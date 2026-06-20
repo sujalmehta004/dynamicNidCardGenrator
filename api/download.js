@@ -1,5 +1,5 @@
-import https from "https";
-import zlib from "zlib";
+const https = require("https");
+const zlib = require("zlib");
 
 function makeHttpsRequest(url, options, postData) {
   return new Promise((resolve, reject) => {
@@ -54,7 +54,7 @@ function makeHttpsRequest(url, options, postData) {
   });
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Allow CORS from our own frontend / vercel env
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -137,4 +137,4 @@ export default async function handler(req, res) {
     console.error("Proxy error:", error);
     return res.status(500).json({ error: `Internal Proxy Error: ${error.message}` });
   }
-}
+};
