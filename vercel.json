@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/v1/enid/verify/:nin",
+      "destination": "/api/verify?nin=:nin"
+    },
+    {
+      "source": "/verify/:nin",
+      "destination": "/api/verify?nin=:nin"
+    }
+  ]
+}

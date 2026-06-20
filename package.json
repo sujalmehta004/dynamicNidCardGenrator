@@ -1,0 +1,9 @@
+{
+  "name": "qr-code-identity-hub",
+  "version": "1.0.0",
+  "description": "National Identity Issuance Hub",
+  "main": "api/people.js",
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}

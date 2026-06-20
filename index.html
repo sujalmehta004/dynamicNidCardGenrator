@@ -1,0 +1,2066 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>National Identity Issuance Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nepali-date-converter/dist/nepali-date-converter.umd.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&family=Mukta:wght=400;500;600;700&family=JetBrains+Mono:wght=400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: "Plus Jakarta Sans", sans-serif;
+    }
+
+    .nepali-font {
+      font-family: "Mukta", sans-serif;
+    }
+
+    .code-font {
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .card-spec {
+      width: 8.6cm;
+      height: 5.5cm;
+      position: relative;
+      box-sizing: border-box;
+      background-color: #ffffff;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition:
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.4s ease;
+    }
+
+    .card-spec:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      z-index: 10;
+    }
+
+    #photoPaperPrintCanvas {
+      width: 6in;
+      height: 4.5in;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4cm;
+      padding: 0.2in;
+      box-sizing: border-box;
+    }
+
+    /* Strict requirement mapping for row color assignments */
+    .status-row-done {
+      background-color: #e2fcd4 !important;
+    }
+
+    /* Light Green */
+    .status-row-pending {
+      background-color: #fef9c3 !important;
+    }
+
+    /* Light Yellow */
+    .status-row-inprogress {
+      background-color: #fee2e2 !important;
+    }
+
+    /* Light Red */
+    .status-row-notonline {
+      background-color: #fca5a5 !important;
+    }
+
+    /* Mid Red */
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #photoPaperPrintCanvas,
+      #photoPaperPrintCanvas * {
+        visibility: visible;
+      }
+
+      #photoPaperPrintCanvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      .card-spec {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        transform: none !important;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-50">
+    <div class="max-w-[1600px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3.5">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/10">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+              d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0a1 1 0 011-1h2a1 1 0 011 1m-4 0h4">
+            </path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-md font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            National Identity Management Dashboard
+          </h1>
+          <p class="text-xs text-slate-555 font-medium">
+            Standardized Identity Matrix Architecture Platform
+          </p>
+        </div>
+      </div>
+
+      <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60" id="tabContainer">
+        <button id="tabFormBtn" onclick="shiftWorkspace('form')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all duration-150">
+          Form Design Studio
+        </button>
+        <button id="tabPortalBtn" onclick="shiftWorkspace('portal')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-655 hover:text-slate-900 transition-all duration-150">
+          Download Card Portal
+        </button>
+        <button id="tabDbBtn" onclick="shiftWorkspace('database')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-655 hover:text-slate-900 transition-all duration-150">
+          Database Index Table
+        </button>
+        <button id="tabAdminBtn" onclick="shiftWorkspace('admin')"
+          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-655 hover:text-slate-900 transition-all duration-155">
+          Admin Setup
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <input type="file" id="uploadFrontBg" accept="image/*" class="hidden" />
+  <input type="file" id="uploadBackBg" accept="image/*" class="hidden" />
+  <input type="file" id="uploadPhoto" accept="image/*" class="hidden" />
+
+  <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6">
+    <div id="mainGridLayoutGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div id="leftLayoutConsoleColumn" class="lg:col-span-6 space-y-6">
+        <section id="paneWorkspaceForm" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-sm font-bold tracking-tight text-slate-900">
+                Identity Variable Configuration Studio
+              </h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Modify parameters dynamically.
+              </p>
+            </div>
+            <span id="formBadgeMode"
+              class="text-[10px] bg-slate-100 text-slate-655 border border-slate-200 px-2.5 py-1 rounded-md font-mono font-medium">MODE:
+              NEW ENTRY</span>
+          </div>
+
+          <form id="clientForm" oninput="processFormMetricsSync()" class="space-y-4 text-xs" onsubmit="event.preventDefault();">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5 font-bold">NIN / NID Number (English) *</label>
+                <input type="text" id="formNinEn" placeholder="615-385-908-6" required
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-bold" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">राष्ट्रिय परिचय नम्बर (नेपाली)</label>
+                <input type="text" id="formNinNp" placeholder="६१५-३८५-९०८-६" readonly
+                  class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Given Name (English)</label>
+                <input type="text" id="formGivenEn" placeholder="SUJAL"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">नाम (नेपाली)</label>
+                <input type="text" id="formGivenNp" placeholder="सुजल"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Surname (English)</label>
+                <input type="text" id="formSurnameEn" placeholder="MEHTA"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">थर (नेपाली)</label>
+                <input type="text" id="formSurnameNp" placeholder="मेहता"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Date of Birth (AD)</label>
+                <input type="text" id="formDobEn" placeholder="2005-05-03"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">जन्म मिति (नेपाली)</label>
+                <input type="text" id="formDobNp" placeholder="२०६२-०१-२०"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Nationality / राष्ट्रियता</label>
+                <input type="text" id="formNationality" value="NEPALI" placeholder="NEPALI"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Citizenship Issue Date</label>
+                <input type="text" id="formCitDate" placeholder="2026-06-18"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Identity Status Mode</label>
+                <select id="formStatus"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition-all">
+                  <option value="pending" selected>Pending</option>
+                  <option value="done">Done</option>
+                  <option value="inprogress">In Progress</option>
+                  <option value="not online">Not Online</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Registered Date</label>
+                <input type="date" id="formRegDate" readonly
+                  class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-500 focus:outline-none cursor-not-allowed" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Updated Date</label>
+                <input type="date" id="formUpdateDate" readonly
+                  class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-500 focus:outline-none cursor-not-allowed" />
+              </div>
+            </div>
+
+            <!-- Nepal Administrative Selection Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">District / जिल्ला</label>
+                <select id="formDistrictSelect" onchange="onDistrictChange()"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all">
+                  <option value="">Select District</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Municipality / Local Level</label>
+                <select id="formMunicipalitySelect" onchange="onMunicipalityChange()"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all">
+                  <option value="">Select Municipality</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Type / प्रकार</label>
+                <select id="formMuniTypeSelect" onchange="onMunicipalityOrWardChange()"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all">
+                  <option value="">Select Type</option>
+                  <option value="1">Metropolitan City (महानगरपालिका)</option>
+                  <option value="2">Sub-Metropolitan City (उपमहानगरपालिका)</option>
+                  <option value="3">Municipality (नगरपालिका)</option>
+                  <option value="4">Rural Municipality (गाउँपालिका)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Ward / वडा नम्बर</label>
+                <input type="number" id="formWardInput" min="1" placeholder="2" oninput="onMunicipalityOrWardChange()"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Permanent Address (English)</label>
+                <input type="text" id="formAddressEn" placeholder="Inaruwa Municipality-2, Sunsari"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">स्थायी ठेगाना (नेपाली)</label>
+                <input type="text" id="formAddressNp" placeholder="इनरुवा नगरपालिका-२, सुनसरी"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+              <input type="hidden" id="formBaseUrl" />
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Secure Token</label>
+                <input type="text" id="formToken" placeholder="eyJhbGciOiJIUzI1NiJ9"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-mono focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <button type="button" onclick="clearFormCanvas()"
+                class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition-all">
+                Clear Canvas
+              </button>
+              <button type="button" id="btnDynamicSubmit" onclick="handleFormActionCommit()"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition-all">
+                Submit Record
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section id="paneWorkspacePortal"
+          class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-sm font-bold tracking-tight text-slate-900">
+              Government Download Gateway
+            </h3>
+            <p class="text-xs text-slate-555 mt-0.5">
+              Extract individual identity data sets from sandbox repositories.
+            </p>
+          </div>
+
+          <form id="portalForm" class="space-y-4 text-xs" onsubmit="event.preventDefault();">
+            <!-- Database Search Integration -->
+            <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 flex flex-col gap-2">
+              <label class="block text-blue-900 font-bold">Search Database to Populate Download Form</label>
+              <div class="flex gap-2">
+                <input type="text" id="portalSearchQuery" placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
+                  class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                <button type="button" onclick="searchDbToPopulatePortal()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-sm shrink-0">
+                  Search & Populate
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Full Name (English)</label>
+                <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA" required
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Full Name (Nepali)</label>
+                <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता" required
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Date of Birth (BS)</label>
+                <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०" required
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-bold mb-1.5">Citizenship Issue Date (BS)</label>
+                <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५" required
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+            </div>
+            <div class="pt-2">
+              <button type="button" id="btnPortalDownloadSubmit" onclick="executePortalDownload()"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
+                Download PDF
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section id="paneWorkspaceAdmin" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
+          <div class="border-b border-slate-100 pb-3">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+              </svg>
+              Admin Security & Whitelist Control
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Verify password and manage allowed IP addresses for system access.
+            </p>
+          </div>
+
+          <!-- STATE 1: Password Authenticator -->
+          <div id="adminAuthBox" class="space-y-4">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs">
+              <div class="font-bold text-slate-700 mb-1">Your Detected Client IP:</div>
+              <div class="font-mono text-sm text-blue-600 font-bold" id="adminDetectedIp">Checking...</div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-xs font-bold text-slate-600">Enter Admin Password to Continue</label>
+              <div class="flex gap-2">
+                <input type="password" id="adminPasswordInput" placeholder="Enter admin password..."
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
+                <button type="button" onclick="verifyAdminPasswordAndUnlock()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition-all shadow-sm shrink-0">
+                  Authenticate
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- STATE 2: Whitelist Registration -->
+          <div id="adminRegisterDeviceBox" class="space-y-4 hidden border-t border-slate-100 pt-4">
+            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-800 space-y-1">
+              <div class="font-bold flex items-center gap-1">
+                <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                IP Registration Required
+              </div>
+              <p>Your current computer IP is not in the whitelist. Register it now to gain full access to the dashboard.</p>
+            </div>
+            
+            <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Target IP Address</label>
+                <input type="text" id="registerDeviceIpInput" placeholder="e.g. 127.0.0.1"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-blue-500" />
+              </div>
+              <button type="button" onclick="submitRegisterDeviceIp()"
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs shadow-sm transition-all uppercase tracking-wider">
+                Register IP & Unlock Hub
+              </button>
+            </div>
+          </div>
+
+          <!-- STATE 3: Allowed IP Whitelist Console -->
+          <div id="adminWhitelistConsole" class="space-y-4 hidden border-t border-slate-100 pt-4">
+            <div class="flex justify-between items-center">
+              <h4 class="text-xs font-bold text-slate-800">Allowed IP Whitelist Table</h4>
+              <button onclick="openAddIpModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all shadow-sm">
+                + Add Allowed IP
+              </button>
+            </div>
+
+            <div class="overflow-x-auto text-[11px] border border-slate-200 rounded-xl">
+              <table class="min-w-full divide-y divide-slate-200 text-left">
+                <thead class="bg-slate-50 text-slate-505 font-mono text-[9px] uppercase tracking-wider bg-slate-50">
+                  <tr>
+                    <th class="px-4 py-2.5 font-bold">IP Address</th>
+                    <th class="px-4 py-2.5 font-bold">Added Date</th>
+                    <th class="px-4 py-2.5 text-center font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="adminIpTableRows" class="divide-y divide-slate-100 text-slate-700 font-medium bg-white">
+                  <!-- Loaded IPs go here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div id="rightLayoutPreviewColumn" class="lg:col-span-6 space-y-5 lg:sticky lg:top-[96px]">
+        <div
+          class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center min-h-[580px]">
+          <div id="photoPaperPrintCanvas" class="border border-slate-300 rounded shadow-md">
+            <div id="cardFrontCanvasNode" onclick="triggerFrontBackgroundSelection()"
+              class="card-spec border border-slate-200/60 p-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
+              <div class="text-center w-full mt-0 mb-4 space-y-0.5 pointer-events-none">
+                <h1 class="font-bold text-[10px] text-slate-900 leading-none font-serif tracking-wide">
+                  नेपाल सरकार
+                </h1>
+                <h2 class="font-bold text-[8px] text-red-700 uppercase tracking-tight leading-none">
+                  GOVERNMENT OF NEPAL
+                </h2>
+                <p class="font-bold nepali-font text-[10.5px] text-blue-900 leading-none pt-0.5">
+                  राष्ट्रिय परिचयपत्र
+                </p>
+                <p class="font-bold text-[7.5px] text-red-600 uppercase tracking-widest leading-none">
+                  NATIONAL IDENTITY CARD
+                </p>
+              </div>
+
+              <div class="grid grid-cols-12 gap-1 items-start flex-1 pointer-events-none">
+                <div class="col-span-8 pl-[84px] space-y-1.5 text-[6.5px] text-slate-955 font-sans font-medium">
+                  <div
+                    class="grid grid-cols-[1.1fr_0.9fr] text-[4.8px] font-bold text-slate-400 pb-0.5 whitespace-nowrap w-full">
+                    <div>
+                      राष्ट्रिय परिचय नम्बर:<br />
+                      <span id="cardNinNp" class="text-[7.5px] text-slate-955 font-bold"></span>
+                    </div>
+                    <div class="pl-1.5">
+                      NIN:<br />
+                      <span id="cardNinEn" class="text-[6.8px] text-slate-955 font-bold"></span>
+                    </div>
+                  </div>
+
+                  <div class="leading-none space-y-0.5">
+                    <span class="text-slate-400 text-[4.8px] block nepali-font">थर | SURNAME</span>
+                    <span id="cardSurnameNp" class="nepali-font font-bold text-slate-955 text-[7.5px] block"></span>
+                    <span id="cardSurnameEn"
+                      class="font-bold text-slate-900 block uppercase font-mono text-[7px]"></span>
+                  </div>
+                  <div class="leading-none space-y-0.5">
+                    <span class="text-slate-400 text-[4.8px] block nepali-font">नाम | GIVEN NAME</span>
+                    <span id="cardGivenNp" class="nepali-font font-bold text-slate-955 text-[7.5px] block"></span>
+                    <span id="cardGivenEn" class="font-bold text-slate-900 block uppercase font-mono text-[7px]"></span>
+                  </div>
+
+                  <div class="grid grid-cols-[1.1fr_0.9fr] leading-none w-full">
+                    <div>
+                      <span class="text-slate-400 text-[4.8px] block nepali-font">जन्म मिति</span>
+                      <span id="cardDobNp" class="nepali-font font-bold text-slate-955 text-[7px] block"></span>
+                    </div>
+                    <div class="pl-1.5">
+                      <span class="text-slate-400 text-[4.8px] block">DATE OF BIRTH</span>
+                      <span id="cardDobEn" class="font-bold text-slate-900 block font-mono text-[6.8px]"></span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span class="text-slate-400 text-[4.8px] block nepali-font">राष्ट्रियता | NATIONALITY</span>
+                    <span id="cardNationality" class="font-bold text-slate-955 text-[7px] font-mono"></span>
+                  </div>
+                </div>
+
+                <div class="col-span-4 flex justify-end pr-1">
+                  <div onclick="
+                        event.stopPropagation();
+                        triggerPortraitSelection();
+                      "
+                    class="w-[1.75cm] h-[2.2cm] bg-slate-100 border border-slate-300 shadow-sm overflow-hidden flex items-center justify-center rounded-sm cursor-pointer pointer-events-auto">
+                    <img id="cardPhoto" src="" class="w-full h-full object-cover hidden" alt="Subject Frame" />
+                    <span id="cardPhotoTxt"
+                      class="text-[5px] text-slate-400 font-bold uppercase text-center p-0.5">UPLOAD IMAGE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="cardBackCanvasNode" onclick="triggerBackBackgroundSelection()"
+              class="card-spec border border-slate-200/60 p-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
+              <div class="flex justify-between items-start text-[7.5px] pointer-events-none">
+                <div class="space-y-1">
+                  <span class="text-slate-400 block font-bold text-[5px]">स्थायी ठेगाना | PERMANENT ADDRESS</span>
+                  <p id="cardAddressNp" class="nepali-font font-bold text-slate-955 text-[9.5px] leading-tight"></p>
+                  <p id="cardAddressEn" class="font-semibold text-slate-800 text-[8px] font-mono leading-tight"></p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-12 gap-1 items-end flex-1 mb-2 pointer-events-none">
+                <div class="col-span-5 flex justify-start pl-1">
+                  <div id="cardQrWidget" class="p-0.5 bg-white border border-slate-200 inline-block"></div>
+                </div>
+                <div class="col-span-7 text-right pr-1">
+                  <div class="space-y-1 text-slate-700">
+                    <div>
+                      <span class="block text-slate-400 font-bold nepali-font text-[5px]">जारी गर्ने निकाय | ISSUING
+                        OFFICE</span>
+                      <span class="font-bold block text-slate-955 nepali-font text-[8px]">राष्ट्रिय परिचयपत्र तथा
+                        पञ्जीकरण विभाग</span>
+                    </div>
+                    <div class="pt-1">
+                      <span class="block text-slate-400 uppercase text-[5px] font-bold">Citizenship Issue Date</span>
+                      <span id="cardCitDate" class="font-bold text-slate-955 font-mono text-[7px]"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row gap-3">
+          <button onclick="triggerPrintEngine()"
+            class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
+            Print Layout Sheet
+          </button>
+          <button onclick="exportLayoutAsPngImage()"
+            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
+            Save Card Layout (PNG)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="paneWorkspaceDb" class="mt-8 hidden">
+      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden space-y-4">
+        <div
+          class="p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 tracking-tight">
+              Enterprise Identity Search & Ledger Vault
+            </h3>
+            <p class="text-xs text-slate-555 mt-0.5">
+              Use filters and full-text querying below to parse identity strings.
+            </p>
+          </div>
+        </div>
+
+        <!-- Column Visibility Control Panel -->
+        <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center gap-2">
+          <span class="text-[11px] font-bold text-slate-500 mr-2 uppercase tracking-wide">Toggle Columns:</span>
+          <button onclick="toggleColumn('nin')" id="colBtn-nin" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">NID Number</button>
+          <button onclick="toggleColumn('name')" id="colBtn-name" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Name</button>
+          <button onclick="toggleColumn('token')" id="colBtn-token" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Token</button>
+          <button onclick="toggleColumn('dob')" id="colBtn-dob" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">DOB</button>
+          <button onclick="toggleColumn('citDate')" id="colBtn-citDate" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Citizenship Date</button>
+          <button onclick="toggleColumn('address')" id="colBtn-address" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Address</button>
+          <button onclick="toggleColumn('regDate')" id="colBtn-regDate" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Reg Date</button>
+          <button onclick="toggleColumn('updateDate')" id="colBtn-updateDate" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Update Date</button>
+          <button onclick="toggleColumn('status')" id="colBtn-status" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Status</button>
+          <button onclick="toggleColumn('actions')" id="colBtn-actions" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Actions</button>
+        </div>
+        <div class="px-5 py-3 grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs bg-slate-50/50 border-b border-slate-100">
+          <div class="lg:col-span-3">
+            <label class="block text-slate-600 font-bold mb-1">Global Query Search Input</label>
+            <div class="relative flex gap-2">
+              <input type="text" id="searchQueryBar" placeholder="Search by Name, NID/NIN number, or Address..."
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 font-medium text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              <button onclick="fetchDatabase()"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <span>Search</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-slate-600 font-bold mb-1">Workflow State</label>
+            <select id="filterStatus" onchange="fetchDatabase()"
+              class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-blue-500">
+              <option value="all">All States</option>
+              <option value="pending">Pending</option>
+              <option value="done">Done</option>
+              <option value="inprogress">In Progress</option>
+              <option value="not online">Not Online</option>
+            </select>
+          </div>
+
+          <div class="lg:col-span-2">
+            <label class="block text-slate-600 font-bold mb-1">Registered Since</label>
+            <input type="text" id="filterRegStart" placeholder="YYYY-MM-DD" oninput="fetchDatabase()"
+              class="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-blue-500 font-mono" />
+          </div>
+
+          <div class="lg:col-span-3">
+            <label class="block text-slate-600 font-bold mb-1">Registration Date Preset</label>
+            <select id="filterRegPeriod" onchange="fetchDatabase()"
+              class="w-full bg-white border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:border-blue-500">
+              <option value="all">All Dates</option>
+              <option value="today">Today Registered</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="this_week">This Week</option>
+              <option value="this_month">This Month</option>
+              <option value="this_year">This Year</option>
+            </select>
+          </div>
+
+          <div class="lg:col-span-2 flex items-end">
+            <button onclick="clearAdvancedFiltersConsole()"
+              class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl border border-slate-300 transition-all text-center">
+              Reset Filters
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto text-xs">
+          <table class="min-w-full divide-y divide-slate-250 text-left whitespace-nowrap">
+            <thead class="bg-slate-100 text-slate-600 font-mono text-[10px] uppercase tracking-wider select-none">
+              <tr id="dbTableHeaderRow">
+                <!-- Dynamically Populated Table Headers -->
+              </tr>
+            </thead>
+            <tbody id="dbRepositoryRows" class="divide-y divide-slate-200 text-slate-700 font-medium"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let qrGeneratorInstance = null;
+    let selectedRecordId = null;
+    let documentIdentityDb = [];
+    let nepalAdminData = { districts: [], local_levels: [] };
+
+    const englishToNepaliDigits = {
+      '0': '०', '1': '१', '2': '२', '3': '३', '4': '४',
+      '5': '५', '6': '६', '7': '७', '8': '८', '9': '९'
+    };
+    const nepaliToEnglishDigits = {
+      '०': '0', '१': '1', '२': '2', '३': '3', '४': '4',
+      '५': '5', '६': '6', '७': '7', '८': '8', '९': '9'
+    };
+
+    const localLevelTypes = {
+      1: { en: "Metropolitan City", ne: "महानगरपालिका" },
+      2: { en: "Sub-Metropolitan City", ne: "उपमहानगरपालिका" },
+      3: { en: "Municipality", ne: "नगरपालिका" },
+      4: { en: "Rural Municipality", ne: "गाउँपालिका" }
+    };
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initializeDateFieldsDefaults();
+      processFormMetricsSync();
+      attachLocalImageReaders();
+      attachNidFormattingListener();
+      attachDateConversionListeners();
+      
+      // Auto-format YYYY-MM-DD input helpers
+      attachDateAutoFormatter("formDobEn");
+      attachDateAutoFormatter("formDobNp");
+      
+      // General formatters for citizenship and download portal fields
+      attachGeneralDateAutoFormatter("formCitDate", false);
+      attachGeneralDateAutoFormatter("portalDobLoc", true);
+      attachGeneralDateAutoFormatter("portalCcnIssuingDateLoc", true);
+      attachGeneralDateAutoFormatter("filterRegStart", false);
+      
+      loadNepalAdministrativeData();
+      fetchDatabase();
+      checkIpAccessControl();
+    });
+
+    function translateDigits(str, map) {
+      return str.split('').map(char => map[char] || char).join('');
+    }
+
+    function initializeDateFieldsDefaults() {
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("formRegDate").value = today;
+      document.getElementById("formUpdateDate").value = today;
+      // Default BaseUrl for QR redirection to local verify endpoint
+      document.getElementById("formBaseUrl").value = window.location.origin + "/verify";
+    }
+
+    function triggerPortraitSelection() {
+      document.getElementById("uploadPhoto").click();
+    }
+    function triggerFrontBackgroundSelection() {
+      document.getElementById("uploadFrontBg").click();
+    }
+    function triggerBackBackgroundSelection() {
+      document.getElementById("uploadBackBg").click();
+    }
+
+    function shiftWorkspace(targetViewTab) {
+      const tabs = {
+        form: "tabFormBtn",
+        portal: "tabPortalBtn",
+        database: "tabDbBtn",
+        admin: "tabAdminBtn"
+      };
+      const panes = {
+        form: "paneWorkspaceForm",
+        portal: "paneWorkspacePortal",
+        database: "paneWorkspaceDb",
+        admin: "paneWorkspaceAdmin"
+      };
+      const leftColumn = document.getElementById("leftLayoutConsoleColumn");
+      const rightColumn = document.getElementById("rightLayoutPreviewColumn");
+      const mainGrid = document.getElementById("mainGridLayoutGrid");
+
+      Object.keys(tabs).forEach((key) => {
+        const button = document.getElementById(tabs[key]);
+        if (!button) return;
+        if (key === targetViewTab) {
+          button.className =
+            "px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150";
+          document.getElementById(panes[key]).classList.remove("hidden");
+        } else {
+          button.className =
+            "px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150";
+          document.getElementById(panes[key]).classList.add("hidden");
+        }
+      });
+
+      if (targetViewTab === "form") {
+        mainGrid.className =
+          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
+        leftColumn.className = "lg:col-span-6 space-y-6";
+        rightColumn.classList.remove("hidden");
+      } else if (targetViewTab === "portal" || targetViewTab === "admin") {
+        mainGrid.className =
+          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
+        leftColumn.className = "lg:col-span-6 space-y-6";
+        rightColumn.classList.add("hidden");
+      } else {
+        mainGrid.className = "block w-full";
+        leftColumn.className = "hidden";
+        rightColumn.classList.add("hidden");
+      }
+    }
+
+    function processFormMetricsSync() {
+      refreshCardPreviewLayout();
+    }
+
+    function getValueOrPlaceholder(elementId) {
+      const el = document.getElementById(elementId);
+      return el.value.trim() !== "" ? el.value : el.placeholder || "";
+    }
+
+    function refreshCardPreviewLayout() {
+      const ctx = {
+        ninEn: getValueOrPlaceholder("formNinEn"),
+        ninNp: getValueOrPlaceholder("formNinNp"),
+        surnameEn: getValueOrPlaceholder("formSurnameEn"),
+        surnameNp: getValueOrPlaceholder("formSurnameNp"),
+        givenEn: getValueOrPlaceholder("formGivenEn"),
+        givenNp: getValueOrPlaceholder("formGivenNp"),
+        dobEn: getValueOrPlaceholder("formDobEn"),
+        dobNp: getValueOrPlaceholder("formDobNp"),
+        nationality: getValueOrPlaceholder("formNationality"),
+        citDate: getValueOrPlaceholder("formCitDate"),
+        addressEn: getValueOrPlaceholder("formAddressEn"),
+        addressNp: getValueOrPlaceholder("formAddressNp"),
+        baseUrl: getValueOrPlaceholder("formBaseUrl"),
+        token: getValueOrPlaceholder("formToken"),
+      };
+
+      document
+        .querySelectorAll("#cardNinEn")
+        .forEach((el) => (el.innerText = ctx.ninEn));
+      document
+        .querySelectorAll("#cardNinNp")
+        .forEach((el) => (el.innerText = ctx.ninNp));
+      document.getElementById("cardSurnameEn").innerText =
+        ctx.surnameEn.toUpperCase();
+      document.getElementById("cardSurnameNp").innerText = ctx.surnameNp;
+      document.getElementById("cardGivenEn").innerText =
+        ctx.givenEn.toUpperCase();
+      document.getElementById("cardGivenNp").innerText = ctx.givenNp;
+      document.getElementById("cardDobEn").innerText = ctx.dobEn;
+      document.getElementById("cardDobNp").innerText = ctx.dobNp;
+      document.getElementById("cardNationality").innerText =
+        ctx.nationality.toUpperCase();
+      document.getElementById("cardAddressNp").innerText = ctx.addressNp;
+      document.getElementById("cardAddressEn").innerText = ctx.addressEn;
+      document.getElementById("cardCitDate").innerText = ctx.citDate;
+
+      // Ensure QR Code URL correctly builds target endpoint
+      const qrTargetUrl = ctx.baseUrl.includes('?') 
+        ? `${ctx.baseUrl}&token=${ctx.token}` 
+        : `${ctx.baseUrl}/${ctx.ninEn}`;
+      
+      compileDynamicQrMatrix(qrTargetUrl);
+    }
+
+    function compileDynamicQrMatrix(payloadString) {
+      const qrBox = document.getElementById("cardQrWidget");
+      qrBox.innerHTML = "";
+      qrGeneratorInstance = new QRCode(qrBox, {
+        text: payloadString,
+        width: 52,
+        height: 52,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }
+
+    function attachLocalImageReaders() {
+      document
+        .getElementById("uploadPhoto")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+              const img = document.getElementById("cardPhoto");
+              img.src = evt.target.result;
+              img.classList.remove("hidden");
+              document.getElementById("cardPhotoTxt").classList.add("hidden");
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      document
+        .getElementById("uploadFrontBg")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+              const front = document.getElementById("cardFrontCanvasNode");
+              front.style.backgroundImage = `url('${evt.target.result}')`;
+              front.style.backgroundSize = "cover";
+              front.style.backgroundPosition = "center";
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      document
+        .getElementById("uploadBackBg")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+              const back = document.getElementById("cardBackCanvasNode");
+              back.style.backgroundImage = `url('${evt.target.result}')`;
+              back.style.backgroundSize = "cover";
+              back.style.backgroundPosition = "center";
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+    }
+
+    function attachNidFormattingListener() {
+      const ninEnInput = document.getElementById("formNinEn");
+      const ninNpInput = document.getElementById("formNinNp");
+
+      ninEnInput.addEventListener("input", (e) => {
+        let val = ninEnInput.value;
+        // Keep only digits
+        let digits = val.replace(/\D/g, '');
+        let formatted = '';
+        if (digits.length > 0) {
+          formatted += digits.substring(0, 3);
+        }
+        if (digits.length > 3) {
+          formatted += '-' + digits.substring(3, 6);
+        }
+        if (digits.length > 6) {
+          formatted += '-' + digits.substring(6, 9);
+        }
+        if (digits.length > 9) {
+          formatted += '-' + digits.substring(9, 10);
+        }
+        
+        ninEnInput.value = formatted;
+        ninNpInput.value = translateDigits(formatted, englishToNepaliDigits);
+        processFormMetricsSync();
+      });
+    }
+
+    function attachDateAutoFormatter(inputId) {
+      const input = document.getElementById(inputId);
+      input.addEventListener("input", (e) => {
+        if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
+          return;
+        }
+        
+        let val = input.value;
+        let isBS = inputId === "formDobNp";
+        let englishVal = isBS ? translateDigits(val, nepaliToEnglishDigits) : val;
+
+        let digits = englishVal.replace(/\D/g, '');
+        let formatted = '';
+        
+        if (digits.length > 0) {
+          formatted += digits.substring(0, 4);
+        }
+        if (digits.length > 4) {
+          formatted += '-' + digits.substring(4, 6);
+        }
+        if (digits.length > 6) {
+          formatted += '-' + digits.substring(6, 8);
+        }
+
+        let finalVal = isBS ? translateDigits(formatted, englishToNepaliDigits) : formatted;
+        input.value = finalVal;
+
+        // Perform real-time conversion when it is a complete 10-character date!
+        if (formatted.length === 10) {
+          if (isBS) {
+            const adVal = convertBsToAd(formatted);
+            if (adVal) {
+              document.getElementById("formDobEn").value = adVal;
+            }
+          } else {
+            const bsVal = convertAdToBs(formatted);
+            if (bsVal) {
+              document.getElementById("formDobNp").value = translateDigits(bsVal, englishToNepaliDigits);
+            }
+          }
+          processFormMetricsSync();
+        }
+      });
+    }
+
+    function getNepaliDateClass() {
+      // Direct global checking that avoids object-namespace namespace error
+      if (window.NepaliDate && typeof window.NepaliDate.default === 'function') {
+        return window.NepaliDate.default;
+      }
+      if (typeof NepaliDate === 'function') {
+        return NepaliDate;
+      }
+      if (window.NepaliDate && typeof window.NepaliDate === 'function') {
+        return window.NepaliDate;
+      }
+      return null;
+    }
+
+    function convertAdToBs(adStr) {
+      const NepaliDateClass = getNepaliDateClass();
+      if (!NepaliDateClass) {
+        console.error("NepaliDate library not loaded");
+        return '';
+      }
+      const parts = adStr.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1; 
+        const d = parseInt(parts[2], 10);
+        
+        try {
+          const jsDate = new Date(y, m, d);
+          if (!isNaN(jsDate.getTime())) {
+            const nepDate = new NepaliDateClass(jsDate);
+            return nepDate.format('YYYY-MM-DD');
+          }
+        } catch (e) {
+          console.error("Error converting AD to BS:", e);
+        }
+      }
+      return '';
+    }
+
+    function convertBsToAd(bsStr) {
+      const NepaliDateClass = getNepaliDateClass();
+      if (!NepaliDateClass) {
+        console.error("NepaliDate library not loaded");
+        return '';
+      }
+      const parts = bsStr.split('-');
+      if (parts.length === 3) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1; 
+        const d = parseInt(parts[2], 10);
+        try {
+          const nepDate = new NepaliDateClass(y, m, d);
+          const jsDate = nepDate.toJsDate();
+          const year = jsDate.getFullYear();
+          const month = String(jsDate.getMonth() + 1).padStart(2, '0');
+          const day = String(jsDate.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        } catch (e) {
+          console.error("Nepali Date parsing error:", e);
+        }
+      }
+      return '';
+    }
+
+    function attachDateConversionListeners() {
+      const dobEnInput = document.getElementById("formDobEn");
+      const dobNpInput = document.getElementById("formDobNp");
+
+      dobEnInput.addEventListener("input", () => {
+        const adVal = dobEnInput.value.trim();
+        if (adVal.length === 10) {
+          const bsVal = convertAdToBs(adVal);
+          if (bsVal) {
+            dobNpInput.value = translateDigits(bsVal, englishToNepaliDigits);
+            processFormMetricsSync();
+          }
+        }
+      });
+
+      dobNpInput.addEventListener("input", () => {
+        const bsVal = dobNpInput.value.trim();
+        if (bsVal.length === 10) {
+          const englishBsVal = translateDigits(bsVal, nepaliToEnglishDigits);
+          const adVal = convertBsToAd(englishBsVal);
+          if (adVal) {
+            dobEnInput.value = adVal;
+            processFormMetricsSync();
+          }
+        }
+      });
+    }
+
+    async function loadNepalAdministrativeData() {
+      const selectDistrict = document.getElementById("formDistrictSelect");
+      try {
+        console.log("Fetching districts...");
+        const distRes = await fetch("https://raw.githubusercontent.com/bibekoli/local-levels-of-nepal-dataset/main/districts.json");
+        if (!distRes.ok) throw new Error("Failed to fetch districts");
+        const rawDistricts = await distRes.json();
+        nepalAdminData.districts = rawDistricts.map(d => ({
+          id: d.district_id,
+          name_en: d.name,
+          name_ne: d.nepali_name
+        }));
+        console.log("Districts loaded successfully:", nepalAdminData.districts.length);
+      } catch (error) {
+        console.warn("Districts API fetch failed, using fallbacks:", error);
+        nepalAdminData.districts = [
+          { id: 11, name_en: "Sunsari", name_ne: "सुनसरी" },
+          { id: 5, name_en: "Kathmandu", name_ne: "काठमाडौं" },
+          { id: 6, name_en: "Lalitpur", name_ne: "ललितपुर" },
+          { id: 1, name_en: "Kaski", name_ne: "कास्की" }
+        ];
+      }
+
+      try {
+        console.log("Fetching local levels...");
+        const muniRes = await fetch("https://raw.githubusercontent.com/bibekoli/local-levels-of-nepal-dataset/main/local_levels.json");
+        if (!muniRes.ok) throw new Error("Failed to fetch local levels");
+        const rawLocalLevels = await muniRes.json();
+        
+        // Map local levels and ensure all keys are normalized
+        nepalAdminData.local_levels = rawLocalLevels.map(m => ({
+          id: m.municipality_id,
+          name_en: m.name,
+          name_ne: m.nepali_name,
+          district_id: m.district_id,
+          type_id: m.local_level_type_id
+        }));
+        console.log("Local levels loaded successfully:", nepalAdminData.local_levels.length);
+      } catch (error) {
+        console.warn("Local levels API fetch failed, using fallbacks:", error);
+        nepalAdminData.local_levels = [
+          { id: 59, name_en: "Inaruwa", name_ne: "इनरुवा", district_id: 11, type_id: 3 },
+          { id: 15, name_en: "Itahari", name_ne: "इटहरी", district_id: 11, type_id: 2 },
+          { id: 12, name_en: "Dharan", name_ne: "धरान", district_id: 11, type_id: 2 },
+          { id: 5, name_en: "Kathmandu", name_ne: "काठमाडौं", district_id: 5, type_id: 1 },
+          { id: 6, name_en: "Lalitpur", name_ne: "ललितपुर", district_id: 6, type_id: 1 },
+          { id: 1, name_en: "Pokhara", name_ne: "पोखरा", district_id: 1, type_id: 1 }
+        ];
+      }
+
+      // Populate district select
+      selectDistrict.innerHTML = '<option value="">Select District</option>';
+      nepalAdminData.districts.sort((a, b) => {
+        return (a.name_en || "").localeCompare(b.name_en || "");
+      }).forEach(dist => {
+        const option = document.createElement("option");
+        option.value = dist.id;
+        option.innerText = `${dist.name_en} (${dist.name_ne})`;
+        selectDistrict.appendChild(option);
+      });
+    }
+
+    function onDistrictChange() {
+      const selectDistrict = document.getElementById("formDistrictSelect");
+      const selectMunicipality = document.getElementById("formMunicipalitySelect");
+      const typeSelect = document.getElementById("formMuniTypeSelect");
+      const districtId = parseInt(selectDistrict.value);
+
+      console.log("onDistrictChange triggered. selected districtId:", districtId);
+      console.log("Total local levels in memory:", nepalAdminData.local_levels.length);
+
+      selectMunicipality.innerHTML = '<option value="">Select Municipality</option>';
+      typeSelect.value = "";
+      
+      if (!districtId) {
+        onMunicipalityOrWardChange();
+        return;
+      }
+
+      const filteredMuni = nepalAdminData.local_levels.filter(muni => muni.district_id == districtId);
+      console.log("Filtered municipalities count:", filteredMuni.length);
+
+      filteredMuni.sort((a, b) => {
+        return (a.name_en || "").localeCompare(b.name_en || "");
+      }).forEach(muni => {
+        const option = document.createElement("option");
+        option.value = muni.id;
+        option.innerText = `${muni.name_en} (${muni.name_ne})`;
+        selectMunicipality.appendChild(option);
+      });
+
+      onMunicipalityChange();
+    }
+
+    function onMunicipalityChange() {
+      const selectMunicipality = document.getElementById("formMunicipalitySelect");
+      const muniId = parseInt(selectMunicipality.value);
+      const typeSelect = document.getElementById("formMuniTypeSelect");
+      
+      if (muniId) {
+        const muni = nepalAdminData.local_levels.find(m => m.id == muniId);
+        if (muni && muni.type_id) {
+          typeSelect.value = muni.type_id;
+        } else {
+          typeSelect.value = "";
+        }
+      } else {
+        typeSelect.value = "";
+      }
+      onMunicipalityOrWardChange();
+    }
+
+    function onMunicipalityOrWardChange() {
+      const selectDistrict = document.getElementById("formDistrictSelect");
+      const selectMunicipality = document.getElementById("formMunicipalitySelect");
+      const typeSelect = document.getElementById("formMuniTypeSelect");
+      const wardInput = document.getElementById("formWardInput");
+
+      const districtId = parseInt(selectDistrict.value);
+      const municipalityId = parseInt(selectMunicipality.value);
+      const wardVal = wardInput.value.trim();
+
+      if (!districtId || !municipalityId) {
+        return;
+      }
+
+      const dist = nepalAdminData.districts.find(d => d.id == districtId);
+      const muni = nepalAdminData.local_levels.find(m => m.id == municipalityId);
+
+      if (dist && muni) {
+        const distEn = dist.name_en || "";
+        const distNe = dist.name_ne || "";
+        
+        // Resolve type id: prioritize selector if set, fallback to muni.type_id
+        const typeId = typeSelect.value ? parseInt(typeSelect.value) : muni.type_id;
+        
+        // Resolve type suffixes dynamically
+        const typeInfo = localLevelTypes[typeId] || { en: "", ne: "" };
+        const suffixEn = typeInfo.en ? ` ${typeInfo.en}` : "";
+        const suffixNe = typeInfo.ne ? ` ${typeInfo.ne}` : "";
+
+        const muniEn = (muni.name_en || "") + suffixEn;
+        const muniNe = (muni.name_ne || "") + suffixNe;
+        
+        const wardEn = wardVal !== "" ? `-${wardVal}` : "";
+        const wardNe = wardVal !== "" ? `-${translateDigits(wardVal, englishToNepaliDigits)}` : "";
+
+        document.getElementById("formAddressEn").value = `${muniEn}${wardEn}, ${distEn}`;
+        document.getElementById("formAddressNp").value = `${muniNe}${wardNe}, ${distNe}`;
+        processFormMetricsSync();
+      }
+    }
+
+    let currentSortBy = "";
+    let currentSortOrder = "desc";
+    
+    let columnVisibility = {
+      nin: true,
+      name: true,
+      token: true,
+      dob: true,
+      citDate: true,
+      address: true,
+      regDate: true,
+      updateDate: true,
+      status: true,
+      actions: true
+    };
+
+    function toggleColumn(col) {
+      columnVisibility[col] = !columnVisibility[col];
+      updateColumnVisibilityButtons();
+      renderTableHeader();
+      renderDatabaseTableRows();
+    }
+
+    function updateColumnVisibilityButtons() {
+      Object.keys(columnVisibility).forEach(col => {
+        const btn = document.getElementById(`colBtn-${col}`);
+        if (btn) {
+          if (columnVisibility[col]) {
+            btn.className = "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-slate-200 bg-slate-100 text-slate-400";
+          }
+        }
+      });
+    }
+
+    function renderTableHeader() {
+      const headerRow = document.getElementById("dbTableHeaderRow");
+      headerRow.innerHTML = "";
+
+      const cols = [
+        { key: "nin", label: "NID Number", sortKey: "ninEn" },
+        { key: "name", label: "Full Identity Name", sortKey: "name" },
+        { key: "token", label: "Secure Token", sortKey: "token" },
+        { key: "dob", label: "Birth Date (DOB)", sortKey: "dobEn" },
+        { key: "citDate", label: "Citizenship Date", sortKey: "citDate" },
+        { key: "address", label: "Registered Address", sortKey: "addressEn" },
+        { key: "regDate", label: "Registered Date", sortKey: "regDate" },
+        { key: "updateDate", label: "Updated Date", sortKey: "updateDate" },
+        { key: "status", label: "Execution Status", sortKey: "status" },
+        { key: "actions", label: "Actions", sortKey: "" }
+      ];
+
+      cols.forEach(col => {
+        if (!columnVisibility[col.key]) return;
+
+        const th = document.createElement("th");
+        th.className = "px-5 py-3.5 font-bold text-slate-700 border-r border-slate-200";
+        if (col.sortKey) {
+          th.className += " cursor-pointer hover:bg-slate-250 hover:text-slate-900 transition-colors";
+          th.onclick = () => sortByColumn(col.sortKey);
+          
+          let indicator = " ⇅";
+          if (currentSortBy === col.sortKey) {
+            indicator = currentSortOrder === "asc" ? " ▲" : " ▼";
+            th.className += " bg-slate-200/80 text-blue-700";
+          }
+          th.innerText = col.label + indicator;
+        } else {
+          th.innerText = col.label;
+        }
+        headerRow.appendChild(th);
+      });
+    }
+
+    function sortByColumn(sortKey) {
+      if (currentSortBy === sortKey) {
+        currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+      } else {
+        currentSortBy = sortKey;
+        currentSortOrder = "desc";
+      }
+      fetchDatabase();
+    }
+    async function fetchDatabase() {
+      const query = document.getElementById("searchQueryBar").value.toLowerCase().trim();
+      const statusFilter = document.getElementById("filterStatus").value;
+      const regStartFilter = document.getElementById("filterRegStart").value;
+      const regPeriodFilter = document.getElementById("filterRegPeriod").value;
+
+      // Get local client YYYY-MM-DD date representation
+      const clientDate = new Date().toLocaleDateString('sv');
+
+      let url = `/api/people?status=${statusFilter}&regStart=${regStartFilter}&regPeriod=${regPeriodFilter}&clientDate=${clientDate}&query=${encodeURIComponent(query)}`;
+      if (currentSortBy) {
+        url += `&sortBy=${currentSortBy}&sortOrder=${currentSortOrder}`;
+      }
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to load database records');
+        documentIdentityDb = await res.json();
+        renderTableHeader();
+        renderDatabaseTableRows();
+      } catch (err) {
+        console.error('Error fetching database records:', err);
+      }
+    }
+
+    function renderDatabaseTableRows() {
+      const tbody = document.getElementById("dbRepositoryRows");
+      tbody.innerHTML = "";
+
+      documentIdentityDb.forEach((row) => {
+        let colorClass = "";
+        if (row.status === "done") colorClass = "status-row-done";
+        else if (row.status === "pending") colorClass = "status-row-pending";
+        else if (row.status === "inprogress") colorClass = "status-row-inprogress";
+        else if (row.status === "not online") colorClass = "status-row-notonline";
+
+        const tr = document.createElement("tr");
+        tr.className = `${colorClass} border-b border-slate-200 transition-colors duration-155`;
+
+        // Col 1: NIN
+        if (columnVisibility.nin) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono font-bold text-blue-600";
+          td.innerHTML = `${row.ninEn}<br><span class="text-[10px] text-slate-400 font-sans font-normal">${row.ninNp || "—"}</span>`;
+          tr.appendChild(td);
+        }
+
+        // Col 2: Name
+        if (columnVisibility.name) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-bold text-slate-900";
+          td.innerHTML = `${row.givenEn || ""} ${row.surnameEn || ""}<br><span class="text-xs text-slate-500 font-normal nepali-font">${row.givenNp || ""} ${row.surnameNp || ""}</span>`;
+          tr.appendChild(td);
+        }
+
+        // Col 3: Token
+        if (columnVisibility.token) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono text-[10px] max-w-xs truncate text-slate-500 cursor-pointer hover:text-blue-650";
+          const tokenStr = row.token || "";
+          td.innerText = tokenStr ? (tokenStr.substring(0, 15) + "...") : "—";
+          td.title = "Click to copy token";
+          td.onclick = () => {
+            if (tokenStr) {
+              navigator.clipboard.writeText(tokenStr);
+              alert("Token copied to clipboard!");
+            }
+          };
+          tr.appendChild(td);
+        }
+
+        // Col 4: DOB
+        if (columnVisibility.dob) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono text-slate-650";
+          td.innerHTML = `${row.dobEn || "—"}<br><span class="text-[10px] text-slate-400 font-normal">${row.dobNp || "—"}</span>`;
+          tr.appendChild(td);
+        }
+
+        // Col 5: Cit Date
+        if (columnVisibility.citDate) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono text-amber-700";
+          td.innerText = row.citDate || "—";
+          tr.appendChild(td);
+        }
+
+        // Col 6: Address
+        if (columnVisibility.address) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 max-w-xs truncate text-slate-655";
+          td.innerHTML = `${row.addressEn || "—"}<br><span class="text-[10px] text-slate-400 nepali-font">${row.addressNp || "—"}</span>`;
+          tr.appendChild(td);
+        }
+
+        // Col 7: Reg Date
+        if (columnVisibility.regDate) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono font-bold text-slate-900 bg-black/5";
+          td.innerText = row.regDate || "—";
+          tr.appendChild(td);
+        }
+
+        // Col 8: Update Date
+        if (columnVisibility.updateDate) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono font-bold text-slate-900 bg-black/5";
+          td.innerText = row.updateDate || "—";
+          tr.appendChild(td);
+        }
+
+        // Col 9: Status
+        if (columnVisibility.status) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 bg-black/5 text-center";
+          td.innerHTML = `
+            <select onchange="updateRowStatusInline('${row.ninEn}', this.value)" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-bold text-[11px] uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer">
+                <option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option>
+                <option value="done" ${row.status === "done" ? "selected" : ""}>Done</option>
+                <option value="inprogress" ${row.status === "inprogress" ? "selected" : ""}>In Progress</option>
+                <option value="not online" ${row.status === "not online" ? "selected" : ""}>Not Online</option>
+            </select>
+          `;
+          tr.appendChild(td);
+        }
+
+        // Col 10: Actions
+        if (columnVisibility.actions) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 text-center space-x-2";
+          td.innerHTML = `
+              <button onclick="pullRowIntoWorkspace('${row.ninEn}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-bold transition-all shadow-sm">Modify</button>
+              <button onclick="deleteRecordInline('${row.ninEn}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg font-bold transition-all shadow-sm">Delete</button>
+          `;
+          tr.appendChild(td);
+        }
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateRowStatusInline(ninEn, newStatus) {
+      try {
+        const res = await fetch(`/api/people?originalNin=${encodeURIComponent(ninEn)}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus, updateDate: new Date().toISOString().split("T")[0] })
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(`Error: ${errData.error}`);
+          return;
+        }
+        fetchDatabase();
+      } catch (err) {
+        console.error('Error updating status:', err);
+      }
+    }
+    function clearAdvancedFiltersConsole() {
+      document.getElementById("searchQueryBar").value = "";
+      document.getElementById("filterStatus").value = "all";
+      document.getElementById("filterRegStart").value = "";
+      document.getElementById("filterRegPeriod").value = "all";
+      fetchDatabase();
+    }
+    async function handleFormActionCommit() {
+      const targetNinEn = document.getElementById("formNinEn").value.trim();
+      if (!targetNinEn) {
+        alert("NIN (English) is a required unique field.");
+        return;
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+
+      const record = {
+        ninEn: targetNinEn,
+        ninNp: document.getElementById("formNinNp").value,
+        givenEn: document.getElementById("formGivenEn").value,
+        givenNp: document.getElementById("formGivenNp").value,
+        surnameEn: document.getElementById("formSurnameEn").value,
+        surnameNp: document.getElementById("formSurnameNp").value,
+        dobEn: document.getElementById("formDobEn").value,
+        dobNp: document.getElementById("formDobNp").value,
+        nationality: document.getElementById("formNationality").value || 'NEPALI',
+        citDate: document.getElementById("formCitDate").value,
+        regDate: selectedRecordId ? document.getElementById("formRegDate").value : today,
+        updateDate: today,
+        status: document.getElementById("formStatus").value,
+        addressEn: document.getElementById("formAddressEn").value,
+        addressNp: document.getElementById("formAddressNp").value,
+        baseUrl: document.getElementById("formBaseUrl").value,
+        token: document.getElementById("formToken").value,
+      };
+
+      if (selectedRecordId) {
+        try {
+          const res = await fetch(`/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(record)
+          });
+          const result = await res.json();
+          if (!res.ok) {
+            alert(`Error: ${result.error}`);
+            return;
+          }
+          alert("Database record updated successfully!");
+          selectedRecordId = null;
+          document.getElementById("formBadgeMode").innerText = "MODE: NEW ENTRY";
+          document.getElementById("btnDynamicSubmit").innerText = "Submit Record";
+          document.getElementById("clientForm").reset();
+          initializeDateFieldsDefaults();
+          fetchDatabase();
+          processFormMetricsSync();
+        } catch (err) {
+          alert(`Network/Server error: ${err.message}`);
+        }
+      } else {
+        try {
+          const res = await fetch(`/api/people`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(record)
+          });
+          const result = await res.json();
+          if (!res.ok) {
+            alert(`Error: ${result.error}`);
+            return;
+          }
+          alert(`New catalog entry recorded successfully: ${result.ninEn}`);
+          document.getElementById("clientForm").reset();
+          initializeDateFieldsDefaults();
+          fetchDatabase();
+          processFormMetricsSync();
+        } catch (err) {
+          alert(`Network/Server error: ${err.message}`);
+        }
+      }
+    }
+
+    function pullRowIntoWorkspace(ninEn) {
+      const record = documentIdentityDb.find((r) => r.ninEn === ninEn);
+      if (!record) return;
+
+      selectedRecordId = ninEn;
+      document.getElementById("formBadgeMode").innerText = "MODE: UPDATE RECORD";
+      document.getElementById("btnDynamicSubmit").innerText = "Update Record";
+
+      document.getElementById("formNinEn").value = record.ninEn;
+      document.getElementById("formNinNp").value = record.ninNp || '';
+      document.getElementById("formGivenEn").value = record.givenEn;
+      document.getElementById("formGivenNp").value = record.givenNp || '';
+      document.getElementById("formSurnameEn").value = record.surnameEn;
+      document.getElementById("formSurnameNp").value = record.surnameNp || '';
+      document.getElementById("formDobEn").value = record.dobEn || '';
+      document.getElementById("formDobNp").value = record.dobNp || '';
+      document.getElementById("formNationality").value = record.nationality || 'NEPALI';
+      document.getElementById("formCitDate").value = record.citDate || '';
+      document.getElementById("formRegDate").value = record.regDate || '';
+      document.getElementById("formUpdateDate").value = record.updateDate || '';
+      document.getElementById("formStatus").value = record.status;
+      document.getElementById("formAddressEn").value = record.addressEn || '';
+      document.getElementById("formAddressNp").value = record.addressNp || '';
+      document.getElementById("formBaseUrl").value = record.baseUrl || (window.location.origin + "/verify");
+      document.getElementById("formToken").value = record.token || '';
+
+      // Reset selection fields
+      document.getElementById("formDistrictSelect").value = "";
+      document.getElementById("formMunicipalitySelect").value = "";
+      document.getElementById("formMuniTypeSelect").value = "";
+      document.getElementById("formWardInput").value = "";
+
+      shiftWorkspace("form");
+      processFormMetricsSync();
+    }
+
+    async function deleteRecordInline(ninEn) {
+      if (!confirm(`Are you sure you want to permanently delete the identity record for NIN ${ninEn}?`)) return;
+      try {
+        const res = await fetch(`/api/people?nin=${encodeURIComponent(ninEn)}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(`Error: ${errData.error}`);
+          return;
+        }
+        alert("Record deleted successfully.");
+        fetchDatabase();
+      } catch (err) {
+        console.error('Error deleting record:', err);
+      }
+    }
+
+    async function executePortalDownload() {
+      const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
+      const fullNameNp = document.getElementById("portalFullNameNp").value.trim();
+      const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
+      const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
+
+      // Automatically convert any English digits to Nepali digits for the local date fields
+      const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
+      const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
+
+      if (!fullName || !fullNameNp || !dobLoc || !ccnIssuingDateLoc) {
+        alert("Please fill all form fields first.");
+        return;
+      }
+
+      console.log("Submitting download payload:", {
+        dob_loc: dobLoc,
+        ccn_issuing_date_loc: ccnIssuingDateLoc,
+        full_name: fullName,
+        full_name_loc: fullNameNp
+      });
+
+      const btn = document.getElementById("btnPortalDownloadSubmit");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Downloading...";
+
+      try {
+        const res = await fetch("/api/download", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            dob_loc: dobLoc,
+            ccn_issuing_date_loc: ccnIssuingDateLoc,
+            full_name: fullName,
+            full_name_loc: fullNameNp
+          })
+        });
+
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } catch(e) {
+            try {
+              errMsg = await res.text();
+            } catch(e2) {}
+          }
+          alert(`Download failed: ${errMsg}`);
+          return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = `NID_Card_${fullName.replace(/\s+/g, '_')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        alert("Identity Card PDF downloaded successfully!");
+      } catch (err) {
+        alert(`Error executing download: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function searchDbToPopulatePortal() {
+      const q = document.getElementById("portalSearchQuery").value.trim();
+      if (!q) {
+        alert("Please enter a NIN or name to search.");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/people?query=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error("Search failed");
+        const results = await res.json();
+        if (results && results.length > 0) {
+          const person = results[0];
+          document.getElementById("portalFullNameEn").value = `${person.givenEn || ""} ${person.surnameEn || ""}`.trim().toUpperCase();
+          document.getElementById("portalFullNameNp").value = `${person.givenNp || ""} ${person.surnameNp || ""}`.trim();
+          document.getElementById("portalDobLoc").value = person.dobNp || "";
+          
+          let citDateNp = translateDigits(person.citDate || "", englishToNepaliDigits);
+          document.getElementById("portalCcnIssuingDateLoc").value = citDateNp;
+          
+          alert(`Successfully loaded details for ${person.givenEn} ${person.surnameEn} from database!`);
+        } else {
+          alert("No records found in database matching your query.");
+        }
+      } catch (err) {
+        alert(`Database search error: ${err.message}`);
+      }
+    }
+
+    function attachGeneralDateAutoFormatter(inputId, isNepaliDigits = false) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+
+      input.addEventListener("input", (e) => {
+        if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
+          return;
+        }
+
+        let val = input.value;
+        let englishVal = translateDigits(val, nepaliToEnglishDigits);
+        let digits = englishVal.replace(/\D/g, '');
+        let formatted = '';
+
+        if (digits.length > 0) {
+          formatted += digits.substring(0, 4);
+        }
+        if (digits.length > 4) {
+          formatted += '-' + digits.substring(4, 6);
+        }
+        if (digits.length > 6) {
+          formatted += '-' + digits.substring(6, 8);
+        }
+
+        let finalVal = isNepaliDigits ? translateDigits(formatted, englishToNepaliDigits) : formatted;
+        input.value = finalVal;
+      });
+    }
+
+    function clearFormCanvas() {
+      document.getElementById("clientForm").reset();
+      initializeDateFieldsDefaults();
+      processFormMetricsSync();
+    }
+
+    function exportLayoutAsPngImage() {
+      html2canvas(document.getElementById("photoPaperPrintCanvas"), {
+        scale: 3,
+      }).then((canvas) => {
+        const a = document.createElement("a");
+        a.download = `NID_PrintSheet_${Date.now()}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      });
+    }
+
+    // Print logic configured dynamically
+    function triggerPrintEngine() {
+      window.print();
+    }
+
+    let clientIpAddress = "";
+    let isClientIpAllowed = false;
+    let allowedIpsDatabase = [];
+    let authenticatedAdmin = false;
+
+    async function checkIpAccessControl() {
+      const cachedIp = localStorage.getItem("adminAllowedIp");
+      
+      try {
+        const res = await fetch("/api/allowed-ips");
+        if (!res.ok) throw new Error("IP check failed");
+        const data = await res.json();
+        
+        clientIpAddress = data.clientIp;
+        isClientIpAllowed = data.isAllowed;
+        allowedIpsDatabase = data.allowedIps || [];
+
+        const ipBox = document.getElementById("adminDetectedIp");
+        if (ipBox) ipBox.innerText = clientIpAddress;
+        
+        const ipInput = document.getElementById("newIpAddressInput");
+        if (ipInput) ipInput.value = clientIpAddress;
+
+        const regDeviceIpInput = document.getElementById("registerDeviceIpInput");
+        if (regDeviceIpInput) regDeviceIpInput.value = clientIpAddress;
+
+        if (isClientIpAllowed || (cachedIp && cachedIp === clientIpAddress)) {
+          localStorage.setItem("adminAllowedIp", clientIpAddress);
+          unlockDashboardTabs();
+        } else {
+          localStorage.removeItem("adminAllowedIp");
+          lockDashboardTabs();
+        }
+      } catch (err) {
+        console.error("IP Access Control error:", err);
+        if (cachedIp) {
+          unlockDashboardTabs();
+        } else {
+          lockDashboardTabs();
+        }
+      }
+    }
+
+    function lockDashboardTabs() {
+      // Hide tabs
+      document.getElementById("tabFormBtn").classList.add("hidden");
+      document.getElementById("tabPortalBtn").classList.add("hidden");
+      document.getElementById("tabDbBtn").classList.add("hidden");
+      document.getElementById("tabAdminBtn").classList.remove("hidden");
+      
+      // Hide the other content panes
+      document.getElementById("paneWorkspaceForm").classList.add("hidden");
+      document.getElementById("paneWorkspacePortal").classList.add("hidden");
+      document.getElementById("paneWorkspaceDb").classList.add("hidden");
+      document.getElementById("rightLayoutPreviewColumn").classList.add("hidden");
+      
+      // Show admin workspace pane
+      document.getElementById("paneWorkspaceAdmin").classList.remove("hidden");
+      
+      // Center the layout for a lock screen look
+      const mainGrid = document.getElementById("mainGridLayoutGrid");
+      mainGrid.className = "flex justify-center items-center py-12 w-full";
+      document.getElementById("leftLayoutConsoleColumn").className = "w-full max-w-md mx-auto";
+      
+      // Visual styling for selected admin tab
+      const tabAdminBtn = document.getElementById("tabAdminBtn");
+      if (tabAdminBtn) {
+        tabAdminBtn.className = "px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150";
+      }
+
+      if (!authenticatedAdmin) {
+        document.getElementById("adminAuthBox").classList.remove("hidden");
+        document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
+        document.getElementById("adminWhitelistConsole").classList.add("hidden");
+      } else {
+        document.getElementById("adminAuthBox").classList.add("hidden");
+        document.getElementById("adminRegisterDeviceBox").classList.remove("hidden");
+        document.getElementById("adminWhitelistConsole").classList.remove("hidden");
+      }
+    }
+
+    function unlockDashboardTabs() {
+      document.getElementById("tabFormBtn").classList.remove("hidden");
+      document.getElementById("tabPortalBtn").classList.remove("hidden");
+      document.getElementById("tabDbBtn").classList.remove("hidden");
+      document.getElementById("tabAdminBtn").classList.remove("hidden");
+      
+      // Restore grid layouts to default
+      const leftColumn = document.getElementById("leftLayoutConsoleColumn");
+      const rightColumn = document.getElementById("rightLayoutPreviewColumn");
+      const mainGrid = document.getElementById("mainGridLayoutGrid");
+      
+      mainGrid.className = "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
+      leftColumn.className = "lg:col-span-6 space-y-6";
+      rightColumn.classList.remove("hidden");
+      
+      if (authenticatedAdmin) {
+        document.getElementById("adminAuthBox").classList.add("hidden");
+        document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
+        document.getElementById("adminWhitelistConsole").classList.remove("hidden");
+      } else {
+        document.getElementById("adminAuthBox").classList.remove("hidden");
+        document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
+        document.getElementById("adminWhitelistConsole").classList.add("hidden");
+      }
+      
+      shiftWorkspace("form");
+    }
+
+    function verifyAdminPasswordAndUnlock() {
+      const pwdInput = document.getElementById("adminPasswordInput");
+      const pwd = pwdInput.value;
+
+      if (pwd === "admin9805344374") {
+        authenticatedAdmin = true;
+        document.getElementById("adminAuthBox").classList.add("hidden");
+        if (!isClientIpAllowed) {
+          document.getElementById("adminRegisterDeviceBox").classList.remove("hidden");
+        }
+        document.getElementById("adminWhitelistConsole").classList.remove("hidden");
+        loadAllowedIpsTable();
+      } else {
+        alert("Invalid Admin Password!");
+      }
+    }
+
+    function loadAllowedIpsTable() {
+      const tbody = document.getElementById("adminIpTableRows");
+      tbody.innerHTML = "";
+
+      allowedIpsDatabase.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-slate-100 text-[11px] bg-white";
+        tr.innerHTML = `
+          <td class="px-4 py-2.5 font-mono font-bold text-slate-800">${item.ip}</td>
+          <td class="px-4 py-2.5 text-slate-400 font-mono">${new Date(item.createdAt).toLocaleString()}</td>
+          <td class="px-4 py-2.5 text-center">
+            <button onclick="removeIpWhitelist('${item.ip}')" class="bg-red-500 hover:bg-red-650 text-white px-2 py-1 rounded-md text-[9px] transition-all font-bold shadow-sm">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openAddIpModal() {
+      document.getElementById("addIpModal").classList.remove("hidden");
+    }
+
+    function closeAddIpModal() {
+      document.getElementById("addIpModal").classList.add("hidden");
+    }
+
+    async function submitRegisterDeviceIp() {
+      const ip = document.getElementById("registerDeviceIpInput").value.trim();
+      if (!ip) {
+        alert("IP address is required");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/allowed-ips", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            ip: ip,
+            password: "admin9805344374"
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Failed: ${err.error}`);
+          return;
+        }
+
+        alert("IP Registered & Authorized successfully!");
+        localStorage.setItem("adminAllowedIp", ip);
+        authenticatedAdmin = true;
+        
+        // Hide registration box
+        document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
+        
+        // Refresh access control
+        await checkIpAccessControl();
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
+    async function submitNewAllowedIp() {
+      const ip = document.getElementById("newIpAddressInput").value.trim();
+      if (!ip) {
+        alert("IP address is required");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/allowed-ips", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            ip: ip,
+            password: "admin9805344374"
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Failed: ${err.error}`);
+          return;
+        }
+
+        alert("IP Whitelisted Successfully!");
+        closeAddIpModal();
+        await checkIpAccessControl();
+        loadAllowedIpsTable();
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
+    async function removeIpWhitelist(ip) {
+      if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
+
+      try {
+        const res = await fetch(`/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=admin9805344374`, {
+          method: "DELETE"
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Failed to delete: ${err.error}`);
+          return;
+        }
+
+        alert("IP Whitelist removed!");
+        await checkIpAccessControl();
+        loadAllowedIpsTable();
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+  </script>
+
+  <!-- Add Allowed IP Modal -->
+  <div id="addIpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-5 mx-4 flex flex-col gap-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 class="text-xs font-bold text-slate-900">
+          Whitelist New IP Address
+        </h3>
+        <button onclick="closeAddIpModal()" class="text-slate-400 hover:text-slate-655 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">IP Address</label>
+          <input type="text" id="newIpAddressInput" placeholder="e.g. 127.0.0.1"
+            class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button onclick="closeAddIpModal()" class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-semibold px-4 py-2 rounded-lg text-[11px] transition-all">
+          Cancel
+        </button>
+        <button onclick="submitNewAllowedIp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+          Add to Whitelist
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
