@@ -5,7 +5,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>National Identity Issuance Hub</title>
-  <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+  <link rel="icon"
+    href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -49,8 +50,8 @@
     }
 
     #photoPaperPrintCanvas {
-      width: 6in;
-      height: 4.5in;
+      width: 4in;
+      height: 6in;
       background-color: #ffffff;
       display: flex;
       flex-direction: column;
@@ -84,6 +85,11 @@
     /* Mid Red */
 
     @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
       body * {
         visibility: hidden;
       }
@@ -102,7 +108,8 @@
       }
 
       .card-spec {
-        border: 1px solid #cbd5e1 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         box-shadow: none !important;
         transform: none !important;
         page-break-inside: avoid;
@@ -111,7 +118,7 @@
   </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-800 lg:h-screen lg:overflow-hidden flex flex-col antialiased">
   <header id="mainNavbarHeader" class="bg-white border-b border-slate-200/80 sticky top-0 z-50 hidden">
     <div class="max-w-[1600px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3.5">
@@ -158,10 +165,11 @@
   <input type="file" id="uploadBackBg" accept="image/*" class="hidden" />
   <input type="file" id="uploadPhoto" accept="image/*" class="hidden" />
 
-  <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6">
-    <div id="mainGridLayoutGrid" class="flex justify-center items-center py-12 w-full">
-      <div id="leftLayoutConsoleColumn" class="w-full max-w-md mx-auto space-y-6">
-        <section id="paneWorkspaceForm" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
+  <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 lg:overflow-hidden flex flex-col">
+    <div id="mainGridLayoutGrid" class="flex justify-center items-center py-4 w-full flex-1 lg:overflow-hidden">
+      <div id="leftLayoutConsoleColumn" class="w-full max-w-md mx-auto space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2">
+        <section id="paneWorkspaceForm"
+          class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3">
             <div>
               <h3 class="text-sm font-bold tracking-tight text-slate-900">
@@ -176,7 +184,8 @@
               NEW ENTRY</span>
           </div>
 
-          <form id="clientForm" oninput="processFormMetricsSync()" class="space-y-4 text-xs" onsubmit="event.preventDefault();">
+          <form id="clientForm" oninput="processFormMetricsSync()" class="space-y-4 text-xs"
+            onsubmit="event.preventDefault();">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-slate-600 font-semibold mb-1.5 font-bold">NIN / NID Number (English) *</label>
@@ -347,7 +356,8 @@
             <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 flex flex-col gap-2">
               <label class="block text-blue-900 font-bold">Search Database to Populate Download Form</label>
               <div class="flex gap-2">
-                <input type="text" id="portalSearchQuery" placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
+                <input type="text" id="portalSearchQuery"
+                  placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
                   class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                 <button type="button" onclick="searchDbToPopulatePortal()"
                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-sm shrink-0">
@@ -389,11 +399,14 @@
           </form>
         </section>
 
-        <section id="paneWorkspaceAdmin" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
+        <section id="paneWorkspaceAdmin"
+          class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
           <div class="border-b border-slate-100 pb-3">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
               <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                </path>
               </svg>
               Admin Security & Whitelist Control
             </h3>
@@ -404,7 +417,8 @@
 
           <!-- STATE 1: Password Authenticator & Whitelist Trigger -->
           <div id="adminAuthBox" class="space-y-4">
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs flex justify-between items-center">
+            <div
+              class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs flex justify-between items-center">
               <span class="font-bold text-slate-700">Detected Client IP:</span>
               <span class="font-mono text-sm text-blue-600 font-bold" id="adminDetectedIp">Checking...</span>
             </div>
@@ -427,13 +441,16 @@
             <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-800 space-y-1">
               <div class="font-bold flex items-center gap-1">
                 <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                  </path>
                 </svg>
                 IP Registration Required
               </div>
-              <p>Your current computer IP is not in the whitelist. Register it now to gain full access to the dashboard.</p>
+              <p>Your current computer IP is not in the whitelist. Register it now to gain full access to the dashboard.
+              </p>
             </div>
-            
+
             <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
               <div>
                 <label class="block text-[11px] font-bold text-slate-600 mb-1">Target IP Address</label>
@@ -451,7 +468,8 @@
           <div id="adminWhitelistConsole" class="space-y-4 hidden border-t border-slate-100 pt-4">
             <div class="flex justify-between items-center">
               <h4 class="text-xs font-bold text-slate-800">Allowed IP Whitelist Table</h4>
-              <button onclick="openAddIpModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all shadow-sm">
+              <button onclick="openAddIpModal()"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all shadow-sm">
                 + Add Allowed IP
               </button>
             </div>
@@ -474,12 +492,12 @@
         </section>
       </div>
 
-      <div id="rightLayoutPreviewColumn" class="lg:col-span-6 space-y-5 lg:sticky lg:top-[96px] hidden">
+      <div id="rightLayoutPreviewColumn" class="lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2 hidden">
         <div
-          class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center min-h-[580px]">
+          class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
           <div id="photoPaperPrintCanvas" class="border border-slate-300 rounded shadow-md">
             <div id="cardFrontCanvasNode" onclick="triggerFrontBackgroundSelection()"
-              class="card-spec border border-slate-200/60 p-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
+              class="card-spec p-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
               <div class="text-center w-full mt-0 mb-4 space-y-0.5 pointer-events-none">
                 <h1 class="font-bold text-[10px] text-slate-900 leading-none font-serif tracking-wide">
                   नेपाल सरकार
@@ -498,43 +516,43 @@
               <div class="grid grid-cols-12 gap-1 items-start flex-1 pointer-events-none">
                 <div class="col-span-8 pl-[84px] space-y-1.5 text-[6.5px] text-slate-955 font-sans font-medium">
                   <div
-                    class="grid grid-cols-[1.1fr_0.9fr] text-[4.8px] font-bold text-slate-400 pb-0.5 whitespace-nowrap w-full">
+                    class="grid grid-cols-[1.1fr_0.9fr] text-[4.8px] font-bold text-blue-900 pb-0.5 whitespace-nowrap w-full">
                     <div>
                       राष्ट्रिय परिचय नम्बर:<br />
-                      <span id="cardNinNp" class="text-[7.5px] text-slate-955 font-bold"></span>
+                      <span id="cardNinNp" class="text-[7.5px] text-black font-bold"></span>
                     </div>
                     <div class="pl-1.5">
                       NIN:<br />
-                      <span id="cardNinEn" class="text-[6.8px] text-slate-955 font-bold"></span>
+                      <span id="cardNinEn" class="text-[6.8px] text-black font-bold"></span>
                     </div>
                   </div>
 
                   <div class="leading-none space-y-0.5">
-                    <span class="text-slate-400 text-[4.8px] block nepali-font">थर | SURNAME</span>
-                    <span id="cardSurnameNp" class="nepali-font font-bold text-slate-955 text-[7.5px] block"></span>
+                    <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">थर | SURNAME</span>
+                    <span id="cardSurnameNp" class="nepali-font font-bold text-black text-[7.5px] block"></span>
                     <span id="cardSurnameEn"
-                      class="font-bold text-slate-900 block uppercase font-mono text-[7px]"></span>
+                      class="font-bold text-black block uppercase font-mono text-[7px]"></span>
                   </div>
                   <div class="leading-none space-y-0.5">
-                    <span class="text-slate-400 text-[4.8px] block nepali-font">नाम | GIVEN NAME</span>
-                    <span id="cardGivenNp" class="nepali-font font-bold text-slate-955 text-[7.5px] block"></span>
-                    <span id="cardGivenEn" class="font-bold text-slate-900 block uppercase font-mono text-[7px]"></span>
+                    <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">नाम | GIVEN NAME</span>
+                    <span id="cardGivenNp" class="nepali-font font-bold text-black text-[7.5px] block"></span>
+                    <span id="cardGivenEn" class="font-bold text-black block uppercase font-mono text-[7px]"></span>
                   </div>
 
                   <div class="grid grid-cols-[1.1fr_0.9fr] leading-none w-full">
                     <div>
-                      <span class="text-slate-400 text-[4.8px] block nepali-font">जन्म मिति</span>
-                      <span id="cardDobNp" class="nepali-font font-bold text-slate-955 text-[7px] block"></span>
+                      <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">जन्म मिति</span>
+                      <span id="cardDobNp" class="nepali-font font-bold text-black text-[7px] block"></span>
                     </div>
                     <div class="pl-1.5">
-                      <span class="text-slate-400 text-[4.8px] block">DATE OF BIRTH</span>
-                      <span id="cardDobEn" class="font-bold text-slate-900 block font-mono text-[6.8px]"></span>
+                      <span class="text-blue-900 text-[4.8px] block font-bold">DATE OF BIRTH</span>
+                      <span id="cardDobEn" class="font-bold text-black block font-mono text-[6.8px]"></span>
                     </div>
                   </div>
 
                   <div>
-                    <span class="text-slate-400 text-[4.8px] block nepali-font">राष्ट्रियता | NATIONALITY</span>
-                    <span id="cardNationality" class="font-bold text-slate-955 text-[7px] font-mono"></span>
+                    <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">राष्ट्रियता | NATIONALITY</span>
+                    <span id="cardNationality" class="font-bold text-black text-[7px] font-mono"></span>
                   </div>
                 </div>
 
@@ -553,12 +571,12 @@
             </div>
 
             <div id="cardBackCanvasNode" onclick="triggerBackBackgroundSelection()"
-              class="card-spec border border-slate-200/60 p-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
+              class="card-spec p-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
               <div class="flex justify-between items-start text-[7.5px] pointer-events-none">
                 <div class="space-y-1">
-                  <span class="text-slate-400 block font-bold text-[5px]">स्थायी ठेगाना | PERMANENT ADDRESS</span>
-                  <p id="cardAddressNp" class="nepali-font font-bold text-slate-955 text-[9.5px] leading-tight"></p>
-                  <p id="cardAddressEn" class="font-semibold text-slate-800 text-[8px] font-mono leading-tight"></p>
+                  <span class="text-blue-900 block font-bold text-[5px]">स्थायी ठेगाना | PERMANENT ADDRESS</span>
+                  <p id="cardAddressNp" class="nepali-font font-bold text-black text-[9.5px] leading-tight"></p>
+                  <p id="cardAddressEn" class="font-bold text-black text-[8px] font-mono leading-tight"></p>
                 </div>
               </div>
 
@@ -569,37 +587,61 @@
                 <div class="col-span-7 text-right pr-1">
                   <div class="space-y-1 text-slate-700">
                     <div>
-                      <span class="block text-slate-400 font-bold nepali-font text-[5px]">जारी गर्ने निकाय | ISSUING
+                      <span class="block text-blue-900 font-bold nepali-font text-[5px]">जारी गर्ने निकाय | ISSUING
                         OFFICE</span>
-                      <span class="font-bold block text-slate-955 nepali-font text-[8px]">राष्ट्रिय परिचयपत्र तथा
+                      <span class="font-bold block text-black nepali-font text-[8px]">राष्ट्रिय परिचयपत्र तथा
                         पञ्जीकरण विभाग</span>
                     </div>
                     <div class="pt-1">
-                      <span class="block text-slate-400 uppercase text-[5px] font-bold">Citizenship Issue Date</span>
-                      <span id="cardCitDate" class="font-bold text-slate-955 font-mono text-[7px]"></span>
+                      <span class="block text-blue-900 uppercase text-[5px] font-bold">Citizenship Issue Date</span>
+                      <span id="cardCitDate" class="font-bold text-black font-mono text-[7px]"></span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <div class="mt-4 flex flex-col sm:flex-row gap-3 w-full border-t border-slate-100 pt-4">
+            <button onclick="triggerPrintEngine()"
+              class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
+              Print Layout Sheet
+            </button>
+            <button onclick="exportLayoutAsPngImage()"
+              class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
+              Save Card Images (PNG)
+            </button>
+            <button onclick="exportSheetAsPngImage()"
+              class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
+              Save 4x6 Sheet (PNG)
+            </button>
+          </div>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row gap-3">
-          <button onclick="triggerPrintEngine()"
-            class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
-            Print Layout Sheet
-          </button>
-          <button onclick="exportLayoutAsPngImage()"
-            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-sm">
-            Save Card Layout (PNG)
-          </button>
-        </div>
+        <!-- Card Customizer Controls Widget -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+          <h4 class="text-xs font-bold text-slate-850 uppercase tracking-wider">Card Canvas Controls</h4>
+          
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <button type="button" onclick="removeBackgrounds()" class="col-span-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 px-3 rounded-lg border border-red-200 transition-all text-[11px]">
+              Remove Backgrounds
+            </button>
+            <button type="button" id="btnToggleBorder" onclick="toggleBorder()" class="col-span-1 bg-slate-100 hover:bg-slate-200 text-slate-750 font-bold py-2 px-3 rounded-lg border border-slate-250 transition-all text-[11px]">
+              Add 1px Border
+            </button>
+            
+            <div class="space-y-1.5 col-span-2 border-t border-slate-100 pt-3">
+              <div class="flex justify-between items-center text-xs font-bold text-slate-750">
+                <span>Card Corner Radius (Border Radius)</span>
+                <span id="borderRadiusVal" class="text-blue-600 font-mono font-bold">0px</span>
+              </div>
+              <input type="range" id="cardBorderRadiusInput" min="0" max="24" value="0" oninput="updateBorderRadius(this.value)" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+            </div>
+          </div>
       </div>
-    </div>
 
-    <div id="paneWorkspaceDb" class="mt-8 hidden">
-      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden space-y-4">
+      <div id="paneWorkspaceDb" class="mt-0 hidden w-full lg:h-full lg:overflow-y-auto">
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden space-y-4">
         <div
           class="p-5 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -615,16 +657,30 @@
         <!-- Column Visibility Control Panel -->
         <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex flex-wrap items-center gap-2">
           <span class="text-[11px] font-bold text-slate-500 mr-2 uppercase tracking-wide">Toggle Columns:</span>
-          <button onclick="toggleColumn('nin')" id="colBtn-nin" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">NID Number</button>
-          <button onclick="toggleColumn('name')" id="colBtn-name" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Name</button>
-          <button onclick="toggleColumn('token')" id="colBtn-token" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Token</button>
-          <button onclick="toggleColumn('dob')" id="colBtn-dob" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">DOB</button>
-          <button onclick="toggleColumn('citDate')" id="colBtn-citDate" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Citizenship Date</button>
-          <button onclick="toggleColumn('address')" id="colBtn-address" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Address</button>
-          <button onclick="toggleColumn('regDate')" id="colBtn-regDate" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Reg Date</button>
-          <button onclick="toggleColumn('updateDate')" id="colBtn-updateDate" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Update Date</button>
-          <button onclick="toggleColumn('status')" id="colBtn-status" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Status</button>
-          <button onclick="toggleColumn('actions')" id="colBtn-actions" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Actions</button>
+          <button onclick="toggleColumn('nin')" id="colBtn-nin"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">NID
+            Number</button>
+          <button onclick="toggleColumn('name')" id="colBtn-name"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Name</button>
+          <button onclick="toggleColumn('token')" id="colBtn-token"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Token</button>
+          <button onclick="toggleColumn('dob')" id="colBtn-dob"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">DOB</button>
+          <button onclick="toggleColumn('citDate')" id="colBtn-citDate"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Citizenship
+            Date</button>
+          <button onclick="toggleColumn('address')" id="colBtn-address"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Address</button>
+          <button onclick="toggleColumn('regDate')" id="colBtn-regDate"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Reg
+            Date</button>
+          <button onclick="toggleColumn('updateDate')" id="colBtn-updateDate"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Update
+            Date</button>
+          <button onclick="toggleColumn('status')" id="colBtn-status"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Status</button>
+          <button onclick="toggleColumn('actions')" id="colBtn-actions"
+            class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border border-blue-500 bg-blue-50 text-blue-700 shadow-sm">Actions</button>
         </div>
         <div class="px-5 py-3 grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs bg-slate-50/50 border-b border-slate-100">
           <div class="lg:col-span-3">
@@ -694,7 +750,8 @@
         </div>
       </div>
     </div>
-  </main>
+  </div>
+</main>
 
   <script>
     const API_BASE = '';
@@ -725,20 +782,21 @@
       attachLocalImageReaders();
       attachNidFormattingListener();
       attachDateConversionListeners();
-      
+
       // Auto-format YYYY-MM-DD input helpers
       attachDateAutoFormatter("formDobEn");
       attachDateAutoFormatter("formDobNp");
-      
+
       // General formatters for citizenship and download portal fields
       attachGeneralDateAutoFormatter("formCitDate", false);
       attachGeneralDateAutoFormatter("portalDobLoc", true);
       attachGeneralDateAutoFormatter("portalCcnIssuingDateLoc", true);
       attachGeneralDateAutoFormatter("filterRegStart", false);
-      
+
       loadNepalAdministrativeData();
       fetchDatabase();
       checkIpAccessControl();
+      loadSavedBordersAndBackgrounds();
     });
 
     function translateDigits(str, map) {
@@ -804,18 +862,18 @@
 
       if (targetViewTab === "form") {
         mainGrid.className =
-          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
-        leftColumn.className = "lg:col-span-6 space-y-6";
-        rightColumn.classList.remove("hidden");
+          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-1 lg:overflow-hidden w-full";
+        leftColumn.className = "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
+        rightColumn.className = "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
       } else if (targetViewTab === "portal" || targetViewTab === "admin") {
         mainGrid.className =
-          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
-        leftColumn.className = "lg:col-span-6 space-y-6";
-        rightColumn.classList.add("hidden");
+          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-1 lg:overflow-hidden w-full";
+        leftColumn.className = "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
+        rightColumn.className = "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2 hidden";
       } else {
-        mainGrid.className = "block w-full";
+        mainGrid.className = "block w-full lg:h-full lg:overflow-hidden";
         leftColumn.className = "hidden";
-        rightColumn.classList.add("hidden");
+        rightColumn.className = "hidden";
       }
     }
 
@@ -867,24 +925,138 @@
       document.getElementById("cardCitDate").innerText = ctx.citDate;
 
       // Ensure QR Code URL correctly builds target endpoint
-      const qrTargetUrl = ctx.baseUrl.includes('?') 
-        ? `${ctx.baseUrl}&token=${ctx.token}` 
+      const qrTargetUrl = ctx.baseUrl.includes('?')
+        ? `${ctx.baseUrl}&token=${ctx.token}`
         : `${ctx.baseUrl}/${ctx.ninEn}`;
-      
+
       compileDynamicQrMatrix(qrTargetUrl);
     }
 
-    function compileDynamicQrMatrix(payloadString) {
+     function compileDynamicQrMatrix(payloadString) {
       const qrBox = document.getElementById("cardQrWidget");
       qrBox.innerHTML = "";
       qrGeneratorInstance = new QRCode(qrBox, {
         text: payloadString,
-        width: 52,
-        height: 52,
+        width: 75,
+        height: 75,
         colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.M,
       });
+    }
+
+    let borderActive = false;
+    let cardBorderRadius = 0;
+
+    function loadSavedBordersAndBackgrounds() {
+      // Load saved backgrounds from localStorage
+      const savedFrontBg = localStorage.getItem("nid_front_bg");
+      if (savedFrontBg) {
+        const front = document.getElementById("cardFrontCanvasNode");
+        front.style.backgroundImage = `url('${savedFrontBg}')`;
+        front.style.backgroundSize = "cover";
+        front.style.backgroundPosition = "center";
+      }
+      const savedBackBg = localStorage.getItem("nid_back_bg");
+      if (savedBackBg) {
+        const back = document.getElementById("cardBackCanvasNode");
+        back.style.backgroundImage = `url('${savedBackBg}')`;
+        back.style.backgroundSize = "cover";
+        back.style.backgroundPosition = "center";
+      }
+
+      // Load saved border settings
+      borderActive = localStorage.getItem("nid_border_active") === "true";
+      updateBorder();
+
+      // Load saved border radius
+      cardBorderRadius = parseInt(localStorage.getItem("nid_border_radius") || "0", 10);
+      const radiusInput = document.getElementById("cardBorderRadiusInput");
+      if (radiusInput) {
+        radiusInput.value = cardBorderRadius;
+      }
+      updateBorderRadius(cardBorderRadius);
+    }
+
+    function toggleBorder() {
+      borderActive = !borderActive;
+      updateBorder();
+      localStorage.setItem("nid_border_active", borderActive);
+    }
+
+    function removeBackgrounds() {
+      const front = document.getElementById("cardFrontCanvasNode");
+      const back = document.getElementById("cardBackCanvasNode");
+      front.style.backgroundImage = "";
+      back.style.backgroundImage = "";
+      localStorage.removeItem("nid_front_bg");
+      localStorage.removeItem("nid_back_bg");
+    }
+
+    function updateBorderRadius(val) {
+      cardBorderRadius = val;
+      const front = document.getElementById("cardFrontCanvasNode");
+      const back = document.getElementById("cardBackCanvasNode");
+      front.style.borderRadius = `${val}px`;
+      back.style.borderRadius = `${val}px`;
+      document.getElementById("borderRadiusVal").textContent = `${val}px`;
+      localStorage.setItem("nid_border_radius", val);
+    }
+
+    function updateBorder() {
+      const front = document.getElementById("cardFrontCanvasNode");
+      const back = document.getElementById("cardBackCanvasNode");
+      const borderBtn = document.getElementById("btnToggleBorder");
+
+      if (borderActive) {
+        front.style.border = "1px solid #000000";
+        back.style.border = "1px solid #000000";
+        if (borderBtn) {
+          borderBtn.textContent = "Remove Border";
+          borderBtn.classList.remove("bg-slate-100", "text-slate-750");
+          borderBtn.classList.add("bg-slate-800", "text-white");
+        }
+      } else {
+        front.style.border = "none";
+        back.style.border = "none";
+        if (borderBtn) {
+          borderBtn.textContent = "Add 1px Border";
+          borderBtn.classList.remove("bg-slate-800", "text-white");
+          borderBtn.classList.add("bg-slate-100", "text-slate-750");
+        }
+      }
+    }
+
+    function compressAndSaveBg(key, dataUrl, callback) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement("canvas");
+        const maxDim = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        // Compress to low-size JPEG
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        try {
+          localStorage.setItem(key, compressedDataUrl);
+        } catch (e) {
+          console.warn("Storage quota exceeded, clearing other items or saving failed:", e);
+        }
+        if (callback) callback(compressedDataUrl);
+      };
+      img.src = dataUrl;
     }
 
     function attachLocalImageReaders() {
@@ -915,6 +1087,7 @@
               front.style.backgroundImage = `url('${evt.target.result}')`;
               front.style.backgroundSize = "cover";
               front.style.backgroundPosition = "center";
+              compressAndSaveBg("nid_front_bg", evt.target.result);
             };
             reader.readAsDataURL(file);
           }
@@ -931,6 +1104,7 @@
               back.style.backgroundImage = `url('${evt.target.result}')`;
               back.style.backgroundSize = "cover";
               back.style.backgroundPosition = "center";
+              compressAndSaveBg("nid_back_bg", evt.target.result);
             };
             reader.readAsDataURL(file);
           }
@@ -958,7 +1132,7 @@
         if (digits.length > 9) {
           formatted += '-' + digits.substring(9, 10);
         }
-        
+
         ninEnInput.value = formatted;
         ninNpInput.value = translateDigits(formatted, englishToNepaliDigits);
         processFormMetricsSync();
@@ -971,14 +1145,14 @@
         if (e.inputType === "deleteContentBackward" || e.inputType === "deleteContentForward") {
           return;
         }
-        
+
         let val = input.value;
         let isBS = inputId === "formDobNp";
         let englishVal = isBS ? translateDigits(val, nepaliToEnglishDigits) : val;
 
         let digits = englishVal.replace(/\D/g, '');
         let formatted = '';
-        
+
         if (digits.length > 0) {
           formatted += digits.substring(0, 4);
         }
@@ -1033,9 +1207,9 @@
       const parts = adStr.split('-');
       if (parts.length === 3) {
         const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1; 
+        const m = parseInt(parts[1], 10) - 1;
         const d = parseInt(parts[2], 10);
-        
+
         try {
           const jsDate = new Date(y, m, d);
           if (!isNaN(jsDate.getTime())) {
@@ -1058,7 +1232,7 @@
       const parts = bsStr.split('-');
       if (parts.length === 3) {
         const y = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1; 
+        const m = parseInt(parts[1], 10) - 1;
         const d = parseInt(parts[2], 10);
         try {
           const nepDate = new NepaliDateClass(y, m, d);
@@ -1130,7 +1304,7 @@
         const muniRes = await fetch("https://raw.githubusercontent.com/bibekoli/local-levels-of-nepal-dataset/main/local_levels.json");
         if (!muniRes.ok) throw new Error("Failed to fetch local levels");
         const rawLocalLevels = await muniRes.json();
-        
+
         // Map local levels and ensure all keys are normalized
         nepalAdminData.local_levels = rawLocalLevels.map(m => ({
           id: m.municipality_id,
@@ -1175,7 +1349,7 @@
 
       selectMunicipality.innerHTML = '<option value="">Select Municipality</option>';
       typeSelect.value = "";
-      
+
       if (!districtId) {
         onMunicipalityOrWardChange();
         return;
@@ -1200,7 +1374,7 @@
       const selectMunicipality = document.getElementById("formMunicipalitySelect");
       const muniId = parseInt(selectMunicipality.value);
       const typeSelect = document.getElementById("formMuniTypeSelect");
-      
+
       if (muniId) {
         const muni = nepalAdminData.local_levels.find(m => m.id == muniId);
         if (muni && muni.type_id) {
@@ -1234,10 +1408,10 @@
       if (dist && muni) {
         const distEn = dist.name_en || "";
         const distNe = dist.name_ne || "";
-        
+
         // Resolve type id: prioritize selector if set, fallback to muni.type_id
         const typeId = typeSelect.value ? parseInt(typeSelect.value) : muni.type_id;
-        
+
         // Resolve type suffixes dynamically
         const typeInfo = localLevelTypes[typeId] || { en: "", ne: "" };
         const suffixEn = typeInfo.en ? ` ${typeInfo.en}` : "";
@@ -1245,7 +1419,7 @@
 
         const muniEn = (muni.name_en || "") + suffixEn;
         const muniNe = (muni.name_ne || "") + suffixNe;
-        
+
         const wardEn = wardVal !== "" ? `-${wardVal}` : "";
         const wardNe = wardVal !== "" ? `-${translateDigits(wardVal, englishToNepaliDigits)}` : "";
 
@@ -1257,7 +1431,7 @@
 
     let currentSortBy = "";
     let currentSortOrder = "desc";
-    
+
     let columnVisibility = {
       nin: true,
       name: true,
@@ -1316,7 +1490,7 @@
         if (col.sortKey) {
           th.className += " cursor-pointer hover:bg-slate-250 hover:text-slate-900 transition-colors";
           th.onclick = () => sortByColumn(col.sortKey);
-          
+
           let indicator = " ⇅";
           if (currentSortBy === col.sortKey) {
             indicator = currentSortOrder === "asc" ? " ▲" : " ▼";
@@ -1685,10 +1859,10 @@
           try {
             const errData = await res.json();
             errMsg = errData.error || errMsg;
-          } catch(e) {
+          } catch (e) {
             try {
               errMsg = await res.text();
-            } catch(e2) {}
+            } catch (e2) { }
           }
           alert(`Download failed: ${errMsg}`);
           return;
@@ -1727,10 +1901,10 @@
           document.getElementById("portalFullNameEn").value = `${person.givenEn || ""} ${person.surnameEn || ""}`.trim().toUpperCase();
           document.getElementById("portalFullNameNp").value = `${person.givenNp || ""} ${person.surnameNp || ""}`.trim();
           document.getElementById("portalDobLoc").value = person.dobNp || "";
-          
+
           let citDateNp = translateDigits(person.citDate || "", englishToNepaliDigits);
           document.getElementById("portalCcnIssuingDateLoc").value = citDateNp;
-          
+
           alert(`Successfully loaded details for ${person.givenEn} ${person.surnameEn} from database!`);
         } else {
           alert("No records found in database matching your query.");
@@ -1776,11 +1950,44 @@
     }
 
     function exportLayoutAsPngImage() {
-      html2canvas(document.getElementById("photoPaperPrintCanvas"), {
-        scale: 3,
+      const nin = document.getElementById("formNinEn").value || "NID";
+      
+      // Save Front Image at maximum resolution (scale: 6)
+      html2canvas(document.getElementById("cardFrontCanvasNode"), {
+        scale: 6,
+        useCORS: true,
+        allowTaint: true,
       }).then((canvas) => {
         const a = document.createElement("a");
-        a.download = `NID_PrintSheet_${Date.now()}.png`;
+        a.download = `NID_Front_${nin}_${Date.now()}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      });
+
+      // Save Back Image at maximum resolution (scale: 6)
+      html2canvas(document.getElementById("cardBackCanvasNode"), {
+        scale: 6,
+        useCORS: true,
+        allowTaint: true,
+      }).then((canvas) => {
+        const a = document.createElement("a");
+        a.download = `NID_Back_${nin}_${Date.now()}.png`;
+        a.href = canvas.toDataURL("image/png");
+        a.click();
+      });
+    }
+
+    function exportSheetAsPngImage() {
+      const nin = document.getElementById("formNinEn").value || "NID";
+      
+      // Save entire 4x6 sheet layout container at maximum resolution (scale: 6)
+      html2canvas(document.getElementById("photoPaperPrintCanvas"), {
+        scale: 6,
+        useCORS: true,
+        allowTaint: true,
+      }).then((canvas) => {
+        const a = document.createElement("a");
+        a.download = `NID_4x6_Sheet_${nin}_${Date.now()}.png`;
         a.href = canvas.toDataURL("image/png");
         a.click();
       });
@@ -1802,14 +2009,14 @@
         const res = await fetch(`${API_BASE}/api/allowed-ips`);
         if (!res.ok) throw new Error("IP check failed");
         const data = await res.json();
-        
+
         clientIpAddress = data.clientIp;
         isClientIpAllowed = data.isAllowed;
         allowedIpsDatabase = data.allowedIps || [];
 
         const ipBox = document.getElementById("adminDetectedIp");
         if (ipBox) ipBox.innerText = clientIpAddress;
-        
+
         const ipInput = document.getElementById("newIpAddressInput");
         if (ipInput) ipInput.value = clientIpAddress;
 
@@ -1829,7 +2036,7 @@
 
     function lockDashboardTabs() {
       isDashboardUnlocked = false;
-      
+
       // Hide the navbar header completely
       const header = document.getElementById("mainNavbarHeader");
       if (header) header.classList.add("hidden");
@@ -1839,21 +2046,21 @@
       document.getElementById("tabPortalBtn").classList.add("hidden");
       document.getElementById("tabDbBtn").classList.add("hidden");
       document.getElementById("tabAdminBtn").classList.add("hidden");
-      
+
       // Hide the other content panes
       document.getElementById("paneWorkspaceForm").classList.add("hidden");
       document.getElementById("paneWorkspacePortal").classList.add("hidden");
       document.getElementById("paneWorkspaceDb").classList.add("hidden");
       document.getElementById("rightLayoutPreviewColumn").classList.add("hidden");
-      
+
       // Show admin workspace pane
       document.getElementById("paneWorkspaceAdmin").classList.remove("hidden");
-      
+
       // Center the layout for a lock screen look
       const mainGrid = document.getElementById("mainGridLayoutGrid");
       mainGrid.className = "flex justify-center items-center py-12 w-full";
       document.getElementById("leftLayoutConsoleColumn").className = "w-full max-w-md mx-auto";
-      
+
       // Visual styling for selected admin tab
       const tabAdminBtn = document.getElementById("tabAdminBtn");
       if (tabAdminBtn) {
@@ -1873,7 +2080,7 @@
 
     function unlockDashboardTabs() {
       isDashboardUnlocked = true;
-      
+
       // Show the navbar header completely
       const header = document.getElementById("mainNavbarHeader");
       if (header) header.classList.remove("hidden");
@@ -1882,16 +2089,16 @@
       document.getElementById("tabPortalBtn").classList.remove("hidden");
       document.getElementById("tabDbBtn").classList.remove("hidden");
       document.getElementById("tabAdminBtn").classList.remove("hidden");
-      
+
       // Restore grid layouts to default
       const leftColumn = document.getElementById("leftLayoutConsoleColumn");
       const rightColumn = document.getElementById("rightLayoutPreviewColumn");
       const mainGrid = document.getElementById("mainGridLayoutGrid");
-      
+
       mainGrid.className = "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
       leftColumn.className = "lg:col-span-6 space-y-6";
       rightColumn.classList.remove("hidden");
-      
+
       if (authenticatedAdmin) {
         document.getElementById("adminAuthBox").classList.add("hidden");
         document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
@@ -1901,7 +2108,7 @@
         document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
         document.getElementById("adminWhitelistConsole").classList.add("hidden");
       }
-      
+
       shiftWorkspace("form");
     }
 
@@ -1947,7 +2154,7 @@
         alert("Verification successful! IP whitelisted and dashboard unlocked.");
         pwdInput.value = "";
         authenticatedAdmin = true;
-        
+
         // Refresh IP access state
         await checkIpAccessControl();
         loadAllowedIpsTable();
@@ -2015,10 +2222,10 @@
         alert("IP Registered & Authorized successfully!");
         localStorage.setItem("adminAllowedIp", ip);
         authenticatedAdmin = true;
-        
+
         // Hide registration box
         document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
-        
+
         // Refresh access control
         await checkIpAccessControl();
       } catch (e) {
@@ -2084,7 +2291,8 @@
   </script>
 
   <!-- Add Allowed IP Modal -->
-  <div id="addIpModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center hidden">
+  <div id="addIpModal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center hidden">
     <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-5 mx-4 flex flex-col gap-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
         <h3 class="text-xs font-bold text-slate-900">
@@ -2106,10 +2314,12 @@
       </div>
 
       <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button onclick="closeAddIpModal()" class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-semibold px-4 py-2 rounded-lg text-[11px] transition-all">
+        <button onclick="closeAddIpModal()"
+          class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-semibold px-4 py-2 rounded-lg text-[11px] transition-all">
           Cancel
         </button>
-        <button onclick="submitNewAllowedIp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+        <button onclick="submitNewAllowedIp()"
+          class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
           Add to Whitelist
         </button>
       </div>
