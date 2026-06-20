@@ -82,6 +82,10 @@
       background-color: #fca5a5 !important;
     }
 
+    #mainGridLayoutGrid {
+      display: none;
+    }
+
     /* Mid Red */
 
     @media print {
@@ -132,10 +136,10 @@
         </div>
         <div>
           <h1 class="text-md font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            National Identity Management Dashboard
+            International Digital Photo Studio
           </h1>
           <p class="text-xs text-slate-555 font-medium">
-            Standardized Identity Matrix Architecture Platform
+            Custom Smart Nid Card
           </p>
         </div>
       </div>
@@ -530,8 +534,7 @@
                   <div class="leading-none space-y-0.5">
                     <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">थर | SURNAME</span>
                     <span id="cardSurnameNp" class="nepali-font font-bold text-black text-[7.5px] block"></span>
-                    <span id="cardSurnameEn"
-                      class="font-bold text-black block uppercase font-mono text-[7px]"></span>
+                    <span id="cardSurnameEn" class="font-bold text-black block uppercase font-mono text-[7px]"></span>
                   </div>
                   <div class="leading-none space-y-0.5">
                     <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">नाम | GIVEN NAME</span>
@@ -551,7 +554,8 @@
                   </div>
 
                   <div>
-                    <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">राष्ट्रियता | NATIONALITY</span>
+                    <span class="text-blue-900 text-[4.8px] block nepali-font font-bold">राष्ट्रियता |
+                      NATIONALITY</span>
                     <span id="cardNationality" class="font-bold text-black text-[7px] font-mono"></span>
                   </div>
                 </div>
@@ -606,21 +610,25 @@
         <!-- Card Customizer Controls Widget -->
         <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
           <h4 class="text-xs font-bold text-slate-850 uppercase tracking-wider">Card Canvas Controls</h4>
-          
+
           <div class="grid grid-cols-2 gap-3 text-xs">
-            <button type="button" onclick="removeBackgrounds()" class="col-span-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 px-3 rounded-lg border border-red-200 transition-all text-[11px]">
+            <button type="button" onclick="removeBackgrounds()"
+              class="col-span-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 px-3 rounded-lg border border-red-200 transition-all text-[11px]">
               Remove Backgrounds
             </button>
-            <button type="button" id="btnToggleBorder" onclick="toggleBorder()" class="col-span-1 bg-slate-100 hover:bg-slate-200 text-slate-750 font-bold py-2 px-3 rounded-lg border border-slate-250 transition-all text-[11px]">
+            <button type="button" id="btnToggleBorder" onclick="toggleBorder()"
+              class="col-span-1 bg-slate-100 hover:bg-slate-200 text-slate-750 font-bold py-2 px-3 rounded-lg border border-slate-250 transition-all text-[11px]">
               Add 1px Border
             </button>
-            
+
             <div class="space-y-1.5 col-span-2 border-t border-slate-100 pt-3">
               <div class="flex justify-between items-center text-xs font-bold text-slate-750">
                 <span>Card Corner Radius (Border Radius)</span>
                 <span id="borderRadiusVal" class="text-blue-600 font-mono font-bold">0px</span>
               </div>
-              <input type="range" id="cardBorderRadiusInput" min="0" max="24" value="0" oninput="updateBorderRadius(this.value)" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+              <input type="range" id="cardBorderRadiusInput" min="0" max="24" value="0"
+                oninput="updateBorderRadius(this.value)"
+                class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
             </div>
           </div>
         </div>
@@ -933,7 +941,7 @@
       compileDynamicQrMatrix(qrTargetUrl);
     }
 
-     function compileDynamicQrMatrix(payloadString) {
+    function compileDynamicQrMatrix(payloadString) {
       const qrBox = document.getElementById("cardQrWidget");
       qrBox.innerHTML = "";
       qrGeneratorInstance = new QRCode(qrBox, {
@@ -1920,7 +1928,7 @@
 
     function exportLayoutAsPngImage() {
       const nin = document.getElementById("formNinEn").value || "NID";
-      
+
       // Save Front Image at maximum resolution (scale: 6)
       html2canvas(document.getElementById("cardFrontCanvasNode"), {
         scale: 6,
@@ -1948,7 +1956,7 @@
 
     function exportSheetAsPngImage() {
       const nin = document.getElementById("formNinEn").value || "NID";
-      
+
       // Save entire 4x6 sheet layout container at maximum resolution (scale: 6)
       html2canvas(document.getElementById("photoPaperPrintCanvas"), {
         scale: 6,
