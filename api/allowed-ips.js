@@ -57,16 +57,17 @@ module.exports = async (req, res) => {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
-        if (!ip) {
+        if (!ip || ip.trim() === "") {
           return res.status(400).json({ error: "IP address is required" });
         }
 
-        const existing = await AllowedIp.findOne({ ip: ip.trim() });
+        const cleanIp = ip.trim();
+        const existing = await AllowedIp.findOne({ ip: cleanIp });
         if (existing) {
           return res.status(200).json(existing);
         }
 
-        const newIp = new AllowedIp({ ip: ip.trim() });
+        const newIp = new AllowedIp({ ip: cleanIp });
         await newIp.save();
         return res.status(201).json(newIp);
       } catch (err) {
@@ -82,11 +83,12 @@ module.exports = async (req, res) => {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
-        if (!ip) {
+        if (!ip || ip.trim() === "") {
           return res.status(400).json({ error: "IP parameter is required" });
         }
 
-        const deleted = await AllowedIp.findOneAndDelete({ ip: ip.trim() });
+        const cleanIp = ip.trim();
+        const deleted = await AllowedIp.findOneAndDelete({ ip: cleanIp });
         if (!deleted) {
           return res.status(404).json({ error: "IP not found" });
         }
