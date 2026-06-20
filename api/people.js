@@ -2,7 +2,20 @@ const connectToDatabase = require('./db');
 const Person = require('./models/Person');
 
 module.exports = async (req, res) => {
-  // Ensure we are connected to the database
+  if (typeof res.status !== 'function') {
+    res.status = function (statusCode) { this.statusCode = statusCode; return this; };
+  }
+  if (typeof res.json !== 'function') {
+    res.json = function (data) {
+      this.setHeader('Content-Type', 'application/json');
+      this.end(JSON.stringify(data));
+      return this;
+    };
+  }
+  if (typeof res.send !== 'function') {
+    res.send = function (data) { this.end(data); return this; };
+  }
+
   try {
     await connectToDatabase();
   } catch (error) {

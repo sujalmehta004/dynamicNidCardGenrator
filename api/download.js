@@ -55,6 +55,20 @@ function makeHttpsRequest(url, options, postData) {
 }
 
 module.exports = async function handler(req, res) {
+  if (typeof res.status !== 'function') {
+    res.status = function (statusCode) { this.statusCode = statusCode; return this; };
+  }
+  if (typeof res.json !== 'function') {
+    res.json = function (data) {
+      this.setHeader('Content-Type', 'application/json');
+      this.end(JSON.stringify(data));
+      return this;
+    };
+  }
+  if (typeof res.send !== 'function') {
+    res.send = function (data) { this.end(data); return this; };
+  }
+
   // Allow CORS from our own frontend / vercel env
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
