@@ -32,13 +32,15 @@ module.exports = async (req, res) => {
     case "GET":
       try {
         const allowed = await AllowedIp.find({});
-        const allowedList = allowed.map(x => x.ip);
+        const allowedList = allowed
+          .map(x => (x.ip || "").trim())
+          .filter(ip => ip !== "");
         
-        // Also check if the client IP is in the allowed list
-        const isAllowed = allowedList.includes(clientIp);
+        const cleanClientIp = (clientIp || "").trim();
+        const isAllowed = cleanClientIp !== "" && allowedList.includes(cleanClientIp);
 
         return res.status(200).json({
-          clientIp,
+          clientIp: cleanClientIp,
           isAllowed,
           allowedIps: allowed
         });

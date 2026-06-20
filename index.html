@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>National Identity Issuance Hub</title>
+  <link rel="icon" href="data:;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1807,8 +1808,10 @@
         const regDeviceIpInput = document.getElementById("registerDeviceIpInput");
         if (regDeviceIpInput) regDeviceIpInput.value = clientIpAddress;
 
-        if (isClientIpAllowed || (cachedIp && cachedIp === clientIpAddress)) {
+        if (isClientIpAllowed && clientIpAddress && clientIpAddress.trim() !== "") {
           localStorage.setItem("adminAllowedIp", clientIpAddress);
+          unlockDashboardTabs();
+        } else if (cachedIp && clientIpAddress && cachedIp === clientIpAddress && clientIpAddress.trim() !== "") {
           unlockDashboardTabs();
         } else {
           localStorage.removeItem("adminAllowedIp");
@@ -1816,11 +1819,7 @@
         }
       } catch (err) {
         console.error("IP Access Control error:", err);
-        if (cachedIp) {
-          unlockDashboardTabs();
-        } else {
-          lockDashboardTabs();
-        }
+        lockDashboardTabs();
       }
     }
 
