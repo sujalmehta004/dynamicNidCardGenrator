@@ -123,22 +123,26 @@
       }
 
       /* Strict requirement mapping for row color assignments */
-      .status-row-done {
+      .status-row-done,
+      .status-row-done td {
         background-color: #e2fcd4 !important;
       }
 
       /* Light Green */
-      .status-row-pending {
+      .status-row-pending,
+      .status-row-pending td {
         background-color: #fef9c3 !important;
       }
 
       /* Light Yellow */
-      .status-row-inprogress {
+      .status-row-inprogress,
+      .status-row-inprogress td {
         background-color: #fee2e2 !important;
       }
 
       /* Light Red */
-      .status-row-notonline {
+      .status-row-notonline,
+      .status-row-notonline td {
         background-color: #fca5a5 !important;
       }
 
@@ -306,7 +310,7 @@
                   <input
                     type="text"
                     id="formNinEn"
-                    placeholder="615-385-908-6"
+                    placeholder=""
                     required
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-bold"
                   />
@@ -318,7 +322,7 @@
                   <input
                     type="text"
                     id="formNinNp"
-                    placeholder="६१५-३८५-९०८-६"
+                    placeholder=""
                     readonly
                     class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
@@ -333,7 +337,18 @@
                   <input
                     type="text"
                     id="formGivenEn"
-                    placeholder="SUJAL"
+                    placeholder=""
+                    class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all"
+                  />
+                </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1.5"
+                    >Surname (English)</label
+                  >
+                  <input
+                    type="text"
+                    id="formSurnameEn"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -344,21 +359,11 @@
                   <input
                     type="text"
                     id="formGivenNp"
-                    placeholder="सुजल"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1.5"
-                    >Surname (English)</label
-                  >
-                  <input
-                    type="text"
-                    id="formSurnameEn"
-                    placeholder="MEHTA"
-                    class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all"
-                  />
-                </div>
+
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1.5"
                     >थर (नेपाली)</label
@@ -366,7 +371,7 @@
                   <input
                     type="text"
                     id="formSurnameNp"
-                    placeholder="मेहता"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -375,26 +380,27 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1.5"
-                    >Date of Birth (AD)</label
-                  >
-                  <input
-                    type="text"
-                    id="formDobEn"
-                    placeholder="2005-05-03"
-                    class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
-                  />
-                </div>
-                <div>
-                  <label class="block text-slate-600 font-semibold mb-1.5"
                     >जन्म मिति (नेपाली)</label
                   >
                   <input
                     type="text"
                     id="formDobNp"
-                    placeholder="२०६२-०१-२०"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
+                <div>
+                  <label class="block text-slate-600 font-semibold mb-1.5"
+                    >Date of Birth (AD)</label
+                  >
+                  <input
+                    type="text"
+                    id="formDobEn"
+                    placeholder=""
+                    class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
+                  />
+                </div>
+
                 <div>
                   <label class="block text-slate-600 font-semibold mb-1.5"
                     >Nationality / राष्ट्रियता</label
@@ -403,7 +409,7 @@
                     type="text"
                     id="formNationality"
                     value="NEPALI"
-                    placeholder="NEPALI"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -417,7 +423,7 @@
                   <input
                     type="text"
                     id="formCitDate"
-                    placeholder="2026-06-18"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -519,7 +525,7 @@
                     type="number"
                     id="formWardInput"
                     min="1"
-                    placeholder="2"
+                    placeholder=""
                     oninput="onMunicipalityOrWardChange()"
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
@@ -534,7 +540,7 @@
                   <input
                     type="text"
                     id="formAddressEn"
-                    placeholder="Inaruwa Municipality-2, Sunsari"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -545,7 +551,7 @@
                   <input
                     type="text"
                     id="formAddressNp"
-                    placeholder="इनरुवा नगरपालिका-२, सुनसरी"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -560,7 +566,7 @@
                   <input
                     type="text"
                     id="formToken"
-                    placeholder="eyJhbGciOiJIUzI1NiJ9"
+                    placeholder=""
                     class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-mono focus:outline-none focus:border-blue-500 transition-all"
                   />
                 </div>
@@ -574,7 +580,7 @@
                   onclick="clearFormCanvas()"
                   class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition-all"
                 >
-                  Clear Canvas
+                  New Entry
                 </button>
                 <button
                   type="button"
@@ -2824,8 +2830,14 @@
         tbody.innerHTML = "";
 
         documentIdentityDb.forEach((row) => {
+          let statusRowClass = "";
+          if (row.status === "done") statusRowClass = "status-row-done";
+          else if (row.status === "pending") statusRowClass = "status-row-pending";
+          else if (row.status === "inprogress") statusRowClass = "status-row-inprogress";
+          else if (row.status === "not online") statusRowClass = "status-row-notonline";
+
           const tr = document.createElement("tr");
-          tr.className = `hover:bg-slate-50/50 transition-colors duration-150 border-b border-slate-100`;
+          tr.className = `${statusRowClass} hover:bg-slate-150 transition-colors duration-150 border-b border-slate-150`;
 
           // Col 1: NIN
           if (columnVisibility.nin) {
@@ -3014,57 +3026,86 @@
         };
 
         if (selectedRecordId) {
-          try {
-            const res = await fetch(
-              `${API_BASE}/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`,
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(record),
-              },
-            );
-            const result = await res.json();
-            if (!res.ok) {
-              alert(`Error: ${result.error}`);
-              return;
-            }
-            alert("Database record updated successfully!");
-            selectedRecordId = null;
-            document.getElementById("formBadgeMode").innerText =
-              "MODE: NEW ENTRY";
-            document.getElementById("btnDynamicSubmit").innerText =
-              "Submit Record";
-            document.getElementById("clientForm").reset();
-            initializeDateFieldsDefaults();
-            fetchDatabase(true);
-            processFormMetricsSync();
-          } catch (err) {
-            alert(`Network/Server error: ${err.message}`);
-          }
+          // Open confirm modal and populate NID / Name details
+          document.getElementById("confirmModalNin").innerText = targetNinEn;
+          const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim() || `${record.givenNp || ""} ${record.surnameNp || ""}`.trim() || "N/A";
+          document.getElementById("confirmModalName").innerText = fullName;
+
+          document.getElementById("btnConfirmUpdateAction").onclick = async () => {
+            closeUpdateConfirmModal();
+            await executeFormUpdate(record);
+          };
+
+          document.getElementById("updateConfirmModal").classList.remove("hidden");
         } else {
-          try {
-            const res = await fetch(`${API_BASE}/api/people`, {
-              method: "POST",
+          await executeFormCreation(record);
+        }
+      }
+
+      function closeUpdateConfirmModal() {
+        document.getElementById("updateConfirmModal").classList.add("hidden");
+      }
+
+      async function executeFormUpdate(record) {
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`,
+            {
+              method: "PUT",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify(record),
-            });
-            const result = await res.json();
-            if (!res.ok) {
-              alert(`Error: ${result.error}`);
-              return;
-            }
-            alert(`New catalog entry recorded successfully: ${result.ninEn}`);
-            document.getElementById("clientForm").reset();
-            initializeDateFieldsDefaults();
-            fetchDatabase(true);
-            processFormMetricsSync();
-          } catch (err) {
-            alert(`Network/Server error: ${err.message}`);
+            },
+          );
+          const result = await res.json();
+          if (!res.ok) {
+            alert(`Error: ${result.error}`);
+            return;
           }
+          alert("Database record updated successfully!");
+          selectedRecordId = null;
+          document.getElementById("formBadgeMode").innerText =
+            "MODE: NEW ENTRY";
+          document.getElementById("btnDynamicSubmit").innerText =
+            "Submit Record";
+
+          const formPane = document.getElementById("paneWorkspaceForm");
+          if (formPane) {
+            formPane.classList.remove("bg-yellow-50/70");
+            formPane.classList.add("bg-white");
+          }
+
+          document.getElementById("clientForm").reset();
+          initializeDateFieldsDefaults();
+          fetchDatabase(true);
+          processFormMetricsSync();
+        } catch (err) {
+          alert(`Network/Server error: ${err.message}`);
+        }
+      }
+
+      async function executeFormCreation(record) {
+        try {
+          const res = await fetch(`${API_BASE}/api/people`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(record),
+          });
+          const result = await res.json();
+          if (!res.ok) {
+            alert(`Error: ${result.error}`);
+            return;
+          }
+          alert(`New catalog entry recorded successfully: ${result.ninEn}`);
+          document.getElementById("clientForm").reset();
+          initializeDateFieldsDefaults();
+          fetchDatabase(true);
+          processFormMetricsSync();
+        } catch (err) {
+          alert(`Network/Server error: ${err.message}`);
         }
       }
 
@@ -3076,6 +3117,12 @@
         document.getElementById("formBadgeMode").innerText =
           "MODE: UPDATE RECORD";
         document.getElementById("btnDynamicSubmit").innerText = "Update Record";
+
+        const formPane = document.getElementById("paneWorkspaceForm");
+        if (formPane) {
+          formPane.classList.remove("bg-white");
+          formPane.classList.add("bg-yellow-50/70");
+        }
 
         document.getElementById("formNinEn").value = record.ninEn;
         document.getElementById("formNinNp").value = record.ninNp || "";
@@ -3293,6 +3340,16 @@
 
       function clearFormCanvas() {
         document.getElementById("clientForm").reset();
+        selectedRecordId = null;
+        document.getElementById("formBadgeMode").innerText = "MODE: NEW ENTRY";
+        document.getElementById("btnDynamicSubmit").innerText = "Submit Record";
+
+        const formPane = document.getElementById("paneWorkspaceForm");
+        if (formPane) {
+          formPane.classList.remove("bg-yellow-50/70");
+          formPane.classList.add("bg-white");
+        }
+
         initializeDateFieldsDefaults();
         processFormMetricsSync();
       }
@@ -3739,6 +3796,67 @@
             class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all"
           >
             Add to Whitelist
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Update Modal -->
+    <div
+      id="updateConfirmModal"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center hidden"
+    >
+      <div
+        class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-100 pb-2"
+        >
+          <h3 class="text-xs font-bold text-slate-900">
+            Confirm Record Update
+          </h3>
+          <button
+            onclick="closeUpdateConfirmModal()"
+            class="text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2.5"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-2 text-xs text-slate-700">
+          <p class="font-medium text-slate-650">
+            Are you sure you want to update the record for:
+          </p>
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1 font-mono text-[11px]">
+            <div><span class="font-bold text-slate-500">NID Number:</span> <span id="confirmModalNin" class="text-blue-600 font-bold"></span></div>
+            <div><span class="font-bold text-slate-500">Full Name:</span> <span id="confirmModalName" class="text-slate-900 font-bold"></span></div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+          <button
+            onclick="closeUpdateConfirmModal()"
+            class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-semibold px-4 py-2 rounded-lg text-[11px] transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            id="btnConfirmUpdateAction"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all"
+          >
+            Yes, Update Record
           </button>
         </div>
       </div>
