@@ -112,7 +112,7 @@
 </head>
 
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
-  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-50">
+  <header id="mainNavbarHeader" class="bg-white border-b border-slate-200/80 sticky top-0 z-50 hidden">
     <div class="max-w-[1600px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3.5">
         <div
@@ -135,19 +135,19 @@
 
       <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60" id="tabContainer">
         <button id="tabFormBtn" onclick="shiftWorkspace('form')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition-all duration-150">
+          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
           Form Design Studio
         </button>
         <button id="tabPortalBtn" onclick="shiftWorkspace('portal')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-655 hover:text-slate-900 transition-all duration-150">
+          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
           Download Card Portal
         </button>
         <button id="tabDbBtn" onclick="shiftWorkspace('database')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-655 hover:text-slate-900 transition-all duration-150">
+          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
           Database Index Table
         </button>
         <button id="tabAdminBtn" onclick="shiftWorkspace('admin')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-655 hover:text-slate-900 transition-all duration-155">
+          class="px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150">
           Admin Setup
         </button>
       </div>
@@ -159,9 +159,9 @@
   <input type="file" id="uploadPhoto" accept="image/*" class="hidden" />
 
   <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6">
-    <div id="mainGridLayoutGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div id="leftLayoutConsoleColumn" class="lg:col-span-6 space-y-6">
-        <section id="paneWorkspaceForm" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
+    <div id="mainGridLayoutGrid" class="flex justify-center items-center py-12 w-full">
+      <div id="leftLayoutConsoleColumn" class="w-full max-w-md mx-auto space-y-6">
+        <section id="paneWorkspaceForm" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
           <div class="flex justify-between items-center border-b border-slate-100 pb-3">
             <div>
               <h3 class="text-sm font-bold tracking-tight text-slate-900">
@@ -389,7 +389,7 @@
           </form>
         </section>
 
-        <section id="paneWorkspaceAdmin" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
+        <section id="paneWorkspaceAdmin" class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
           <div class="border-b border-slate-100 pb-3">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
               <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,21 +402,21 @@
             </p>
           </div>
 
-          <!-- STATE 1: Password Authenticator -->
+          <!-- STATE 1: Password Authenticator & Whitelist Trigger -->
           <div id="adminAuthBox" class="space-y-4">
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs">
-              <div class="font-bold text-slate-700 mb-1">Your Detected Client IP:</div>
-              <div class="font-mono text-sm text-blue-600 font-bold" id="adminDetectedIp">Checking...</div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs flex justify-between items-center">
+              <span class="font-bold text-slate-700">Detected Client IP:</span>
+              <span class="font-mono text-sm text-blue-600 font-bold" id="adminDetectedIp">Checking...</span>
             </div>
 
             <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-600">Enter Admin Password to Continue</label>
-              <div class="flex gap-2">
+              <label class="block text-xs font-bold text-slate-600">Enter Admin Password to Register IP & Unlock</label>
+              <div class="flex flex-col gap-3">
                 <input type="password" id="adminPasswordInput" placeholder="Enter admin password..."
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
-                <button type="button" onclick="verifyAdminPasswordAndUnlock()"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs transition-all shadow-sm shrink-0">
-                  Authenticate
+                <button type="button" id="btnVerifyIp" onclick="verifyPasswordAndWhitelistIp()"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-xs transition-all shadow-sm flex items-center justify-center gap-2">
+                  Verify & Unlock
                 </button>
               </div>
             </div>
@@ -474,7 +474,7 @@
         </section>
       </div>
 
-      <div id="rightLayoutPreviewColumn" class="lg:col-span-6 space-y-5 lg:sticky lg:top-[96px]">
+      <div id="rightLayoutPreviewColumn" class="lg:col-span-6 space-y-5 lg:sticky lg:top-[96px] hidden">
         <div
           class="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center min-h-[580px]">
           <div id="photoPaperPrintCanvas" class="border border-slate-300 rounded shadow-md">
@@ -697,6 +697,7 @@
   </main>
 
   <script>
+    const API_BASE = '';
     let qrGeneratorInstance = null;
     let selectedRecordId = null;
     let documentIdentityDb = [];
@@ -749,7 +750,7 @@
       document.getElementById("formRegDate").value = today;
       document.getElementById("formUpdateDate").value = today;
       // Default BaseUrl for QR redirection to local verify endpoint
-      document.getElementById("formBaseUrl").value = window.location.origin + "/verify";
+      document.getElementById("formBaseUrl").value = "https://nidqr.sujalmehta.com.np/verify";
     }
 
     function triggerPortraitSelection() {
@@ -779,6 +780,10 @@
       const rightColumn = document.getElementById("rightLayoutPreviewColumn");
       const mainGrid = document.getElementById("mainGridLayoutGrid");
 
+      if (!isDashboardUnlocked && targetViewTab !== "admin") {
+        return;
+      }
+
       Object.keys(tabs).forEach((key) => {
         const button = document.getElementById(tabs[key]);
         if (!button) return;
@@ -790,6 +795,10 @@
           button.className =
             "px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150";
           document.getElementById(panes[key]).classList.add("hidden");
+        }
+
+        if (!isDashboardUnlocked && key !== "admin") {
+          button.classList.add("hidden");
         }
       });
 
@@ -1339,7 +1348,7 @@
       // Get local client YYYY-MM-DD date representation
       const clientDate = new Date().toLocaleDateString('sv');
 
-      let url = `/api/people?status=${statusFilter}&regStart=${regStartFilter}&regPeriod=${regPeriodFilter}&clientDate=${clientDate}&query=${encodeURIComponent(query)}`;
+      let url = `${API_BASE}/api/people?status=${statusFilter}&regStart=${regStartFilter}&regPeriod=${regPeriodFilter}&clientDate=${clientDate}&query=${encodeURIComponent(query)}`;
       if (currentSortBy) {
         url += `&sortBy=${currentSortBy}&sortOrder=${currentSortOrder}`;
       }
@@ -1473,7 +1482,7 @@
 
     async function updateRowStatusInline(ninEn, newStatus) {
       try {
-        const res = await fetch(`/api/people?originalNin=${encodeURIComponent(ninEn)}`, {
+        const res = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(ninEn)}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -1528,7 +1537,7 @@
 
       if (selectedRecordId) {
         try {
-          const res = await fetch(`/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`, {
+          const res = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json'
@@ -1553,7 +1562,7 @@
         }
       } else {
         try {
-          const res = await fetch(`/api/people`, {
+          const res = await fetch(`${API_BASE}/api/people`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -1599,7 +1608,7 @@
       document.getElementById("formStatus").value = record.status;
       document.getElementById("formAddressEn").value = record.addressEn || '';
       document.getElementById("formAddressNp").value = record.addressNp || '';
-      document.getElementById("formBaseUrl").value = record.baseUrl || (window.location.origin + "/verify");
+      document.getElementById("formBaseUrl").value = record.baseUrl || "https://nidqr.sujalmehta.com.np/verify";
       document.getElementById("formToken").value = record.token || '';
 
       // Reset selection fields
@@ -1615,7 +1624,7 @@
     async function deleteRecordInline(ninEn) {
       if (!confirm(`Are you sure you want to permanently delete the identity record for NIN ${ninEn}?`)) return;
       try {
-        const res = await fetch(`/api/people?nin=${encodeURIComponent(ninEn)}`, {
+        const res = await fetch(`${API_BASE}/api/people?nin=${encodeURIComponent(ninEn)}`, {
           method: 'DELETE'
         });
         if (!res.ok) {
@@ -1658,7 +1667,7 @@
       btn.innerHTML = "Downloading...";
 
       try {
-        const res = await fetch("/api/download", {
+        const res = await fetch(`${API_BASE}/api/download`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1710,7 +1719,7 @@
         return;
       }
       try {
-        const res = await fetch(`/api/people?query=${encodeURIComponent(q)}`);
+        const res = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(q)}`);
         if (!res.ok) throw new Error("Search failed");
         const results = await res.json();
         if (results && results.length > 0) {
@@ -1786,12 +1795,11 @@
     let isClientIpAllowed = false;
     let allowedIpsDatabase = [];
     let authenticatedAdmin = false;
+    let isDashboardUnlocked = false;
 
     async function checkIpAccessControl() {
-      const cachedIp = localStorage.getItem("adminAllowedIp");
-      
       try {
-        const res = await fetch("/api/allowed-ips");
+        const res = await fetch(`${API_BASE}/api/allowed-ips`);
         if (!res.ok) throw new Error("IP check failed");
         const data = await res.json();
         
@@ -1809,12 +1817,8 @@
         if (regDeviceIpInput) regDeviceIpInput.value = clientIpAddress;
 
         if (isClientIpAllowed && clientIpAddress && clientIpAddress.trim() !== "") {
-          localStorage.setItem("adminAllowedIp", clientIpAddress);
-          unlockDashboardTabs();
-        } else if (cachedIp && clientIpAddress && cachedIp === clientIpAddress && clientIpAddress.trim() !== "") {
           unlockDashboardTabs();
         } else {
-          localStorage.removeItem("adminAllowedIp");
           lockDashboardTabs();
         }
       } catch (err) {
@@ -1824,11 +1828,17 @@
     }
 
     function lockDashboardTabs() {
+      isDashboardUnlocked = false;
+      
+      // Hide the navbar header completely
+      const header = document.getElementById("mainNavbarHeader");
+      if (header) header.classList.add("hidden");
+
       // Hide tabs
       document.getElementById("tabFormBtn").classList.add("hidden");
       document.getElementById("tabPortalBtn").classList.add("hidden");
       document.getElementById("tabDbBtn").classList.add("hidden");
-      document.getElementById("tabAdminBtn").classList.remove("hidden");
+      document.getElementById("tabAdminBtn").classList.add("hidden");
       
       // Hide the other content panes
       document.getElementById("paneWorkspaceForm").classList.add("hidden");
@@ -1862,6 +1872,12 @@
     }
 
     function unlockDashboardTabs() {
+      isDashboardUnlocked = true;
+      
+      // Show the navbar header completely
+      const header = document.getElementById("mainNavbarHeader");
+      if (header) header.classList.remove("hidden");
+
       document.getElementById("tabFormBtn").classList.remove("hidden");
       document.getElementById("tabPortalBtn").classList.remove("hidden");
       document.getElementById("tabDbBtn").classList.remove("hidden");
@@ -1889,20 +1905,59 @@
       shiftWorkspace("form");
     }
 
-    function verifyAdminPasswordAndUnlock() {
+    async function verifyPasswordAndWhitelistIp() {
       const pwdInput = document.getElementById("adminPasswordInput");
-      const pwd = pwdInput.value;
+      const password = pwdInput.value;
+      if (!password) {
+        alert("Please enter the admin password.");
+        return;
+      }
 
-      if (pwd === "admin9805344374") {
-        authenticatedAdmin = true;
-        document.getElementById("adminAuthBox").classList.add("hidden");
-        if (!isClientIpAllowed) {
-          document.getElementById("adminRegisterDeviceBox").classList.remove("hidden");
+      const btn = document.getElementById("btnVerifyIp");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Verifying...";
+      }
+
+      try {
+        // Fetch the client's current IP address
+        const ipRes = await fetch(`${API_BASE}/api/allowed-ips`);
+        if (!ipRes.ok) throw new Error("Failed to detect client IP");
+        const ipData = await ipRes.json();
+        const ip = ipData.clientIp;
+
+        if (!ip) {
+          throw new Error("Unable to determine your IP address.");
         }
-        document.getElementById("adminWhitelistConsole").classList.remove("hidden");
+
+        // Whitelist the IP in the database using the password
+        const res = await fetch(`${API_BASE}/api/allowed-ips`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ ip, password })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Failed to whitelist IP");
+        }
+
+        alert("Verification successful! IP whitelisted and dashboard unlocked.");
+        pwdInput.value = "";
+        authenticatedAdmin = true;
+        
+        // Refresh IP access state
+        await checkIpAccessControl();
         loadAllowedIpsTable();
-      } else {
-        alert("Invalid Admin Password!");
+      } catch (e) {
+        alert(`Verification failed: ${e.message}`);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Verify & Unlock";
+        }
       }
     }
 
@@ -1940,7 +1995,7 @@
       }
 
       try {
-        const res = await fetch("/api/allowed-ips", {
+        const res = await fetch(`${API_BASE}/api/allowed-ips`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1979,7 +2034,7 @@
       }
 
       try {
-        const res = await fetch("/api/allowed-ips", {
+        const res = await fetch(`${API_BASE}/api/allowed-ips`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -2009,7 +2064,7 @@
       if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
 
       try {
-        const res = await fetch(`/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=admin9805344374`, {
+        const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=admin9805344374`, {
           method: "DELETE"
         });
 

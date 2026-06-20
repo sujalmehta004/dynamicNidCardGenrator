@@ -27,6 +27,13 @@ module.exports = async (req, res) => {
 
   // Set standard response headers
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
   switch (method) {
     case 'GET':

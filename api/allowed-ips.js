@@ -27,6 +27,13 @@ module.exports = async (req, res) => {
   const clientIp = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "127.0.0.1";
 
   res.setHeader("Content-Type", "application/json");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
   switch (method) {
     case "GET":
@@ -57,17 +64,16 @@ module.exports = async (req, res) => {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
-        if (!ip || ip.trim() === "") {
+        if (!ip) {
           return res.status(400).json({ error: "IP address is required" });
         }
 
-        const cleanIp = ip.trim();
-        const existing = await AllowedIp.findOne({ ip: cleanIp });
+        const existing = await AllowedIp.findOne({ ip: ip.trim() });
         if (existing) {
           return res.status(200).json(existing);
         }
 
-        const newIp = new AllowedIp({ ip: cleanIp });
+        const newIp = new AllowedIp({ ip: ip.trim() });
         await newIp.save();
         return res.status(201).json(newIp);
       } catch (err) {
@@ -83,12 +89,11 @@ module.exports = async (req, res) => {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
-        if (!ip || ip.trim() === "") {
+        if (!ip) {
           return res.status(400).json({ error: "IP parameter is required" });
         }
 
-        const cleanIp = ip.trim();
-        const deleted = await AllowedIp.findOneAndDelete({ ip: cleanIp });
+        const deleted = await AllowedIp.findOneAndDelete({ ip: ip.trim() });
         if (!deleted) {
           return res.status(404).json({ error: "IP not found" });
         }
