@@ -29,7 +29,7 @@ A production-grade, full-stack application built with **HTML/JavaScript**, **Nod
 
 5. **IP Access Security Whitelisting**:
    - Blocks dashboard access (Form, Download Portal, Database Ledger) if the client's public/local IP address is not whitelisted.
-   - An **Admin Setup** tab handles unlocking the whitelisting console using password authorization (default: `admin9805344374`).
+   - An **Admin Setup** tab handles unlocking the whitelisting console using password authorization (default: `9805344374@><`).
    - Allows dynamically whitelisting/removing permitted IP addresses.
    - Whitelists are cached locally in the browser's `localStorage` to avoid redundant database calls.
 

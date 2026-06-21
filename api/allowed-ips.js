@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
         const { ip, password } = req.body;
         
         // Validate password
-        if (password !== "admin9805344374") {
+        if (password !== "9805344374@><") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
         const { ip, password } = req.query;
 
         // Validate password
-        if (password !== "admin9805344374") {
+        if (password !== "9805344374@><") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
