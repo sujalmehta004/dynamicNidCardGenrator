@@ -735,14 +735,32 @@
               <div
                 class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 text-xs flex justify-between items-center"
               >
-                <span class="font-bold text-slate-700"
-                  >Detected Client IP:</span
-                >
+                <span class="font-bold text-slate-700">Auto-Detected Private IP:</span>
                 <span
                   class="font-mono text-sm text-blue-600 font-bold"
                   id="adminDetectedIp"
-                  >Checking...</span
+                  >Detecting...</span
                 >
+              </div>
+
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-600">Manual Private IP (override if auto-detect fails)</label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    id="adminManualIpInput"
+                    placeholder="e.g. 192.168.1.5"
+                    class="flex-1 bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onclick="useManualIpAsClient()"
+                    class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-3 py-2 rounded-lg text-xs transition-all shadow-sm shrink-0"
+                  >
+                    Use This IP
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400">Find your private IP: run <code class="bg-slate-100 px-1 rounded font-mono">ipconfig</code> (Windows) or <code class="bg-slate-100 px-1 rounded font-mono">ifconfig</code> (Mac/Linux)</p>
               </div>
 
               <div class="space-y-2">
@@ -3255,7 +3273,24 @@
           document.body.appendChild(a);
           a.click();
           window.URL.revokeObjectURL(url);
-          alert("Identity Card PDF downloaded successfully!");
+
+          // Build clipboard code: first 4 letters of full name (no spaces) + BS year
+          // fullName is already uppercase, e.g. "SUJAL MEHTA"
+          // dobLocRaw is in Nepali digits or English digits e.g. "2062-01-20" or "२०६२-०१-२०"
+          const nameOnly = fullName.replace(/\s+/g, ""); // Remove spaces → "SUJALMEHTA"
+          const namePart = nameOnly.substring(0, 4).toUpperCase(); // "SUJA"
+
+          // Convert DOB to English digits and extract the year part (first 4 digits before '-')
+          const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
+          const yearPart = dobEnglish.split("-")[0].substring(0, 4); // "2062"
+
+          const clipboardCode = namePart + yearPart;
+          try {
+            await navigator.clipboard.writeText(clipboardCode);
+            alert(`Identity Card PDF downloaded successfully!\n\n📋 Copied to clipboard: ${clipboardCode}`);
+          } catch (clipErr) {
+            alert(`Identity Card PDF downloaded successfully!\n\nPassword code: ${clipboardCode}\n(Could not auto-copy — please copy manually)`);
+          }
         } catch (err) {
           alert(`Error executing download: ${err.message}`);
         } finally {
@@ -3409,32 +3444,115 @@
       let authenticatedAdmin = false;
       let isDashboardUnlocked = false;
 
+      // Detect the machine's private LAN IP via WebRTC (works without a STUN server)
+      function detectPrivateLanIp() {
+        return new Promise((resolve) => {
+          try {
+            const pc = new RTCPeerConnection({ iceServers: [] });
+            pc.createDataChannel("");
+
+            let resolved = false;
+            const done = (ip) => {
+              if (!resolved) {
+                resolved = true;
+                try { pc.close(); } catch (e) {}
+                resolve(ip || null);
+              }
+            };
+
+            pc.onicecandidate = (e) => {
+              if (!e || !e.candidate) {
+                // Null candidate = ICE gathering complete
+                done(null);
+                return;
+              }
+              const line = e.candidate.candidate;
+              // Match any IPv4 private range: 10.x, 172.16-31.x, 192.168.x
+              const privateMatch = line.match(
+                /((?:10|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.[0-9]{1,3}\.[0-9]{1,3})/
+              );
+              if (privateMatch) {
+                done(privateMatch[1]);
+                return;
+              }
+              // Also accept any non-loopback IPv4 host candidate as fallback
+              const anyIpv4 = line.match(/([0-9]{1,3}(?:\.[0-9]{1,3}){3})/);
+              if (anyIpv4 && !anyIpv4[1].startsWith('127.') && !anyIpv4[1].startsWith('0.')) {
+                done(anyIpv4[1]);
+              }
+            };
+
+            pc.createOffer()
+              .then(offer => pc.setLocalDescription(offer))
+              .catch(() => done(null));
+
+            // Timeout after 4 seconds
+            setTimeout(() => done(null), 4000);
+          } catch (err) {
+            resolve(null);
+          }
+        });
+      }
+
+      function useManualIpAsClient() {
+        const manualInput = document.getElementById("adminManualIpInput");
+        const ip = (manualInput ? manualInput.value.trim() : "");
+        if (!ip) {
+          alert("Please enter a private IP address first.");
+          return;
+        }
+        // Basic IPv4 validation
+        if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+          alert("Please enter a valid IPv4 address (e.g. 192.168.1.5).");
+          return;
+        }
+        clientIpAddress = ip;
+        // 💾 Save to localStorage so it persists across refreshes
+        localStorage.setItem("nid_private_ip", ip);
+        const ipBox = document.getElementById("adminDetectedIp");
+        if (ipBox) ipBox.innerText = ip + " (manual)";
+        alert(`✅ Private IP set to: ${ip}\nNow enter your password and click Verify & Unlock.`);
+      }
+
       async function checkIpAccessControl() {
         try {
+          // 1️⃣ Check localStorage for a previously verified private IP (survives refresh)
+          const savedIp = localStorage.getItem("nid_private_ip");
+          if (savedIp && savedIp.trim() !== "") {
+            clientIpAddress = savedIp.trim();
+          }
+
+          // 2️⃣ If nothing saved, try WebRTC auto-detection
+          if (!clientIpAddress) {
+            const privateIp = await detectPrivateLanIp();
+            if (privateIp) {
+              clientIpAddress = privateIp;
+            }
+          }
+
+          // 3️⃣ Fetch the whitelist from the server
           const res = await fetch(`${API_BASE}/api/allowed-ips`);
           if (!res.ok) throw new Error("IP check failed");
           const data = await res.json();
 
-          clientIpAddress = data.clientIp;
-          isClientIpAllowed = data.isAllowed;
           allowedIpsDatabase = data.allowedIps || [];
 
+          // 4️⃣ Check if our private IP is in the whitelist
+          const allowedList = allowedIpsDatabase.map(x => (x.ip || "").trim());
+          isClientIpAllowed = clientIpAddress !== "" && allowedList.includes(clientIpAddress);
+
           const ipBox = document.getElementById("adminDetectedIp");
-          if (ipBox) ipBox.innerText = clientIpAddress;
+          if (ipBox) ipBox.innerText = clientIpAddress
+            ? (savedIp ? clientIpAddress + " (saved)" : clientIpAddress)
+            : "Not detected";
 
           const ipInput = document.getElementById("newIpAddressInput");
           if (ipInput) ipInput.value = clientIpAddress;
 
-          const regDeviceIpInput = document.getElementById(
-            "registerDeviceIpInput",
-          );
+          const regDeviceIpInput = document.getElementById("registerDeviceIpInput");
           if (regDeviceIpInput) regDeviceIpInput.value = clientIpAddress;
 
-          if (
-            isClientIpAllowed &&
-            clientIpAddress &&
-            clientIpAddress.trim() !== ""
-          ) {
+          if (isClientIpAllowed && clientIpAddress && clientIpAddress.trim() !== "") {
             unlockDashboardTabs();
           } else {
             lockDashboardTabs();
@@ -3561,17 +3679,26 @@
         }
 
         try {
-          // Fetch the client's current IP address
-          const ipRes = await fetch(`${API_BASE}/api/allowed-ips`);
-          if (!ipRes.ok) throw new Error("Failed to detect client IP");
-          const ipData = await ipRes.json();
-          const ip = ipData.clientIp;
-
+          // Prefer: manual override → WebRTC auto-detected → error
+          let ip = clientIpAddress;
           if (!ip) {
-            throw new Error("Unable to determine your IP address.");
+            const manualInput = document.getElementById("adminManualIpInput");
+            const manualIp = manualInput ? manualInput.value.trim() : "";
+            if (manualIp) {
+              ip = manualIp;
+              clientIpAddress = ip;
+            }
+          }
+          if (!ip) {
+            ip = await detectPrivateLanIp();
+            if (ip) clientIpAddress = ip;
           }
 
-          // Whitelist the IP in the database using the password
+          if (!ip) {
+            throw new Error("Could not detect your private LAN IP.\n\nPlease enter it manually in the 'Manual Private IP' field above (run 'ipconfig' on Windows or 'ifconfig' on Mac to find it, e.g. 192.168.1.5).");
+          }
+
+          // Whitelist the private IP in the database using the password
           const res = await fetch(`${API_BASE}/api/allowed-ips`, {
             method: "POST",
             headers: {
@@ -3586,10 +3713,13 @@
           }
 
           alert(
-            "Verification successful! IP whitelisted and dashboard unlocked.",
+            `Verification successful! Private IP ${ip} whitelisted and dashboard unlocked.`,
           );
           pwdInput.value = "";
           authenticatedAdmin = true;
+
+          // 💾 Save verified private IP to localStorage so refreshes don't need re-entry
+          localStorage.setItem("nid_private_ip", ip);
 
           // Refresh IP access state
           await checkIpAccessControl();
