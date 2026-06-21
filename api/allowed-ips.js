@@ -38,13 +38,29 @@ module.exports = async (req, res) => {
   switch (method) {
     case "GET":
       try {
+        const urlParams = new URL(req.url, `http://${req.headers.host || 'localhost'}`).searchParams;
+        const queryIp = urlParams.get("ip");
+        const queryToken = urlParams.get("token");
+
         const allowed = await AllowedIp.find({});
-        const allowedList = allowed
-          .map(x => (x.ip || "").trim())
-          .filter(ip => ip !== "");
         
-        const cleanClientIp = (clientIp || "").trim();
-        const isAllowed = cleanClientIp !== "" && allowedList.includes(cleanClientIp);
+        let isAllowed = false;
+        const cleanClientIp = (queryIp || clientIp || "").trim();
+        const cleanToken = (queryToken || "").trim();
+
+        if (cleanClientIp && cleanToken) {
+          const match = await AllowedIp.findOne({ ip: cleanClientIp });
+          if (match) {
+            if (!match.token || match.token.trim() === "") {
+              // First computer to open with this whitelisted IP auto-binds its token
+              match.token = cleanToken;
+              await match.save();
+              isAllowed = true;
+            } else if (match.token.trim() === cleanToken) {
+              isAllowed = true;
+            }
+          }
+        }
 
         return res.status(200).json({
           clientIp: cleanClientIp,
@@ -57,10 +73,10 @@ module.exports = async (req, res) => {
 
     case "POST":
       try {
-        const { ip, password } = req.body;
+        const { ip, password, token } = req.body;
         
         // Validate password
-        if (password !== "9805344374@><") {
+        if (password !== "Ss9805344374@><") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
@@ -68,12 +84,22 @@ module.exports = async (req, res) => {
           return res.status(400).json({ error: "IP address is required" });
         }
 
+        if (!token) {
+          return res.status(400).json({ error: "Device token is required" });
+        }
+
         const existing = await AllowedIp.findOne({ ip: ip.trim() });
         if (existing) {
+          if (existing.token && existing.token.trim() !== token.trim()) {
+            return res.status(409).json({ error: "This IP address is already registered to another computer." });
+          }
+          // Update/ensure token matches
+          existing.token = token.trim();
+          await existing.save();
           return res.status(200).json(existing);
         }
 
-        const newIp = new AllowedIp({ ip: ip.trim() });
+        const newIp = new AllowedIp({ ip: ip.trim(), token: token.trim() });
         await newIp.save();
         return res.status(201).json(newIp);
       } catch (err) {
@@ -82,18 +108,20 @@ module.exports = async (req, res) => {
 
     case "DELETE":
       try {
-        const { ip, password } = req.query;
+        const urlParams = new URL(req.url, `http://${req.headers.host || 'localhost'}`).searchParams;
+        const queryIp = urlParams.get("ip");
+        const queryPassword = urlParams.get("password");
 
         // Validate password
-        if (password !== "9805344374@><") {
+        if (queryPassword !== "Ss9805344374@><") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
-        if (!ip) {
+        if (!queryIp) {
           return res.status(400).json({ error: "IP parameter is required" });
         }
 
-        const deleted = await AllowedIp.findOneAndDelete({ ip: ip.trim() });
+        const deleted = await AllowedIp.findOneAndDelete({ ip: queryIp.trim() });
         if (!deleted) {
           return res.status(404).json({ error: "IP not found" });
         }

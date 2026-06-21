@@ -7,6 +7,10 @@ const AllowedIpSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+  token: {
+    type: String,
+    trim: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

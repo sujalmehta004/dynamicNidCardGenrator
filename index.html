@@ -2859,44 +2859,41 @@
         return;
       }
       clientIpAddress = ip;
-      // 💾 Save to localStorage so it persists across refreshes
-      localStorage.setItem("nid_private_ip", ip);
       const ipBox = document.getElementById("adminDetectedIp");
-      if (ipBox) ipBox.innerText = ip + " (manual)";
-      alert(`✅ Private IP set to: ${ip}\nNow enter your password and click Verify & Unlock.`);
+      if (ipBox) ipBox.innerText = ip + " (manual override)";
+      alert(`✅ Private IP set to: ${ip}\nNow enter the admin password and click Verify & Unlock.`);
+    }
+
+    // Generate or retrieve a persistent, unique device token for this computer/browser
+    function getDeviceToken() {
+      let token = localStorage.getItem("nid_device_token");
+      if (!token) {
+        token = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 11);
+        localStorage.setItem("nid_device_token", token);
+      }
+      return token;
     }
 
     async function checkIpAccessControl() {
       try {
-        // 1️⃣ Check localStorage for a previously verified private IP (survives refresh)
-        const savedIp = localStorage.getItem("nid_private_ip");
-        if (savedIp && savedIp.trim() !== "") {
-          clientIpAddress = savedIp.trim();
+        // 1️⃣ Always detect private LAN IP directly from the computer itself via WebRTC
+        clientIpAddress = "";
+        const privateIp = await detectPrivateLanIp();
+        if (privateIp) {
+          clientIpAddress = privateIp;
         }
 
-        // 2️⃣ If nothing saved, try WebRTC auto-detection
-        if (!clientIpAddress) {
-          const privateIp = await detectPrivateLanIp();
-          if (privateIp) {
-            clientIpAddress = privateIp;
-          }
-        }
-
-        // 3️⃣ Fetch the whitelist from the server
-        const res = await fetch(`${API_BASE}/api/allowed-ips`);
+        // 2️⃣ Fetch the whitelist verification status from the server
+        const token = getDeviceToken();
+        const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(clientIpAddress)}&token=${encodeURIComponent(token)}`);
         if (!res.ok) throw new Error("IP check failed");
         const data = await res.json();
 
         allowedIpsDatabase = data.allowedIps || [];
-
-        // 4️⃣ Check if our private IP is in the whitelist
-        const allowedList = allowedIpsDatabase.map(x => (x.ip || "").trim());
-        isClientIpAllowed = clientIpAddress !== "" && allowedList.includes(clientIpAddress);
+        isClientIpAllowed = data.isAllowed;
 
         const ipBox = document.getElementById("adminDetectedIp");
-        if (ipBox) ipBox.innerText = clientIpAddress
-          ? (savedIp ? clientIpAddress + " (saved)" : clientIpAddress)
-          : "Not detected";
+        if (ipBox) ipBox.innerText = clientIpAddress || "Not detected (WebRTC blocked)";
 
         const ipInput = document.getElementById("newIpAddressInput");
         if (ipInput) ipInput.value = clientIpAddress;
@@ -3056,7 +3053,7 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ip, password }),
+          body: JSON.stringify({ ip, password, token: getDeviceToken() }),
         });
 
         if (!res.ok) {
@@ -3069,9 +3066,6 @@
         );
         pwdInput.value = "";
         authenticatedAdmin = true;
-
-        // 💾 Save verified private IP to localStorage so refreshes don't need re-entry
-        localStorage.setItem("nid_private_ip", ip);
 
         // Refresh IP access state
         await checkIpAccessControl();
@@ -3130,6 +3124,7 @@
           body: JSON.stringify({
             ip: ip,
             password: "Ss9805344374@><",
+            token: getDeviceToken(),
           }),
         });
 
