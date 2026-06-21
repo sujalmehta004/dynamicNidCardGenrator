@@ -2864,33 +2864,34 @@
       alert(`✅ Private IP set to: ${ip}\nNow enter the admin password and click Verify & Unlock.`);
     }
 
-    // Generate or retrieve a persistent, unique device token for this computer/browser
-    function getDeviceToken() {
-      let token = localStorage.getItem("nid_device_token");
-      if (!token) {
-        token = 'dev_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 11);
-        localStorage.setItem("nid_device_token", token);
-      }
-      return token;
-    }
-
     async function checkIpAccessControl() {
       try {
-        // 1️⃣ Always detect private LAN IP directly from the computer itself via WebRTC
-        clientIpAddress = "";
-        const privateIp = await detectPrivateLanIp();
-        if (privateIp) {
-          clientIpAddress = privateIp;
+        // 1️⃣ Load saved IP from localStorage first (persists across refreshes)
+        if (!clientIpAddress) {
+          const savedIp = localStorage.getItem("nid_verified_ip");
+          if (savedIp && savedIp.trim() !== "") {
+            clientIpAddress = savedIp.trim();
+          }
         }
 
-        // 2️⃣ Fetch the whitelist verification status from the server
-        const token = getDeviceToken();
-        const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(clientIpAddress)}&token=${encodeURIComponent(token)}`);
+        // 2️⃣ If still no IP, try WebRTC auto-detection
+        if (!clientIpAddress) {
+          const privateIp = await detectPrivateLanIp();
+          if (privateIp) {
+            clientIpAddress = privateIp;
+          }
+        }
+
+        // 3️⃣ Fetch the whitelist from the server
+        const res = await fetch(`${API_BASE}/api/allowed-ips`);
         if (!res.ok) throw new Error("IP check failed");
         const data = await res.json();
 
         allowedIpsDatabase = data.allowedIps || [];
-        isClientIpAllowed = data.isAllowed;
+
+        // 4️⃣ Check if the IP is in the whitelist database
+        const allowedList = allowedIpsDatabase.map(x => (x.ip || "").trim());
+        isClientIpAllowed = clientIpAddress !== "" && allowedList.includes(clientIpAddress);
 
         const ipBox = document.getElementById("adminDetectedIp");
         if (ipBox) ipBox.innerText = clientIpAddress || "Not detected (WebRTC blocked)";
@@ -2904,6 +2905,10 @@
         if (isClientIpAllowed && clientIpAddress && clientIpAddress.trim() !== "") {
           unlockDashboardTabs();
         } else {
+          // If saved IP is no longer in whitelist, clear it
+          if (clientIpAddress && !isClientIpAllowed) {
+            localStorage.removeItem("nid_verified_ip");
+          }
           lockDashboardTabs();
         }
       } catch (err) {
@@ -3053,7 +3058,7 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ip, password, token: getDeviceToken() }),
+          body: JSON.stringify({ ip, password }),
         });
 
         if (!res.ok) {
@@ -3066,6 +3071,10 @@
         );
         pwdInput.value = "";
         authenticatedAdmin = true;
+
+        // 💾 Save verified IP to localStorage — auto-unlocks on refresh
+        localStorage.setItem("nid_verified_ip", ip);
+        clientIpAddress = ip;
 
         // Refresh IP access state
         await checkIpAccessControl();
@@ -3124,7 +3133,6 @@
           body: JSON.stringify({
             ip: ip,
             password: "Ss9805344374@><",
-            token: getDeviceToken(),
           }),
         });
 
