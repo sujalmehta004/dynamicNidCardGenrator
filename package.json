@@ -2,6 +2,9 @@
   "name": "qr-code-identity-hub",
   "version": "1.0.0",
   "description": "National Identity Issuance Hub",
+  "scripts": {
+    "build": "echo 'No build step required'"
+  },
   "dependencies": {
     "mongoose": "^8.0.0"
   }

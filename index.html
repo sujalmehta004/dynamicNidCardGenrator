@@ -16,6 +16,14 @@
     rel="stylesheet" />
 
   <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease forwards;
+    }
+
     body {
       font-family: "Plus Jakarta Sans", sans-serif;
     }
@@ -586,8 +594,19 @@
               </div>
             </div>
 
+            <!-- Step Indicator -->
+            <div id="portalStepIndicator" class="hidden flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider pb-2 border-b border-slate-100 mb-3">
+              <span id="portalStepInd1" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">1. Captcha</span>
+              <span class="text-slate-300">→</span>
+              <span id="portalStepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">2. OTP</span>
+              <span class="text-slate-300">→</span>
+              <span id="portalStepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">3. Download</span>
+              <span class="text-slate-300">→</span>
+              <span id="portalStepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">4. Token Scan</span>
+            </div>
+
             <!-- Captcha input step -->
-            <div id="portalCaptchaInputRow" class="hidden">
+            <div id="portalCaptchaInputRow" class="hidden fade-in">
               <label class="block text-slate-600 font-bold mb-1.5">Enter Captcha Code</label>
               <div class="flex gap-2">
                 <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
@@ -600,7 +619,7 @@
             </div>
 
             <!-- OTP input step -->
-            <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
               <div class="flex flex-col gap-1">
                 <span class="font-bold text-slate-700">OTP Info:</span>
                 <span id="portalOtpInfoText" class="font-medium text-slate-600">Masked Mobile: -, NIN: -</span>
@@ -618,27 +637,22 @@
               </div>
               <div class="flex gap-2 justify-end pt-1">
                 <button type="button" onclick="loadPortalCaptcha()"
-                  class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">
+                  class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">
                   Resend OTP / Start Over
                 </button>
               </div>
             </div>
 
             <!-- Final download action step -->
-            <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-              <div class="flex flex-col gap-1">
-                <span class="font-bold text-slate-700">Download Token:</span>
-                <textarea id="portalDownloadTokenVal" readonly rows="2"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-[10px] resize-none text-slate-600 focus:outline-none"></textarea>
-              </div>
+            <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
               <button type="button" id="btnPortalDownloadSubmit" onclick="executePortalDownload()"
                 class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
-                Download PDF & Copy Code
+                Download PDF
               </button>
             </div>
 
             <!-- Manual scanned token entry step -->
-            <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
               <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
                 <span class="font-bold block mb-1">⚠️ PDF Downloaded Successfully!</span>
                 Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it below to verify and update the database.
@@ -653,6 +667,20 @@
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
                 Verify & Save Token
               </button>
+            </div>
+
+            <!-- Step 5: Success -->
+            <div id="portalSuccessRow" class="hidden space-y-4 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
+              <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-emerald-700">Verification &amp; Update Complete!</div>
+                <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and the database status updated to Done.</div>
+                <div class="text-[10px] text-slate-400 mt-2">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
+              </div>
             </div>
 
             <!-- Initial Action Button (to load captcha/start process) -->
@@ -2794,11 +2822,60 @@
     let portalNinValue = "";
     let portalDownloadToken = "";
 
+    function setPortalInputsDisabled(disabled) {
+      document.getElementById("portalFullNameEn").disabled = disabled;
+      document.getElementById("portalFullNameNp").disabled = disabled;
+      document.getElementById("portalDobLoc").disabled = disabled;
+      document.getElementById("portalCcnIssuingDateLoc").disabled = disabled;
+      document.getElementById("portalSearchQuery").disabled = disabled;
+      
+      const searchBtns = document.querySelectorAll("button[onclick='searchDbToPopulatePortal()']");
+      searchBtns.forEach(btn => btn.disabled = disabled);
+    }
+
+    function showPortalStep(n) {
+      const indicator = document.getElementById("portalStepIndicator");
+      if (n > 0) {
+        indicator.classList.remove("hidden");
+      } else {
+        indicator.classList.add("hidden");
+        return;
+      }
+
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById("portalStepInd" + i);
+        if (el) {
+          if (i <= n) {
+            el.className = "px-2.5 py-1 rounded-full bg-blue-600 text-white transition-all duration-300";
+          } else {
+            el.className = "px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300";
+          }
+        }
+      }
+    }
+
+    function resetPortalToInitial() {
+      setPortalInputsDisabled(false);
+      showPortalStep(0);
+      document.getElementById("portalCaptchaInputRow").classList.add("hidden");
+      document.getElementById("portalOtpRow").classList.add("hidden");
+      document.getElementById("portalDownloadRow").classList.add("hidden");
+      document.getElementById("portalManualTokenRow").classList.add("hidden");
+      document.getElementById("portalSuccessRow").classList.add("hidden");
+      document.getElementById("portalCaptchaContainer").classList.add("hidden");
+      document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+      
+      document.getElementById("portalCaptchaCode").value = "";
+      document.getElementById("portalOtpCode").value = "";
+      document.getElementById("portalScannedTokenVal").value = "";
+      portalNinValue = "";
+      portalDownloadToken = "";
+    }
+
     async function loadPortalCaptcha() {
       // Clear steps and inputs
       document.getElementById("portalCaptchaCode").value = "";
       document.getElementById("portalOtpCode").value = "";
-      document.getElementById("portalDownloadTokenVal").value = "";
       portalNinValue = "";
       portalDownloadToken = "";
 
@@ -2807,9 +2884,13 @@
       document.getElementById("portalOtpRow").classList.add("hidden");
       document.getElementById("portalDownloadRow").classList.add("hidden");
       document.getElementById("portalManualTokenRow").classList.add("hidden");
+      document.getElementById("portalSuccessRow").classList.add("hidden");
       document.getElementById("portalScannedTokenVal").value = "";
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
       document.getElementById("portalInitialActionBtnRow").classList.add("hidden");
+
+      setPortalInputsDisabled(true);
+      showPortalStep(1);
 
       const img = document.getElementById("portalCaptchaImg");
       img.src = "";
@@ -2829,7 +2910,7 @@
         }
       } catch (err) {
         alert("Failed loading captcha: " + err.message);
-        document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+        resetPortalToInitial();
       }
     }
 
@@ -2883,6 +2964,7 @@
         // Advance view state
         document.getElementById("portalCaptchaInputRow").classList.add("hidden");
         document.getElementById("portalOtpRow").classList.remove("hidden");
+        showPortalStep(2);
       } catch (err) {
         alert("Network error requesting OTP: " + err.message);
         loadPortalCaptcha();
@@ -2931,11 +3013,11 @@
         const data = await res.json();
         // Expected response: {"code":"OTP_VERIFIED","downloadToken":"eyJhbG..."}
         portalDownloadToken = data.downloadToken;
-        document.getElementById("portalDownloadTokenVal").value = portalDownloadToken;
 
         // Advance view state
         document.getElementById("portalOtpRow").classList.add("hidden");
         document.getElementById("portalDownloadRow").classList.remove("hidden");
+        showPortalStep(3);
       } catch (err) {
         alert("Network error verifying OTP: " + err.message);
       } finally {
@@ -3030,6 +3112,7 @@
         document.getElementById("portalDownloadRow").classList.add("hidden");
         document.getElementById("portalManualTokenRow").classList.remove("hidden");
         document.getElementById("portalScannedTokenVal").value = "";
+        showPortalStep(4);
 
       } catch (err) {
         alert(`Error executing download: ${err.message}`);
@@ -3083,10 +3166,25 @@
           console.log("Verified token saved for NIN:", portalNinValue);
         }
 
-        alert(`✅ Token verified and saved successfully!\n\nThe record has been updated with status: Done.\n\nToken: ${extracted.substring(0, 40)}...`);
-
-        // Reset portal back to initial state
-        loadPortalCaptcha();
+        // Transition to Success state
+        document.getElementById("portalManualTokenRow").classList.add("hidden");
+        document.getElementById("portalSuccessRow").classList.remove("hidden");
+        
+        let count = 5;
+        const timerEl = document.getElementById("portalCountdownTimer");
+        timerEl.innerText = count;
+        
+        const interval = setInterval(() => {
+          count--;
+          timerEl.innerText = count;
+          if (count <= 0) {
+            clearInterval(interval);
+            resetPortalToInitial();
+            if (typeof fetchDatabase === 'function') {
+              fetchDatabase(true);
+            }
+          }
+        }, 1000);
 
       } catch (err) {
         alert(`❌ Error: ${err.message}`);
