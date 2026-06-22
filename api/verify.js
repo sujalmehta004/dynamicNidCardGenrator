@@ -1,38 +1,546 @@
+const https = require("https");
+const zlib = require("zlib");
 const connectToDatabase = require("./db");
 const Person = require("./models/Person");
 
-module.exports = async (req, res) => {
-  if (typeof res.status !== 'function') {
-    res.status = function (statusCode) { this.statusCode = statusCode; return this; };
-  }
-  if (typeof res.json !== 'function') {
-    res.json = function (data) {
-      this.setHeader('Content-Type', 'application/json');
-      this.end(JSON.stringify(data));
-      return this;
+function makeHttpsRequest(url, options) {
+  return new Promise((resolve, reject) => {
+    const urlObj = new URL(url);
+    const reqOptions = {
+      method: options.method || "GET",
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      headers: options.headers || {},
+      rejectUnauthorized: false,
     };
+    const req = https.request(reqOptions, (res) => {
+      let chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => {
+        const buffer = Buffer.concat(chunks);
+        const enc = res.headers["content-encoding"];
+        if (enc === "gzip") {
+          zlib.gunzip(buffer, (e, d) => e ? reject(e) : resolve({ status: res.statusCode, body: d.toString() }));
+        } else if (enc === "br") {
+          zlib.brotliDecompress(buffer, (e, d) => e ? reject(e) : resolve({ status: res.statusCode, body: d.toString() }));
+        } else {
+          resolve({ status: res.statusCode, body: buffer.toString() });
+        }
+      });
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
+async function checkTokenValid(token) {
+  try {
+    const result = await makeHttpsRequest(
+      `https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=${encodeURIComponent(token)}`,
+      {
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Connection": "keep-alive",
+        },
+      }
+    );
+    if (result.status >= 400) return false;
+    try {
+      const parsed = JSON.parse(result.body);
+      if (parsed && parsed.error) return false;
+    } catch (e) { /* HTML response = valid */ }
+    return true;
+  } catch (e) {
+    return false;
   }
-  if (typeof res.send !== 'function') {
-    res.send = function (data) { this.end(data); return this; };
+}
+
+function renderVerifyPage(person, mode, nin) {
+  // mode: "no_token" | "expired_token"
+  const title = mode === "expired_token" ? "Token Expired — Re-verification Required" : "Identity Token Not Configured";
+  const subtitle = mode === "expired_token"
+    ? "Your NID download token has expired or is invalid. Please complete verification to get a new one."
+    : "Your NID card has not been verified yet. Click below to verify and obtain your digital NID card.";
+  const badgeColor = mode === "expired_token" ? "red" : "amber";
+
+  const dobNpJs = (person.dobNp || "").replace(/'/g, "\\'");
+  const citDateJs = (person.citDate || "").replace(/'/g, "\\'");
+  const givenEnJs = (person.givenEn || "").replace(/'/g, "\\'");
+  const surnameEnJs = (person.surnameEn || "").replace(/'/g, "\\'");
+  const givenNpJs = (person.givenNp || "").replace(/'/g, "\\'");
+  const surnameNpJs = (person.surnameNp || "").replace(/'/g, "\\'");
+  const ninEnJs = (person.ninEn || "").replace(/'/g, "\\'");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Identity Verification — ${person.givenEn} ${person.surnameEn}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; }
+    .nepali-font { font-family: 'Mukta', sans-serif; }
+    .step-card { display: none; }
+    .step-card.active { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin 1s linear infinite; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    .captcha-img { image-rendering: pixelated; }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 antialiased">
+
+  <div class="w-full max-w-2xl space-y-4">
+
+    <!-- Header Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <!-- Logo / Brand -->
+      <div class="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0h4"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-sm font-bold text-slate-900">National Identity Card — Nepal</div>
+          <div class="text-xs text-slate-500">राष्ट्रिय परिचयपत्र प्रणाली</div>
+        </div>
+        <div class="ml-auto">
+          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${badgeColor === "red" ? "bg-red-50 text-red-600 border-red-200" : "bg-amber-50 text-amber-600 border-amber-200"} uppercase tracking-wider">
+            ${mode === "expired_token" ? "Token Expired" : "Unverified"}
+          </span>
+        </div>
+      </div>
+
+      <!-- Status Message -->
+      <div class="flex items-start gap-3 p-4 rounded-xl ${badgeColor === "red" ? "bg-red-50 border border-red-100" : "bg-amber-50 border border-amber-100"} mb-5">
+        <svg class="w-5 h-5 ${badgeColor === "red" ? "text-red-500" : "text-amber-500"} mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <div>
+          <div class="text-sm font-bold ${badgeColor === "red" ? "text-red-700" : "text-amber-700"}">${title}</div>
+          <div class="text-xs ${badgeColor === "red" ? "text-red-600" : "text-amber-600"} mt-0.5">${subtitle}</div>
+        </div>
+      </div>
+
+      <!-- Identity Info Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">NID Number</div>
+          <div class="text-sm font-bold text-blue-700 font-mono">${person.ninEn}</div>
+          ${person.ninNp ? `<div class="text-xs text-slate-400 nepali-font">${person.ninNp}</div>` : ""}
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Full Name</div>
+          <div class="text-sm font-bold text-slate-900 uppercase">${person.givenEn || ""} ${person.surnameEn || ""}</div>
+          ${(person.givenNp || person.surnameNp) ? `<div class="text-xs text-slate-500 nepali-font">${person.givenNp || ""} ${person.surnameNp || ""}</div>` : ""}
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Date of Birth (AD / BS)</div>
+          <div class="text-sm font-semibold text-slate-800 font-mono">${person.dobEn || "—"} <span class="text-slate-400">/</span> ${person.dobNp || "—"}</div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Citizenship Issue Date</div>
+          <div class="text-sm font-semibold text-slate-800 font-mono">${person.citDate || "—"}</div>
+        </div>
+        ${person.addressEn ? `
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 sm:col-span-2">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Permanent Address</div>
+          <div class="text-sm font-semibold text-slate-800">${person.addressEn}</div>
+          ${person.addressNp ? `<div class="text-xs text-slate-500 nepali-font">${person.addressNp}</div>` : ""}
+        </div>` : ""}
+        ${person.mobile ? `
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Mobile (Registered)</div>
+          <div class="text-sm font-semibold text-slate-800">${person.mobile.replace(/(\d{2})(\d{5})(\d{3})/, "$1XXXXX$3")}</div>
+        </div>` : ""}
+      </div>
+
+      <!-- CTA Button -->
+      <div id="verifyBtnArea">
+        <button onclick="startVerifyFlow()" id="startVerifyBtn"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-600/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          Verify &amp; Download NID Card
+        </button>
+      </div>
+    </div>
+
+    <!-- OTP Flow Steps Card -->
+    <div id="otpFlowCard" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 fade-in">
+      <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
+      <p class="text-xs text-slate-500 mb-5">Complete the steps below to verify your identity and download your NID card.</p>
+
+      <!-- Step Indicator -->
+      <div class="flex items-center gap-2 mb-5 text-[10px] font-bold uppercase tracking-wider">
+        <span id="stepInd1" class="px-2.5 py-1 rounded-full bg-blue-600 text-white">1. Captcha</span>
+        <span class="text-slate-300">→</span>
+        <span id="stepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">2. OTP</span>
+        <span class="text-slate-300">→</span>
+        <span id="stepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">3. Download</span>
+      </div>
+
+      <!-- Step 1: Captcha -->
+      <div id="step1" class="step-card active space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs font-bold text-slate-700 mb-0.5">Enter the captcha code shown</div>
+            <div class="text-[11px] text-slate-500">Can't read? Click the refresh icon.</div>
+          </div>
+          <div class="flex items-center gap-2 border border-slate-200 rounded-xl p-2 bg-slate-50">
+            <img id="captchaImg" src="" alt="Captcha" class="h-12 w-36 object-contain rounded captcha-img" />
+            <button onclick="loadCaptcha()" title="Refresh" class="p-1.5 text-slate-500 hover:text-blue-600 transition-all">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <input id="captchaInput" type="text" placeholder="Enter captcha code"
+            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+          <button onclick="requestOtp()" id="btnRequestOtp"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
+            Send OTP
+          </button>
+        </div>
+        <div id="step1Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+      </div>
+
+      <!-- Step 2: OTP -->
+      <div id="step2" class="step-card space-y-4">
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
+          <div class="text-xs text-blue-700 font-medium">OTP sent to: <span id="maskedMobileDisplay" class="font-bold"></span></div>
+          <div class="text-[11px] text-blue-600 mt-0.5">NIN: <span id="ninDisplay" class="font-mono font-bold"></span></div>
+        </div>
+        <div class="flex gap-2">
+          <input id="otpInput" type="text" placeholder="Enter OTP code" maxlength="6"
+            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+          <button onclick="verifyOtp()" id="btnVerifyOtp"
+            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
+            Verify OTP
+          </button>
+        </div>
+        <div class="flex justify-end">
+          <button onclick="loadCaptcha()" class="text-xs text-slate-500 hover:text-blue-600 transition-all">↩ Resend OTP / Start Over</button>
+        </div>
+        <div id="step2Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+      </div>
+
+      <!-- Step 3: Download -->
+      <div id="step3" class="step-card space-y-4">
+        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+          <div class="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            OTP Verified Successfully
+          </div>
+          <div class="text-[11px] text-emerald-600 mt-0.5">Download Token obtained. Saving to database...</div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Download Token</div>
+          <div id="tokenDisplay" class="text-[10px] font-mono text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-2.5 break-all"></div>
+        </div>
+        <button onclick="downloadAndSave()" id="btnDownload"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Download NID Card PDF
+        </button>
+        <div id="step3Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div id="step4" class="step-card space-y-4 text-center">
+        <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+          <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-lg font-bold text-emerald-700">Verification Complete!</div>
+          <div class="text-sm text-slate-600 mt-1">Your NID card has been downloaded and your token has been saved.</div>
+          <div class="text-xs text-slate-400 mt-2">Redirecting to official NID verification page in <span id="countdownTimer">5</span>s...</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-[10px] text-slate-400">
+      Department of National ID & Civil Registration (DONIDCR) &bull; Government of Nepal
+    </div>
+  </div>
+
+  <script>
+    const PERSON_NIN = '${ninEnJs}';
+    const PERSON_FULL_NAME = '${givenEnJs} ${surnameEnJs}';
+    const PERSON_FULL_NAME_NP = '${givenNpJs} ${surnameNpJs}';
+    const PERSON_DOB_LOC = '${dobNpJs}';
+    const PERSON_CIT_DATE_LOC = '${citDateJs}';
+
+    let verifyNin = '';
+    let verifyDownloadToken = '';
+
+    // Nepali to English digit translation
+    const nepToEn = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
+    const enToNep = {'0':'०','1':'१','2':'२','3':'३','4':'४','5':'५','6':'६','7':'७','8':'८','9':'९'};
+    function translateDigits(str, map) {
+      return str.split('').map(c => map[c] || c).join('');
+    }
+
+    function showStep(n) {
+      document.querySelectorAll('.step-card').forEach(el => el.classList.remove('active'));
+      document.getElementById('step' + n).classList.add('active');
+      ['stepInd1','stepInd2','stepInd3'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (i + 1 <= n) {
+          el.className = 'px-2.5 py-1 rounded-full bg-blue-600 text-white';
+        } else {
+          el.className = 'px-2.5 py-1 rounded-full bg-slate-100 text-slate-400';
+        }
+      });
+    }
+
+    function showError(stepNum, msg) {
+      const el = document.getElementById('step' + stepNum + 'Error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+    function hideError(stepNum) {
+      document.getElementById('step' + stepNum + 'Error').classList.add('hidden');
+    }
+
+    function startVerifyFlow() {
+      document.getElementById('verifyBtnArea').innerHTML = '<div class="text-xs text-slate-500 text-center py-2">Loading captcha...</div>';
+      document.getElementById('otpFlowCard').classList.remove('hidden');
+      loadCaptcha();
+    }
+
+    async function loadCaptcha() {
+      // Reset to step 1
+      document.getElementById('captchaInput').value = '';
+      document.getElementById('captchaImg').src = '';
+      verifyNin = '';
+      verifyDownloadToken = '';
+      showStep(1);
+      hideError(1);
+
+      try {
+        const res = await fetch('/api/captcha');
+        if (!res.ok) throw new Error('Failed to load captcha');
+        const data = await res.json();
+        if (!data.image) throw new Error('Invalid captcha format');
+        document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.image;
+      } catch (err) {
+        showError(1, 'Could not load captcha: ' + err.message);
+      }
+    }
+
+    async function requestOtp() {
+      hideError(1);
+      const captchaCode = document.getElementById('captchaInput').value.trim();
+      if (!captchaCode) { showError(1, 'Please enter the captcha code.'); return; }
+
+      const btn = document.getElementById('btnRequestOtp');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const dobLoc = translateDigits(PERSON_DOB_LOC, enToNep);
+      const ccnIssuingDateLoc = translateDigits(PERSON_CIT_DATE_LOC, enToNep);
+
+      try {
+        const res = await fetch('/api/request-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode },
+          body: JSON.stringify({
+            fullName: PERSON_FULL_NAME.trim().toUpperCase(),
+            fullNameLoc: PERSON_FULL_NAME_NP.trim(),
+            dobLoc: dobLoc,
+            ccnIssuingDateLoc: ccnIssuingDateLoc,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showError(1, 'OTP request failed: ' + (data.error || res.statusText));
+          loadCaptcha();
+          return;
+        }
+        verifyNin = data.nin || PERSON_NIN;
+        document.getElementById('maskedMobileDisplay').textContent = data.maskedMobile || '—';
+        document.getElementById('ninDisplay').textContent = verifyNin;
+        showStep(2);
+      } catch (err) {
+        showError(1, 'Network error: ' + err.message);
+        loadCaptcha();
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send OTP';
+      }
+    }
+
+    async function verifyOtp() {
+      hideError(2);
+      const otp = document.getElementById('otpInput').value.trim();
+      if (!otp) { showError(2, 'Please enter the OTP code.'); return; }
+
+      const btn = document.getElementById('btnVerifyOtp');
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        const res = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nin: verifyNin, otp }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showError(2, 'OTP verification failed: ' + (data.error || res.statusText));
+          return;
+        }
+        verifyDownloadToken = data.downloadToken;
+        document.getElementById('tokenDisplay').textContent = verifyDownloadToken;
+        showStep(3);
+        if (data.downloadToken) {
+          // Auto-trigger download
+          downloadAndSave();
+        }
+      } catch (err) {
+        showError(2, 'Network error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify OTP';
+      }
+    }
+
+    async function downloadAndSave() {
+      hideError(3);
+      const btn = document.getElementById('btnDownload');
+      btn.disabled = true;
+      btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Downloading...';
+
+      const dobLoc = translateDigits(PERSON_DOB_LOC, enToNep);
+      const ccnIssuingDateLoc = translateDigits(PERSON_CIT_DATE_LOC, enToNep);
+
+      try {
+        // Download PDF
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Download-Token': verifyDownloadToken,
+          },
+          body: JSON.stringify({
+            full_name: PERSON_FULL_NAME.trim().toUpperCase(),
+            full_name_loc: PERSON_FULL_NAME_NP.trim(),
+            dob_loc: dobLoc,
+            ccn_issuing_date_loc: ccnIssuingDateLoc,
+          }),
+        });
+
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try { const d = await res.json(); errMsg = d.error || errMsg; } catch(e) {}
+          showError(3, 'Download failed: ' + errMsg);
+          btn.disabled = false;
+          btn.textContent = 'Retry Download';
+          return;
+        }
+
+        const finalToken = res.headers.get("X-Download-Token") || res.headers.get("token") || verifyDownloadToken;
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+
+        // Save token + set status=done in DB
+        try {
+          await fetch('/api/people?originalNin=' + encodeURIComponent(PERSON_NIN), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: finalToken, status: 'done' }),
+          });
+        } catch(dbErr) { console.error('DB update failed:', dbErr); }
+
+        // Clipboard code
+        try {
+          const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
+          const namePart = nameOnly.substring(0,4).toUpperCase();
+          const dobEn = translateDigits(PERSON_DOB_LOC, nepToEn);
+          const yearPart = dobEn.split('-')[0].substring(0,4);
+          await navigator.clipboard.writeText(namePart + yearPart);
+        } catch(e) {}
+
+        // Show success step
+        showStep(4);
+        document.getElementById('stepInd3').className = 'px-2.5 py-1 rounded-full bg-blue-600 text-white';
+
+        // Countdown redirect
+        let count = 5;
+        const timer = setInterval(() => {
+          count--;
+          const el = document.getElementById('countdownTimer');
+          if (el) el.textContent = count;
+          if (count <= 0) {
+            clearInterval(timer);
+            window.location.href = 'https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=' + encodeURIComponent(finalToken);
+          }
+        }, 1000);
+
+      } catch (err) {
+        showError(3, 'Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Retry Download';
+      }
+    }
+
+    // Auto-start captcha load when page loads if needed
+    window.addEventListener('DOMContentLoaded', () => {
+      // Preload captcha image only (not visible until user clicks button)
+    });
+  </script>
+</body>
+</html>`;
+}
+
+module.exports = async (req, res) => {
+  if (typeof res.status !== "function") {
+    res.status = function (s) { this.statusCode = s; return this; };
+  }
+  if (typeof res.json !== "function") {
+    res.json = function (d) { this.setHeader("Content-Type", "application/json"); this.end(JSON.stringify(d)); return this; };
+  }
+  if (typeof res.send !== "function") {
+    res.send = function (d) { this.end(d); return this; };
   }
 
   try {
     await connectToDatabase();
   } catch (error) {
-    console.error("Database connection error:", error);
     return res.status(500).json({ error: "Database connection failed" });
   }
 
   const { nin } = req.query;
-
-  if (!nin) {
-    return res.status(400).json({ error: "NIN (National Identity Number) parameter is required" });
-  }
+  if (!nin) return res.status(400).json({ error: "NIN parameter is required" });
 
   try {
-    // Find the person by NIN
     const person = await Person.findOne({ ninEn: nin.trim() });
 
+    // CASE A: Not found
     if (!person) {
       res.setHeader("Content-Type", "text/html");
       return res.status(404).send(`<!DOCTYPE html>
@@ -40,148 +548,47 @@ module.exports = async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Identity Status Verification - Not Found</title>
+  <title>Identity Not Found</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-    }
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-  </style>
+  <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; }</style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 text-slate-100 antialiased">
-  <div class="w-full max-w-md glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl text-center flex flex-col gap-5">
-    <div class="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-550 mx-auto">
-      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+<body class="min-h-screen flex items-center justify-center p-4 antialiased">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center space-y-5">
+    <div class="w-16 h-16 rounded-full bg-red-50 border-2 border-red-200 flex items-center justify-center mx-auto">
+      <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </div>
     <div>
-      <h2 class="text-lg font-bold text-red-400">Record Not Found</h2>
-      <p class="text-xs text-slate-400 mt-2">
-        No registered profile could be matched with the National Identity Number (NIN): <strong>${nin}</strong>.
-      </p>
+      <h2 class="text-lg font-bold text-slate-900">Record Not Found</h2>
+      <p class="text-sm text-slate-500 mt-2">No registered profile could be matched with NIN: <strong class="font-mono text-blue-600">${nin}</strong>.</p>
     </div>
-    <div class="pt-2">
-      <a href="/" class="inline-block bg-white/10 hover:bg-white/20 border border-white/10 text-white font-semibold px-6 py-2.5 rounded-xl text-xs transition-all">
-        Go to Dashboard
-      </a>
-    </div>
+    <div class="text-[10px] text-slate-400">Department of National ID &amp; Civil Registration &bull; Government of Nepal</div>
   </div>
 </body>
 </html>`);
     }
 
-    // If token exists, redirect to government verification page with token
+    // CASE B: Token exists — check validity
     if (person.token && person.token.trim() !== "") {
-      const redirectUrl = `https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=${encodeURIComponent(person.token.trim())}`;
-      res.writeHead(302, { Location: redirectUrl });
-      return res.end();
+      const tokenValid = await checkTokenValid(person.token.trim());
+      if (tokenValid) {
+        // Valid — redirect to nin-support
+        const redirectUrl = `https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=${encodeURIComponent(person.token.trim())}`;
+        res.writeHead(302, { Location: redirectUrl });
+        return res.end();
+      }
+      // Invalid/expired — show verify page with "Token Expired" mode
+      res.setHeader("Content-Type", "text/html");
+      return res.status(200).send(renderVerifyPage(person, "expired_token", nin));
     }
 
-    // Otherwise, return the beautifully formatted profile HTML page showing "NID number token is not configured or not online"
+    // CASE C: No token — show verify page with "no_token" mode
     res.setHeader("Content-Type", "text/html");
-    return res.status(200).send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Identity Status Verification</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Mukta:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-    }
-    .nepali-font {
-      font-family: 'Mukta', sans-serif;
-    }
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-  </style>
-</head>
-<body class="min-h-screen flex items-center justify-center p-4 text-slate-100 antialiased">
-  <div class="w-full max-w-2xl glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-    <!-- Glowing background accent -->
-    <div class="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-    <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    return res.status(200).send(renderVerifyPage(person, "no_token", nin));
 
-    <!-- Header status -->
-    <div class="flex flex-col items-center text-center gap-3 border-b border-white/10 pb-5">
-      <div class="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-lg shadow-amber-500/5">
-        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-        </svg>
-      </div>
-      <div>
-        <h2 class="text-lg font-bold text-amber-400 tracking-tight font-sans">Identity Token Not Configured</h2>
-        <p class="text-xs text-slate-300 mt-1 max-w-md mx-auto leading-relaxed">
-          Your NID number token is not configured or not online.
-        </p>
-      </div>
-    </div>
-
-    <!-- NID Banner -->
-    <div class="bg-white/5 border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-      <div>
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">National Identity Number</span>
-        <div class="text-md font-bold text-white font-mono mt-0.5">${person.ninEn}</div>
-      </div>
-      <div class="text-right sm:text-left">
-        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider nepali-font">राष्ट्रिय परिचय नम्बर</span>
-        <div class="text-md font-bold text-white font-mono mt-0.5 nepali-font">${person.ninNp || "—"}</div>
-      </div>
-    </div>
-
-    <!-- Profile Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-      <div class="space-y-1 bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.04]">
-        <span class="text-slate-400 font-medium">Full Name (English)</span>
-        <div class="text-sm font-bold text-slate-200 uppercase">${person.givenEn} ${person.surnameEn}</div>
-      </div>
-      <div class="space-y-1 bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.04] nepali-font">
-        <span class="text-slate-400 font-medium">पुरा नाम (नेपाली)</span>
-        <div class="text-sm font-bold text-slate-200">${person.givenNp || ""} ${person.surnameNp || ""}</div>
-      </div>
-      <div class="space-y-1 bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.04]">
-        <span class="text-slate-400 font-medium">Date of Birth (AD / BS)</span>
-        <div class="text-sm font-bold text-slate-200 font-mono">${person.dobEn || "—"} <span class="text-slate-400 font-normal">/</span> ${person.dobNp || "—"}</div>
-      </div>
-      <div class="space-y-1 bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.04]">
-        <span class="text-slate-400 font-medium">Citizenship Issue Date</span>
-        <div class="text-sm font-bold text-slate-200 font-mono">${person.citDate || "—"}</div>
-      </div>
-      <div class="space-y-1 bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.04] md:col-span-2">
-        <span class="text-slate-400 font-medium">Permanent Address (English)</span>
-        <div class="text-sm font-semibold text-slate-200">${person.addressEn || "—"}</div>
-      </div>
-      <div class="space-y-1 bg-white/[0.02] p-3.5 rounded-xl border border-white/[0.04] md:col-span-2 nepali-font">
-        <span class="text-slate-400 font-medium">स्थायी ठेगाना (नेपाली)</span>
-        <div class="text-sm font-semibold text-slate-200">${person.addressNp || "—"}</div>
-      </div>
-    </div>
-
-    <!-- Footer meta -->
-    <div class="border-t border-white/10 pt-4 flex flex-wrap justify-between items-center text-[10px] text-slate-500 gap-2">
-      <div>Identity Status: <span class="uppercase font-bold text-amber-500">${person.status || "pending"}</span></div>
-      <div>Last Updated: <span class="font-mono">${person.updateDate || person.regDate || "—"}</span></div>
-    </div>
-  </div>
-</body>
-</html>`);
   } catch (err) {
-    return res.status(500).json({ error: "Internal server error during verification", details: err.message });
+    return res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };

@@ -58,6 +58,7 @@ module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Download-Token");
+  res.setHeader("Access-Control-Expose-Headers", "X-Download-Token, token, Content-Disposition");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -127,6 +128,15 @@ module.exports = async function handler(req, res) {
     if (postResult.status !== 200) {
       console.error("Failed downloading from government portal. Status:", postResult.status);
       return res.status(postResult.status).json({ error: `External portal failed (${postResult.status}): ${postResult.body.toString() || "No response details"}` });
+    }
+
+    // Expose the download token from government API response headers to the client proxy response
+    const govResponseToken = postResult.headers["x-download-token"] || postResult.headers["token"] || postResult.headers["x-enid-token"];
+    if (govResponseToken) {
+      res.setHeader("X-Download-Token", govResponseToken);
+    } else {
+      // Fallback: If not found in headers, reuse the request token
+      res.setHeader("X-Download-Token", downloadToken);
     }
 
     res.setHeader("Content-Type", "application/pdf");

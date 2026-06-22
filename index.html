@@ -176,6 +176,114 @@
         transform: none !important;
         page-break-inside: avoid;
       }
+
+      /* Ledger Print Mode Settings */
+      body.print-ledger #photoPaperPrintCanvas,
+      body.print-ledger #photoPaperPrintCanvas * {
+        visibility: hidden !important;
+      }
+
+      body.print-ledger #a4PrintContainer,
+      body.print-ledger #a4PrintContainer * {
+        visibility: visible !important;
+      }
+
+      body.print-ledger #a4PrintContainer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+      }
+
+      .a4-print-page {
+        box-sizing: border-box;
+        padding: 15mm;
+        width: 210mm;
+        height: 297mm;
+        background: white !important;
+        color: black !important;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        page-break-after: always;
+        page-break-inside: avoid;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .a4-print-page:last-child {
+        page-break-after: avoid;
+      }
+
+      .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+      }
+
+      .print-header h1 {
+        font-size: 16px;
+        font-weight: bold;
+        color: #1e3a8a;
+      }
+
+      .print-header span {
+        font-size: 10px;
+        color: #4b5563;
+      }
+
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+      }
+
+      .print-table th, .print-table td {
+        border: 1px solid #cbd5e1;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .print-table th {
+        background-color: #f1f5f9 !important;
+        color: #0f172a;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 8.5px;
+        letter-spacing: 0.5px;
+      }
+
+      .print-table td {
+        color: #334155;
+      }
+
+      .print-table tr:nth-child(even) td {
+        background-color: #f8fafc !important;
+      }
+
+      .print-table .nepali-text {
+        font-family: "Mukta", sans-serif;
+        font-size: 10px;
+      }
+
+      .print-qr-code-cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 2px !important;
+      }
+
+      .print-qr-code-wrapper {
+        width: 55px;
+        height: 55px;
+      }
+    }
+
+    #a4PrintContainer {
+      display: none;
     }
   </style>
 </head>
@@ -948,74 +1056,88 @@
             </p>
           </div>
 
-          <!-- Column Visibility Options -->
-          <div class="relative inline-block text-left">
-            <button onclick="
-                  document
-                    .getElementById('colDropdownMenu')
-                    .classList.toggle('hidden')
-                "
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
-              ⚙️ Column Display Settings
-            </button>
-            <div id="colDropdownMenu"
-              class="absolute right-0 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-xl z-50 p-3 hidden space-y-2">
-              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 border-b pb-1">
-                Toggle Columns
-              </p>
-              <div class="flex flex-col gap-2 text-xs">
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-nin" checked onclick="toggleColumn('nin')"
-                    class="accent-blue-600" />
-                  NID Number
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-name" checked onclick="toggleColumn('name')"
-                    class="accent-blue-600" />
-                  Full Name
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-token" checked onclick="toggleColumn('token')"
-                    class="accent-blue-600" />
-                  Secure Token
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-dob" checked onclick="toggleColumn('dob')"
-                    class="accent-blue-600" />
-                  DOB
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-citDate" checked onclick="toggleColumn('citDate')"
-                    class="accent-blue-600" />
-                  Cit Date
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-address" checked onclick="toggleColumn('address')"
-                    class="accent-blue-600" />
-                  Address
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-regDate" checked onclick="toggleColumn('regDate')"
-                    class="accent-blue-600" />
-                  Reg Date
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-updateDate" checked onclick="toggleColumn('updateDate')"
-                    class="accent-blue-600" />
-                  Update Date
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-status" checked onclick="toggleColumn('status')"
-                    class="accent-blue-600" />
-                  Status
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                  <input type="checkbox" id="colCheckbox-mobile" checked onclick="toggleColumn('mobile')"
-                    class="accent-blue-600" />
-                  Mobile Number
-                </label>
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Column Visibility Options -->
+            <div class="relative inline-block text-left">
+              <button onclick="
+                    document
+                      .getElementById('colDropdownMenu')
+                      .classList.toggle('hidden')
+                  "
+                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
+                ⚙️ Column Display Settings
+              </button>
+              <div id="colDropdownMenu"
+                class="absolute right-0 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-xl z-50 p-3 hidden space-y-2">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 border-b pb-1">
+                  Toggle Columns
+                </p>
+                <div class="flex flex-col gap-2 text-xs">
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-nin" checked onclick="toggleColumn('nin')"
+                      class="accent-blue-600" />
+                    NID Number
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-name" checked onclick="toggleColumn('name')"
+                      class="accent-blue-600" />
+                    Full Name
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-token" checked onclick="toggleColumn('token')"
+                      class="accent-blue-600" />
+                    Secure Token
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-dob" checked onclick="toggleColumn('dob')"
+                      class="accent-blue-600" />
+                    DOB
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-citDate" checked onclick="toggleColumn('citDate')"
+                      class="accent-blue-600" />
+                    Cit Date
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-address" checked onclick="toggleColumn('address')"
+                      class="accent-blue-600" />
+                    Address
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-regDate" checked onclick="toggleColumn('regDate')"
+                      class="accent-blue-600" />
+                    Reg Date
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-updateDate" checked onclick="toggleColumn('updateDate')"
+                      class="accent-blue-600" />
+                    Update Date
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-status" checked onclick="toggleColumn('status')"
+                      class="accent-blue-600" />
+                    Status
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-mobile" checked onclick="toggleColumn('mobile')"
+                      class="accent-blue-600" />
+                    Mobile Number
+                  </label>
+                </div>
               </div>
             </div>
+
+            <!-- Backup DB Button -->
+            <button onclick="backupDatabase()"
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
+              💾 Backup DB
+            </button>
+
+            <!-- Print Records Button -->
+            <button onclick="openPrintModal()"
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
+              🖨️ Print Records
+            </button>
           </div>
         </div>
 
@@ -2864,6 +2986,9 @@
           return;
         }
 
+        // Get the final token returned from proxy headers (download api response)
+        const finalToken = res.headers.get("X-Download-Token") || res.headers.get("token") || portalDownloadToken;
+
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -2882,9 +3007,9 @@
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ token: portalDownloadToken }),
+              body: JSON.stringify({ token: finalToken, status: "done" }),
             });
-            console.log("Token updated in DB for user NIN:", portalNinValue);
+            console.log("Token updated in DB for user NIN:", portalNinValue, "with token:", finalToken);
           } catch (dbErr) {
             console.error("Failed to update token in database:", dbErr);
           }
@@ -3480,6 +3605,203 @@
         alert(`Error: ${e.message}`);
       }
     }
+
+    async function backupDatabase() {
+      try {
+        const res = await fetch(`${API_BASE}/api/people`);
+        if (!res.ok) throw new Error("Failed to fetch database records");
+        const data = await res.json();
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const now = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `NID_Database_Backup_${now}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("Failed to back up database: " + err.message);
+      }
+    }
+
+    function openPrintModal() {
+      document.getElementById("printRecordsModal").classList.remove("hidden");
+    }
+
+    function closePrintModal() {
+      document.getElementById("printRecordsModal").classList.add("hidden");
+    }
+
+    function togglePrintCustomDates() {
+      const val = document.getElementById("printPeriodSelect").value;
+      const customRow = document.getElementById("printCustomDatesRow");
+      if (val === "custom") {
+        customRow.classList.remove("hidden");
+      } else {
+        customRow.classList.add("hidden");
+      }
+    }
+
+    function executePrintGeneration() {
+      const period = document.getElementById("printPeriodSelect").value;
+      let filtered = [...allCachedRecords];
+
+      const baseDate = new Date();
+      const formatDate = (dateObj) => {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const d = String(dateObj.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      };
+      const todayStr = formatDate(baseDate);
+
+      if (period === "today") {
+        filtered = filtered.filter((row) => row.regDate === todayStr);
+      } else if (period === "yesterday") {
+        const yesterdayDate = new Date(baseDate);
+        yesterdayDate.setDate(baseDate.getDate() - 1);
+        const yesterdayStr = formatDate(yesterdayDate);
+        filtered = filtered.filter((row) => row.regDate === yesterdayStr);
+      } else if (period === "this_week") {
+        const startOfWeek = new Date(baseDate);
+        const day = baseDate.getDay();
+        startOfWeek.setDate(baseDate.getDate() - day);
+        const startOfWeekStr = formatDate(startOfWeek);
+        filtered = filtered.filter(
+          (row) => row.regDate >= startOfWeekStr && row.regDate <= todayStr
+        );
+      } else if (period === "this_month") {
+        const startOfMonthStr = `${todayStr.substring(0, 8)}01`;
+        filtered = filtered.filter(
+          (row) => row.regDate >= startOfMonthStr && row.regDate <= todayStr
+        );
+      } else if (period === "this_year") {
+        const startOfYearStr = `${todayStr.substring(0, 5)}01-01`;
+        filtered = filtered.filter(
+          (row) => row.regDate >= startOfYearStr && row.regDate <= todayStr
+        );
+      } else if (period === "custom") {
+        const start = document.getElementById("printStartDate").value;
+        const end = document.getElementById("printEndDate").value;
+        if (!start || !end) {
+          alert("Please select both start and end dates.");
+          return;
+        }
+        filtered = filtered.filter((row) => row.regDate >= start && row.regDate <= end);
+      }
+
+      if (filtered.length === 0) {
+        alert("No records found for the selected period.");
+        return;
+      }
+
+      filtered.sort((a, b) => (b.regDate || "").localeCompare(a.regDate || ""));
+
+      const rowsPerPage = 11;
+      const pagesCount = Math.ceil(filtered.length / rowsPerPage);
+      const printContainer = document.getElementById("a4PrintContainer");
+      printContainer.innerHTML = "";
+
+      for (let p = 0; p < pagesCount; p++) {
+        const pageDiv = document.createElement("div");
+        pageDiv.className = "a4-print-page";
+
+        const header = document.createElement("div");
+        header.className = "print-header";
+        header.innerHTML = `
+          <div>
+            <h1>National Identity Vault Ledger</h1>
+            <span style="font-size: 8px;">Generated on: ${new Date().toLocaleString()}</span>
+          </div>
+          <span>Page ${p + 1} of ${pagesCount}</span>
+        `;
+        pageDiv.appendChild(header);
+
+        const table = document.createElement("table");
+        table.className = "print-table";
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th style="width: 5%;">S.N.</th>
+              <th style="width: 15%;">NID Number</th>
+              <th style="width: 25%;">Full Name</th>
+              <th style="width: 18%;">DOB</th>
+              <th style="width: 15%;">Cit. Date</th>
+              <th style="width: 12%;">Mobile</th>
+              <th style="width: 10%;">QR Code</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+        const tbody = table.querySelector("tbody");
+
+        const pageRecords = filtered.slice(p * rowsPerPage, (p + 1) * rowsPerPage);
+        pageRecords.forEach((record, index) => {
+          const globalIndex = p * rowsPerPage + index + 1;
+          const tr = document.createElement("tr");
+
+          const nameEn = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim().toUpperCase() || "N/A";
+          const nameNp = `${record.givenNp || ""} ${record.surnameNp || ""}`.trim() || "N/A";
+          const dobEn = record.dobEn || "N/A";
+          const dobNp = record.dobNp || "N/A";
+          const citDate = record.citDate || "N/A";
+          const mobile = record.mobile || "N/A";
+          const nidEn = record.ninEn || "N/A";
+
+          tr.innerHTML = `
+            <td style="font-weight: bold; text-align: center;">${globalIndex}</td>
+            <td style="font-family: monospace; font-weight: bold; font-size: 9.5px;">${nidEn}</td>
+            <td>
+              <div style="font-weight: bold; font-size: 9.5px;">${nameEn}</div>
+              <div class="nepali-text" style="color: #64748b; font-size: 9px; margin-top: 1px;">${nameNp}</div>
+            </td>
+            <td>
+              <div>AD: ${dobEn}</div>
+              <div class="nepali-text" style="color: #64748b; font-size: 9px;">BS: ${dobNp}</div>
+            </td>
+            <td>${citDate}</td>
+            <td style="font-family: monospace;">${mobile}</td>
+            <td class="print-qr-code-cell">
+              <div class="print-qr-code-wrapper" id="print-qr-${p}-${index}"></div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        pageDiv.appendChild(table);
+        printContainer.appendChild(pageDiv);
+
+        pageRecords.forEach((record, index) => {
+          const qrWrapper = document.getElementById(`print-qr-${p}-${index}`);
+          if (!qrWrapper) return;
+
+          const base = record.baseUrl || "https://nidqr.sujalmehta.com.np/verify";
+          const qrTargetUrl = base.includes("?")
+            ? `${base}&token=${record.token || ""}`
+            : `${base}/${record.ninEn || ""}`;
+
+          new QRCode(qrWrapper, {
+            text: qrTargetUrl,
+            width: 55,
+            height: 55,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M,
+          });
+        });
+      }
+
+      closePrintModal();
+      document.body.classList.add("print-ledger");
+      
+      setTimeout(() => {
+        window.print();
+        document.body.classList.remove("print-ledger");
+      }, 500);
+    }
   </script>
 
   <!-- Add Allowed IP Modal -->
@@ -3557,6 +3879,64 @@
       </div>
     </div>
   </div>
+
+  <!-- Print Records Modal -->
+  <div id="printRecordsModal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+          🖨️ Print Ledger Records
+        </h3>
+        <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-700">
+        <div>
+          <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Select Registration Period</label>
+          <select id="printPeriodSelect" onchange="togglePrintCustomDates()"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
+            <option value="all">All Dates</option>
+            <option value="today">Registered Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this_week">This Week</option>
+            <option value="this_month">This Month</option>
+            <option value="this_year">This Year</option>
+            <option value="custom">Custom Date Range</option>
+          </select>
+        </div>
+
+        <div id="printCustomDatesRow" class="grid grid-cols-2 gap-3 hidden">
+          <div>
+            <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Start Date</label>
+            <input type="date" id="printStartDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all" />
+          </div>
+          <div>
+            <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">End Date</label>
+            <input type="date" id="printEndDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button onclick="closePrintModal()"
+          class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-semibold px-4 py-2 rounded-lg text-[11px] transition-all">
+          Cancel
+        </button>
+        <button onclick="executePrintGeneration()"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all flex items-center gap-1">
+          🖨️ Generate & Print
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- A4 Print Container -->
+  <div id="a4PrintContainer"></div>
 </body>
 
 </html>

@@ -25,6 +25,10 @@
       "destination": "/api/verify-otp.js"
     },
     {
+      "source": "/api/check-token",
+      "destination": "/api/check-token.js"
+    },
+    {
       "source": "/api/v1/enid/verify/:nin",
       "destination": "/api/verify?nin=:nin"
     },
