@@ -558,7 +558,7 @@ function renderVerifyPage(person, mode, nin) {
           if (el) el.textContent = count;
           if (count <= 0) {
             clearInterval(timer);
-            window.location.href = 'https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=' + encodeURIComponent(extracted);
+            window.location.href = 'https://citizenportal.donidcr.gov.np/en/verify?token=' + encodeURIComponent(extracted);
           }
         }, 1000);
 
@@ -578,7 +578,7 @@ function renderVerifyPage(person, mode, nin) {
           const res = await fetch('/api/check-token?token=' + encodeURIComponent(cached));
           const data = await res.json();
           if (data && data.valid) {
-            window.location.href = 'https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=' + encodeURIComponent(cached);
+            window.location.href = 'https://citizenportal.donidcr.gov.np/en/verify?token=' + encodeURIComponent(cached);
           } else {
             localStorage.removeItem('nid_token_' + PERSON_NIN);
           }
@@ -647,8 +647,8 @@ module.exports = async (req, res) => {
     if (person.token && person.token.trim() !== "") {
       const tokenValid = await checkTokenValid(person.token.trim());
       if (tokenValid) {
-        // Valid — redirect to nin-support
-        const redirectUrl = `https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=${encodeURIComponent(person.token.trim())}`;
+        // Valid — redirect to citizen portal
+        const redirectUrl = `https://citizenportal.donidcr.gov.np/en/verify?token=${encodeURIComponent(person.token.trim())}`;
         res.writeHead(302, { Location: redirectUrl });
         return res.end();
       }
