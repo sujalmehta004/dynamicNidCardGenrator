@@ -178,15 +178,17 @@ function renderVerifyPage(person, mode, nin) {
     <!-- OTP Flow Steps Card -->
     <div id="otpFlowCard" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 fade-in">
       <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
-      <p class="text-xs text-slate-500 mb-5">Complete the steps below to verify your identity and download your NID card.</p>
+      <p class="text-xs text-slate-500 mb-4">Complete the steps below to verify your identity and download your NID card.</p>
 
       <!-- Step Indicator -->
-      <div class="flex items-center gap-2 mb-5 text-[10px] font-bold uppercase tracking-wider">
+      <div class="flex flex-wrap items-center gap-2 mb-5 text-[10px] font-bold uppercase tracking-wider">
         <span id="stepInd1" class="px-2.5 py-1 rounded-full bg-blue-600 text-white">1. Captcha</span>
         <span class="text-slate-300">→</span>
         <span id="stepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">2. OTP</span>
         <span class="text-slate-300">→</span>
         <span id="stepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">3. Download</span>
+        <span class="text-slate-300">→</span>
+        <span id="stepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">4. Token Scan</span>
       </div>
 
       <!-- Step 1: Captcha -->
@@ -243,11 +245,7 @@ function renderVerifyPage(person, mode, nin) {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
             OTP Verified Successfully
           </div>
-          <div class="text-[11px] text-emerald-600 mt-0.5">Download Token obtained. Saving to database...</div>
-        </div>
-        <div>
-          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Download Token</div>
-          <div id="tokenDisplay" class="text-[10px] font-mono text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-2.5 break-all"></div>
+          <div class="text-[11px] text-emerald-600 mt-0.5">Ready to download the digital NID card PDF.</div>
         </div>
         <button onclick="downloadAndSave()" id="btnDownload"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
@@ -257,8 +255,31 @@ function renderVerifyPage(person, mode, nin) {
         <div id="step3Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
       </div>
 
-      <!-- Step 4: Success -->
-      <div id="step4" class="step-card space-y-4 text-center">
+      <!-- Step 4: Scanned Token Entry -->
+      <div id="step4" class="step-card space-y-4">
+        <div class="bg-amber-50 border border-amber-100 rounded-xl p-3">
+          <div class="text-xs text-amber-700 font-bold flex items-center gap-1.5">
+            ⚠️ PDF Downloaded Successfully!
+          </div>
+          <div class="text-[11px] text-amber-600 mt-1 font-semibold leading-relaxed">
+            Please open the downloaded NID card PDF, scan the QR code inside the PDF, copy that URL/text, and paste it in the field below.
+            <br/><span class="text-red-500 font-bold">Do not close or refresh this page.</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Pasted Scanned QR URL / Token</label>
+          <textarea id="pastedTokenInput" rows="3" placeholder="Paste the full scanned QR URL here..."
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-mono transition-all"></textarea>
+        </div>
+        <button onclick="verifyAndSaveScannedToken()" id="btnSubmitScannedToken"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+          Verify &amp; Save Token
+        </button>
+        <div id="step4Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+      </div>
+
+      <!-- Step 5: Success -->
+      <div id="step5" class="step-card space-y-4 text-center">
         <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
           <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -266,7 +287,7 @@ function renderVerifyPage(person, mode, nin) {
         </div>
         <div>
           <div class="text-lg font-bold text-emerald-700">Verification Complete!</div>
-          <div class="text-sm text-slate-600 mt-1">Your NID card has been downloaded and your token has been saved.</div>
+          <div class="text-sm text-slate-600 mt-1">Your NID card token has been verified and saved to the database.</div>
           <div class="text-xs text-slate-400 mt-2">Redirecting to official NID verification page in <span id="countdownTimer">5</span>s...</div>
         </div>
       </div>
@@ -299,7 +320,7 @@ function renderVerifyPage(person, mode, nin) {
     function showStep(n) {
       document.querySelectorAll('.step-card').forEach(el => el.classList.remove('active'));
       document.getElementById('step' + n).classList.add('active');
-      ['stepInd1','stepInd2','stepInd3'].forEach((id, i) => {
+      ['stepInd1','stepInd2','stepInd3','stepInd4'].forEach((id, i) => {
         const el = document.getElementById(id);
         if (i + 1 <= n) {
           el.className = 'px-2.5 py-1 rounded-full bg-blue-600 text-white';
@@ -407,7 +428,6 @@ function renderVerifyPage(person, mode, nin) {
           return;
         }
         verifyDownloadToken = data.downloadToken;
-        document.getElementById('tokenDisplay').textContent = verifyDownloadToken;
         showStep(3);
         if (data.downloadToken) {
           // Auto-trigger download
@@ -455,8 +475,6 @@ function renderVerifyPage(person, mode, nin) {
           return;
         }
 
-        const finalToken = res.headers.get("X-Download-Token") || res.headers.get("token") || verifyDownloadToken;
-
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -467,15 +485,6 @@ function renderVerifyPage(person, mode, nin) {
         a.click();
         URL.revokeObjectURL(url);
 
-        // Save token + set status=done in DB
-        try {
-          await fetch('/api/people?originalNin=' + encodeURIComponent(PERSON_NIN), {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: finalToken, status: 'done' }),
-          });
-        } catch(dbErr) { console.error('DB update failed:', dbErr); }
-
         // Clipboard code
         try {
           const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
@@ -485,9 +494,61 @@ function renderVerifyPage(person, mode, nin) {
           await navigator.clipboard.writeText(namePart + yearPart);
         } catch(e) {}
 
-        // Show success step
+        // Go to Step 4 (Token Scan) instead of updating DB immediately
         showStep(4);
-        document.getElementById('stepInd3').className = 'px-2.5 py-1 rounded-full bg-blue-600 text-white';
+
+      } catch (err) {
+        showError(3, 'Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Retry Download';
+      }
+    }
+
+    function extractToken(str) {
+      str = str.trim();
+      const matches = str.match(/token=([^&]+)/g);
+      if (matches && matches.length > 0) {
+        const lastMatch = matches[matches.length - 1];
+        return decodeURIComponent(lastMatch.substring(6));
+      }
+      return str;
+    }
+
+    async function verifyAndSaveScannedToken() {
+      hideError(4);
+      const inputVal = document.getElementById('pastedTokenInput').value.trim();
+      if (!inputVal) {
+        showError(4, 'Please paste the scanned QR URL or token.');
+        return;
+      }
+
+      const extracted = extractToken(inputVal);
+      const btn = document.getElementById('btnSubmitScannedToken');
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        // Verify with API
+        const checkRes = await fetch('/api/check-token?token=' + encodeURIComponent(extracted));
+        if (!checkRes.ok) throw new Error('Verification request failed.');
+        const checkData = await checkRes.json();
+        if (!checkData.valid) {
+          throw new Error('This token could not be verified by the government server.');
+        }
+
+        // Save token + status=done in DB
+        const saveRes = await fetch('/api/people?originalNin=' + encodeURIComponent(PERSON_NIN), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: extracted, status: 'done' }),
+        });
+        if (!saveRes.ok) throw new Error('Failed to save verified token to database.');
+
+        // Save to webpage cache (localStorage) for refreshing
+        localStorage.setItem('nid_token_' + PERSON_NIN, extracted);
+
+        // Show Success
+        showStep(5);
 
         // Countdown redirect
         let count = 5;
@@ -497,20 +558,32 @@ function renderVerifyPage(person, mode, nin) {
           if (el) el.textContent = count;
           if (count <= 0) {
             clearInterval(timer);
-            window.location.href = 'https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=' + encodeURIComponent(finalToken);
+            window.location.href = 'https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=' + encodeURIComponent(extracted);
           }
         }, 1000);
 
-      } catch (err) {
-        showError(3, 'Error: ' + err.message);
+      } catch(err) {
+        showError(4, err.message);
+      } finally {
         btn.disabled = false;
-        btn.textContent = 'Retry Download';
+        btn.textContent = 'Verify & Save Token';
       }
     }
 
-    // Auto-start captcha load when page loads if needed
-    window.addEventListener('DOMContentLoaded', () => {
-      // Preload captcha image only (not visible until user clicks button)
+    // Auto-start captcha load and check local cache when page loads
+    window.addEventListener('DOMContentLoaded', async () => {
+      const cached = localStorage.getItem('nid_token_' + PERSON_NIN);
+      if (cached) {
+        try {
+          const res = await fetch('/api/check-token?token=' + encodeURIComponent(cached));
+          const data = await res.json();
+          if (data && data.valid) {
+            window.location.href = 'https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=' + encodeURIComponent(cached);
+          } else {
+            localStorage.removeItem('nid_token_' + PERSON_NIN);
+          }
+        } catch(e) {}
+      }
     });
   </script>
 </body>

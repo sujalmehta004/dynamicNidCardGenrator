@@ -637,6 +637,24 @@
               </button>
             </div>
 
+            <!-- Manual scanned token entry step -->
+            <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
+                <span class="font-bold block mb-1">⚠️ PDF Downloaded Successfully!</span>
+                Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it below to verify and update the database.
+                <br/><span class="text-red-650 font-bold">Do not close or refresh this page.</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="font-bold text-slate-700 text-xs">Pasted Scanned QR URL / Token:</span>
+                <textarea id="portalScannedTokenVal" rows="3" placeholder="Paste the full scanned QR URL here..."
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-blue-500 rounded-xl transition-all"></textarea>
+              </div>
+              <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
+                Verify & Save Token
+              </button>
+            </div>
+
             <!-- Initial Action Button (to load captcha/start process) -->
             <div id="portalInitialActionBtnRow" class="pt-2">
               <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha()"
@@ -2788,6 +2806,8 @@
       document.getElementById("portalCaptchaInputRow").classList.add("hidden");
       document.getElementById("portalOtpRow").classList.add("hidden");
       document.getElementById("portalDownloadRow").classList.add("hidden");
+      document.getElementById("portalManualTokenRow").classList.add("hidden");
+      document.getElementById("portalScannedTokenVal").value = "";
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
       document.getElementById("portalInitialActionBtnRow").classList.add("hidden");
 
@@ -2986,9 +3006,6 @@
           return;
         }
 
-        // Get the final token returned from proxy headers (download api response)
-        const finalToken = res.headers.get("X-Download-Token") || res.headers.get("token") || portalDownloadToken;
-
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -2999,37 +3016,80 @@
         a.click();
         window.URL.revokeObjectURL(url);
 
-        // Update download token in DB if registered
-        if (portalNinValue) {
-          try {
-            await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ token: finalToken, status: "done" }),
-            });
-            console.log("Token updated in DB for user NIN:", portalNinValue, "with token:", finalToken);
-          } catch (dbErr) {
-            console.error("Failed to update token in database:", dbErr);
-          }
-        }
-
-        const nameOnly = fullName.replace(/\s+/g, ""); 
-        const namePart = nameOnly.substring(0, 4).toUpperCase(); 
-
+        // Clipboard code
+        const nameOnly = fullName.replace(/\s+/g, "");
+        const namePart = nameOnly.substring(0, 4).toUpperCase();
         const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-        const yearPart = dobEnglish.split("-")[0].substring(0, 4); 
-
+        const yearPart = dobEnglish.split("-")[0].substring(0, 4);
         const clipboardCode = namePart + yearPart;
         try {
           await navigator.clipboard.writeText(clipboardCode);
-          alert(`Identity Card PDF downloaded successfully!\n\n📋 Copied to clipboard: ${clipboardCode}`);
-        } catch (clipErr) {
-          alert(`Identity Card PDF downloaded successfully!\n\nPassword code: ${clipboardCode}\n(Could not auto-copy — please copy manually)`);
-        }
+        } catch (clipErr) {}
+
+        // Hide download row, show manual token entry step
+        document.getElementById("portalDownloadRow").classList.add("hidden");
+        document.getElementById("portalManualTokenRow").classList.remove("hidden");
+        document.getElementById("portalScannedTokenVal").value = "";
+
       } catch (err) {
         alert(`Error executing download: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function extractPortalToken(str) {
+      str = str.trim();
+      // Find all token= occurrences and take the last one (handles nested URLs)
+      const matches = str.match(/token=([^&\s]+)/g);
+      if (matches && matches.length > 0) {
+        const lastMatch = matches[matches.length - 1];
+        return decodeURIComponent(lastMatch.substring(6));
+      }
+      return str;
+    }
+
+    async function verifyAndSavePortalScannedToken() {
+      const inputVal = document.getElementById("portalScannedTokenVal").value.trim();
+      if (!inputVal) {
+        alert("Please paste the scanned QR URL or token first.");
+        return;
+      }
+
+      const extracted = extractPortalToken(inputVal);
+      const btn = document.getElementById("btnPortalScannedTokenSubmit");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Verifying...";
+
+      try {
+        // Verify token against government server
+        const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extracted)}`);
+        if (!checkRes.ok) throw new Error("Token verification request failed.");
+        const checkData = await checkRes.json();
+        if (!checkData.valid) {
+          throw new Error("This token could not be verified by the government server. Please make sure you scanned the correct QR code from the downloaded PDF.");
+        }
+
+        // Save verified token + status=done in DB
+        if (portalNinValue) {
+          const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: extracted, status: "done" }),
+          });
+          if (!saveRes.ok) throw new Error("Failed to save verified token to database.");
+          console.log("Verified token saved for NIN:", portalNinValue);
+        }
+
+        alert(`✅ Token verified and saved successfully!\n\nThe record has been updated with status: Done.\n\nToken: ${extracted.substring(0, 40)}...`);
+
+        // Reset portal back to initial state
+        loadPortalCaptcha();
+
+      } catch (err) {
+        alert(`❌ Error: ${err.message}`);
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
