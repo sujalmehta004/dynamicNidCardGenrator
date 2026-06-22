@@ -83,6 +83,10 @@ const PersonSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  mobile: {
+    type: String,
+    trim: true,
+  },
 }, {
   timestamps: true, // Automatically logs createdAt/updatedAt just in case
 });

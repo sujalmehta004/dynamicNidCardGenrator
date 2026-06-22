@@ -384,12 +384,17 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input type="hidden" id="formBaseUrl" />
               <div>
                 <label class="block text-slate-600 font-semibold mb-1.5">Secure Token</label>
                 <input type="text" id="formToken" placeholder=""
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-mono focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Mobile Number</label>
+                <input type="text" id="formMobile" placeholder="e.g. 98XXXXX374"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
@@ -1003,6 +1008,11 @@
                   <input type="checkbox" id="colCheckbox-status" checked onclick="toggleColumn('status')"
                     class="accent-blue-600" />
                   Status
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                  <input type="checkbox" id="colCheckbox-mobile" checked onclick="toggleColumn('mobile')"
+                    class="accent-blue-600" />
+                  Mobile Number
                 </label>
               </div>
             </div>
@@ -2027,6 +2037,7 @@
       regDate: true,
       updateDate: true,
       status: true,
+      mobile: true,
       actions: true,
     };
 
@@ -2127,6 +2138,7 @@
         { key: "regDate", label: "Registered Date", sortKey: "regDate" },
         { key: "updateDate", label: "Updated Date", sortKey: "updateDate" },
         { key: "status", label: "Execution Status", sortKey: "status" },
+        { key: "mobile", label: "Mobile Number", sortKey: "mobile" },
         { key: "actions", label: "Actions", sortKey: "" },
       ];
 
@@ -2387,6 +2399,14 @@
           tr.appendChild(td);
         }
 
+        // Col 9.5: Mobile Number
+        if (columnVisibility.mobile) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 font-mono text-slate-650";
+          td.innerText = row.mobile || "—";
+          tr.appendChild(td);
+        }
+
         // Col 10: Actions
         if (columnVisibility.actions) {
           const td = document.createElement("td");
@@ -2470,6 +2490,7 @@
         addressNp: document.getElementById("formAddressNp").value,
         baseUrl: document.getElementById("formBaseUrl").value,
         token: document.getElementById("formToken").value,
+        mobile: document.getElementById("formMobile").value,
       };
 
       if (selectedRecordId) {
@@ -2591,6 +2612,7 @@
       document.getElementById("formBaseUrl").value =
         record.baseUrl || "https://nidqr.sujalmehta.com.np/verify";
       document.getElementById("formToken").value = record.token || "";
+      document.getElementById("formMobile").value = record.mobile || "";
 
       // Reset selection fields
       document.getElementById("formDistrictSelect").value = "";
@@ -2852,6 +2874,22 @@
         a.click();
         window.URL.revokeObjectURL(url);
 
+        // Update download token in DB if registered
+        if (portalNinValue) {
+          try {
+            await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ token: portalDownloadToken }),
+            });
+            console.log("Token updated in DB for user NIN:", portalNinValue);
+          } catch (dbErr) {
+            console.error("Failed to update token in database:", dbErr);
+          }
+        }
+
         const nameOnly = fullName.replace(/\s+/g, ""); 
         const namePart = nameOnly.substring(0, 4).toUpperCase(); 
 
@@ -2887,6 +2925,7 @@
         const results = await res.json();
         if (results && results.length > 0) {
           const person = results[0];
+          portalNinValue = person.ninEn;
           document.getElementById("portalFullNameEn").value =
             `${person.givenEn || ""} ${person.surnameEn || ""}`
               .trim()
