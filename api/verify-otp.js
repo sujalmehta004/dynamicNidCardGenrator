@@ -57,7 +57,7 @@ function makeHttpsRequest(url, options, postData) {
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Download-Token");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -67,18 +67,13 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const downloadToken = req.headers["x-download-token"] || req.headers["X-Download-Token"];
-  if (!downloadToken) {
-    return res.status(400).json({ error: "X-Download-Token header is required" });
+  const { nin, otp } = req.body;
+  if (!nin || !otp) {
+    return res.status(400).json({ error: "Missing required fields (nin, otp) in request body" });
   }
 
-  const { dob_loc, ccn_issuing_date_loc, full_name, full_name_loc } = req.body;
-  if (!dob_loc || !ccn_issuing_date_loc || !full_name || !full_name_loc) {
-    return res.status(400).json({ error: "Missing required body fields" });
-  }
-
-  const targetUrl = "https://api-citizenportal.donidcr.gov.np/api/v1/enid/download";
-  const postPayload = JSON.stringify({ dob_loc, ccn_issuing_date_loc, full_name, full_name_loc });
+  const targetUrl = "https://api-citizenportal.donidcr.gov.np/api/v1/mfa/verify-otp";
+  const postPayload = JSON.stringify({ nin, otp });
 
   try {
     // OPTIONS preflight request
@@ -87,7 +82,7 @@ module.exports = async function handler(req, res) {
       headers: {
         "Accept": "*/*",
         "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "content-type,x-download-token",
+        "Access-Control-Request-Headers": "content-type",
         "Origin": "https://citizenportal.donidcr.gov.np",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
         "Sec-Fetch-Mode": "cors",
@@ -101,19 +96,18 @@ module.exports = async function handler(req, res) {
     });
 
     // POST request
-    const postResult = await makeHttpsRequest(targetUrl, {
+    const result = await makeHttpsRequest(targetUrl, {
       method: "POST",
       headers: {
         "Host": "api-citizenportal.donidcr.gov.np",
         "Content-Length": Buffer.byteLength(postPayload),
         "Sec-Ch-Ua-Platform": "\"macOS\"",
         "Accept-Language": "en-US,en;q=0.9",
+        "Accept": "application/json, text/plain, */*",
         "Sec-Ch-Ua": "\"Not-A.Brand\";v=\"24\", \"Chromium\";v=\"146\"",
-        "X-Download-Token": downloadToken,
+        "Content-Type": "application/json",
         "Sec-Ch-Ua-Mobile": "?0",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
-        "Accept": "application/pdf",
-        "Content-Type": "application/json",
         "Origin": "https://citizenportal.donidcr.gov.np",
         "Sec-Fetch-Site": "same-site",
         "Sec-Fetch-Mode": "cors",
@@ -124,16 +118,11 @@ module.exports = async function handler(req, res) {
       }
     }, postPayload);
 
-    if (postResult.status !== 200) {
-      console.error("Failed downloading from government portal. Status:", postResult.status);
-      return res.status(postResult.status).json({ error: `External portal failed (${postResult.status}): ${postResult.body.toString() || "No response details"}` });
-    }
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="NID_Card_${full_name.replace(/\s+/g, '_')}.pdf"`);
-    return res.send(postResult.body);
+    res.status(result.status);
+    res.setHeader("Content-Type", "application/json");
+    return res.send(result.body);
   } catch (error) {
-    console.error("Proxy download error:", error);
-    return res.status(500).json({ error: `Internal Proxy Error: ${error.message}` });
+    console.error("OTP verification error:", error);
+    return res.status(500).json({ error: `OTP verification failed: ${error.message}` });
   }
 };

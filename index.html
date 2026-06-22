@@ -408,13 +408,28 @@
 
         <section id="paneWorkspacePortal"
           class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
-          <div class="border-b border-slate-100 pb-3">
-            <h3 class="text-sm font-bold tracking-tight text-slate-900">
-              Government Download Gateway
-            </h3>
-            <p class="text-xs text-slate-555 mt-0.5">
-              Extract individual identity data sets from sandbox repositories.
-            </p>
+          <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+            <div>
+              <h3 class="text-sm font-bold tracking-tight text-slate-900">
+                Government Download Gateway
+              </h3>
+              <p class="text-xs text-slate-555 mt-0.5">
+                Extract individual identity data sets from sandbox repositories.
+              </p>
+            </div>
+            <!-- Captcha display container -->
+            <div id="portalCaptchaContainer" class="flex flex-col items-end gap-1.5 hidden">
+              <div class="flex items-center gap-2 border border-slate-200 rounded-lg p-1 bg-slate-50">
+                <img id="portalCaptchaImg" src="" alt="Captcha" class="h-10 w-28 object-contain rounded" />
+                <button type="button" onclick="loadPortalCaptcha()" title="Refresh Captcha"
+                  class="bg-slate-200 hover:bg-slate-350 text-slate-700 p-1.5 rounded-lg transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
 
           <form id="portalForm" class="space-y-4 text-xs" onsubmit="event.preventDefault()">
@@ -432,6 +447,7 @@
               </div>
             </div>
 
+            <!-- Input fields -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-slate-600 font-bold mb-1.5">Full Name (English)</label>
@@ -456,10 +472,63 @@
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
-            <div class="pt-2">
+
+            <!-- Captcha input step -->
+            <div id="portalCaptchaInputRow" class="hidden">
+              <label class="block text-slate-600 font-bold mb-1.5">Enter Captcha Code</label>
+              <div class="flex gap-2">
+                <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                <button type="button" id="btnPortalRequestOtp" onclick="requestPortalOtp()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">
+                  Request OTP
+                </button>
+              </div>
+            </div>
+
+            <!-- OTP input step -->
+            <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex flex-col gap-1">
+                <span class="font-bold text-slate-700">OTP Info:</span>
+                <span id="portalOtpInfoText" class="font-medium text-slate-600">Masked Mobile: -, NIN: -</span>
+              </div>
+              <div class="space-y-1.5">
+                <label class="block text-slate-600 font-bold">Enter OTP Code</label>
+                <div class="flex gap-2">
+                  <input type="text" id="portalOtpCode" placeholder="Enter OTP code"
+                    class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
+                  <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">
+                    Verify OTP
+                  </button>
+                </div>
+              </div>
+              <div class="flex gap-2 justify-end pt-1">
+                <button type="button" onclick="loadPortalCaptcha()"
+                  class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">
+                  Resend OTP / Start Over
+                </button>
+              </div>
+            </div>
+
+            <!-- Final download action step -->
+            <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex flex-col gap-1">
+                <span class="font-bold text-slate-700">Download Token:</span>
+                <textarea id="portalDownloadTokenVal" readonly rows="2"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-[10px] resize-none text-slate-600 focus:outline-none"></textarea>
+              </div>
               <button type="button" id="btnPortalDownloadSubmit" onclick="executePortalDownload()"
                 class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
-                Download PDF
+                Download PDF & Copy Code
+              </button>
+            </div>
+
+            <!-- Initial Action Button (to load captcha/start process) -->
+            <div id="portalInitialActionBtnRow" class="pt-2">
+              <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha()"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase">
+                Proceed to Verification (Captcha/OTP)
               </button>
             </div>
           </form>
@@ -1159,6 +1228,14 @@
           "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
         rightColumn.className =
           "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2 hidden";
+        if (targetViewTab === "portal") {
+          // Reset multi-step flow visibility states to default initial view
+          document.getElementById("portalCaptchaInputRow").classList.add("hidden");
+          document.getElementById("portalOtpRow").classList.add("hidden");
+          document.getElementById("portalDownloadRow").classList.add("hidden");
+          document.getElementById("portalCaptchaContainer").classList.add("hidden");
+          document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+        }
       } else if (targetViewTab === "database") {
         mainGrid.className = "hidden";
         leftColumn.className = "hidden";
@@ -2551,6 +2628,158 @@
       }
     }
 
+    // Multi-step OTP and Captcha state variables
+    let portalNinValue = "";
+    let portalDownloadToken = "";
+
+    async function loadPortalCaptcha() {
+      // Clear steps and inputs
+      document.getElementById("portalCaptchaCode").value = "";
+      document.getElementById("portalOtpCode").value = "";
+      document.getElementById("portalDownloadTokenVal").value = "";
+      portalNinValue = "";
+      portalDownloadToken = "";
+
+      // Hide/Show Rows
+      document.getElementById("portalCaptchaInputRow").classList.add("hidden");
+      document.getElementById("portalOtpRow").classList.add("hidden");
+      document.getElementById("portalDownloadRow").classList.add("hidden");
+      document.getElementById("portalCaptchaContainer").classList.add("hidden");
+      document.getElementById("portalInitialActionBtnRow").classList.add("hidden");
+
+      const img = document.getElementById("portalCaptchaImg");
+      img.src = "";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha`);
+        if (!res.ok) {
+          throw new Error(`Captcha load failed: ${res.statusText}`);
+        }
+        const data = await res.json();
+        if (data.image) {
+          img.src = "data:image/png;base64," + data.image;
+          document.getElementById("portalCaptchaContainer").classList.remove("hidden");
+          document.getElementById("portalCaptchaInputRow").classList.remove("hidden");
+        } else {
+          throw new Error("Invalid captcha response format.");
+        }
+      } catch (err) {
+        alert("Failed loading captcha: " + err.message);
+        document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+      }
+    }
+
+    async function requestPortalOtp() {
+      const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
+      const fullNameLoc = document.getElementById("portalFullNameNp").value.trim();
+      const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
+      const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
+      const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
+
+      const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
+      const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
+
+      if (!fullName || !fullNameLoc || !dobLoc || !ccnIssuingDateLoc || !captchaCode) {
+        alert("Please fill all fields and enter the captcha code.");
+        return;
+      }
+
+      const btn = document.getElementById("btnPortalRequestOtp");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Requesting...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/request-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Captcha-Code": captchaCode
+          },
+          body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
+        });
+
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } catch(e) {}
+          alert(`OTP Request failed: ${errMsg}`);
+          // Load new captcha automatically on failure
+          loadPortalCaptcha();
+          return;
+        }
+
+        const data = await res.json();
+        // Expected response format: {"code":"OTP_SENT","maskedMobile":"98XXXXX374","nin":"615-385-908-6"}
+        portalNinValue = data.nin;
+        document.getElementById("portalOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${data.nin || "-"}`;
+        
+        // Advance view state
+        document.getElementById("portalCaptchaInputRow").classList.add("hidden");
+        document.getElementById("portalOtpRow").classList.remove("hidden");
+      } catch (err) {
+        alert("Network error requesting OTP: " + err.message);
+        loadPortalCaptcha();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    async function verifyPortalOtp() {
+      const otp = document.getElementById("portalOtpCode").value.trim();
+      if (!otp) {
+        alert("Please enter the OTP code received.");
+        return;
+      }
+      if (!portalNinValue) {
+        alert("NIN value missing. Please request OTP again.");
+        loadPortalCaptcha();
+        return;
+      }
+
+      const btn = document.getElementById("btnPortalVerifyOtp");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Verifying...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/verify-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ nin: portalNinValue, otp })
+        });
+
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } catch(e) {}
+          alert(`OTP Verification failed: ${errMsg}`);
+          return;
+        }
+
+        const data = await res.json();
+        // Expected response: {"code":"OTP_VERIFIED","downloadToken":"eyJhbG..."}
+        portalDownloadToken = data.downloadToken;
+        document.getElementById("portalDownloadTokenVal").value = portalDownloadToken;
+
+        // Advance view state
+        document.getElementById("portalOtpRow").classList.add("hidden");
+        document.getElementById("portalDownloadRow").classList.remove("hidden");
+      } catch (err) {
+        alert("Network error verifying OTP: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
     async function executePortalDownload() {
       const fullName = document
         .getElementById("portalFullNameEn")
@@ -2564,7 +2793,6 @@
         .getElementById("portalCcnIssuingDateLoc")
         .value.trim();
 
-      // Automatically convert any English digits to Nepali digits for the local date fields
       const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
       const ccnIssuingDateLoc = translateDigits(
         ccnIssuingDateLocRaw,
@@ -2575,13 +2803,10 @@
         alert("Please fill all form fields first.");
         return;
       }
-
-      console.log("Submitting download payload:", {
-        dob_loc: dobLoc,
-        ccn_issuing_date_loc: ccnIssuingDateLoc,
-        full_name: fullName,
-        full_name_loc: fullNameNp,
-      });
+      if (!portalDownloadToken) {
+        alert("Verification token is missing. Please complete OTP verification first.");
+        return;
+      }
 
       const btn = document.getElementById("btnPortalDownloadSubmit");
       const originalText = btn.innerHTML;
@@ -2593,6 +2818,7 @@
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-Download-Token": portalDownloadToken
           },
           body: JSON.stringify({
             dob_loc: dobLoc,
@@ -2626,15 +2852,11 @@
         a.click();
         window.URL.revokeObjectURL(url);
 
-        // Build clipboard code: first 4 letters of full name (no spaces) + BS year
-        // fullName is already uppercase, e.g. "SUJAL MEHTA"
-        // dobLocRaw is in Nepali digits or English digits e.g. "2062-01-20" or "२०६२-०१-२०"
-        const nameOnly = fullName.replace(/\s+/g, ""); // Remove spaces → "SUJALMEHTA"
-        const namePart = nameOnly.substring(0, 4).toUpperCase(); // "SUJA"
+        const nameOnly = fullName.replace(/\s+/g, ""); 
+        const namePart = nameOnly.substring(0, 4).toUpperCase(); 
 
-        // Convert DOB to English digits and extract the year part (first 4 digits before '-')
         const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-        const yearPart = dobEnglish.split("-")[0].substring(0, 4); // "2062"
+        const yearPart = dobEnglish.split("-")[0].substring(0, 4); 
 
         const clipboardCode = namePart + yearPart;
         try {

@@ -57,7 +57,7 @@ function makeHttpsRequest(url, options, postData) {
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Download-Token");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, captcha-code");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -67,18 +67,18 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const downloadToken = req.headers["x-download-token"] || req.headers["X-Download-Token"];
-  if (!downloadToken) {
-    return res.status(400).json({ error: "X-Download-Token header is required" });
+  const captchaCode = req.headers["captcha-code"] || req.headers["Captcha-Code"];
+  if (!captchaCode) {
+    return res.status(400).json({ error: "Captcha-Code header is required" });
   }
 
-  const { dob_loc, ccn_issuing_date_loc, full_name, full_name_loc } = req.body;
-  if (!dob_loc || !ccn_issuing_date_loc || !full_name || !full_name_loc) {
+  const { fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc } = req.body;
+  if (!fullName || !fullNameLoc || !dobLoc || !ccnIssuingDateLoc) {
     return res.status(400).json({ error: "Missing required body fields" });
   }
 
-  const targetUrl = "https://api-citizenportal.donidcr.gov.np/api/v1/enid/download";
-  const postPayload = JSON.stringify({ dob_loc, ccn_issuing_date_loc, full_name, full_name_loc });
+  const targetUrl = "https://api-citizenportal.donidcr.gov.np/api/v1/mfa/request-otp";
+  const postPayload = JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc });
 
   try {
     // OPTIONS preflight request
@@ -87,7 +87,7 @@ module.exports = async function handler(req, res) {
       headers: {
         "Accept": "*/*",
         "Access-Control-Request-Method": "POST",
-        "Access-Control-Request-Headers": "content-type,x-download-token",
+        "Access-Control-Request-Headers": "captcha-code,content-type",
         "Origin": "https://citizenportal.donidcr.gov.np",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
         "Sec-Fetch-Mode": "cors",
@@ -101,18 +101,18 @@ module.exports = async function handler(req, res) {
     });
 
     // POST request
-    const postResult = await makeHttpsRequest(targetUrl, {
+    const result = await makeHttpsRequest(targetUrl, {
       method: "POST",
       headers: {
         "Host": "api-citizenportal.donidcr.gov.np",
         "Content-Length": Buffer.byteLength(postPayload),
         "Sec-Ch-Ua-Platform": "\"macOS\"",
         "Accept-Language": "en-US,en;q=0.9",
+        "Captcha-Code": captchaCode,
         "Sec-Ch-Ua": "\"Not-A.Brand\";v=\"24\", \"Chromium\";v=\"146\"",
-        "X-Download-Token": downloadToken,
         "Sec-Ch-Ua-Mobile": "?0",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36",
-        "Accept": "application/pdf",
+        "Accept": "application/json",
         "Content-Type": "application/json",
         "Origin": "https://citizenportal.donidcr.gov.np",
         "Sec-Fetch-Site": "same-site",
@@ -124,16 +124,11 @@ module.exports = async function handler(req, res) {
       }
     }, postPayload);
 
-    if (postResult.status !== 200) {
-      console.error("Failed downloading from government portal. Status:", postResult.status);
-      return res.status(postResult.status).json({ error: `External portal failed (${postResult.status}): ${postResult.body.toString() || "No response details"}` });
-    }
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="NID_Card_${full_name.replace(/\s+/g, '_')}.pdf"`);
-    return res.send(postResult.body);
+    res.status(result.status);
+    res.setHeader("Content-Type", "application/json");
+    return res.send(result.body);
   } catch (error) {
-    console.error("Proxy download error:", error);
-    return res.status(500).json({ error: `Internal Proxy Error: ${error.message}` });
+    console.error("OTP request error:", error);
+    return res.status(500).json({ error: `OTP request failed: ${error.message}` });
   }
 };

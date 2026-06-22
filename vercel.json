@@ -13,6 +13,18 @@
   ],
   "rewrites": [
     {
+      "source": "/api/captcha",
+      "destination": "/api/captcha.js"
+    },
+    {
+      "source": "/api/request-otp",
+      "destination": "/api/request-otp.js"
+    },
+    {
+      "source": "/api/verify-otp",
+      "destination": "/api/verify-otp.js"
+    },
+    {
       "source": "/api/v1/enid/verify/:nin",
       "destination": "/api/verify?nin=:nin"
     },
