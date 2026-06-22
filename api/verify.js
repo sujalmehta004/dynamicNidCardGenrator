@@ -1,7 +1,7 @@
 const https = require("https");
 const zlib = require("zlib");
-const connectToDatabase = require("./db");
-const Person = require("./models/Person");
+const connectToDatabase = require("../lib/db");
+const Person = require("../lib/models/Person");
 
 function makeHttpsRequest(url, options) {
   return new Promise((resolve, reject) => {

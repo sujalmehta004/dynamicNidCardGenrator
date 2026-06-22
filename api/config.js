@@ -1,5 +1,5 @@
-const connectToDatabase = require('./db');
-const Config = require('./models/Config');
+const connectToDatabase = require('../lib/db');
+const Config = require('../lib/models/Config');
 
 module.exports = async (req, res) => {
   if (typeof res.status !== 'function') {

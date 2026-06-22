@@ -1,5 +1,5 @@
-const connectToDatabase = require("./db");
-const AllowedIp = require("./models/AllowedIp");
+const connectToDatabase = require("../lib/db");
+const AllowedIp = require("../lib/models/AllowedIp");
 
 module.exports = async (req, res) => {
   if (typeof res.status !== 'function') {
