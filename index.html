@@ -709,8 +709,8 @@
         </section>
 
         <!-- ===== BULK VERIFICATION MODAL ===== -->
-        <div id="portalBulkModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
-          style="background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);">
+        <div id="portalBulkModal" class="fixed inset-0 z-50 items-center justify-center p-4"
+          style="display:none; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);">
           <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl">
@@ -3130,7 +3130,7 @@
     }
 
     function closeBulkModal() {
-      document.getElementById("portalBulkModal").classList.add("hidden");
+      document.getElementById("portalBulkModal").style.display = "none";
     }
 
     function updateBulkStats() {
@@ -3249,7 +3249,7 @@
         document.getElementById("bulkModalSubtitle").innerText = `Sending ${targets.length} simultaneous OTP requests...`;
         document.getElementById("bulkFooterStatus").innerText = `Using captcha: ${captchaCode}`;
         updateBulkStats();
-        document.getElementById("portalBulkModal").classList.remove("hidden");
+        document.getElementById("portalBulkModal").style.display = "flex";
 
         // 3. Send all requests in parallel
         const requests = targets.map(async record => {
