@@ -420,7 +420,7 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label class="block text-slate-600 font-semibold mb-1.5">Citizenship Issue Date</label>
                 <input type="text" id="formCitDate" placeholder=""
@@ -434,6 +434,14 @@
                   <option value="done">Done</option>
                   <option value="inprogress">In Progress</option>
                   <option value="not online">Not Online</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 font-semibold mb-1.5">Card Design</label>
+                <select id="formCardDesign"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition-all">
+                  <option value="smart card" selected>Smart Card</option>
+                  <option value="white card">White Card</option>
                 </select>
               </div>
             </div>
@@ -936,6 +944,10 @@
             class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-sm">
             Save 4x6 Sheet (PNG)
           </button>
+          <button onclick="downloadWhiteCard()"
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow-sm">
+            Download White Card (PNG)
+          </button>
         </div>
 
         <details class="group bg-white border border-slate-200 rounded-2xl p-4 shadow-sm transition-all duration-300">
@@ -1163,6 +1175,11 @@
                     <input type="checkbox" id="colCheckbox-status" checked onclick="toggleColumn('status')"
                       class="accent-blue-600" />
                     Status
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-cardDesign" checked onclick="toggleColumn('cardDesign')"
+                      class="accent-blue-600" />
+                    Card Design
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                     <input type="checkbox" id="colCheckbox-mobile" checked onclick="toggleColumn('mobile')"
@@ -2205,6 +2222,7 @@
       regDate: true,
       updateDate: true,
       status: true,
+      cardDesign: true,
       mobile: true,
       actions: true,
     };
@@ -2306,6 +2324,7 @@
         { key: "regDate", label: "Registered Date", sortKey: "regDate" },
         { key: "updateDate", label: "Updated Date", sortKey: "updateDate" },
         { key: "status", label: "Execution Status", sortKey: "status" },
+        { key: "cardDesign", label: "Card Design", sortKey: "cardDesign" },
         { key: "mobile", label: "Mobile Number", sortKey: "mobile" },
         { key: "actions", label: "Actions", sortKey: "" },
       ];
@@ -2567,6 +2586,26 @@
           tr.appendChild(td);
         }
 
+        // Col 9.1: Card Design
+        if (columnVisibility.cardDesign) {
+          const td = document.createElement("td");
+          td.className = "px-5 py-4 text-center";
+
+          let cardDesignBadgeClass = "bg-purple-50 text-purple-700 border-purple-200";
+          if (row.cardDesign === "white card") {
+            cardDesignBadgeClass = "bg-slate-100 text-slate-700 border-slate-300";
+          }
+
+          td.innerHTML = `
+            <select onchange="updateRowCardDesignInline('${row.ninEn}', this.value)" 
+              class="${cardDesignBadgeClass} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider focus:outline-none cursor-pointer border shadow-sm transition-all bg-white">
+                <option value="smart card" ${row.cardDesign === "smart card" || !row.cardDesign ? "selected" : ""}>Smart Card</option>
+                <option value="white card" ${row.cardDesign === "white card" ? "selected" : ""}>White Card</option>
+            </select>
+          `;
+          tr.appendChild(td);
+        }
+
         // Col 9.5: Mobile Number
         if (columnVisibility.mobile) {
           const td = document.createElement("td");
@@ -2621,6 +2660,31 @@
         console.error("Error updating status:", err);
       }
     }
+    async function updateRowCardDesignInline(ninEn, newCardDesign) {
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/people?originalNin=${encodeURIComponent(ninEn)}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              cardDesign: newCardDesign,
+              updateDate: new Date().toISOString().split("T")[0],
+            }),
+          },
+        );
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(`Error: ${errData.error}`);
+          return;
+        }
+        fetchDatabase(true);
+      } catch (err) {
+        console.error("Error updating card design:", err);
+      }
+    }
     function clearAdvancedFiltersConsole() {
       document.getElementById("searchQueryBar").value = "";
       document.getElementById("filterStatus").value = "all";
@@ -2654,6 +2718,7 @@
           : today,
         updateDate: today,
         status: document.getElementById("formStatus").value,
+        cardDesign: document.getElementById("formCardDesign").value || "smart card",
         addressEn: document.getElementById("formAddressEn").value,
         addressNp: document.getElementById("formAddressNp").value,
         baseUrl: document.getElementById("formBaseUrl").value,
@@ -2775,6 +2840,7 @@
       document.getElementById("formUpdateDate").value =
         record.updateDate || "";
       document.getElementById("formStatus").value = record.status;
+      document.getElementById("formCardDesign").value = record.cardDesign || "smart card";
       document.getElementById("formAddressEn").value = record.addressEn || "";
       document.getElementById("formAddressNp").value = record.addressNp || "";
       document.getElementById("formBaseUrl").value =
@@ -3283,6 +3349,306 @@
 
       initializeDateFieldsDefaults();
       processFormMetricsSync();
+    }
+
+    const districtToProvince = {
+      "bhojpur": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "dhankuta": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "ilam": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "jhapa": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "khotang": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "morang": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "okhaldhunga": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "panchthar": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "sankhuwasabha": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "solukhumbu": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "sunsari": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "taplejung": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "terhathum": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "udayapur": { en: "Koshi Province", ne: "कोशी प्रदेश" },
+      "bara": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "dhanusha": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "mahottari": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "parsa": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "rautahat": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "saptari": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "sarlahi": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "siraha": { en: "Madhesh Province", ne: "मधेश प्रदेश" },
+      "bhaktapur": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "chitwan": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "dhading": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "dolakha": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "kathmandu": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "kavrepalanchok": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "lalitpur": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "makwanpur": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "nuwakot": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "ramechhap": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "rasuwa": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "sindhuli": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "sindhupalchok": { en: "Bagmati Province", ne: "बागमती प्रदेश" },
+      "baglung": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "gorkha": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "kaski": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "lamjung": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "manang": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "mustang": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "myagdi": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "nawalpur": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "nawalparasi east": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "parbat": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "syangja": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "tanahun": { en: "Gandaki Province", ne: "गण्डकी प्रदेश" },
+      "arghakhanchi": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "banke": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "bardiya": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "dang": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "gulmi": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "kapilvastu": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "parasi": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "nawalparasi west": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "palpa": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "pyuthan": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "rolpa": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "rukum east": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "rupandehi": { en: "Lumbini Province", ne: "लुम्बिनी प्रदेश" },
+      "dailekh": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "dolpa": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "humla": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "jajarkot": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "jumla": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "kalikot": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "mugu": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "rukum west": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "salyan": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "surkhet": { en: "Karnali Province", ne: "कर्णाली प्रदेश" },
+      "achham": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "baitadi": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "bajhang": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "bajura": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "dadeldhura": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "darchula": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "doti": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "kailali": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" },
+      "kanchanpur": { en: "Sudurpashchim Province", ne: "सुदूरपश्चिम प्रदेश" }
+    };
+
+    function parseAddress(addressEn, addressNp) {
+      let districtEn = "";
+      let districtNe = "";
+      let provinceEn = "";
+      let provinceNe = "";
+      let ward = "";
+      let wardNe = "";
+      let muniEn = "";
+      let muniNe = "";
+
+      const addrEnLower = (addressEn || "").toLowerCase();
+      for (const distKey of Object.keys(districtToProvince)) {
+        if (addrEnLower.includes(distKey)) {
+          districtEn = distKey.charAt(0).toUpperCase() + distKey.slice(1);
+          const provInfo = districtToProvince[distKey];
+          provinceEn = provInfo.en;
+          provinceNe = provInfo.ne;
+          
+          if (nepalAdminData && nepalAdminData.districts) {
+            const foundDist = nepalAdminData.districts.find(d => (d.name_en || "").toLowerCase() === distKey);
+            if (foundDist) {
+              districtNe = foundDist.name_ne;
+            }
+          }
+          break;
+        }
+      }
+
+      const wardMatch = (addressEn || "").match(/(?:ward\s*(?:no\.?)?\s*|-)(\d+)/i);
+      if (wardMatch) {
+        ward = wardMatch[1];
+      } else {
+        const trailingNumMatch = (addressEn || "").match(/-(\d+)/);
+        if (trailingNumMatch) {
+          ward = trailingNumMatch[1];
+        }
+      }
+      
+      if (ward) {
+        wardNe = translateDigits(ward, englishToNepaliDigits);
+      }
+
+      if (addressEn) {
+        let parts = addressEn.split(",");
+        let basePart = parts[0].trim();
+        if (ward) {
+          basePart = basePart.replace(new RegExp(`-\\s*${ward}`), "").trim();
+        }
+        muniEn = basePart;
+      }
+
+      if (addressNp) {
+        let parts = addressNp.split(",");
+        let basePart = parts[0].trim();
+        if (wardNe) {
+          basePart = basePart.replace(new RegExp(`-\\s*${wardNe}`), "").trim();
+        }
+        muniNe = basePart;
+      }
+
+      return {
+        provinceEn,
+        provinceNe,
+        districtEn,
+        districtNe,
+        municipalityEn: muniEn,
+        municipalityNe: muniNe,
+        ward,
+        wardNe
+      };
+    }
+
+    function downloadWhiteCard() {
+      const nin = document.getElementById("formNinEn").value || "NID";
+      const givenEn = document.getElementById("formGivenEn").value || "";
+      const surnameEn = document.getElementById("formSurnameEn").value || "";
+      const fullNameEn = `${givenEn} ${surnameEn}`.trim().toUpperCase() || "N/A";
+
+      // 1. Create canvas
+      const canvas = document.createElement("canvas");
+      canvas.width = 1000;
+      canvas.height = 630;
+      const ctx = canvas.getContext("2d");
+
+      // 2. Draw card container (White with rounded corners, light border)
+      ctx.fillStyle = "#ffffff";
+      const x = 5, y = 5, width = 990, height = 620, radius = 24;
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle shadow/border
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.stroke();
+
+      // 3. Draw TOP ROW
+      ctx.fillStyle = "#0f172a";
+      ctx.textAlign = "center";
+      ctx.font = "bold 26px sans-serif";
+      ctx.fillText("राष्ट्रिय परिचयपत्र / NATIONAL IDENTITY CARD", 500, 55);
+
+      ctx.font = "bold 28px sans-serif";
+      ctx.fillText(nin, 500, 105);
+
+      // Draw Top Row Divider
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(40, 145);
+      ctx.lineTo(960, 145);
+      ctx.stroke();
+
+      // 4. Draw QR Code (Top right)
+      const baseUrl = document.getElementById("formBaseUrl").value || "https://nidqr.sujalmehta.com.np/verify";
+      const token = document.getElementById("formToken").value;
+      const qrTargetUrl = baseUrl.includes("?")
+        ? `${baseUrl}&token=${token}`
+        : `${baseUrl}/${nin}`;
+
+      const tempDiv = document.createElement("div");
+      new QRCode(tempDiv, {
+        text: qrTargetUrl,
+        width: 150,
+        height: 150,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      const qrCanvas = tempDiv.querySelector("canvas");
+      if (qrCanvas) {
+        ctx.drawImage(qrCanvas, 830, 20, 110, 110);
+      }
+
+      // 5. Draw BOTTOM ROW
+      // LEFT COLUMN: Profile image or placeholder
+      const img = document.getElementById("cardPhoto");
+      if (img && img.src && !img.classList.contains("hidden") && img.naturalWidth > 0) {
+        ctx.drawImage(img, 50, 185, 260, 340);
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 185, 260, 340);
+      } else {
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(50, 185, 260, 340);
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 185, 260, 340);
+
+        ctx.fillStyle = "#e2e8f0";
+        ctx.beginPath();
+        ctx.arc(180, 300, 50, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(180, 420, 90, 70, 0, Math.PI, 0);
+        ctx.fill();
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 15px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("PROFILE PHOTO", 180, 480);
+      }
+
+      // RIGHT COLUMN: Other Citizenship Details
+      const addressEn = document.getElementById("formAddressEn").value;
+      const addressNp = document.getElementById("formAddressNp").value;
+      const parsed = parseAddress(addressEn, addressNp);
+
+      const province = parsed.provinceEn ? `${parsed.provinceEn} (${parsed.provinceNe})` : "—";
+      const district = parsed.districtEn ? `${parsed.districtEn} (${parsed.districtNe})` : "—";
+      const municipality = parsed.municipalityEn ? `${parsed.municipalityEn} (${parsed.municipalityNe})` : "—";
+      const ward = parsed.ward ? `${parsed.ward} (${parsed.wardNe})` : "—";
+
+      ctx.fillStyle = "#1e3a8a";
+      ctx.textAlign = "left";
+      ctx.font = "bold 22px sans-serif";
+      ctx.fillText("Other Citizenship Details", 350, 210);
+
+      const fields = [
+        { key: "English Name", value: fullNameEn },
+        { key: "Nepali Name", value: ((document.getElementById("formGivenNp").value || "") + " " + (document.getElementById("formSurnameNp").value || "")).trim() || "—" },
+        { key: "Date of Birth", value: document.getElementById("formDobNp").value || "—" },
+        { key: "Citizenship Issue Date", value: document.getElementById("formCitDate").value || "—" },
+        { key: "Province", value: province },
+        { key: "District", value: district },
+        { key: "Municipality", value: municipality },
+        { key: "Ward", value: ward }
+      ];
+
+      let currentY = 255;
+      fields.forEach(field => {
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 16px sans-serif";
+        ctx.fillText(field.key, 350, currentY);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "normal 16px sans-serif";
+        ctx.fillText(": " + field.value, 580, currentY);
+        currentY += 36;
+      });
+
+      // 6. Download PNG
+      const a = document.createElement("a");
+      a.download = `NID_White_Card_${nin}_${Date.now()}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
     }
 
     function exportLayoutAsPngImage() {
