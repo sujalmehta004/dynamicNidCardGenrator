@@ -619,7 +619,7 @@
               <div class="flex gap-2">
                 <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-                <button type="button" id="btnPortalRequestOtp" onclick="requestPortalOtp()"
+                <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">
                   Request OTP
                 </button>
@@ -691,15 +691,79 @@
               </div>
             </div>
 
-            <!-- Initial Action Button (to load captcha/start process) -->
-            <div id="portalInitialActionBtnRow" class="pt-2">
-              <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha()"
+            <!-- Initial Action Buttons (single or bulk) -->
+            <div id="portalInitialActionBtnRow" class="pt-2 flex flex-col gap-2">
+              <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha(false)"
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase">
-                Proceed to Verification (Captcha/OTP)
+                Proceed to Verification (Single)
+              </button>
+              <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
+                class="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h7"/>
+                </svg>
+                Verify All (Bulk Request)
               </button>
             </div>
           </form>
         </section>
+
+        <!-- ===== BULK VERIFICATION MODAL ===== -->
+        <div id="portalBulkModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+          style="background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);">
+          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl">
+              <div>
+                <h2 class="text-white font-bold text-base tracking-wide">⚡ Bulk Verification</h2>
+                <p id="bulkModalSubtitle" class="text-violet-200 text-xs mt-0.5">Sending OTP requests to all pending records...</p>
+              </div>
+              <button onclick="closeBulkModal()" class="text-white hover:text-violet-200 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Modal Body: Stats Row + Record List -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+              <!-- Summary Stats -->
+              <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                  <div id="bulkStatTotal" class="text-xl font-bold text-slate-800">0</div>
+                  <div class="text-slate-500 font-medium mt-0.5">Total</div>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
+                  <div id="bulkStatPending" class="text-xl font-bold text-amber-600">0</div>
+                  <div class="text-amber-600 font-medium mt-0.5">Sending</div>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
+                  <div id="bulkStatSuccess" class="text-xl font-bold text-emerald-600">0</div>
+                  <div class="text-emerald-600 font-medium mt-0.5">OTP Sent</div>
+                </div>
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
+                  <div id="bulkStatFailed" class="text-xl font-bold text-rose-600">0</div>
+                  <div class="text-rose-600 font-medium mt-0.5">Failed</div>
+                </div>
+              </div>
+
+              <!-- Record Rows List -->
+              <div id="bulkRecordList" class="space-y-2">
+                <!-- Rows injected by JS -->
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-slate-100 flex gap-2 justify-end items-center bg-slate-50 rounded-b-2xl">
+              <span id="bulkFooterStatus" class="text-xs text-slate-500 flex-1"></span>
+              <button onclick="closeBulkModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-2 rounded-xl text-xs transition-all">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+
+
 
         <section id="paneWorkspaceAdmin"
           class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
@@ -2887,6 +2951,9 @@
     // Multi-step OTP and Captcha state variables
     let portalNinValue = "";
     let portalDownloadToken = "";
+    let isBulkMode = false;
+    let bulkTargetRecords = [];
+    let bulkStats = { total: 0, sending: 0, success: 0, failed: 0 };
 
     function setPortalInputsDisabled(disabled) {
       document.getElementById("portalFullNameEn").disabled = disabled;
@@ -2938,7 +3005,8 @@
       portalDownloadToken = "";
     }
 
-    async function loadPortalCaptcha() {
+    async function loadPortalCaptcha(bulkMode = false) {
+      isBulkMode = !!bulkMode;
       // Clear steps and inputs
       document.getElementById("portalCaptchaCode").value = "";
       document.getElementById("portalOtpCode").value = "";
@@ -3018,7 +3086,7 @@
           } catch(e) {}
           alert(`OTP Request failed: ${errMsg}`);
           // Load new captcha automatically on failure
-          loadPortalCaptcha();
+          loadPortalCaptcha(false);
           return;
         }
 
@@ -3033,10 +3101,217 @@
         showPortalStep(2);
       } catch (err) {
         alert("Network error requesting OTP: " + err.message);
-        loadPortalCaptcha();
+        loadPortalCaptcha(false);
       } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
+      }
+    }
+
+    // --- Wrapper: routes to single or bulk OTP based on mode ---
+    function handleRequestOtpClick() {
+      if (isBulkMode) {
+        requestPortalBulkOtp();
+      } else {
+        requestPortalOtp();
+      }
+    }
+
+    // --- Bulk Verification Flow ---
+    async function startVerifyAllFlow() {
+      // Reset and load captcha in bulk mode
+      await loadPortalCaptcha(true);
+      // Update button label to indicate bulk mode
+      const btn = document.getElementById("btnPortalRequestOtp");
+      if (btn) {
+        btn.innerText = "Send Bulk OTP Requests";
+        btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+      }
+    }
+
+    function closeBulkModal() {
+      document.getElementById("portalBulkModal").classList.add("hidden");
+    }
+
+    function updateBulkStats() {
+      document.getElementById("bulkStatTotal").innerText = bulkStats.total;
+      document.getElementById("bulkStatPending").innerText = bulkStats.sending;
+      document.getElementById("bulkStatSuccess").innerText = bulkStats.success;
+      document.getElementById("bulkStatFailed").innerText = bulkStats.failed;
+    }
+
+    function setBulkRowState(rowEl, state, responseData, errorMsg) {
+      const statusEl = rowEl.querySelector(".bulk-row-status");
+      const detailsEl = rowEl.querySelector(".bulk-row-details");
+
+      const stateConfig = {
+        sending: { label: "Sending...", cls: "bg-amber-100 text-amber-700 border-amber-200 animate-pulse" },
+        success: { label: "OTP Sent ✓", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+        failed:  { label: "Failed ✗",  cls: "bg-rose-100 text-rose-700 border-rose-200" },
+        skipped: { label: "Skipped",   cls: "bg-slate-100 text-slate-500 border-slate-200" }
+      };
+
+      const cfg = stateConfig[state] || stateConfig.skipped;
+      statusEl.innerText = cfg.label;
+      statusEl.className = `bulk-row-status text-[10px] font-bold px-2.5 py-1 rounded-full border ${cfg.cls}`;
+
+      if (responseData) {
+        let html = "";
+        if (state === "success") {
+          html = `<div class="text-emerald-700 font-semibold">✓ OTP request succeeded</div>`;
+          if (responseData.maskedMobile) html += `<div><span class="text-slate-500">Masked Mobile:</span> <span class="font-mono font-bold">${responseData.maskedMobile}</span></div>`;
+          if (responseData.nin) html += `<div><span class="text-slate-500">NIN:</span> <span class="font-mono font-bold">${responseData.nin}</span></div>`;
+          if (responseData.code) html += `<div><span class="text-slate-500">Response Code:</span> <span class="font-mono">${responseData.code}</span></div>`;
+        } else if (state === "failed") {
+          html = `<div class="text-rose-700 font-semibold">✗ Request failed</div>`;
+          if (errorMsg) html += `<div><span class="text-slate-500">Error:</span> <span class="font-mono text-rose-700">${errorMsg}</span></div>`;
+          if (responseData && typeof responseData === "object") {
+            const pretty = JSON.stringify(responseData, null, 2);
+            html += `<pre class="mt-1 text-[10px] bg-rose-50 text-rose-800 p-2 rounded overflow-auto max-h-24">${pretty}</pre>`;
+          }
+        }
+        detailsEl.innerHTML = html;
+      }
+
+      // Toggle visibility
+      detailsEl.classList.remove("hidden");
+    }
+
+    async function requestPortalBulkOtp() {
+      const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
+      if (!captchaCode) {
+        alert("Please enter the captcha code first.");
+        return;
+      }
+
+      const btn = document.getElementById("btnPortalRequestOtp");
+      btn.disabled = true;
+      btn.innerText = "Fetching records...";
+
+      try {
+        // 1. Fetch all non-done records from database
+        const dbRes = await fetch(`${API_BASE}/api/people`);
+        if (!dbRes.ok) throw new Error("Failed to fetch database records.");
+        const allRecords = await dbRes.json();
+
+        const targets = allRecords.filter(r => r.status !== "done");
+        if (targets.length === 0) {
+          alert("No records with non-done status found. Nothing to verify.");
+          resetPortalToInitial();
+          return;
+        }
+
+        bulkTargetRecords = targets;
+        bulkStats = { total: targets.length, sending: targets.length, success: 0, failed: 0 };
+
+        // 2. Build and show modal with all records in "sending" state
+        const listEl = document.getElementById("bulkRecordList");
+        listEl.innerHTML = "";
+
+        targets.forEach(record => {
+          const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim();
+          const nameNp = `${record.givenNp || ""} ${record.surnameNp || ""}`.trim();
+          const nin = record.ninEn;
+
+          const rowEl = document.createElement("div");
+          rowEl.id = `bulk-row-${nin.replace(/[^a-zA-Z0-9]/g, "_")}`;
+          rowEl.className = "bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm";
+
+          const statusBadge = `<span class="bulk-row-status text-[10px] font-bold px-2.5 py-1 rounded-full border bg-amber-100 text-amber-700 border-amber-200 animate-pulse">Sending...</span>`;
+
+          const statusBadgeClass = record.status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                   record.status === "inprogress" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                   "bg-slate-100 text-slate-600 border-slate-300";
+
+          rowEl.innerHTML = `
+            <div class="flex items-center gap-3 px-4 py-3 cursor-pointer select-none" onclick="this.parentElement.querySelector('.bulk-row-details').classList.toggle('hidden')">
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-slate-900 text-xs truncate">${fullName}</div>
+                <div class="text-[10px] text-slate-400 nepali-font">${nameNp}</div>
+                <div class="font-mono text-[10px] text-blue-600 mt-0.5">${nin}</div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase ${statusBadgeClass}">${record.status}</span>
+                ${statusBadge}
+                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+            <div class="bulk-row-details hidden px-4 pb-3 text-xs space-y-1 text-slate-700 border-t border-slate-100 pt-2 bg-slate-50">
+              <div class="text-slate-400 italic">Waiting for response...</div>
+            </div>
+          `;
+          listEl.appendChild(rowEl);
+        });
+
+        // Update stats display and show modal
+        document.getElementById("bulkModalSubtitle").innerText = `Sending ${targets.length} simultaneous OTP requests...`;
+        document.getElementById("bulkFooterStatus").innerText = `Using captcha: ${captchaCode}`;
+        updateBulkStats();
+        document.getElementById("portalBulkModal").classList.remove("hidden");
+
+        // 3. Send all requests in parallel
+        const requests = targets.map(async record => {
+          const nin = record.ninEn;
+          const rowId = `bulk-row-${nin.replace(/[^a-zA-Z0-9]/g, "_")}`;
+          const rowEl = document.getElementById(rowId);
+
+          const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim().toUpperCase();
+          const fullNameLoc = `${record.givenNp || ""} ${record.surnameNp || ""}`.trim();
+          const dobLoc = translateDigits(record.dobNp || "", englishToNepaliDigits);
+          const ccnIssuingDateLoc = translateDigits(record.citDate || "", englishToNepaliDigits);
+
+          try {
+            const res = await fetch(`${API_BASE}/api/request-otp`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Captcha-Code": captchaCode
+              },
+              body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
+            });
+
+            if (!res.ok) {
+              let errMsg = res.statusText;
+              try {
+                const errData = await res.json();
+                errMsg = errData.error || errMsg;
+              } catch(e) {}
+
+              bulkStats.sending--;
+              bulkStats.failed++;
+              updateBulkStats();
+              if (rowEl) setBulkRowState(rowEl, "failed", null, errMsg);
+            } else {
+              const data = await res.json();
+              bulkStats.sending--;
+              bulkStats.success++;
+              updateBulkStats();
+              if (rowEl) setBulkRowState(rowEl, "success", data, null);
+            }
+          } catch (err) {
+            bulkStats.sending--;
+            bulkStats.failed++;
+            updateBulkStats();
+            if (rowEl) setBulkRowState(rowEl, "failed", null, err.message);
+          }
+        });
+
+        // Await all parallel requests
+        await Promise.allSettled(requests);
+
+        const finalStatus = `Done: ${bulkStats.success} succeeded, ${bulkStats.failed} failed out of ${bulkStats.total} records.`;
+        document.getElementById("bulkModalSubtitle").innerText = "Bulk verification complete!";
+        document.getElementById("bulkFooterStatus").innerText = finalStatus;
+
+      } catch (err) {
+        alert("Bulk request error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Send Bulk OTP Requests";
+        // Reset to initial state behind the modal
+        resetPortalToInitial();
       }
     }
 
