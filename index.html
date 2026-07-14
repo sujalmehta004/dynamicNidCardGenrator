@@ -1409,6 +1409,13 @@
       attachGeneralDateAutoFormatter("portalCcnIssuingDateLoc", true);
       attachGeneralDateAutoFormatter("filterRegStart", false);
 
+      document.getElementById("portalFullNameNp").addEventListener("blur", (e) => {
+        e.target.value = cleanNepaliText(e.target.value);
+      });
+      document.getElementById("portalFullNameNp").addEventListener("change", (e) => {
+        e.target.value = cleanNepaliText(e.target.value);
+      });
+
       loadNepalAdministrativeData();
       fetchDatabase();
       checkIpAccessControl();
@@ -1421,6 +1428,18 @@
         .split("")
         .map((char) => map[char] || char)
         .join("");
+    }
+
+    function cleanNepaliText(text) {
+      if (!text) return "";
+      // Remove unwanted hidden spaces/tabs
+      let clean = text.trim().replace(/\s+/g, ' ');
+      // Fix "गुप्ता" -> "गुप्ता" (Inserts ZWJ \u200D after the halant under Pa)
+      clean = clean.replace(/प्ता/g, 'प्\u200Dता');
+      // Fix "तामाङ्ग" -> Ensures the Halant stays visible on the Nga (\u0919 + \u094D) 
+      // and doesn't blend into a bottom loop with Ga (\u0917)
+      clean = clean.replace(/ङ्ग/g, 'ङ्\u200Dग');
+      return clean;
     }
 
     function initializeDateFieldsDefaults() {
@@ -3095,7 +3114,7 @@
 
     async function requestPortalOtp() {
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
-      const fullNameLoc = document.getElementById("portalFullNameNp").value.trim();
+      const fullNameLoc = cleanNepaliText(document.getElementById("portalFullNameNp").value);
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
       const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
       const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
@@ -3323,7 +3342,7 @@
           const rowEl = document.getElementById(rowId);
 
           const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim().toUpperCase();
-          const fullNameLoc = `${record.givenNp || ""} ${record.surnameNp || ""}`.trim();
+          const fullNameLoc = cleanNepaliText(`${record.givenNp || ""} ${record.surnameNp || ""}`);
           const dobLoc = translateDigits(record.dobNp || "", englishToNepaliDigits);
           const ccnIssuingDateLoc = translateDigits(record.citDate || "", englishToNepaliDigits);
 
