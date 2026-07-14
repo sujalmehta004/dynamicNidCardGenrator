@@ -1283,7 +1283,7 @@
               Search</label>
             <div class="relative flex gap-2">
               <input type="text" id="searchQueryBar" placeholder="Search by Name, NID, or Address..."
-                oninput="applyFiltersClientSide()"
+                oninput="onSearchQueryInput()"
                 class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all shadow-inner" />
               <button onclick="fetchDatabase(true)"
                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0">
@@ -1298,6 +1298,7 @@
             <select id="filterStatus" onchange="applyFiltersClientSide()"
               class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
               <option value="all">All States</option>
+              <option value="not_done" selected>All Not Done</option>
               <option value="pending">Pending</option>
               <option value="done">Done</option>
               <option value="inprogress">Mobile Number Update</option>
@@ -2454,6 +2455,18 @@
       applyFiltersClientSide();
     }
 
+    function onSearchQueryInput() {
+      // When user types a search query, show ALL statuses so results aren't restricted
+      const query = document.getElementById("searchQueryBar").value.trim();
+      if (query.length > 0) {
+        document.getElementById("filterStatus").value = "all";
+      } else {
+        // When search is cleared, restore default "not_done" filter
+        document.getElementById("filterStatus").value = "not_done";
+      }
+      applyFiltersClientSide();
+    }
+
     function applyFiltersClientSide() {
       const query = document
         .getElementById("searchQueryBar")
@@ -2469,7 +2482,9 @@
       let filtered = [...allCachedRecords];
 
       // 1. Status Filter
-      if (statusFilter && statusFilter !== "all") {
+      if (statusFilter === "not_done") {
+        filtered = filtered.filter((row) => row.status !== "done");
+      } else if (statusFilter && statusFilter !== "all") {
         filtered = filtered.filter((row) => row.status === statusFilter);
       }
 
