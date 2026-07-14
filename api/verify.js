@@ -396,9 +396,20 @@ function renderVerifyPage(person, mode, nin) {
             ccnIssuingDateLoc: ccnIssuingDateLoc,
           }),
         });
-        const data = await res.json();
+
+        // Safe body parsing
+        const rawText = await res.text();
+        let data;
+        try { data = JSON.parse(rawText); } catch (e) { data = rawText; }
+
         if (!res.ok) {
-          let errMsg = data.error || res.statusText || "";
+          let errMsg = "";
+          if (typeof data === "object" && data !== null) {
+            errMsg = data.error || data.message || JSON.stringify(data);
+          } else {
+            errMsg = String(data);
+          }
+
           if (errMsg.includes("MOBILE_NOT_REGISTERED")) {
             errMsg = "Mobile number is not registered on the NID portal.";
           } else if (errMsg.includes("DATA_NOT_FOUND")) {
@@ -436,9 +447,20 @@ function renderVerifyPage(person, mode, nin) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nin: verifyNin, otp }),
         });
-        const data = await res.json();
+
+        // Safe body parsing
+        const rawText = await res.text();
+        let data;
+        try { data = JSON.parse(rawText); } catch (e) { data = rawText; }
+
         if (!res.ok) {
-          showError(2, 'OTP verification failed: ' + (data.error || res.statusText));
+          let errMsg = "";
+          if (typeof data === "object" && data !== null) {
+            errMsg = data.error || data.message || JSON.stringify(data);
+          } else {
+            errMsg = String(data);
+          }
+          showError(2, 'OTP verification failed: ' + errMsg);
           return;
         }
         verifyDownloadToken = data.downloadToken;
