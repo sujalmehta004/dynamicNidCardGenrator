@@ -2871,7 +2871,7 @@
 
         const formPane = document.getElementById("paneWorkspaceForm");
         if (formPane) {
-          formPane.classList.remove("bg-red-500");
+          formPane.classList.remove("bg-sky-400");
           formPane.classList.add("bg-white");
         }
 
@@ -2920,7 +2920,7 @@
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
         formPane.classList.remove("bg-white");
-        formPane.classList.add("bg-red-500");
+        formPane.classList.add("bg-sky-400");
       }
 
       document.getElementById("formNinEn").value = record.ninEn;
@@ -3732,7 +3732,7 @@
 
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
-        formPane.classList.remove("bg-red-500");
+        formPane.classList.remove("bg-sky-400");
         formPane.classList.add("bg-white");
       }
 
@@ -4606,10 +4606,33 @@
         filtered = filtered.filter((row) => row.regDate >= start && row.regDate <= end);
       }
 
+      // Apply status filter
+      const statusFilter = document.getElementById("printStatusSelect").value;
+      if (statusFilter === "not_done") {
+        filtered = filtered.filter((row) => row.status !== "done");
+      } else if (statusFilter === "done") {
+        filtered = filtered.filter((row) => row.status === "done");
+      } else if (statusFilter === "pending") {
+        filtered = filtered.filter((row) => row.status === "pending");
+      } else if (statusFilter === "inprogress") {
+        filtered = filtered.filter((row) => row.status === "inprogress");
+      } else if (statusFilter === "not_online") {
+        filtered = filtered.filter((row) => row.status === "notonline");
+      } else if (statusFilter === "mobile_updated") {
+        filtered = filtered.filter((row) => row.status === "mobile_updated" || (row.executionStatus && row.executionStatus.toLowerCase().includes("mobile")));
+      }
+
       if (filtered.length === 0) {
-        alert("No records found for the selected period.");
+        alert("No records found for the selected period and status.");
         return;
       }
+
+      const statusLabelMap = {
+        all: "All Records", not_done: "All Not Done", done: "Done",
+        pending: "Pending", inprogress: "In Progress", not_online: "Not Online",
+        mobile_updated: "Mobile Number Updated"
+      };
+      const filterLabel = statusLabelMap[statusFilter] || statusFilter;
 
       filtered.sort((a, b) => (b.regDate || "").localeCompare(a.regDate || ""));
 
@@ -4627,7 +4650,7 @@
         header.innerHTML = `
           <div>
             <h1>National Identity Vault Ledger</h1>
-            <span style="font-size: 8px;">Generated on: ${new Date().toLocaleString()}</span>
+            <span style="font-size: 8px;">Generated on: ${new Date().toLocaleString()} &nbsp;|&nbsp; Filter: <strong>${filterLabel}</strong> &nbsp;|&nbsp; Total Records: <strong>${filtered.length}</strong></span>
           </div>
           <span>Page ${p + 1} of ${pagesCount}</span>
         `;
@@ -4825,6 +4848,20 @@
             <option value="this_month">This Month</option>
             <option value="this_year">This Year</option>
             <option value="custom">Custom Date Range</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Select Execution Status / Filter</label>
+          <select id="printStatusSelect"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
+            <option value="all">All Records</option>
+            <option value="not_done">All Not Done</option>
+            <option value="done">Done Records</option>
+            <option value="pending">Pending Records</option>
+            <option value="inprogress">In Progress Records</option>
+            <option value="not_online">Not Online Records</option>
+            <option value="mobile_updated">Mobile Number Updated</option>
           </select>
         </div>
 
