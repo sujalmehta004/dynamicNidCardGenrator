@@ -1334,8 +1334,8 @@
           </div>
         </div>
 
-        <!-- Database Table -->
-        <div class="flex-1 overflow-auto" style="scrollbar-width:none; -ms-overflow-style:none;">
+        <!-- Database Table Wrapper Card -->
+        <div class="flex-1 overflow-hidden border border-slate-250 rounded-xl bg-white shadow-sm flex flex-col mb-4" style="scrollbar-width:none; -ms-overflow-style:none;">
           <style>.db-scroll-area::-webkit-scrollbar{display:none;}</style>
           <div class="db-scroll-area overflow-auto h-full">
             <table class="min-w-full text-left text-xs" style="border-collapse:collapse;">
@@ -2756,7 +2756,7 @@
           openRowDetailPopup(row.ninEn);
         };
 
-        const CELL = "padding:9px 14px; border-right:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9;";
+        const CELL = "padding:9px 14px; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;";
 
         // Col 1: NIN
         if (columnVisibility.nin) {
@@ -2851,7 +2851,7 @@
         // Col 10: Actions
         if (columnVisibility.actions) {
           const td = document.createElement("td");
-          td.style.cssText = "padding:9px 14px; border-bottom:1px solid #f1f5f9; text-align:center; white-space:nowrap;";
+          td.style.cssText = "padding:9px 14px; border-bottom:1px solid #e2e8f0; text-align:center; white-space:nowrap;";
           td.innerHTML = `<button onclick="event.stopPropagation(); pullRowIntoWorkspace('${row.ninEn}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg font-bold transition-all text-[10px]">✏️ Edit</button>`;
           tr.appendChild(td);
         }
