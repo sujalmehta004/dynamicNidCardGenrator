@@ -519,16 +519,27 @@ function renderVerifyPage(person, mode, nin) {
         a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
         document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
 
-        // Clipboard code
+        // Open in a new tab
+        window.open(url, "_blank");
+
+        // Delayed revocation to let browser load PDF in new tab
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 5000);
+
+        // Clipboard & Password calculation
+        const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
+        const namePart = nameOnly.substring(0,4).toUpperCase();
+        const dobEn = translateDigits(PERSON_DOB_LOC, nepToEn);
+        const yearPart = dobEn.replace(/\//g, "-").split('-')[0].substring(0,4);
+        const clipboardCode = namePart + yearPart;
         try {
-          const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
-          const namePart = nameOnly.substring(0,4).toUpperCase();
-          const dobEn = translateDigits(PERSON_DOB_LOC, nepToEn);
-          const yearPart = dobEn.split('-')[0].substring(0,4);
-          await navigator.clipboard.writeText(namePart + yearPart);
+          await navigator.clipboard.writeText(clipboardCode);
         } catch(e) {}
+
+        alert('NID Card Downloaded and Opened!\n\nThe password for the PDF is: ' + clipboardCode + '\n(First 4 letters of name + BS birth year).\n\nThis password has been automatically copied to your clipboard!');
 
         // Go to Step 4 (Token Scan) instead of updating DB immediately
         showStep(4);

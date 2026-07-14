@@ -3836,17 +3836,27 @@
         a.download = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
         document.body.appendChild(a);
         a.click();
-        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
 
-        // Clipboard code
+        // Open in new tab
+        window.open(url, "_blank");
+
+        // Delayed revocation to let browser load PDF in new tab
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 5000);
+
+        // Clipboard & Password calculation
         const nameOnly = fullName.replace(/\s+/g, "");
         const namePart = nameOnly.substring(0, 4).toUpperCase();
         const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-        const yearPart = dobEnglish.split("-")[0].substring(0, 4);
+        const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
         const clipboardCode = namePart + yearPart;
         try {
           await navigator.clipboard.writeText(clipboardCode);
         } catch (clipErr) {}
+
+        alert(`NID Card Downloaded and Opened!\n\nThe password for the PDF is: ${clipboardCode}\n(First 4 letters of name + BS birth year).\n\nThis password has been automatically copied to your clipboard!`);
 
         // Hide download row, show manual token entry step
         document.getElementById("portalDownloadRow").classList.add("hidden");
