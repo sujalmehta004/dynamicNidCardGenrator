@@ -11,17 +11,16 @@ A production-grade, full-stack application built with **HTML/JavaScript**, **Nod
    - Dynamic transliteration of NIN digits from English to Nepali in real-time.
    - Bidirectional AD-to-BS and BS-to-AD Date of Birth conversion.
    - Dynamic administrative address generation (District, Municipality, Type, and Ward selectors).
-   
 2. **Interactive Database Ledger**:
    - **Custom Column Visibility**: Show/hide any database column dynamically (NID, Name, Token, DOB, Address, Dates, Status, etc.).
    - **Click-to-Copy Tokens**: Truncated secure tokens copy instantly to your clipboard when clicked.
    - **Server-Side Dynamic Sorting**: Click headers to sort by NID, Name, Dates, or Status (defaults to showing the newest entry at the top).
-   - **Inline Status Updates**: Change card execution status (Pending, Done, In Progress, Not Online) directly from the table.
+   - **Inline Status Updates**: Change card execution status (Pending, Done, Mobile Number Update, Not Online) directly from the table.
 
 3. **QR Routing Verification Gateway (`/verify/:ninEn`)**:
    - Generates unique QR codes for each record that point to `/verify/<NIN>`.
    - If a **Secure Token** is configured in the database, the gateway does a `302 Redirect` to the official verification portal: `https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=<TOKEN>`.
-   - If **no token** is found, the server renders a premium glassmorphic dark-theme profile card informing the user: *"Your NID number token is not configured or not online"* alongside their registered details.
+   - If **no token** is found, the server renders a premium glassmorphic dark-theme profile card informing the user: _"Your NID number token is not configured or not online"_ alongside their registered details.
 
 4. **Government Download Gateway Proxy (`/api/download`)**:
    - Instantly pre-fills details from the database using the new **Search & Populate** feature in the Download Card Portal tab.
@@ -66,22 +65,29 @@ MONGODB_URI=mongodb+srv://sujalmehta:admin123@cluster0.u8czprf.mongodb.net/qrcod
 ## Quick Start & Running Locally
 
 ### 1. Install Dependencies
+
 Ensure you have Node.js (version 18+) installed. Run the command to install packages:
+
 ```bash
 npm install
 ```
 
 ### 2. Install Vercel CLI (Globally)
+
 If you haven't installed Vercel's developer tools globally:
+
 ```bash
 npm i -g vercel
 ```
 
 ### 3. Run Development Server
+
 Start the local Vercel dev server:
+
 ```bash
 npx vercel dev
 ```
+
 Open **`http://localhost:3000`** in your browser.
 
 ---
@@ -90,13 +96,11 @@ Open **`http://localhost:3000`** in your browser.
 
 To host your project in production on Vercel:
 
-1. **Deploy via CLI**:
-   Run `vercel` in the project directory:
+1. **Deploy via CLI**: Run `vercel` in the project directory:
    ```bash
    vercel
    ```
-2. **Configure Database Secrets**:
-   Go to your project settings in the Vercel Dashboard under **Environment Variables**, and add:
+2. **Configure Database Secrets**: Go to your project settings in the Vercel Dashboard under **Environment Variables**, and add:
    - Key: `MONGODB_URI`
    - Value: `mongodb+srv://sujalmehta:admin123@cluster0.u8czprf.mongodb.net/qrcode?retryWrites=true&w=majority`
 3. **Promote to Production**:
