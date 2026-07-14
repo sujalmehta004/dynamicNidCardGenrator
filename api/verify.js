@@ -161,6 +161,15 @@ function renderVerifyPage(person, mode, nin) {
           <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Mobile (Registered)</div>
           <div class="text-sm font-semibold text-slate-800">${person.mobile.replace(/(\d{2})(\d{5})(\d{3})/, "$1XXXXX$3")}</div>
         </div>` : ""}
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Workflow Status</div>
+          <div class="text-sm font-bold ${person.status === "inprogress" ? "text-rose-600" : person.status === "not online" ? "text-slate-500" : "text-amber-600"}">
+            ${person.status === "inprogress" ? "Mobile Not Registered" :
+              person.status === "not online" ? "Not Online" :
+              person.status === "pending" ? "Pending Verification" :
+              person.status === "done" ? "Verified" : "Unverified"}
+          </div>
+        </div>
       </div>
 
       <!-- CTA Button -->
@@ -296,7 +305,6 @@ function renderVerifyPage(person, mode, nin) {
 
     <!-- Footer -->
     <div class="text-center text-[10px] text-slate-400">
-      Department of National ID & Civil Registration (DONIDCR) &bull; Government of Nepal
     </div>
   </div>
 
@@ -390,7 +398,13 @@ function renderVerifyPage(person, mode, nin) {
         });
         const data = await res.json();
         if (!res.ok) {
-          showError(1, 'OTP request failed: ' + (data.error || res.statusText));
+          let errMsg = data.error || res.statusText || "";
+          if (errMsg.includes("MOBILE_NOT_REGISTERED")) {
+            errMsg = "Mobile number is not registered on the NID portal.";
+          } else if (errMsg.includes("DATA_NOT_FOUND")) {
+            errMsg = "Citizen data is not found on the NID portal.";
+          }
+          showError(1, 'OTP request failed: ' + errMsg);
           loadCaptcha();
           return;
         }
@@ -637,7 +651,7 @@ module.exports = async (req, res) => {
       <h2 class="text-lg font-bold text-slate-900">Record Not Found</h2>
       <p class="text-sm text-slate-500 mt-2">No registered profile could be matched with NIN: <strong class="font-mono text-blue-600">${nin}</strong>.</p>
     </div>
-    <div class="text-[10px] text-slate-400">Department of National ID &amp; Civil Registration &bull; Government of Nepal</div>
+    <div class="text-[10px] text-slate-400"></div>
   </div>
 </body>
 </html>`);
