@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NID Secure PDF Viewer & Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-hidden">
+
+  <!-- Header Bar -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shadow-lg z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/20">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold text-slate-100" id="pdfNameHeader">NID Card Document</h1>
+        <p class="text-[10px] text-slate-400 font-medium tracking-wide">SECURE PREVIEW & DECRYPTION</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <button id="btnScanQR" onclick="autoScanQR()" disabled
+        class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-blue-500/10">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Scan & Sync QR
+      </button>
+
+      <button id="btnDownloadUnlocked" onclick="downloadUnlockedPDF()" disabled
+        class="bg-slate-800 hover:bg-slate-700 disabled:bg-slate-800/50 disabled:text-slate-600 text-slate-200 border border-slate-750 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 11V7a4 4 0 118 0m-4 10v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+        </svg>
+        Save Unlocked PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport Area -->
+  <main class="flex-1 flex overflow-hidden relative">
+
+    <!-- Sidebar / Status Bar -->
+    <div class="w-64 bg-slate-900/60 border-r border-slate-800 p-5 flex flex-col gap-5 shrink-0 hidden md:flex">
+      <div>
+        <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Status Console</h3>
+        <div class="bg-slate-950 border border-slate-850 rounded-xl p-3.5 space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Security</span>
+            <span id="txtEncrypted" class="font-bold text-amber-500">Encrypted</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-500">Auto Scan</span>
+            <span id="txtScanState" class="font-bold text-slate-400">Waiting...</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="quickTips" class="text-[11px] text-slate-400 bg-slate-850/30 rounded-xl p-4 border border-slate-800/50 leading-relaxed">
+        <p class="font-bold text-slate-200 mb-1">💡 Smart View Mode</p>
+        This page automatically scans the document for national identification secure codes. Once matched, it immediately returns the sync token to your main window automatically.
+      </div>
+    </div>
+
+    <!-- PDF Viewer Area -->
+    <div class="flex-1 bg-slate-950 overflow-auto flex items-center justify-center p-6 relative custom-scrollbar" id="pdfScrollContainer">
+      
+      <!-- Password Prompt Form (Overlaid initially if required) -->
+      <div id="passwordPrompt" class="hidden absolute inset-0 bg-slate-950/90 z-20 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-100">Document Password Required</h2>
+            <p class="text-xs text-slate-400 mt-1">Please enter the NID password to open the preview.</p>
+          </div>
+          <div class="flex gap-2">
+            <input id="pdfPasswordInput" type="text" placeholder="e.g. SUJA2062"
+              class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-blue-500 transition-all font-mono uppercase" />
+            <button onclick="submitManualPassword()"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 rounded-xl text-xs transition-all shrink-0">
+              Submit
+            </button>
+          </div>
+          <div id="passwordError" class="hidden text-[10px] text-rose-500 font-medium">Incorrect password. Please try again.</div>
+        </div>
+      </div>
+
+      <!-- PDF Canvas Container -->
+      <div id="pdfContainer" class="shadow-2xl border border-slate-800 rounded bg-white hidden">
+        <canvas id="pdfCanvas" class="max-w-full rounded"></canvas>
+      </div>
+
+      <!-- Loading Placeholder -->
+      <div id="loadingPlaceholder" class="flex flex-col items-center gap-3">
+        <div class="w-8 h-8 rounded-full border-4 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+        <div class="text-xs text-slate-400 font-medium">Loading secure preview document...</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let pdfDataArrayBuffer = null;
+    let decryptedBytes = null;
+    let pdfDocInstance = null;
+    let currentPassword = "";
+    let extractedQrData = null;
+    let pdfName = "NID_Card.pdf";
+
+    // 1. Initialize Page and Read Blob Parameters
+    window.addEventListener("DOMContentLoaded", async () => {
+      const params = new URLSearchParams(window.location.search);
+      const pdfBlobUrl = params.get("pdf");
+      const nameParam = params.get("name");
+      const passParam = params.get("password");
+
+      if (nameParam) {
+        pdfName = nameParam;
+        document.getElementById("pdfNameHeader").innerText = nameParam;
+      }
+      if (passParam) {
+        currentPassword = passParam.trim().toUpperCase();
+      }
+
+      if (!pdfBlobUrl) {
+        setPlaceholderText("❌ Error: No document URL provided.");
+        return;
+      }
+
+      try {
+        const res = await fetch(pdfBlobUrl);
+        if (!res.ok) throw new Error("Failed to fetch document bytes.");
+        const blob = await res.blob();
+        pdfDataArrayBuffer = await blob.arrayBuffer();
+        
+        await attemptLoadPdf();
+      } catch (err) {
+        console.error(err);
+        setPlaceholderText("❌ Error fetching document: " + err.message);
+      }
+    });
+
+    function setPlaceholderText(text) {
+      document.getElementById("loadingPlaceholder").innerHTML = `<div class="text-xs text-slate-400 font-medium">${text}</div>`;
+    }
+
+    // 2. Load PDF (With Decryption Support)
+    async function attemptLoadPdf() {
+      document.getElementById("passwordPrompt").classList.add("hidden");
+      document.getElementById("passwordError").classList.add("hidden");
+      document.getElementById("loadingPlaceholder").classList.remove("hidden");
+      document.getElementById("pdfContainer").classList.add("hidden");
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      try {
+        // Try standard load with pdf.js (handles AES-256 decryption natively!)
+        const loadingTask = pdfjsLib.getDocument({
+          data: pdfDataArrayBuffer,
+          password: currentPassword
+        });
+        
+        pdfDocInstance = await loadingTask.promise;
+        await renderPageOne();
+        
+        // Load succeeded!
+        document.getElementById("loadingPlaceholder").classList.add("hidden");
+        document.getElementById("pdfContainer").classList.remove("hidden");
+        
+        // Mark security status
+        document.getElementById("txtEncrypted").innerText = currentPassword ? "Decrypted" : "None";
+        document.getElementById("txtEncrypted").className = "font-bold text-emerald-500";
+
+        // Enable buttons
+        document.getElementById("btnScanQR").disabled = false;
+        document.getElementById("btnDownloadUnlocked").disabled = false;
+
+        // Auto Scan QR Code
+        autoScanQR();
+      } catch (err) {
+        if (err.name === "PasswordException" || err.code === 1) {
+          // Password needed or incorrect
+          document.getElementById("loadingPlaceholder").classList.add("hidden");
+          document.getElementById("passwordPrompt").classList.remove("hidden");
+          if (currentPassword) {
+            document.getElementById("passwordError").classList.remove("hidden");
+            document.getElementById("passwordError").innerText = "Auto-decryption failed. Please enter password manually:";
+          }
+        } else {
+          console.error(err);
+          setPlaceholderText("❌ Failed parsing PDF: " + err.message);
+        }
+      }
+    }
+
+    async function submitManualPassword() {
+      const input = document.getElementById("pdfPasswordInput").value.trim().toUpperCase();
+      if (!input) return;
+      currentPassword = input;
+      await attemptLoadPdf();
+    }
+
+    // 3. Render Page 1 to Canvas
+    async function renderPageOne() {
+      if (!pdfDocInstance) return;
+      const page = await pdfDocInstance.getPage(1);
+      
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.getElementById("pdfCanvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({
+        canvasContext: ctx,
+        viewport: viewport
+      }).promise;
+    }
+
+    // 4. Automatic QR Code Scanning
+    async function autoScanQR() {
+      const stateEl = document.getElementById("txtScanState");
+      stateEl.innerText = "Scanning...";
+      stateEl.className = "font-bold text-blue-400";
+
+      try {
+        const canvas = document.getElementById("pdfCanvas");
+        const ctx = canvas.getContext("2d");
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert"
+        });
+
+        if (code && code.data) {
+          extractedQrData = code.data;
+          stateEl.innerText = "Success ✓";
+          stateEl.className = "font-bold text-emerald-500";
+          
+          // Send to original window immediately
+          if (window.opener) {
+            window.opener.postMessage({
+              type: "QR_SCANNED",
+              data: extractedQrData
+            }, "*");
+          }
+          
+          alert(`✅ QR Code Scanned & Synced Automatically!\n\nToken extracted:\n"${extractedQrData}"\n\nThis token has been sent back to the main portal window. You can close this tab now.`);
+        } else {
+          stateEl.innerText = "No QR found";
+          stateEl.className = "font-bold text-rose-500";
+        }
+      } catch (err) {
+        console.error(err);
+        stateEl.innerText = "Scan failed";
+        stateEl.className = "font-bold text-rose-500";
+      }
+    }
+
+    // 5. Save/Download Unlocked PDF
+    async function downloadUnlockedPDF() {
+      const btn = document.getElementById("btnDownloadUnlocked");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Decrypting...";
+
+      try {
+        // Try decrypting with PDF-Lib using the successful password
+        const pdfLibDoc = await PDFLib.PDFDocument.load(pdfDataArrayBuffer, {
+          password: currentPassword
+        });
+        
+        decryptedBytes = await pdfLibDoc.save();
+        const blob = new Blob([decryptedBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = pdfName.replace(".pdf", "") + "_unlocked.pdf";
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        alert("✅ Fully unlocked PDF has been downloaded successfully!");
+      } catch (err) {
+        console.error("PDFLib decryption failed:", err);
+        alert("⚠️ Decryption algorithm is not fully supported for direct download saving in this browser version. You can still print or save directly from the PDF preview pane.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  </script>
+</body>
+</html>

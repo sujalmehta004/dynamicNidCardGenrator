@@ -318,6 +318,19 @@ function renderVerifyPage(person, mode, nin) {
     const PERSON_DOB_LOC = '${dobNpJs}';
     const PERSON_CIT_DATE_LOC = '${citDateJs}';
 
+    // Listen for scanned token from the secure PDF viewer page
+    window.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "QR_SCANNED") {
+        const qrVal = event.data.data;
+        console.log("Received QR token from viewer tab:", qrVal);
+        const inp = document.getElementById("pastedTokenInput");
+        if (inp) {
+          inp.value = qrVal;
+          verifyAndSaveScannedToken();
+        }
+      }
+    });
+
     let verifyNin = '';
     let verifyDownloadToken = '';
 
@@ -566,13 +579,14 @@ function renderVerifyPage(person, mode, nin) {
         a.click();
         document.body.removeChild(a);
 
-        // Open in a new tab
-        window.open(url, "_blank");
+        // Open in our high-tech custom viewer page!
+        const viewerUrl = '/viewer.html?pdf=' + encodeURIComponent(url) + '&password=' + encodeURIComponent(clipboardCode) + '&name=' + encodeURIComponent('NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf');
+        window.open(viewerUrl, "_blank");
 
-        // Delayed revocation to let browser load PDF in new tab
+        // Delayed revocation to let browser load PDF in custom viewer
         setTimeout(() => {
           URL.revokeObjectURL(url);
-        }, 8000);
+        }, 12000);
 
         try {
           await navigator.clipboard.writeText(clipboardCode);
