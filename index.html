@@ -3369,25 +3369,33 @@
 
       // Build Table HTML
       let html = `
-        <div class="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
-          <table class="w-full text-left border-collapse text-xs">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+          <table class="w-full text-left text-xs" style="border-collapse: collapse; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 48px;" />
+              <col style="width: 200px;" />
+              <col style="width: 240px;" />
+              <col style="width: 110px;" />
+              <col style="width: 150px;" />
+              <col style="min-width: 220px;" />
+            </colgroup>
             <thead>
-              <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[9px]">
-                <th class="px-4 py-3 text-center w-12">S.N.</th>
-                <th class="px-4 py-3 w-28">NID Number</th>
-                <th class="px-4 py-3 w-48">Full Name</th>
-                <th class="px-4 py-3 w-20 text-center">Orig. Status</th>
-                <th class="px-4 py-3 w-32 text-center">Verif. Status</th>
-                <th class="px-4 py-3">Details / Response</th>
+              <tr style="background:#f8f9fb; border-bottom: 2px solid #e2e8f0;">
+                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">#</th>
+                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">NID Number</th>
+                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Full Name</th>
+                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Status</th>
+                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Verification</th>
+                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">Response</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody>
       `;
 
       if (displayRows.length === 0) {
         html += `
           <tr>
-            <td colspan="6" class="px-4 py-8 text-center text-slate-400 italic">No records match the active filter.</td>
+            <td colspan="6" style="padding:36px 16px; text-align:center; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9;">No records match the active filter.</td>
           </tr>
         `;
       } else {
@@ -3397,64 +3405,79 @@
           const nameNp = `${rec.givenNp || ""} ${rec.surnameNp || ""}`.trim();
           const nin = rec.ninEn;
 
-          // Status Badge Class
-          const statusBadgeClass = rec.status === "pending" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                                   rec.status === "inprogress" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                   "bg-slate-100 text-slate-650 border-slate-300";
+          // Left-accent border color only — minimal row tinting
+          let accentColor = "#e2e8f0"; // default slate
+          if (row.state === "success") accentColor = "#10b981";
+          else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") accentColor = "#8b5cf6";
+          else if (row.resolvedCode === "DATA_NOT_FOUND") accentColor = "#0ea5e9";
+          else if (row.state === "failed") accentColor = "#f43f5e";
+          else if (row.state === "sending") accentColor = "#f59e0b";
 
-          // Verif status badge
-          let verifBadge = "";
+          // Row bg: very faint
+          let rowBg = "#ffffff";
+          if (row.state === "success") rowBg = "#f0fdf8";
+          else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") rowBg = "#faf5ff";
+          else if (row.resolvedCode === "DATA_NOT_FOUND") rowBg = "#f0f9ff";
+          else if (row.state === "failed") rowBg = "#fff1f2";
+          else if (row.state === "sending") rowBg = "#fffbeb";
+
+          // Original DB status badge
+          const statusColors = {
+            pending: { bg: "#fef3c7", text: "#92400e", border: "#fde68a" },
+            inprogress: { bg: "#dbeafe", text: "#1e40af", border: "#bfdbfe" },
+            default: { bg: "#f1f5f9", text: "#475569", border: "#e2e8f0" }
+          };
+          const sc = statusColors[rec.status] || statusColors.default;
+
+          // Verification badge
+          let verifLabel = ""; let verifBg = ""; let verifText = ""; let verifBorder = "";
           if (row.state === "sending") {
-            verifBadge = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-amber-200 animate-pulse">Sending...</span>`;
+            verifLabel = "Sending…"; verifBg = "#fef3c7"; verifText = "#92400e"; verifBorder = "#fde68a";
           } else if (row.state === "success") {
-            verifBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-emerald-250">OTP Sent ✓</span>`;
+            verifLabel = "OTP Sent ✓"; verifBg = "#d1fae5"; verifText = "#065f46"; verifBorder = "#a7f3d0";
           } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
-            verifBadge = `<span class="bg-violet-100 text-violet-800 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-violet-250">Unregistered ✗</span>`;
+            verifLabel = "Not Registered ✗"; verifBg = "#ede9fe"; verifText = "#5b21b6"; verifBorder = "#ddd6fe";
           } else if (row.resolvedCode === "DATA_NOT_FOUND") {
-            verifBadge = `<span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-sky-250">No Data ✗</span>`;
+            verifLabel = "Data Not Found ✗"; verifBg = "#e0f2fe"; verifText = "#0c4a6e"; verifBorder = "#bae6fd";
           } else {
-            verifBadge = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-rose-250">Failed ✗</span>`;
+            verifLabel = "Failed ✗"; verifBg = "#ffe4e6"; verifText = "#9f1239"; verifBorder = "#fecdd3";
           }
 
-          // Details field
+          // Details / response text — clean, no prefix
           let detailsHtml = "";
           if (row.state === "sending") {
-            detailsHtml = `<span class="text-slate-400 italic">Waiting for response...</span>`;
+            detailsHtml = `<span style="color:#94a3b8; font-style:italic;">Waiting for response…</span>`;
           } else if (row.state === "success") {
             const mobileStr = row.responseData && row.responseData.maskedMobile ? row.responseData.maskedMobile : "—";
-            detailsHtml = `<span class="text-emerald-700 font-semibold">OTP sent to: <span class="font-mono font-bold">${mobileStr}</span></span>`;
+            detailsHtml = `<span style="color:#059669; font-weight:600;">Mobile: <span style="font-family:monospace; font-weight:700;">${mobileStr}</span></span>`;
+          } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
+            detailsHtml = `<span style="color:#7c3aed; font-weight:500;">Mobile number not registered on NID portal</span>`;
+          } else if (row.resolvedCode === "DATA_NOT_FOUND") {
+            detailsHtml = `<span style="color:#0284c7; font-weight:500;">Citizen data not found on NID portal</span>`;
           } else {
-            const msg = row.errorMsg || (row.responseData ? (typeof row.responseData === "string" ? row.responseData : JSON.stringify(row.responseData)) : "Unknown error");
-            detailsHtml = `<span class="text-rose-700 font-medium">${msg}</span>`;
+            const rawMsg = row.errorMsg || (row.responseData ? (typeof row.responseData === "string" ? row.responseData : JSON.stringify(row.responseData)) : "Unknown error");
+            // Strip "Response code: " prefix if present
+            const cleanMsg = rawMsg.replace(/^Response\s*code:\s*/i, "").replace(/^Error:\s*/i, "");
+            detailsHtml = `<span style="color:#be123c; font-weight:500;">${cleanMsg}</span>`;
           }
 
-          // Dynamic row color-coding
-          let rowBgClass = "hover:bg-slate-50/70 transition-colors";
-          if (row.state === "success") {
-            rowBgClass = "bg-emerald-50/20 hover:bg-emerald-100/30 text-slate-800 transition-colors";
-          } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
-            rowBgClass = "bg-violet-50/25 hover:bg-violet-100/30 text-slate-800 transition-colors";
-          } else if (row.resolvedCode === "DATA_NOT_FOUND") {
-            rowBgClass = "bg-sky-50/25 hover:bg-sky-100/30 text-slate-800 transition-colors";
-          } else if (row.state === "failed") {
-            rowBgClass = "bg-rose-50/20 hover:bg-rose-100/30 text-slate-800 transition-colors";
-          } else if (row.state === "sending") {
-            rowBgClass = "bg-amber-50/15 hover:bg-amber-100/25 text-slate-800 transition-colors";
-          }
+          const pulseCss = row.state === "sending" ? "animation:pulse 1.5s infinite;" : "";
 
           html += `
-            <tr class="${rowBgClass}">
-              <td class="px-4 py-2.5 text-center text-slate-400 font-medium">${idx + 1}</td>
-              <td class="px-4 py-2.5 font-mono text-blue-600 font-bold">${nin}</td>
-              <td class="px-4 py-2.5">
-                <div class="font-bold text-slate-800">${fullName}</div>
-                <div class="text-[10px] text-slate-500 font-medium nepali-font">${nameNp}</div>
+            <tr style="background:${rowBg}; border-top:1px solid #f1f5f9; border-left:3px solid ${accentColor}; transition:background .15s;">
+              <td style="padding:10px 14px; text-align:center; color:#94a3b8; font-weight:600; border-right:1px solid #f1f5f9; white-space:nowrap;">${idx + 1}</td>
+              <td style="padding:10px 14px; font-family:monospace; color:#2563eb; font-weight:700; font-size:11px; border-right:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nin}</td>
+              <td style="padding:10px 14px; border-right:1px solid #f1f5f9;">
+                <div style="font-weight:700; color:#1e293b; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fullName}</div>
+                <div style="font-size:10px; color:#64748b; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="nepali-font">${nameNp || "—"}</div>
               </td>
-              <td class="px-4 py-2.5 text-center">
-                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase ${statusBadgeClass}">${rec.status}</span>
+              <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
+                <span style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid ${sc.border}; background:${sc.bg}; color:${sc.text}; text-transform:uppercase; letter-spacing:.04em;">${rec.status}</span>
               </td>
-              <td class="px-4 py-2.5 text-center">${verifBadge}</td>
-              <td class="px-4 py-2.5">${detailsHtml}</td>
+              <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
+                <span style="font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid ${verifBorder}; background:${verifBg}; color:${verifText}; white-space:nowrap; ${pulseCss}">${verifLabel}</span>
+              </td>
+              <td style="padding:10px 14px; font-size:11px;">${detailsHtml}</td>
             </tr>
           `;
         });
