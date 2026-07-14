@@ -3508,6 +3508,8 @@
             verifLabel = "Sending…"; verifBg = "#fef3c7"; verifText = "#92400e"; verifBorder = "#fde68a";
           } else if (row.state === "success") {
             verifLabel = "OTP Sent ✓"; verifBg = "#d1fae5"; verifText = "#065f46"; verifBorder = "#a7f3d0";
+          } else if (row.state === "verified") {
+            verifLabel = "Verified ✓"; verifBg = "#d1fae5"; verifText = "#047857"; verifBorder = "#34d399";
           } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
             verifLabel = "Not Registered ✗"; verifBg = "#ede9fe"; verifText = "#5b21b6"; verifBorder = "#ddd6fe";
           } else if (row.resolvedCode === "DATA_NOT_FOUND") {
@@ -3522,7 +3524,17 @@
             detailsHtml = `<span style="color:#94a3b8; font-style:italic;">Waiting for response…</span>`;
           } else if (row.state === "success") {
             const mobileStr = row.responseData && row.responseData.maskedMobile ? row.responseData.maskedMobile : "—";
-            detailsHtml = `<span style="color:#059669; font-weight:600;">Mobile: <span style="font-family:monospace; font-weight:700;">${mobileStr}</span></span>`;
+            detailsHtml = `
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color:#059669; font-weight:600; white-space:nowrap;">Mobile: ${mobileStr}</span>
+                <input type="text" id="bulkOtp_${row.index}" placeholder="OTP" maxlength="6" style="width: 55px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 11px; text-align: center; height: 22px;" autocomplete="off" />
+                <button id="btnBulkVerify_${row.index}" onclick="verifyAndDownloadBulkRow(${row.index})" style="background:#10b981; color:#ffffff; font-weight:700; padding: 2px 8px; border: none; border-radius: 6px; font-size: 10px; cursor: pointer; height: 22px; transition: background 0.15s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                  Verify
+                </button>
+              </div>
+            `;
+          } else if (row.state === "verified") {
+            detailsHtml = `<span style="color:#059669; font-weight:700;">NID card successfully verified &amp; saved!</span>`;
           } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
             detailsHtml = `<span style="color:#7c3aed; font-weight:500;">Mobile number not registered on NID portal</span>`;
           } else if (row.resolvedCode === "DATA_NOT_FOUND") {
@@ -3563,6 +3575,116 @@
       `;
 
       listEl.innerHTML = html;
+    }
+
+    async function verifyAndDownloadBulkRow(index) {
+      const row = bulkResults[index];
+      if (!row) return;
+
+      const otpInput = document.getElementById(`bulkOtp_${index}`);
+      if (!otpInput) return;
+      const otp = otpInput.value.trim();
+      if (!otp) {
+        alert("Please enter the OTP first.");
+        return;
+      }
+
+      const btn = document.getElementById(`btnBulkVerify_${index}`);
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Wait...";
+
+      try {
+        // 1. Verify OTP
+        const verifyRes = await fetch(`${API_BASE}/api/verify-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nin: row.record.ninEn, otp })
+        });
+
+        if (!verifyRes.ok) {
+          let errMsg = verifyRes.statusText;
+          try {
+            const errData = await verifyRes.json();
+            errMsg = errData.error || errMsg;
+          } catch(e) {}
+          alert(`OTP Verification failed: ${errMsg}`);
+          return;
+        }
+
+        const verifyData = await verifyRes.json();
+        const downloadToken = verifyData.downloadToken;
+
+        // 2. Translate dates for download
+        const dobLoc = translateDigits(row.record.dobNp, englishToNepaliDigits);
+        const ccnIssuingDateLoc = translateDigits(row.record.citDate, englishToNepaliDigits);
+        const fullName = `${row.record.givenEn || ""} ${row.record.surnameEn || ""}`.trim().toUpperCase();
+        const fullNameNp = `${row.record.givenNp || ""} ${row.record.surnameNp || ""}`.trim();
+
+        // 3. Download PDF
+        btn.innerHTML = "Dl...";
+        const dlRes = await fetch(`${API_BASE}/api/download`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Download-Token": downloadToken
+          },
+          body: JSON.stringify({
+            dob_loc: dobLoc,
+            ccn_issuing_date_loc: ccnIssuingDateLoc,
+            full_name: fullName,
+            full_name_loc: fullNameNp,
+          })
+        });
+
+        if (!dlRes.ok) {
+          let errMsg = dlRes.statusText;
+          try {
+            const errData = await dlRes.json();
+            errMsg = errData.error || errMsg;
+          } catch (e) {}
+          alert(`Download failed: ${errMsg}`);
+          return;
+        }
+
+        const encryptedBlob = await dlRes.blob();
+
+        // 4. Calculate Password
+        const nameOnly = fullName.replace(/\s+/g, "");
+        const namePart = nameOnly.substring(0, 4).toUpperCase();
+        const dobEnglish = translateDigits(row.record.dobNp.trim(), nepaliToEnglishDigits);
+        const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
+        const passwordCode = namePart + yearPart;
+
+        // Copy password to clipboard
+        try {
+          await navigator.clipboard.writeText(passwordCode);
+        } catch (e) {}
+
+        // Set global portal NIN so scanned token will be saved for this NIN
+        portalNinValue = row.record.ninEn;
+
+        // 5. Open embedded preview/scanner modal!
+        const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
+        openEmbeddedPdfModal(encryptedBlob, filename, passwordCode);
+
+        // Update bulk list row state to indicate success verified
+        row.state = "verified";
+        
+        // Also update bulk stats
+        bulkStats.success++;
+        updateBulkStats();
+        
+        renderBulkTable();
+
+      } catch (err) {
+        alert("Error verifying and downloading: " + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
     }
 
     async function requestPortalBulkOtp() {
