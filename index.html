@@ -728,7 +728,7 @@
             <!-- Modal Body: Stats Row + Record List -->
             <div class="flex-1 overflow-y-auto p-4 space-y-3">
               <!-- Summary Stats -->
-              <div class="grid grid-cols-4 gap-2 text-center text-xs">
+              <div class="grid grid-cols-6 gap-2 text-center text-xs">
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
                   <div id="bulkStatTotal" class="text-xl font-bold text-slate-800">0</div>
                   <div class="text-slate-500 font-medium mt-0.5">Total</div>
@@ -744,6 +744,14 @@
                 <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
                   <div id="bulkStatFailed" class="text-xl font-bold text-rose-600">0</div>
                   <div class="text-rose-600 font-medium mt-0.5">Failed</div>
+                </div>
+                <div class="bg-violet-50 border border-violet-200 rounded-xl p-2.5">
+                  <div id="bulkStatMobileNotRegistered" class="text-xl font-bold text-violet-600">0</div>
+                  <div class="text-violet-600 font-medium mt-0.5">Mobile Not Registered</div>
+                </div>
+                <div class="bg-sky-50 border border-sky-200 rounded-xl p-2.5">
+                  <div id="bulkStatDataNotFound" class="text-xl font-bold text-sky-600">0</div>
+                  <div class="text-sky-600 font-medium mt-0.5">Data Not Found</div>
                 </div>
               </div>
 
@@ -2953,7 +2961,7 @@
     let portalDownloadToken = "";
     let isBulkMode = false;
     let bulkTargetRecords = [];
-    let bulkStats = { total: 0, sending: 0, success: 0, failed: 0 };
+    let bulkStats = { total: 0, sending: 0, success: 0, failed: 0, mobileNotRegistered: 0, dataNotFound: 0 };
 
     function setPortalInputsDisabled(disabled) {
       document.getElementById("portalFullNameEn").disabled = disabled;
@@ -3048,6 +3056,43 @@
       }
     }
 
+    async function parseResponseBody(res) {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        return text.trim() || null;
+      }
+    }
+
+    function extractOtpResponseMessage(data) {
+      if (!data) return null;
+      if (typeof data === "string") return data;
+      if (data.error) return data.error;
+      if (data.message) return data.message;
+      if (data.description) return data.description;
+      if (data.detail) return data.detail;
+      if (data.code && data.code !== "OTP_SENT") {
+        let msg = `Response code: ${data.code}`;
+        if (data.message) msg += ` - ${data.message}`;
+        if (data.description) msg += ` - ${data.description}`;
+        return msg;
+      }
+      return null;
+    }
+
+    function getOtpErrorCode(data) {
+      if (!data) return null;
+      if (typeof data === "object" && data.code) return data.code;
+      return null;
+    }
+
+    function parseOtpErrorCodeFromText(text) {
+      if (!text || typeof text !== "string") return null;
+      const match = text.match(/\b(MOBILE_NOT_REGISTERED|DATA_NOT_FOUND)\b/);
+      return match ? match[1] : null;
+    }
+
     async function requestPortalOtp() {
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
       const fullNameLoc = document.getElementById("portalFullNameNp").value.trim();
@@ -3078,19 +3123,29 @@
           body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
         });
 
+        const responseBody = await parseResponseBody(res);
         if (!res.ok) {
-          let errMsg = res.statusText;
-          try {
-            const errData = await res.json();
-            errMsg = errData.error || errMsg;
-          } catch(e) {}
+          const errMsg = extractOtpResponseMessage(responseBody) || res.statusText || "OTP request failed";
           alert(`OTP Request failed: ${errMsg}`);
-          // Load new captcha automatically on failure
           loadPortalCaptcha(false);
           return;
         }
 
-        const data = await res.json();
+        if (typeof responseBody === "string") {
+          alert(`OTP Request failed: ${responseBody}`);
+          loadPortalCaptcha(false);
+          return;
+        }
+
+        const responseMsg = extractOtpResponseMessage(responseBody);
+        if (responseMsg) {
+          alert(`OTP request failed: ${responseMsg}`);
+          loadPortalCaptcha(false);
+          return;
+        }
+
+        const data = responseBody;
+
         // Expected response format: {"code":"OTP_SENT","maskedMobile":"98XXXXX374","nin":"615-385-908-6"}
         portalNinValue = data.nin;
         document.getElementById("portalOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${data.nin || "-"}`;
@@ -3138,6 +3193,8 @@
       document.getElementById("bulkStatPending").innerText = bulkStats.sending;
       document.getElementById("bulkStatSuccess").innerText = bulkStats.success;
       document.getElementById("bulkStatFailed").innerText = bulkStats.failed;
+      document.getElementById("bulkStatMobileNotRegistered").innerText = bulkStats.mobileNotRegistered;
+      document.getElementById("bulkStatDataNotFound").innerText = bulkStats.dataNotFound;
     }
 
     function setBulkRowState(rowEl, state, responseData, errorMsg) {
@@ -3155,23 +3212,31 @@
       statusEl.innerText = cfg.label;
       statusEl.className = `bulk-row-status text-[10px] font-bold px-2.5 py-1 rounded-full border ${cfg.cls}`;
 
-      if (responseData) {
-        let html = "";
-        if (state === "success") {
-          html = `<div class="text-emerald-700 font-semibold">✓ OTP request succeeded</div>`;
+      let html = "";
+      if (state === "success") {
+        html = `<div class="text-emerald-700 font-semibold">✓ OTP request succeeded</div>`;
+        if (responseData) {
           if (responseData.maskedMobile) html += `<div><span class="text-slate-500">Masked Mobile:</span> <span class="font-mono font-bold">${responseData.maskedMobile}</span></div>`;
           if (responseData.nin) html += `<div><span class="text-slate-500">NIN:</span> <span class="font-mono font-bold">${responseData.nin}</span></div>`;
           if (responseData.code) html += `<div><span class="text-slate-500">Response Code:</span> <span class="font-mono">${responseData.code}</span></div>`;
-        } else if (state === "failed") {
-          html = `<div class="text-rose-700 font-semibold">✗ Request failed</div>`;
-          if (errorMsg) html += `<div><span class="text-slate-500">Error:</span> <span class="font-mono text-rose-700">${errorMsg}</span></div>`;
-          if (responseData && typeof responseData === "object") {
+          if (typeof responseData === "string") html += `<div><span class="text-slate-500">Response:</span> <span class="font-mono">${responseData}</span></div>`;
+        }
+      } else if (state === "failed") {
+        html = `<div class="text-rose-700 font-semibold">✗ Request failed</div>`;
+        if (errorMsg) html += `<div><span class="text-slate-500">Error:</span> <span class="font-mono text-rose-700">${errorMsg}</span></div>`;
+        if (responseData) {
+          if (typeof responseData === "object") {
             const pretty = JSON.stringify(responseData, null, 2);
             html += `<pre class="mt-1 text-[10px] bg-rose-50 text-rose-800 p-2 rounded overflow-auto max-h-24">${pretty}</pre>`;
+          } else {
+            html += `<div><span class="text-slate-500">Response:</span> <span class="font-mono text-rose-700">${responseData}</span></div>`;
           }
         }
-        detailsEl.innerHTML = html;
       }
+      if (!html) {
+        html = `<div class="text-slate-500 italic">No details available.</div>`;
+      }
+      detailsEl.innerHTML = html;
 
       // Toggle visibility
       detailsEl.classList.remove("hidden");
@@ -3202,7 +3267,7 @@
         }
 
         bulkTargetRecords = targets;
-        bulkStats = { total: targets.length, sending: targets.length, success: 0, failed: 0 };
+        bulkStats = { total: targets.length, sending: targets.length, success: 0, failed: 0, mobileNotRegistered: 0, dataNotFound: 0 };
 
         // 2. Build and show modal with all records in "sending" state
         const listEl = document.getElementById("bulkRecordList");
@@ -3272,23 +3337,43 @@
               body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
             });
 
-            if (!res.ok) {
-              let errMsg = res.statusText;
-              try {
-                const errData = await res.json();
-                errMsg = errData.error || errMsg;
-              } catch(e) {}
+            const responseBody = await parseResponseBody(res);
+            const responseCode = getOtpErrorCode(responseBody);
+            const parsedCode = parseOtpErrorCodeFromText(typeof responseBody === "string" ? responseBody : extractOtpResponseMessage(responseBody));
+            const resolvedCode = responseCode || parsedCode;
 
+            if (!res.ok) {
+              const errMsg = extractOtpResponseMessage(responseBody) || res.statusText || "OTP request failed";
+              if (resolvedCode === "MOBILE_NOT_REGISTERED") bulkStats.mobileNotRegistered++;
+              else if (resolvedCode === "DATA_NOT_FOUND") bulkStats.dataNotFound++;
               bulkStats.sending--;
               bulkStats.failed++;
               updateBulkStats();
-              if (rowEl) setBulkRowState(rowEl, "failed", null, errMsg);
-            } else {
-              const data = await res.json();
+              if (rowEl) setBulkRowState(rowEl, "failed", responseBody, errMsg);
+            } else if (typeof responseBody === "string") {
+              const errMsg = responseBody || "OTP request failed.";
+              if (parsedCode === "MOBILE_NOT_REGISTERED") bulkStats.mobileNotRegistered++;
+              else if (parsedCode === "DATA_NOT_FOUND") bulkStats.dataNotFound++;
               bulkStats.sending--;
-              bulkStats.success++;
+              bulkStats.failed++;
               updateBulkStats();
-              if (rowEl) setBulkRowState(rowEl, "success", data, null);
+              if (rowEl) setBulkRowState(rowEl, "failed", responseBody, errMsg);
+            } else {
+              const responseMsg = extractOtpResponseMessage(responseBody);
+              if (responseMsg) {
+                const errMsg = responseMsg || "OTP request did not succeed.";
+                if (resolvedCode === "MOBILE_NOT_REGISTERED") bulkStats.mobileNotRegistered++;
+                else if (resolvedCode === "DATA_NOT_FOUND") bulkStats.dataNotFound++;
+                bulkStats.sending--;
+                bulkStats.failed++;
+                updateBulkStats();
+                if (rowEl) setBulkRowState(rowEl, "failed", responseBody, errMsg);
+              } else {
+                bulkStats.sending--;
+                bulkStats.success++;
+                updateBulkStats();
+                if (rowEl) setBulkRowState(rowEl, "success", responseBody, null);
+              }
             }
           } catch (err) {
             bulkStats.sending--;
@@ -3301,7 +3386,10 @@
         // Await all parallel requests
         await Promise.allSettled(requests);
 
-        const finalStatus = `Done: ${bulkStats.success} succeeded, ${bulkStats.failed} failed out of ${bulkStats.total} records.`;
+        const parts = [];
+        if (bulkStats.mobileNotRegistered) parts.push(`${bulkStats.mobileNotRegistered} MOBILE_NOT_REGISTERED`);
+        if (bulkStats.dataNotFound) parts.push(`${bulkStats.dataNotFound} DATA_NOT_FOUND`);
+        const finalStatus = `Done: ${bulkStats.success} succeeded, ${bulkStats.failed} failed${parts.length ? ` (${parts.join(", ")})` : ""} out of ${bulkStats.total} records.`;
         document.getElementById("bulkModalSubtitle").innerText = "Bulk verification complete!";
         document.getElementById("bulkFooterStatus").innerText = finalStatus;
 
