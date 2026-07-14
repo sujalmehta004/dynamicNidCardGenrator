@@ -131,28 +131,27 @@
     /* Strict requirement mapping for row color assignments */
     .status-row-done,
     .status-row-done td {
-      background-color: #e2fcd4 !important;
+      background-color: #e2fcd4 !important; /* Light green — keep as-is */
     }
-
-    /* Light Green */
     .status-row-pending,
     .status-row-pending td {
-      background-color: #fef9c3 !important;
+      background-color: #fef9c3 !important; /* Light yellow — keep as-is */
     }
-
-    /* Light Yellow */
     .status-row-inprogress,
     .status-row-inprogress td {
-      background-color: #fee2e2 !important;
+      background-color: #fee8e8 !important; /* Very light red (mobile not registered) */
     }
-
-    /* Light Red */
     .status-row-notonline,
     .status-row-notonline td {
-      background-color: #fca5a5 !important;
+      background-color: #ffffff !important; /* White — no color (not online) */
     }
-
-    /* Mid Red */
+    .db-row-clickable {
+      cursor: pointer;
+      transition: filter 0.12s;
+    }
+    .db-row-clickable:hover td {
+      filter: brightness(0.96);
+    }
 
     @media print {
       body {
@@ -2647,6 +2646,90 @@
       renderDatabaseTableRows();
     }
 
+    function getStatusAccentColor(status) {
+      if (status === "done") return { left: "#22c55e", badge_bg: "#dcfce7", badge_text: "#166534", badge_border: "#bbf7d0" };
+      if (status === "pending") return { left: "#f59e0b", badge_bg: "#fef3c7", badge_text: "#92400e", badge_border: "#fde68a" };
+      if (status === "inprogress") return { left: "#ef4444", badge_bg: "#fee8e8", badge_text: "#991b1b", badge_border: "#fca5a5" };
+      if (status === "not online") return { left: "#94a3b8", badge_bg: "#f8fafc", badge_text: "#475569", badge_border: "#e2e8f0" };
+      return { left: "#e2e8f0", badge_bg: "#f8fafc", badge_text: "#64748b", badge_border: "#e2e8f0" };
+    }
+
+    function openRowDetailPopup(ninEn) {
+      const row = documentIdentityDb.find(r => r.ninEn === ninEn);
+      if (!row) return;
+      const sc = getStatusAccentColor(row.status);
+      const statusLabel = row.status === "inprogress" ? "Mobile Not Registered" :
+                          row.status === "not online" ? "Not Online" :
+                          row.status === "pending" ? "Pending" :
+                          row.status === "done" ? "Done" : row.status;
+      const modal = document.getElementById("rowDetailModal");
+      document.getElementById("rowDetailContent").innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+          <div style="width:4px; height:40px; border-radius:4px; background:${sc.left}; flex-shrink:0;"></div>
+          <div>
+            <div style="font-weight:800; font-size:14px; color:#1e293b;">${row.givenEn || ""} ${row.surnameEn || ""}</div>
+            <div style="font-size:11px; color:#64748b; font-family:inherit;" class="nepali-font">${row.givenNp || ""} ${row.surnameNp || ""}</div>
+          </div>
+          <span style="margin-left:auto; font-size:9px; font-weight:700; padding:3px 10px; border-radius:20px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; text-transform:uppercase; letter-spacing:.06em;">${statusLabel}</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11px;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">NID Number</div>
+            <div style="font-family:monospace; font-weight:700; color:#2563eb; font-size:12px;">${row.ninEn}</div>
+            <div style="font-size:10px; color:#94a3b8; margin-top:2px;">${row.ninNp || "—"}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Date of Birth</div>
+            <div style="font-weight:600; color:#1e293b;">${row.dobEn || "—"}</div>
+            <div style="font-size:10px; color:#94a3b8; margin-top:2px;">${row.dobNp || "—"}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Citizenship Date</div>
+            <div style="font-weight:600; color:#1e293b;">${row.citDate || "—"}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Mobile</div>
+            <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.mobile || "—"}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; grid-column:span 2;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Address</div>
+            <div style="font-weight:600; color:#1e293b;">${row.addressEn || "—"}</div>
+            <div style="font-size:10px; color:#94a3b8; margin-top:2px;" class="nepali-font">${row.addressNp || "—"}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Registered</div>
+            <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.regDate || "—"}</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
+            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Updated</div>
+            <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.updateDate || "—"}</div>
+          </div>
+          ${row.token ? `<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px; grid-column:span 2;">
+            <div style="color:#0284c7; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Verification Token</div>
+            <div style="font-family:monospace; font-size:10px; color:#0369a1; word-break:break-all;">${row.token}</div>
+          </div>` : ""}
+        </div>
+        <div style="display:flex; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid #f1f5f9;">
+          <button onclick="pullRowIntoWorkspace('${row.ninEn}'); closeRowDetailModal();" style="flex:1; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-weight:700; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer; transition:background .15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">✏️ Modify Record</button>
+          <select onchange="updateRowStatusInline('${row.ninEn}', this.value); closeRowDetailModal();" style="background:#f8fafc; border:1px solid #e2e8f0; color:#475569; font-weight:600; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer;">
+            <option value="">Change Status…</option>
+            <option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option>
+            <option value="done" ${row.status === "done" ? "selected" : ""}>Done</option>
+            <option value="inprogress" ${row.status === "inprogress" ? "selected" : ""}>Mobile Not Registered</option>
+            <option value="not online" ${row.status === "not online" ? "selected" : ""}>Not Online</option>
+          </select>
+        </div>
+      `;
+      modal.classList.remove("hidden");
+      setTimeout(() => modal.firstElementChild.classList.add("scale-100"), 10);
+    }
+
+    function closeRowDetailModal() {
+      const modal = document.getElementById("rowDetailModal");
+      modal.firstElementChild.classList.remove("scale-100");
+      setTimeout(() => modal.classList.add("hidden"), 150);
+    }
+
     function renderDatabaseTableRows() {
       const tbody = document.getElementById("dbRepositoryRows");
       tbody.innerHTML = "";
@@ -2658,54 +2741,58 @@
         else if (row.status === "inprogress") statusRowClass = "status-row-inprogress";
         else if (row.status === "not online") statusRowClass = "status-row-notonline";
 
+        const sc = getStatusAccentColor(row.status);
+        const statusLabel = row.status === "inprogress" ? "Mobile Not Reg." :
+                            row.status === "not online" ? "Not Online" :
+                            row.status === "pending" ? "Pending" :
+                            row.status === "done" ? "Done" : (row.status || "—");
+
         const tr = document.createElement("tr");
-        tr.className = `${statusRowClass} hover:bg-slate-150 transition-colors duration-150 border-b border-slate-150`;
+        tr.className = `${statusRowClass} db-row-clickable border-b border-slate-100`;
+        tr.style.cssText = `border-left: 3px solid ${sc.left};`;
+        tr.onclick = (e) => {
+          // Don't open detail if clicking select/button/input inside the row
+          if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+          openRowDetailPopup(row.ninEn);
+        };
 
         // Col 1: NIN
         if (columnVisibility.nin) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-mono font-bold text-blue-600";
-          td.innerHTML = `${row.ninEn}<br><span class="text-[10px] text-slate-400 font-sans font-normal">${row.ninNp || "—"}</span>`;
+          td.className = "px-4 py-3";
+          td.innerHTML = `<div class="font-mono font-bold text-blue-600 text-xs">${row.ninEn}</div><div class="text-[10px] text-slate-400 font-normal mt-0.5">${row.ninNp || "—"}</div>`;
           tr.appendChild(td);
         }
 
         // Col 2: Name
         if (columnVisibility.name) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-bold text-slate-900";
-          td.innerHTML = `${row.givenEn || ""} ${row.surnameEn || ""}<br><span class="text-xs text-slate-500 font-normal nepali-font">${row.givenNp || ""} ${row.surnameNp || ""}</span>`;
+          td.className = "px-4 py-3";
+          td.innerHTML = `<div class="font-bold text-slate-900 text-xs">${row.givenEn || ""} ${row.surnameEn || ""}</div><div class="text-[10px] text-slate-400 font-normal nepali-font mt-0.5">${row.givenNp || ""} ${row.surnameNp || ""}</div>`;
           tr.appendChild(td);
         }
 
         // Col 3: Token
         if (columnVisibility.token) {
           const td = document.createElement("td");
-          td.className =
-            "px-5 py-4 font-mono text-[10px] max-w-xs truncate text-slate-500 cursor-pointer hover:text-blue-650";
+          td.className = "px-4 py-3";
           const tokenStr = row.token || "";
-          td.innerText = tokenStr ? tokenStr.substring(0, 15) + "..." : "—";
-          td.title = "Click to copy token";
-          td.onclick = () => {
-            if (tokenStr) {
-              navigator.clipboard.writeText(tokenStr);
-              alert("Token copied to clipboard!");
-            }
-          };
+          td.innerHTML = `<span class="font-mono text-[10px] text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" title="Click to copy" onclick="event.stopPropagation(); if('${tokenStr}'){navigator.clipboard.writeText('${tokenStr}'); alert('Token copied!');}">${tokenStr ? tokenStr.substring(0, 14) + "…" : "—"}</span>`;
           tr.appendChild(td);
         }
 
         // Col 4: DOB
         if (columnVisibility.dob) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-mono text-slate-650";
-          td.innerHTML = `${row.dobEn || "—"}<br><span class="text-[10px] text-slate-400 font-normal">${row.dobNp || "—"}</span>`;
+          td.className = "px-4 py-3";
+          td.innerHTML = `<div class="font-mono text-xs text-slate-700">${row.dobEn || "—"}</div><div class="text-[10px] text-slate-400">${row.dobNp || ""}</div>`;
           tr.appendChild(td);
         }
 
         // Col 5: Cit Date
         if (columnVisibility.citDate) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-mono text-amber-700";
+          td.className = "px-4 py-3 font-mono text-xs text-amber-700";
           td.innerText = row.citDate || "—";
           tr.appendChild(td);
         }
@@ -2713,15 +2800,15 @@
         // Col 6: Address
         if (columnVisibility.address) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 max-w-xs truncate text-slate-655";
-          td.innerHTML = `${row.addressEn || "—"}<br><span class="text-[10px] text-slate-400 nepali-font">${row.addressNp || "—"}</span>`;
+          td.className = "px-4 py-3 max-w-[180px]";
+          td.innerHTML = `<div class="text-xs text-slate-700 truncate">${row.addressEn || "—"}</div><div class="text-[10px] text-slate-400 nepali-font truncate">${row.addressNp || ""}</div>`;
           tr.appendChild(td);
         }
 
         // Col 7: Reg Date
         if (columnVisibility.regDate) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-mono text-slate-500";
+          td.className = "px-4 py-3 font-mono text-[11px] text-slate-500";
           td.innerText = row.regDate || "—";
           tr.appendChild(td);
         }
@@ -2729,80 +2816,43 @@
         // Col 8: Update Date
         if (columnVisibility.updateDate) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-mono text-slate-500";
+          td.className = "px-4 py-3 font-mono text-[11px] text-slate-500";
           td.innerText = row.updateDate || "—";
           tr.appendChild(td);
         }
 
-        // Col 9: Status (Custom Badge Select Dropdown)
+        // Col 9: Status Badge (inline)
         if (columnVisibility.status) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 text-center";
-
-          let badgeColorClass = "";
-          if (row.status === "done")
-            badgeColorClass =
-              "bg-emerald-55 text-emerald-700 border-emerald-200";
-          else if (row.status === "pending")
-            badgeColorClass = "bg-amber-50 text-amber-700 border-amber-200";
-          else if (row.status === "inprogress")
-            badgeColorClass = "bg-blue-50 text-blue-700 border-blue-200";
-          else if (row.status === "not online")
-            badgeColorClass = "bg-rose-55 text-rose-700 border-rose-200";
-
-          td.innerHTML = `
-            <select onchange="updateRowStatusInline('${row.ninEn}', this.value)" 
-              class="${badgeColorClass} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider focus:outline-none cursor-pointer border shadow-sm transition-all bg-white">
-                <option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option>
-                <option value="done" ${row.status === "done" ? "selected" : ""}>Done</option>
-                <option value="inprogress" ${row.status === "inprogress" ? "selected" : ""}>Mobile Number Update</option>
-                <option value="not online" ${row.status === "not online" ? "selected" : ""}>Not Online</option>
-            </select>
-          `;
+          td.className = "px-4 py-3 text-center";
+          td.innerHTML = `<span style="font-size:9px; font-weight:700; padding:3px 9px; border-radius:20px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; white-space:nowrap; text-transform:uppercase; letter-spacing:.05em;">${statusLabel}</span>`;
           tr.appendChild(td);
         }
 
         // Col 9.1: Card Design
         if (columnVisibility.cardDesign) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 text-center";
-
-          let cardDesignBadgeClass = "bg-purple-50 text-purple-700 border-purple-200";
-          if (row.cardDesign === "white card") {
-            cardDesignBadgeClass = "bg-slate-100 text-slate-700 border-slate-300";
-          }
-
-          td.innerHTML = `
-            <select onchange="updateRowCardDesignInline('${row.ninEn}', this.value)" 
-              class="${cardDesignBadgeClass} px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider focus:outline-none cursor-pointer border shadow-sm transition-all bg-white">
-                <option value="smart card" ${row.cardDesign === "smart card" || !row.cardDesign ? "selected" : ""}>Smart Card</option>
-                <option value="white card" ${row.cardDesign === "white card" ? "selected" : ""}>White Card</option>
-            </select>
-          `;
+          td.className = "px-4 py-3 text-center";
+          const isWhite = row.cardDesign === "white card";
+          td.innerHTML = `<span style="font-size:9px; font-weight:700; padding:3px 9px; border-radius:20px; border:1px solid ${isWhite ? "#e2e8f0" : "#ddd6fe"}; background:${isWhite ? "#f8fafc" : "#f5f3ff"}; color:${isWhite ? "#475569" : "#6d28d9"}; text-transform:uppercase; letter-spacing:.05em;">${isWhite ? "White" : "Smart"}</span>`;
           tr.appendChild(td);
         }
 
-        // Col 9.5: Mobile Number
+        // Col 9.5: Mobile
         if (columnVisibility.mobile) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 font-mono text-slate-650";
+          td.className = "px-4 py-3 font-mono text-[11px] text-slate-600";
           td.innerText = row.mobile || "—";
           tr.appendChild(td);
         }
 
-        // Col 10: Actions
+        // Col 10: Actions (compact)
         if (columnVisibility.actions) {
           const td = document.createElement("td");
-          td.className = "px-5 py-4 text-center space-x-2";
+          td.className = "px-4 py-3 text-center";
           td.innerHTML = `
-            <button onclick="pullRowIntoWorkspace('${row.ninEn}')" 
-              class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 px-3 py-1.5 rounded-xl font-bold transition-all shadow-sm text-[10.5px]">
-              Modify
-            </button>
-            <button onclick="deleteRecordInline('${row.ninEn}')" style="display:none;"
-              class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 px-3 py-1.5 rounded-xl font-bold transition-all shadow-sm text-[10.5px]">
-              Delete
-            </button>
+            <button onclick="event.stopPropagation(); pullRowIntoWorkspace('${row.ninEn}')" 
+              class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg font-bold transition-all text-[10px]">✏️ Edit</button>
           `;
           tr.appendChild(td);
         }
@@ -3620,11 +3670,38 @@
         // Await all parallel requests
         await Promise.allSettled(requests);
 
+        // Auto-update workflow status based on OTP response
+        const statusMappings = { success: "pending", MOBILE_NOT_REGISTERED: "inprogress", DATA_NOT_FOUND: "not online" };
+        const autoUpdatePromises = bulkResults
+          .filter(rowObj => rowObj.state !== "sending")
+          .map(async rowObj => {
+            const rec = rowObj.record;
+            let targetStatus = null;
+            if (rowObj.state === "success") targetStatus = "pending";
+            else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") targetStatus = "inprogress";
+            else if (rowObj.resolvedCode === "DATA_NOT_FOUND") targetStatus = "not online";
+            // Only update if there's a mapping and current status differs
+            if (targetStatus && rec.status !== targetStatus) {
+              try {
+                await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(rec.ninEn)}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: targetStatus, updateDate: new Date().toISOString().split("T")[0] })
+                });
+              } catch (e) {
+                console.warn("Auto-status update failed for", rec.ninEn, e);
+              }
+            }
+          });
+        await Promise.allSettled(autoUpdatePromises);
+        // Refresh local DB table after status updates
+        fetchDatabase(true);
+
         const parts = [];
         if (bulkStats.mobileNotRegistered) parts.push(`${bulkStats.mobileNotRegistered} MOBILE_NOT_REGISTERED`);
         if (bulkStats.dataNotFound) parts.push(`${bulkStats.dataNotFound} DATA_NOT_FOUND`);
         const finalStatus = `Done: ${bulkStats.success} succeeded, ${bulkStats.failed} failed${parts.length ? ` (${parts.join(", ")})` : ""} out of ${bulkStats.total} records.`;
-        document.getElementById("bulkModalSubtitle").innerText = "Bulk verification complete!";
+        document.getElementById("bulkModalSubtitle").innerText = "Bulk verification complete — status auto-updated!";
         document.getElementById("bulkFooterStatus").innerText = finalStatus;
 
       } catch (err) {
@@ -5025,6 +5102,25 @@
           class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
           Yes, Update Record
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row Detail Popup Modal -->
+  <div id="rowDetailModal"
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99990] flex items-center justify-center hidden"
+    onclick="if(event.target===this) closeRowDetailModal()">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Record Details</h3>
+        <button onclick="closeRowDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="rowDetailContent">
+        <!-- Populated dynamically by openRowDetailPopup() -->
       </div>
     </div>
   </div>
