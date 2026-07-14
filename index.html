@@ -711,7 +711,7 @@
         <!-- ===== BULK VERIFICATION MODAL ===== -->
         <div id="portalBulkModal" class="fixed inset-0 z-50 items-center justify-center p-4"
           style="display:none; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);">
-          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+          <div class="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-[90vw] max-h-[90vh] flex flex-col overflow-hidden">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl">
               <div>
@@ -1455,6 +1455,63 @@
       clean = clean.replace(/ङ्ग/g, 'ङ्\u200Dग');
       return clean;
     }
+
+    function showCustomAlert(title, message, type = 'info') {
+      const modal = document.getElementById("customAlertModal");
+      const titleEl = document.getElementById("customAlertTitle");
+      const messageEl = document.getElementById("customAlertMessage");
+      const okBtn = document.getElementById("customAlertOkBtn");
+
+      let icon = "ℹ️";
+      let btnCls = "bg-blue-600 hover:bg-blue-700";
+      if (type === "success" || type === "ok") {
+        icon = "✅";
+        btnCls = "bg-emerald-650 hover:bg-emerald-700";
+      } else if (type === "error" || type === "danger") {
+        icon = "❌";
+        btnCls = "bg-rose-600 hover:bg-rose-700";
+      } else if (type === "warning") {
+        icon = "⚠️";
+        btnCls = "bg-amber-600 hover:bg-amber-700";
+      }
+
+      titleEl.innerHTML = `<span>${icon}</span> <span>${title}</span>`;
+      messageEl.innerHTML = message;
+      okBtn.className = `${btnCls} text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all`;
+
+      modal.classList.remove("hidden");
+      setTimeout(() => {
+        modal.firstElementChild.classList.remove("scale-95");
+        modal.firstElementChild.classList.add("scale-100");
+      }, 10);
+    }
+
+    function closeCustomAlert() {
+      const modal = document.getElementById("customAlertModal");
+      modal.firstElementChild.classList.remove("scale-100");
+      modal.firstElementChild.classList.add("scale-95");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 150);
+    }
+
+    // Intercept standard browser alerts to show the beautiful modal automatically
+    window.alert = function(message) {
+      let title = "System Notification";
+      let type = "info";
+      const lower = String(message).toLowerCase();
+      if (lower.includes("success") || lower.includes("saved") || lower.includes("complete") || lower.includes("registered") || lower.includes("authorized")) {
+        title = "Action Successful";
+        type = "success";
+      } else if (lower.includes("error") || lower.includes("fail") || lower.includes("invalid") || lower.includes("mismatch") || lower.includes("missing") || lower.includes("required") || lower.includes("failed")) {
+        title = "Action Failed";
+        type = "error";
+      } else if (lower.includes("warning") || lower.includes("attention")) {
+        title = "Attention Required";
+        type = "warning";
+      }
+      showCustomAlert(title, message, type);
+    };
 
     function initializeDateFieldsDefaults() {
       const today = new Date().toISOString().split("T")[0];
@@ -3371,13 +3428,27 @@
             detailsHtml = `<span class="text-rose-700 font-medium">${msg}</span>`;
           }
 
+          // Dynamic row color-coding
+          let rowBgClass = "hover:bg-slate-50/70 transition-colors";
+          if (row.state === "success") {
+            rowBgClass = "bg-emerald-50/20 hover:bg-emerald-100/30 text-slate-800 transition-colors";
+          } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
+            rowBgClass = "bg-violet-50/25 hover:bg-violet-100/30 text-slate-800 transition-colors";
+          } else if (row.resolvedCode === "DATA_NOT_FOUND") {
+            rowBgClass = "bg-sky-50/25 hover:bg-sky-100/30 text-slate-800 transition-colors";
+          } else if (row.state === "failed") {
+            rowBgClass = "bg-rose-50/20 hover:bg-rose-100/30 text-slate-800 transition-colors";
+          } else if (row.state === "sending") {
+            rowBgClass = "bg-amber-50/15 hover:bg-amber-100/25 text-slate-800 transition-colors";
+          }
+
           html += `
-            <tr class="hover:bg-slate-50/55 transition-colors">
+            <tr class="${rowBgClass}">
               <td class="px-4 py-2.5 text-center text-slate-400 font-medium">${idx + 1}</td>
-              <td class="px-4 py-2.5 font-mono text-blue-600 font-semibold">${nin}</td>
+              <td class="px-4 py-2.5 font-mono text-blue-600 font-bold">${nin}</td>
               <td class="px-4 py-2.5">
                 <div class="font-bold text-slate-800">${fullName}</div>
-                <div class="text-[10px] text-slate-405 nepali-font">${nameNp}</div>
+                <div class="text-[10px] text-slate-500 font-medium nepali-font">${nameNp}</div>
               </td>
               <td class="px-4 py-2.5 text-center">
                 <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase ${statusBadgeClass}">${rec.status}</span>
@@ -4923,6 +4994,34 @@
         <button id="btnConfirmUpdateAction"
           class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
           Yes, Update Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Beautiful Alert Modal -->
+  <div id="customAlertModal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 id="customAlertTitle" class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+          <!-- Icon + Title dynamically updated -->
+        </h3>
+        <button onclick="closeCustomAlert()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div id="customAlertMessage" class="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line">
+        <!-- Message dynamically updated -->
+      </div>
+
+      <div class="flex justify-end border-t border-slate-100 pt-3">
+        <button id="customAlertOkBtn" onclick="closeCustomAlert()"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+          OK
         </button>
       </div>
     </div>
