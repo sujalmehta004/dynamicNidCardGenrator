@@ -536,45 +536,15 @@ function renderVerifyPage(person, mode, nin) {
         const yearPart = dobEn.replace(/\//g, "-").split('-')[0].substring(0,4);
         const clipboardCode = namePart + yearPart;
 
-        let finalBlob = encryptedBlob;
-        let isDecrypted = false;
-        let qrCodeText = null;
-
         try {
-          const encryptedBuffer = await encryptedBlob.arrayBuffer();
-          
-          // 1. Decrypt using PDF-Lib
-          const pdfDoc = await PDFLib.PDFDocument.load(encryptedBuffer, { password: clipboardCode });
-          const decryptedBytes = await pdfDoc.save();
-          finalBlob = new Blob([decryptedBytes], { type: "application/pdf" });
-          isDecrypted = true;
-          
-          // 2. Scan QR using PDF.js + jsQR
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          const loadingTask = pdfjsLib.getDocument({ data: decryptedBytes });
-          const pdfjsDoc = await loadingTask.promise;
-          const page = await pdfjsDoc.getPage(1);
-          const viewport = page.getViewport({ scale: 2.0 });
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-          
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height);
-          if (code && code.data) {
-            qrCodeText = code.data;
-          }
-        } catch (decErr) {
-          console.error("Auto-decryption/scanning failed:", decErr);
-        }
+          await navigator.clipboard.writeText(clipboardCode);
+        } catch(e) {}
 
-        const url = URL.createObjectURL(finalBlob);
+        const url = URL.createObjectURL(encryptedBlob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + (isDecrypted ? '_unlocked' : '') + '.pdf';
+        a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -586,31 +556,11 @@ function renderVerifyPage(person, mode, nin) {
         // Delayed revocation to let browser load PDF in custom viewer
         setTimeout(() => {
           URL.revokeObjectURL(url);
-        }, 12000);
-
-        try {
-          await navigator.clipboard.writeText(clipboardCode);
-        } catch(e) {}
-
-        if (isDecrypted) {
-          if (qrCodeText) {
-            alert('✅ NID Card Unlocked & Scanned Automatically!\n\n• Password "' + clipboardCode + '" was automatically applied.\n• PDF has been opened fully unlocked.\n• QR Code scanned successfully:\n"' + qrCodeText + '"\n\nSaving token to database...');
-          } else {
-            alert('✅ NID Card Unlocked Automatically!\n\n• Password "' + clipboardCode + '" was automatically applied.\n• PDF has been opened fully unlocked.\n\nCould not scan QR code automatically from PDF. Please copy the URL manually.');
-          }
-        } else {
-          alert('NID Card Downloaded!\n\nCould not decrypt automatically. The password for the PDF is: ' + clipboardCode + '\nThis password has been copied to your clipboard.');
-        }
+        }, 30000);
 
         // Show step 4
         showStep(4);
-
-        if (qrCodeText) {
-          document.getElementById('pastedTokenInput').value = qrCodeText;
-          verifyAndSaveScannedToken();
-        } else {
-          document.getElementById('pastedTokenInput').value = '';
-        }
+        document.getElementById('pastedTokenInput').value = '';
 
       } catch (err) {
         showError(3, 'Error: ' + err.message);
