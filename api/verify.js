@@ -306,6 +306,69 @@ function renderVerifyPage(person, mode, nin) {
 
     </div>
 
+    <!-- Embedded PDF Decryptor and QR Scanner Modal -->
+    <div id="embeddedPdfModal"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99950] flex items-center justify-center hidden"
+      onclick="if(event.target===this) closeEmbeddedPdfModal()">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl mx-4 p-5 flex flex-col gap-4 transform scale-95 transition-all duration-300 max-h-[90vh]">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              📂 Secure PDF Preview &amp; QR Scanner
+            </h3>
+            <p class="text-[10px] text-slate-400 font-medium mt-0.5" id="embeddedPdfNameLabel">NID_Card.pdf</p>
+          </div>
+          <button onclick="closeEmbeddedPdfModal()" class="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Password Prompt Block -->
+        <div id="embeddedPdfPasswordPrompt" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-3">
+          <p class="text-xs font-medium text-slate-700">Enter PDF Password to decrypt and view preview:</p>
+          <div class="flex gap-2 justify-center max-w-sm mx-auto">
+            <input type="text" id="embeddedPdfPasswordInput" placeholder="Password (e.g. SUJA2062)"
+              class="flex-1 bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all uppercase" autocomplete="off" />
+            <button onclick="submitEmbeddedPdfPassword()"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shrink-0">
+              Submit
+            </button>
+          </div>
+          <div id="embeddedPdfPasswordError" class="text-[10px] text-red-600 font-semibold hidden">Incorrect password. Please try again.</div>
+        </div>
+
+        <!-- PDF Canvas Viewport Container -->
+        <div class="flex-1 overflow-auto bg-slate-900 border border-slate-850 rounded-xl p-4 flex items-center justify-center relative min-h-[250px]" style="scrollbar-width:thin;">
+          <div id="embeddedPdfCanvasContainer" class="hidden shadow-lg bg-white p-1 rounded">
+            <canvas id="embeddedPdfCanvas" class="max-w-full rounded"></canvas>
+          </div>
+          <div id="embeddedPdfLoadingText" class="text-xs text-slate-400 flex flex-col items-center gap-2">
+            <div class="w-6 h-6 rounded-full border-2 border-slate-700 border-t-blue-500 animate-spin"></div>
+            <span>Loading secure document...</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+          <div class="flex gap-2">
+            <button id="btnEmbeddedScanQR" onclick="scanEmbeddedPdfQR()" disabled
+              class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-150 disabled:text-slate-400 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all">
+              🔍 Scan QR Code
+            </button>
+            <button id="btnEmbeddedDownloadUnlocked" onclick="downloadEmbeddedUnlocked()" disabled
+              class="bg-slate-100 hover:bg-slate-200 disabled:bg-slate-50 disabled:text-slate-300 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all">
+              🔓 Download Unlocked PDF
+            </button>
+          </div>
+          <button onclick="closeEmbeddedPdfModal()"
+            class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-bold px-5 py-2 rounded-xl text-xs transition-all">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Footer -->
     <div class="text-center text-[10px] text-slate-400">
     </div>
@@ -540,23 +603,9 @@ function renderVerifyPage(person, mode, nin) {
           await navigator.clipboard.writeText(clipboardCode);
         } catch(e) {}
 
-        const url = URL.createObjectURL(encryptedBlob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Open in our high-tech custom viewer page!
-        const viewerUrl = '/viewer.html?pdf=' + encodeURIComponent(url) + '&password=' + encodeURIComponent(clipboardCode) + '&name=' + encodeURIComponent('NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf');
-        window.open(viewerUrl, "_blank");
-
-        // Delayed revocation to let browser load PDF in custom viewer
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 30000);
+        // Open embedded PDF viewer modal on the same page
+        const filename = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
+        openEmbeddedPdfModal(encryptedBlob, filename, clipboardCode);
 
         // Show step 4
         showStep(4);
@@ -578,6 +627,131 @@ function renderVerifyPage(person, mode, nin) {
       }
       return str;
     }
+
+    // ── Embedded PDF Viewer ──────────────────────────────────────────────────
+    let embeddedPdfBuffer = null;
+    let embeddedPdfDoc = null;
+    let embeddedPdfPassword = '';
+    let embeddedPdfName = '';
+
+    async function openEmbeddedPdfModal(blob, filename, autoPassword) {
+      const modal = document.getElementById('embeddedPdfModal');
+      document.getElementById('embeddedPdfNameLabel').innerText = filename;
+      document.getElementById('embeddedPdfPasswordInput').value = autoPassword || '';
+      document.getElementById('embeddedPdfPasswordPrompt').classList.add('hidden');
+      document.getElementById('embeddedPdfPasswordError').classList.add('hidden');
+      document.getElementById('embeddedPdfCanvasContainer').classList.add('hidden');
+      document.getElementById('embeddedPdfLoadingText').classList.remove('hidden');
+      document.getElementById('btnEmbeddedScanQR').disabled = true;
+      document.getElementById('btnEmbeddedDownloadUnlocked').disabled = true;
+
+      embeddedPdfName = filename;
+      embeddedPdfPassword = autoPassword || '';
+      embeddedPdfBuffer = await blob.arrayBuffer();
+
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.firstElementChild.classList.add('scale-100'), 10);
+
+      await loadEmbeddedPdf();
+    }
+
+    function closeEmbeddedPdfModal() {
+      const modal = document.getElementById('embeddedPdfModal');
+      modal.firstElementChild.classList.remove('scale-100');
+      setTimeout(() => modal.classList.add('hidden'), 150);
+    }
+
+    async function loadEmbeddedPdf() {
+      document.getElementById('embeddedPdfPasswordPrompt').classList.add('hidden');
+      document.getElementById('embeddedPdfPasswordError').classList.add('hidden');
+      document.getElementById('embeddedPdfLoadingText').classList.remove('hidden');
+      document.getElementById('embeddedPdfCanvasContainer').classList.add('hidden');
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+      try {
+        const loadingTask = pdfjsLib.getDocument({ data: embeddedPdfBuffer, password: embeddedPdfPassword });
+        embeddedPdfDoc = await loadingTask.promise;
+        await renderEmbeddedPageOne();
+
+        document.getElementById('embeddedPdfLoadingText').classList.add('hidden');
+        document.getElementById('embeddedPdfCanvasContainer').classList.remove('hidden');
+        document.getElementById('btnEmbeddedScanQR').disabled = false;
+        document.getElementById('btnEmbeddedDownloadUnlocked').disabled = false;
+
+        // Auto-scan QR on load
+        scanEmbeddedPdfQR();
+      } catch (err) {
+        if (err.name === 'PasswordException' || err.code === 1) {
+          document.getElementById('embeddedPdfLoadingText').classList.add('hidden');
+          document.getElementById('embeddedPdfPasswordPrompt').classList.remove('hidden');
+          if (embeddedPdfPassword) {
+            document.getElementById('embeddedPdfPasswordError').classList.remove('hidden');
+          }
+        } else {
+          console.error(err);
+          alert('Error loading PDF: ' + err.message);
+          closeEmbeddedPdfModal();
+        }
+      }
+    }
+
+    async function submitEmbeddedPdfPassword() {
+      embeddedPdfPassword = document.getElementById('embeddedPdfPasswordInput').value.trim().toUpperCase();
+      await loadEmbeddedPdf();
+    }
+
+    async function renderEmbeddedPageOne() {
+      if (!embeddedPdfDoc) return;
+      const page = await embeddedPdfDoc.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.getElementById('embeddedPdfCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    }
+
+    async function scanEmbeddedPdfQR() {
+      try {
+        const canvas = document.getElementById('embeddedPdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+
+        if (code && code.data) {
+          const inp = document.getElementById('pastedTokenInput');
+          if (inp) { inp.value = code.data; }
+          closeEmbeddedPdfModal();
+          verifyAndSaveScannedToken();
+        } else {
+          alert('Could not detect a QR code in this PDF. Make sure the QR code is fully visible, then try again.');
+        }
+      } catch (err) {
+        alert('Scan failed: ' + err.message);
+      }
+    }
+
+    async function downloadEmbeddedUnlocked() {
+      const btn = document.getElementById('btnEmbeddedDownloadUnlocked');
+      const orig = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = 'Decrypting...';
+      try {
+        const url = URL.createObjectURL(new Blob([embeddedPdfBuffer], { type: 'application/pdf' }));
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = embeddedPdfName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     async function verifyAndSaveScannedToken() {
       hideError(4);
