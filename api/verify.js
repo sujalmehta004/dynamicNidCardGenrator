@@ -82,6 +82,9 @@ function renderVerifyPage(person, mode, nin) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Identity Verification — ${person.givenEn} ${person.surnameEn}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; }
@@ -511,12 +514,54 @@ function renderVerifyPage(person, mode, nin) {
           return;
         }
 
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+        const encryptedBlob = await res.blob();
+        
+        // Calculate Password
+        const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
+        const namePart = nameOnly.substring(0,4).toUpperCase();
+        const dobEn = translateDigits(PERSON_DOB_LOC, nepToEn);
+        const yearPart = dobEn.replace(/\//g, "-").split('-')[0].substring(0,4);
+        const clipboardCode = namePart + yearPart;
+
+        let finalBlob = encryptedBlob;
+        let isDecrypted = false;
+        let qrCodeText = null;
+
+        try {
+          const encryptedBuffer = await encryptedBlob.arrayBuffer();
+          
+          // 1. Decrypt using PDF-Lib
+          const pdfDoc = await PDFLib.PDFDocument.load(encryptedBuffer, { password: clipboardCode });
+          const decryptedBytes = await pdfDoc.save();
+          finalBlob = new Blob([decryptedBytes], { type: "application/pdf" });
+          isDecrypted = true;
+          
+          // 2. Scan QR using PDF.js + jsQR
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          const loadingTask = pdfjsLib.getDocument({ data: decryptedBytes });
+          const pdfjsDoc = await loadingTask.promise;
+          const page = await pdfjsDoc.getPage(1);
+          const viewport = page.getViewport({ scale: 2.0 });
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            qrCodeText = code.data;
+          }
+        } catch (decErr) {
+          console.error("Auto-decryption/scanning failed:", decErr);
+        }
+
+        const url = URL.createObjectURL(finalBlob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
+        a.download = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + (isDecrypted ? '_unlocked' : '') + '.pdf';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -527,22 +572,31 @@ function renderVerifyPage(person, mode, nin) {
         // Delayed revocation to let browser load PDF in new tab
         setTimeout(() => {
           URL.revokeObjectURL(url);
-        }, 5000);
+        }, 8000);
 
-        // Clipboard & Password calculation
-        const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
-        const namePart = nameOnly.substring(0,4).toUpperCase();
-        const dobEn = translateDigits(PERSON_DOB_LOC, nepToEn);
-        const yearPart = dobEn.replace(/\//g, "-").split('-')[0].substring(0,4);
-        const clipboardCode = namePart + yearPart;
         try {
           await navigator.clipboard.writeText(clipboardCode);
         } catch(e) {}
 
-        alert('NID Card Downloaded and Opened!\n\nThe password for the PDF is: ' + clipboardCode + '\n(First 4 letters of name + BS birth year).\n\nThis password has been automatically copied to your clipboard!');
+        if (isDecrypted) {
+          if (qrCodeText) {
+            alert('✅ NID Card Unlocked & Scanned Automatically!\n\n• Password "' + clipboardCode + '" was automatically applied.\n• PDF has been opened fully unlocked.\n• QR Code scanned successfully:\n"' + qrCodeText + '"\n\nSaving token to database...');
+          } else {
+            alert('✅ NID Card Unlocked Automatically!\n\n• Password "' + clipboardCode + '" was automatically applied.\n• PDF has been opened fully unlocked.\n\nCould not scan QR code automatically from PDF. Please copy the URL manually.');
+          }
+        } else {
+          alert('NID Card Downloaded!\n\nCould not decrypt automatically. The password for the PDF is: ' + clipboardCode + '\nThis password has been copied to your clipboard.');
+        }
 
-        // Go to Step 4 (Token Scan) instead of updating DB immediately
+        // Show step 4
         showStep(4);
+
+        if (qrCodeText) {
+          document.getElementById('pastedTokenInput').value = qrCodeText;
+          verifyAndSaveScannedToken();
+        } else {
+          document.getElementById('pastedTokenInput').value = '';
+        }
 
       } catch (err) {
         showError(3, 'Error: ' + err.message);
