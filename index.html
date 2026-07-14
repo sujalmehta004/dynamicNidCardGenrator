@@ -2864,7 +2864,7 @@
 
         const formPane = document.getElementById("paneWorkspaceForm");
         if (formPane) {
-          formPane.classList.remove("bg-yellow-50/70");
+          formPane.classList.remove("bg-red-50/70");
           formPane.classList.add("bg-white");
         }
 
@@ -2913,7 +2913,7 @@
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
         formPane.classList.remove("bg-white");
-        formPane.classList.add("bg-yellow-50/70");
+        formPane.classList.add("bg-red-50/70");
       }
 
       document.getElementById("formNinEn").value = record.ninEn;
@@ -3050,7 +3050,7 @@
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
       document.getElementById("portalInitialActionBtnRow").classList.add("hidden");
 
-      setPortalInputsDisabled(true);
+      setPortalInputsDisabled(false);
       showPortalStep(1);
 
       const img = document.getElementById("portalCaptchaImg");
@@ -3725,7 +3725,7 @@
 
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
-        formPane.classList.remove("bg-yellow-50/70");
+        formPane.classList.remove("bg-red-50/70");
         formPane.classList.add("bg-white");
       }
 
