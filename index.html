@@ -1476,7 +1476,7 @@
       }
 
       titleEl.innerHTML = `<span>${icon}</span> <span>${title}</span>`;
-      messageEl.innerHTML = message;
+      messageEl.innerHTML = String(message).replace(/\n/g, "<br>");
       okBtn.className = `${btnCls} text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all`;
 
       modal.classList.remove("hidden");
@@ -3216,8 +3216,15 @@
       const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
       const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
 
-      if (!fullName || !fullNameLoc || !dobLoc || !ccnIssuingDateLoc || !captchaCode) {
-        alert("Please fill all fields and enter the captcha code.");
+      const missingFields = [];
+      if (!fullName) missingFields.push("Full Name (English)");
+      if (!fullNameLoc) missingFields.push("Full Name (Nepali)");
+      if (!dobLocRaw) missingFields.push("Date of Birth (Nepali)");
+      if (!ccnIssuingDateLocRaw) missingFields.push("Citizenship Issue Date (Nepali)");
+      if (!captchaCode) missingFields.push("Captcha Code");
+
+      if (missingFields.length > 0) {
+        alert("Please fill all required fields:\n• " + missingFields.join("\n• "));
         return;
       }
 
