@@ -139,7 +139,7 @@
     }
     .status-row-inprogress,
     .status-row-inprogress td {
-      background-color: #fee8e8 !important; /* Very light red (mobile not registered) */
+      background-color: #fef4f4 !important; /* Very light red (mobile not registered) */
     }
     .status-row-notonline,
     .status-row-notonline td {
@@ -1334,19 +1334,21 @@
           </div>
         </div>
 
-        <!-- Redesigned Modern Table -->
-        <div class="overflow-auto flex-1 text-xs">
-          <table class="min-w-full divide-y divide-slate-100 text-left whitespace-nowrap">
-            <thead
-              class="bg-slate-50/80 text-slate-600 font-bold text-[10px] uppercase tracking-wider select-none border-b border-slate-100">
-              <tr id="dbTableHeaderRow">
-                <!-- Dynamically Populated Table Headers -->
-              </tr>
-            </thead>
-            <tbody id="dbRepositoryRows" class="divide-y divide-slate-100 text-slate-700 font-medium bg-white">
-              <!-- Dynamically Populated Rows -->
-            </tbody>
-          </table>
+        <!-- Database Table -->
+        <div class="flex-1 overflow-auto" style="scrollbar-width:none; -ms-overflow-style:none;">
+          <style>.db-scroll-area::-webkit-scrollbar{display:none;}</style>
+          <div class="db-scroll-area overflow-auto h-full">
+            <table class="min-w-full text-left text-xs" style="border-collapse:collapse;">
+              <thead class="sticky top-0 z-10" style="background:#f8fafc;">
+                <tr id="dbTableHeaderRow" style="border-bottom: 2px solid #e2e8f0;">
+                  <!-- Dynamically Populated Table Headers -->
+                </tr>
+              </thead>
+              <tbody id="dbRepositoryRows" style="">
+                <!-- Dynamically Populated Rows -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -2494,17 +2496,15 @@
         if (!columnVisibility[col.key]) return;
 
         const th = document.createElement("th");
-        th.className =
-          "px-5 py-3.5 font-bold text-slate-700 border-r border-slate-200";
+        th.style.cssText = "padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; border-right:1px solid #e2e8f0; background:#f8fafc; user-select:none;";
         if (col.sortKey) {
-          th.className +=
-            " cursor-pointer hover:bg-slate-250 hover:text-slate-900 transition-colors";
+          th.style.cursor = "pointer";
           th.onclick = () => sortByColumn(col.sortKey);
-
           let indicator = " ⇅";
           if (currentSortBy === col.sortKey) {
             indicator = currentSortOrder === "asc" ? " ▲" : " ▼";
-            th.className += " bg-slate-200/80 text-blue-700";
+            th.style.color = "#2563eb";
+            th.style.background = "#eff6ff";
           }
           th.innerText = col.label + indicator;
         } else {
@@ -2704,7 +2704,8 @@
             <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Updated</div>
             <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.updateDate || "—"}</div>
           </div>
-          ${row.token ? `<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px; grid-column:span 2;">
+          ${row.token ? `
+          <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px; grid-column:span 2;">
             <div style="color:#0284c7; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Verification Token</div>
             <div style="font-family:monospace; font-size:10px; color:#0369a1; word-break:break-all;">${row.token}</div>
           </div>` : ""}
@@ -2748,18 +2749,19 @@
                             row.status === "done" ? "Done" : (row.status || "—");
 
         const tr = document.createElement("tr");
-        tr.className = `${statusRowClass} db-row-clickable border-b border-slate-100`;
+        tr.className = `${statusRowClass} db-row-clickable`;
         tr.style.cssText = `border-left: 3px solid ${sc.left};`;
         tr.onclick = (e) => {
-          // Don't open detail if clicking select/button/input inside the row
           if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
           openRowDetailPopup(row.ninEn);
         };
 
+        const CELL = "padding:9px 14px; border-right:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9;";
+
         // Col 1: NIN
         if (columnVisibility.nin) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3";
+          td.style.cssText = CELL + "white-space:nowrap;";
           td.innerHTML = `<div class="font-mono font-bold text-blue-600 text-xs">${row.ninEn}</div><div class="text-[10px] text-slate-400 font-normal mt-0.5">${row.ninNp || "—"}</div>`;
           tr.appendChild(td);
         }
@@ -2767,7 +2769,7 @@
         // Col 2: Name
         if (columnVisibility.name) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3";
+          td.style.cssText = CELL + "min-width:160px;";
           td.innerHTML = `<div class="font-bold text-slate-900 text-xs">${row.givenEn || ""} ${row.surnameEn || ""}</div><div class="text-[10px] text-slate-400 font-normal nepali-font mt-0.5">${row.givenNp || ""} ${row.surnameNp || ""}</div>`;
           tr.appendChild(td);
         }
@@ -2775,16 +2777,16 @@
         // Col 3: Token
         if (columnVisibility.token) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3";
+          td.style.cssText = CELL + "white-space:nowrap;";
           const tokenStr = row.token || "";
-          td.innerHTML = `<span class="font-mono text-[10px] text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" title="Click to copy" onclick="event.stopPropagation(); if('${tokenStr}'){navigator.clipboard.writeText('${tokenStr}'); alert('Token copied!');}">${tokenStr ? tokenStr.substring(0, 14) + "…" : "—"}</span>`;
+          td.innerHTML = `<span class="font-mono text-[10px] text-slate-400 cursor-pointer hover:text-blue-600 transition-colors" title="Click to copy" onclick="event.stopPropagation(); if('${tokenStr}'){navigator.clipboard.writeText('${tokenStr}'); alert('Token copied!')}">${tokenStr ? tokenStr.substring(0, 14) + "…" : "—"}</span>`;
           tr.appendChild(td);
         }
 
         // Col 4: DOB
         if (columnVisibility.dob) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3";
+          td.style.cssText = CELL + "white-space:nowrap;";
           td.innerHTML = `<div class="font-mono text-xs text-slate-700">${row.dobEn || "—"}</div><div class="text-[10px] text-slate-400">${row.dobNp || ""}</div>`;
           tr.appendChild(td);
         }
@@ -2792,7 +2794,7 @@
         // Col 5: Cit Date
         if (columnVisibility.citDate) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 font-mono text-xs text-amber-700";
+          td.style.cssText = CELL + "white-space:nowrap; font-family:monospace; font-size:11px; color:#b45309;";
           td.innerText = row.citDate || "—";
           tr.appendChild(td);
         }
@@ -2800,7 +2802,7 @@
         // Col 6: Address
         if (columnVisibility.address) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 max-w-[180px]";
+          td.style.cssText = CELL + "max-width:180px;";
           td.innerHTML = `<div class="text-xs text-slate-700 truncate">${row.addressEn || "—"}</div><div class="text-[10px] text-slate-400 nepali-font truncate">${row.addressNp || ""}</div>`;
           tr.appendChild(td);
         }
@@ -2808,7 +2810,7 @@
         // Col 7: Reg Date
         if (columnVisibility.regDate) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 font-mono text-[11px] text-slate-500";
+          td.style.cssText = CELL + "white-space:nowrap; font-family:monospace; font-size:11px; color:#64748b;";
           td.innerText = row.regDate || "—";
           tr.appendChild(td);
         }
@@ -2816,23 +2818,23 @@
         // Col 8: Update Date
         if (columnVisibility.updateDate) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 font-mono text-[11px] text-slate-500";
+          td.style.cssText = CELL + "white-space:nowrap; font-family:monospace; font-size:11px; color:#64748b;";
           td.innerText = row.updateDate || "—";
           tr.appendChild(td);
         }
 
-        // Col 9: Status Badge (inline)
+        // Col 9: Status Badge
         if (columnVisibility.status) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 text-center";
-          td.innerHTML = `<span style="font-size:9px; font-weight:700; padding:3px 9px; border-radius:20px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; white-space:nowrap; text-transform:uppercase; letter-spacing:.05em;">${statusLabel}</span>`;
+          td.style.cssText = CELL + "text-align:center; white-space:nowrap;";
+          td.innerHTML = `<span style="font-size:9px; font-weight:700; padding:3px 9px; border-radius:20px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; text-transform:uppercase; letter-spacing:.05em;">${statusLabel}</span>`;
           tr.appendChild(td);
         }
 
         // Col 9.1: Card Design
         if (columnVisibility.cardDesign) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 text-center";
+          td.style.cssText = CELL + "text-align:center; white-space:nowrap;";
           const isWhite = row.cardDesign === "white card";
           td.innerHTML = `<span style="font-size:9px; font-weight:700; padding:3px 9px; border-radius:20px; border:1px solid ${isWhite ? "#e2e8f0" : "#ddd6fe"}; background:${isWhite ? "#f8fafc" : "#f5f3ff"}; color:${isWhite ? "#475569" : "#6d28d9"}; text-transform:uppercase; letter-spacing:.05em;">${isWhite ? "White" : "Smart"}</span>`;
           tr.appendChild(td);
@@ -2841,19 +2843,16 @@
         // Col 9.5: Mobile
         if (columnVisibility.mobile) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 font-mono text-[11px] text-slate-600";
+          td.style.cssText = CELL + "white-space:nowrap; font-family:monospace; font-size:11px; color:#475569;";
           td.innerText = row.mobile || "—";
           tr.appendChild(td);
         }
 
-        // Col 10: Actions (compact)
+        // Col 10: Actions
         if (columnVisibility.actions) {
           const td = document.createElement("td");
-          td.className = "px-4 py-3 text-center";
-          td.innerHTML = `
-            <button onclick="event.stopPropagation(); pullRowIntoWorkspace('${row.ninEn}')" 
-              class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg font-bold transition-all text-[10px]">✏️ Edit</button>
-          `;
+          td.style.cssText = "padding:9px 14px; border-bottom:1px solid #f1f5f9; text-align:center; white-space:nowrap;";
+          td.innerHTML = `<button onclick="event.stopPropagation(); pullRowIntoWorkspace('${row.ninEn}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-2.5 py-1 rounded-lg font-bold transition-all text-[10px]">✏️ Edit</button>`;
           tr.appendChild(td);
         }
 
@@ -3007,6 +3006,7 @@
         const formPane = document.getElementById("paneWorkspaceForm");
         if (formPane) {
           formPane.classList.remove("bg-sky-400");
+          formPane.style.backgroundColor = "";
           formPane.classList.add("bg-white");
         }
 
@@ -3055,7 +3055,7 @@
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
         formPane.classList.remove("bg-white");
-        formPane.classList.add("bg-sky-400");
+        formPane.style.backgroundColor = "rgba(245, 185, 185, 1)";
       }
 
       document.getElementById("formNinEn").value = record.ninEn;
@@ -4018,6 +4018,7 @@
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
         formPane.classList.remove("bg-sky-400");
+        formPane.style.backgroundColor = "";
         formPane.classList.add("bg-white");
       }
 
