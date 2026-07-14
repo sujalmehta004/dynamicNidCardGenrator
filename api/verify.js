@@ -427,8 +427,13 @@ function renderVerifyPage(person, mode, nin) {
     }
 
     function startVerifyFlow() {
-      document.getElementById('verifyBtnArea').innerHTML = '<div class="text-xs text-slate-500 text-center py-2">Loading captcha...</div>';
+      document.getElementById('startVerifyBtn').disabled = true;
+      document.getElementById('startVerifyBtn').innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Loading captcha...';
       document.getElementById('otpFlowCard').classList.remove('hidden');
+      // Scroll the OTP card into view smoothly
+      setTimeout(() => {
+        document.getElementById('otpFlowCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       loadCaptcha();
     }
 
@@ -447,8 +452,16 @@ function renderVerifyPage(person, mode, nin) {
         const data = await res.json();
         if (!data.image) throw new Error('Invalid captcha format');
         document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.image;
+        // Hide verify button now that OTP card is fully loaded
+        document.getElementById('verifyBtnArea').classList.add('hidden');
       } catch (err) {
         showError(1, 'Could not load captcha: ' + err.message);
+        // Re-enable button if captcha failed to load
+        const btn = document.getElementById('startVerifyBtn');
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg> Verify &amp; Download NID Card';
+        }
       }
     }
 
@@ -583,10 +596,23 @@ function renderVerifyPage(person, mode, nin) {
 
         if (!res.ok) {
           let errMsg = res.statusText;
-          try { const d = await res.json(); errMsg = d.error || errMsg; } catch(e) {}
-          showError(3, 'Download failed: ' + errMsg);
+          try {
+            const rawErr = await res.text();
+            try { const d = JSON.parse(rawErr); errMsg = d.error || d.message || errMsg; } catch(e) { errMsg = rawErr || errMsg; }
+          } catch(e) {}
+
+          // Translate raw API codes to friendly messages
+          if (errMsg.includes('MOBILE_NOT_REGISTERED')) {
+            errMsg = 'Mobile number is not registered on the NID portal.';
+          } else if (errMsg.includes('DATA_NOT_FOUND')) {
+            errMsg = 'Citizen data was not found on the NID portal.';
+          } else if (errMsg.includes('INVALID_TOKEN') || errMsg.includes('invalid token')) {
+            errMsg = 'Download session expired. Please start over.';
+          }
+
+          showError(3, '❌ ' + errMsg);
           btn.disabled = false;
-          btn.textContent = 'Retry Download';
+          btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Retry Download';
           return;
         }
 
