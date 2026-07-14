@@ -2823,7 +2823,13 @@
         const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim() || `${record.givenNp || ""} ${record.surnameNp || ""}`.trim() || "N/A";
         document.getElementById("confirmModalName").innerText = fullName;
 
+        document.getElementById("confirmModalUpdateInput").value = "";
         document.getElementById("btnConfirmUpdateAction").onclick = async () => {
+          const typedVal = document.getElementById("confirmModalUpdateInput").value.trim();
+          if (typedVal !== "UPDATE") {
+            alert("Verification mismatch! Please type 'UPDATE' exactly.");
+            return;
+          }
           closeUpdateConfirmModal();
           await executeFormUpdate(record);
         };
@@ -2835,6 +2841,7 @@
     }
 
     function closeUpdateConfirmModal() {
+      document.getElementById("confirmModalUpdateInput").value = "";
       document.getElementById("updateConfirmModal").classList.add("hidden");
     }
 
@@ -2864,7 +2871,7 @@
 
         const formPane = document.getElementById("paneWorkspaceForm");
         if (formPane) {
-          formPane.classList.remove("bg-red-50/70");
+          formPane.classList.remove("bg-red-500");
           formPane.classList.add("bg-white");
         }
 
@@ -2913,7 +2920,7 @@
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
         formPane.classList.remove("bg-white");
-        formPane.classList.add("bg-red-50/70");
+        formPane.classList.add("bg-red-500");
       }
 
       document.getElementById("formNinEn").value = record.ninEn;
@@ -3725,7 +3732,7 @@
 
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
-        formPane.classList.remove("bg-red-50/70");
+        formPane.classList.remove("bg-red-500");
         formPane.classList.add("bg-white");
       }
 
@@ -4770,6 +4777,11 @@
               class="text-blue-600 font-bold"></span></div>
           <div><span class="font-bold text-slate-500">Full Name:</span> <span id="confirmModalName"
               class="text-slate-900 font-bold"></span></div>
+        </div>
+        <div class="pt-2">
+          <label class="block text-slate-650 font-semibold mb-1">To confirm, type <span class="font-mono font-bold text-red-650 bg-red-50 px-1 py-0.5 rounded">UPDATE</span> below:</label>
+          <input type="text" id="confirmModalUpdateInput" placeholder="Type UPDATE here"
+            class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all" autocomplete="off" />
         </div>
       </div>
 
