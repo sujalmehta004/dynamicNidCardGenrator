@@ -98,7 +98,7 @@ function renderVerifyPage(person, mode, nin) {
     .captcha-img { image-rendering: pixelated; }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 antialiased">
+<body class="min-h-screen bg-slate-100 p-4 antialiased flex flex-col items-center justify-start pt-8 pb-8">
 
   <div class="w-full max-w-2xl space-y-4">
 
@@ -185,12 +185,11 @@ function renderVerifyPage(person, mode, nin) {
           Verify &amp; Download NID Card
         </button>
       </div>
-    </div>
 
-    <!-- OTP Flow Steps Card -->
-    <div id="otpFlowCard" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-6 fade-in">
-      <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
-      <p class="text-xs text-slate-500 mb-4">Complete the steps below to verify your identity and download your NID card.</p>
+      <!-- OTP Flow Steps (shown in-place after button click) -->
+      <div id="otpFlowCard" class="hidden border-t border-slate-100 pt-5 mt-2 fade-in">
+        <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
+        <p class="text-xs text-slate-500 mb-4">Complete the steps below to verify your identity and download your NID card.</p>
 
       <!-- Step Indicator -->
       <div class="flex flex-wrap items-center gap-2 mb-5 text-[10px] font-bold uppercase tracking-wider">
@@ -305,6 +304,7 @@ function renderVerifyPage(person, mode, nin) {
       </div>
 
     </div>
+  </div>
 
     <!-- Embedded PDF Decryptor and QR Scanner Modal -->
     <div id="embeddedPdfModal"
@@ -619,10 +619,10 @@ function renderVerifyPage(person, mode, nin) {
         const encryptedBlob = await res.blob();
         
         // Calculate Password
-        const nameOnly = PERSON_FULL_NAME.trim().replace(/\s+/g,'');
+        const nameOnly = PERSON_FULL_NAME.trim().replace(/\\s+/g,'');
         const namePart = nameOnly.substring(0,4).toUpperCase();
         const dobEn = translateDigits(PERSON_DOB_LOC, nepToEn);
-        const yearPart = dobEn.replace(/\//g, "-").split('-')[0].substring(0,4);
+        const yearPart = dobEn.replace(/\\//g, "-").split('-')[0].substring(0,4);
         const clipboardCode = namePart + yearPart;
 
         try {
@@ -630,7 +630,7 @@ function renderVerifyPage(person, mode, nin) {
         } catch(e) {}
 
         // Open embedded PDF viewer modal on the same page
-        const filename = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
+        const filename = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\\s+/g,'_') + '.pdf';
         openEmbeddedPdfModal(encryptedBlob, filename, clipboardCode);
 
         // Show step 4
