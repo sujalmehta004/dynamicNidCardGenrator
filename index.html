@@ -1417,6 +1417,19 @@
         e.target.value = cleanNepaliText(e.target.value);
       });
 
+      // Nepali text cleaning for form design studio name fields
+      ["formGivenNp", "formSurnameNp"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener("blur", (e) => {
+            e.target.value = cleanNepaliText(e.target.value);
+          });
+          el.addEventListener("change", (e) => {
+            e.target.value = cleanNepaliText(e.target.value);
+          });
+        }
+      });
+
       loadNepalAdministrativeData();
       fetchDatabase();
       checkIpAccessControl();
@@ -2811,9 +2824,9 @@
         ninEn: targetNinEn,
         ninNp: document.getElementById("formNinNp").value,
         givenEn: document.getElementById("formGivenEn").value,
-        givenNp: document.getElementById("formGivenNp").value,
+        givenNp: cleanNepaliText(document.getElementById("formGivenNp").value),
         surnameEn: document.getElementById("formSurnameEn").value,
-        surnameNp: document.getElementById("formSurnameNp").value,
+        surnameNp: cleanNepaliText(document.getElementById("formSurnameNp").value),
         dobEn: document.getElementById("formDobEn").value,
         dobNp: document.getElementById("formDobNp").value,
         nationality:
