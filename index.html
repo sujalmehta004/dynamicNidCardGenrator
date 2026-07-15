@@ -3415,6 +3415,15 @@
       const listEl = document.getElementById("bulkRecordList");
       if (!listEl) return;
 
+      // Save any OTP values the user has already typed before wiping innerHTML
+      const savedOtpValues = {};
+      bulkResults.forEach(row => {
+        const inp = document.getElementById(`bulkOtp_${row.index}`);
+        if (inp && inp.value.trim()) {
+          savedOtpValues[row.index] = inp.value.trim();
+        }
+      });
+
       // Filter rows
       let displayRows = [...bulkResults];
       if (currentBulkFilter === "sending") {
@@ -3575,6 +3584,12 @@
       `;
 
       listEl.innerHTML = html;
+
+      // Restore OTP values the user had typed before the re-render wiped them
+      Object.entries(savedOtpValues).forEach(([index, value]) => {
+        const inp = document.getElementById(`bulkOtp_${index}`);
+        if (inp) inp.value = value;
+      });
     }
 
     async function verifyAndDownloadBulkRow(index) {
