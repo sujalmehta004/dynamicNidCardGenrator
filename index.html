@@ -699,6 +699,13 @@
                 class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase">
                 Proceed to Verification (Single)
               </button>
+              <button type="button" id="btnTestOtp" onclick="fillTestDataAndVerify()"
+                class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Test OTP (Auto-fill)
+              </button>
               <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
                 class="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3190,6 +3197,22 @@
       document.getElementById("portalScannedTokenVal").value = "";
       portalNinValue = "";
       portalDownloadToken = "";
+    }
+
+    function fillTestDataAndVerify() {
+      // Pre-fill form with hardcoded test data then start the normal single verification flow
+      const nameEnEl   = document.getElementById("portalFullNameEn");
+      const nameNpEl   = document.getElementById("portalFullNameNp");
+      const dobEl      = document.getElementById("portalDobLoc");
+      const citDateEl  = document.getElementById("portalCcnIssuingDateLoc");
+
+      if (nameEnEl)  nameEnEl.value  = "SUJAL MEHTA";
+      if (nameNpEl)  nameNpEl.value  = "सुजल मेहता";
+      if (dobEl)     dobEl.value     = "२०६२-०१-२०";
+      if (citDateEl) citDateEl.value = "२०७८-०३-२५";
+
+      // Trigger the same flow as "Proceed to Verification (Single)"
+      loadPortalCaptcha(false);
     }
 
     async function loadPortalCaptcha(bulkMode = false) {
