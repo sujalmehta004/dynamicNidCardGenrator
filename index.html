@@ -3418,9 +3418,9 @@
       // Save any OTP values the user has already typed before wiping innerHTML
       const savedOtpValues = {};
       bulkResults.forEach(row => {
-        const inp = document.getElementById(`bulkOtp_${row.index}`);
+        const inp = document.getElementById(`bulkOtp_${row.record.ninEn}`);
         if (inp && inp.value.trim()) {
-          savedOtpValues[row.index] = inp.value.trim();
+          savedOtpValues[row.record.ninEn] = inp.value.trim();
         }
       });
 
@@ -3536,8 +3536,8 @@
             detailsHtml = `
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="color:#059669; font-weight:600; white-space:nowrap;">Mobile: ${mobileStr}</span>
-                <input type="text" id="bulkOtp_${row.index}" placeholder="OTP" maxlength="6" style="width: 55px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 11px; text-align: center; height: 22px;" autocomplete="off" />
-                <button id="btnBulkVerify_${row.index}" onclick="verifyAndDownloadBulkRow(${row.index})" style="background:#10b981; color:#ffffff; font-weight:700; padding: 2px 8px; border: none; border-radius: 6px; font-size: 10px; cursor: pointer; height: 22px; transition: background 0.15s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                <input type="text" id="bulkOtp_${row.record.ninEn}" placeholder="OTP" maxlength="6" style="width: 55px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 11px; text-align: center; height: 22px;" autocomplete="off" />
+                <button id="btnBulkVerify_${row.record.ninEn}" onclick="verifyAndDownloadBulkRow('${row.record.ninEn}')" style="background:#10b981; color:#ffffff; font-weight:700; padding: 2px 8px; border: none; border-radius: 6px; font-size: 10px; cursor: pointer; height: 22px; transition: background 0.15s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                   Verify
                 </button>
               </div>
@@ -3586,17 +3586,17 @@
       listEl.innerHTML = html;
 
       // Restore OTP values the user had typed before the re-render wiped them
-      Object.entries(savedOtpValues).forEach(([index, value]) => {
-        const inp = document.getElementById(`bulkOtp_${index}`);
+      Object.entries(savedOtpValues).forEach(([nin, value]) => {
+        const inp = document.getElementById(`bulkOtp_${nin}`);
         if (inp) inp.value = value;
       });
     }
 
-    async function verifyAndDownloadBulkRow(index) {
-      const row = bulkResults[index];
+    async function verifyAndDownloadBulkRow(nin) {
+      const row = bulkResults.find(r => r.record.ninEn === nin);
       if (!row) return;
 
-      const otpInput = document.getElementById(`bulkOtp_${index}`);
+      const otpInput = document.getElementById(`bulkOtp_${nin}`);
       if (!otpInput) return;
       const otp = otpInput.value.trim();
       if (!otp) {
@@ -3604,7 +3604,7 @@
         return;
       }
 
-      const btn = document.getElementById(`btnBulkVerify_${index}`);
+      const btn = document.getElementById(`btnBulkVerify_${nin}`);
       const originalText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = "Wait...";
