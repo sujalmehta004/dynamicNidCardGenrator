@@ -30,6 +30,10 @@
       "destination": "/api/check-token.js"
     },
     {
+      "source": "/api/voter-search",
+      "destination": "/api/voter-search.js"
+    },
+    {
       "source": "/verify/:nin",
       "destination": "/api/verify?nin=:nin"
     }
