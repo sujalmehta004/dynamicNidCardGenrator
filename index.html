@@ -665,7 +665,6 @@
               </div>
             </div>
 
-            <!-- OTP input step -->
             <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
               <div class="flex flex-col gap-1">
                 <span class="font-bold text-slate-700">OTP Info:</span>
@@ -730,28 +729,29 @@
               </div>
             </div>
 
-              <!-- NID Tab Action Buttons -->
-              <div id="portalInitialActionBtnRow" class="pt-2 flex flex-col gap-2">
+              <!-- NID Tab Action Buttons in one row -->
+              <div id="portalInitialActionBtnRow" class="pt-2 grid grid-cols-3 gap-2">
                 <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha(false)"
-                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase">
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-all text-[9.5px] uppercase tracking-wider text-center">
                   Proceed to Verification (Single)
                 </button>
                 <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
-                  class="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h7"/>
-                  </svg>
-                  Verify All (Bulk Request)
+                  class="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-2 rounded-lg transition-all text-[9.5px] uppercase tracking-wider flex items-center justify-center gap-1 shadow-md">
+                  Verify All (Bulk)
+                </button>
+                <button type="button" id="btnShowNidSearch" onclick="toggleNidSearchPortal()"
+                  class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg transition-all text-[9.5px] uppercase tracking-wider text-center">
+                  Search by NID Number
                 </button>
               </div>
 
-              <!-- Integrated Voter Portal Gateway Box -->
-              <div class="mt-4 border-t border-slate-200/80 pt-4">
+              <!-- Integrated with nid number search portal Box -->
+              <div id="nidNumberSearchPortalBox" class="mt-4 border-t border-slate-200/80 pt-4 hidden">
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
                   <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
                     <div class="flex items-center gap-2">
                       <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                      <span class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Voter Portal Gateway</span>
+                      <span class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">with NID number search portal</span>
                     </div>
                   </div>
 
@@ -3276,6 +3276,7 @@
       document.getElementById("portalManualTokenRow").classList.add("hidden");
       document.getElementById("portalSuccessRow").classList.add("hidden");
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
+      document.getElementById("portalMobileNotRegisteredRow").classList.add("hidden");
       document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
       
       document.getElementById("portalCaptchaCode").value = "";
@@ -3303,7 +3304,8 @@
       document.getElementById("portalSuccessRow").classList.add("hidden");
       document.getElementById("portalScannedTokenVal").value = "";
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
-      document.getElementById("portalInitialActionBtnRow").classList.add("hidden");
+      // DO NOT hide the action buttons row, keep Proceed to Verification / Verify All / Search visible
+      document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
 
       setPortalInputsDisabled(false);
       showPortalStep(1);
@@ -3405,8 +3407,58 @@
         });
 
         const responseBody = await parseResponseBody(res);
+
+        // Detect MOBILE_NOT_REGISTERED or DATA_NOT_FOUND specifically
+        const _respCode = getOtpErrorCode(responseBody);
+        const _rawText  = typeof responseBody === "string" ? responseBody : extractOtpResponseMessage(responseBody);
+        const _parsedCode = parseOtpErrorCodeFromText(_rawText);
+        const _resolvedCode = _respCode || _parsedCode;
+
+        if (_resolvedCode === "MOBILE_NOT_REGISTERED" || (_rawText && _rawText.includes("MOBILE_NOT_REGISTERED")) ||
+            _resolvedCode === "DATA_NOT_FOUND" || (_rawText && _rawText.includes("DATA_NOT_FOUND"))) {
+          
+          // Silently trigger voter search in background so we can show white card + download paper even when OTP fails
+          const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
+          const _dobBsEn  = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+          const _dobAd    = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+          const _fullEnName = document.getElementById("portalFullNameEn").value.trim();
+          const _firstName  = _fullEnName.split(" ")[0].toLowerCase();
+          
+          // Retrieve NID value from the response if available, else from search portal inputs/DB lookup
+          let resolvedNid = (responseBody && responseBody.nin) || portalNinValue || "";
+          if (!resolvedNid) {
+            try {
+              const checkRes = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(_fullEnName)}`);
+              if (checkRes.ok) {
+                const list = await checkRes.json();
+                if (list.length > 0) {
+                  resolvedNid = list[0].ninEn;
+                }
+              }
+            } catch (e) {}
+          }
+          
+          if (resolvedNid && _dobAd && _firstName) {
+            try {
+              const vres = await fetch(`${API_BASE}/api/voter-search`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nin: resolvedNid, dob: _dobAd, firstname: _firstName })
+              });
+              const vdata = await vres.json();
+              if (vres.ok && vdata.success && vdata.data) {
+                openNidVoterModalWithError(_resolvedCode, _rawText, vdata.data);
+                return;
+              }
+            } catch (e) {}
+          }
+          
+          openNidVoterModalWithError(_resolvedCode, _rawText, null);
+          return;
+        }
+
         if (!res.ok) {
-          const errMsg = extractOtpResponseMessage(responseBody) || res.statusText || "OTP request failed";
+          const errMsg = _rawText || res.statusText || "OTP request failed";
           alert(`OTP Request failed: ${errMsg}`);
           loadPortalCaptcha(false);
           return;
@@ -3435,6 +3487,16 @@
         document.getElementById("portalCaptchaInputRow").classList.add("hidden");
         document.getElementById("portalOtpRow").classList.remove("hidden");
         showPortalStep(2);
+
+        // ── Auto voter-list search using the just-returned NIN ──
+        const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
+        const _dobBsEn  = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+        const _dobAd    = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+        const _fullEnName = document.getElementById("portalFullNameEn").value.trim();
+        const _firstName  = _fullEnName.split(" ")[0].toLowerCase();
+        if (data.nin && _dobAd && _firstName) {
+          autoVoterSearchForNid(data.nin, _dobAd, _firstName);
+        }
       } catch (err) {
         alert("Network error requesting OTP: " + err.message);
         loadPortalCaptcha(false);
@@ -4155,6 +4217,13 @@
         // Transition to Success state
         document.getElementById("portalManualTokenRow").classList.add("hidden");
         document.getElementById("portalSuccessRow").classList.remove("hidden");
+
+        // ── Also show success in the nidVoterModal if it is open ──
+        const _nidVoterMod = document.getElementById("nidVoterModal");
+        if (_nidVoterMod && !_nidVoterMod.classList.contains("hidden")) {
+          document.getElementById("nidVoterTokenSection").classList.add("hidden");
+          document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
+        }
         
         let count = 5;
         const timerEl = document.getElementById("portalCountdownTimer");
@@ -6840,6 +6909,592 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   
   <!-- Single Card Print Container -->
   <div id="singleCardPrintContainer"></div>
+
+  <!-- ===== NID + VOTER WHITE CARD MODAL ===== -->
+  <div id="nidVoterModal" class="fixed inset-0 z-[70] items-center justify-center p-4 hidden"
+       style="background:rgba(15,23,42,0.78); backdrop-filter:blur(6px);">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[680px] max-h-[92vh] flex flex-col overflow-hidden">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-700 rounded-t-2xl">
+        <div>
+          <h2 class="text-white font-bold text-sm tracking-wide" id="nidVoterModalTitle">🪪 NID Card Found — Continue Verification</h2>
+          <p class="text-indigo-100 text-[11px] mt-0.5" id="nidVoterModalSubtitle">Record matched. Enter OTP below to proceed.</p>
+        </div>
+        <button onclick="closeNidVoterModal()" class="text-white hover:text-indigo-200 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+
+        <!-- Error/Fallback Section inside the Modal (hidden by default) -->
+        <div id="nidVoterFallbackSection" class="hidden space-y-4">
+          <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-3">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-rose-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <div>
+                <div id="nidVoterMnrHeader" class="font-bold text-rose-700 text-[11px] uppercase tracking-wide">Mobile Not Registered</div>
+                <div id="nidVoterMnrErrorText" class="text-rose-600 text-[10px] mt-0.5">OTP could not be sent. Enter the NID number below to search the voter list directly.</div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-600 font-bold mb-1 text-[10px] uppercase tracking-wide">NID Number</label>
+              <div class="flex gap-2">
+                <input type="text" id="nidVoterMnrNidInput" placeholder="e.g. 615-385-908-6"
+                  class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono text-[11px]" />
+                <button type="button" onclick="searchVoterByManualNid()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg transition-all shadow-sm shrink-0 text-[11px] uppercase">
+                  Search
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- White Card Preview -->
+        <div id="nidVoterWhiteCardSection" class="space-y-2">
+          <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Voter White Card Preview</div>
+          <div class="flex items-center justify-center bg-slate-50 border border-slate-200 rounded-xl p-2 overflow-hidden">
+            <img id="nidVoterWhiteCardImg" src="" alt="White Card" class="max-w-full rounded" style="max-height:260px;" />
+          </div>
+          <div class="flex gap-2">
+            <button onclick="downloadNidVoterPaper()"
+              class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5">
+              📄 Download Paper
+            </button>
+            <button onclick="saveNidVoterWhiteCard()"
+              class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-[11px] transition-all flex items-center justify-center gap-1.5">
+              💾 Save White Card
+            </button>
+          </div>
+        </div>
+
+        <!-- OTP Section -->
+        <div id="nidVoterOtpSection" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div class="flex flex-col gap-0.5">
+            <span class="font-bold text-slate-700 text-[12px]">OTP Info:</span>
+            <span id="nidVoterOtpInfo" class="font-medium text-slate-600 text-[11px]">—</span>
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-slate-600 font-bold text-[12px]">Enter OTP Code</label>
+            <div class="flex gap-2">
+              <input type="text" id="nidVoterOtpCode" placeholder="Enter OTP code"
+                class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
+              <button id="btnNidVoterVerifyOtp" onclick="verifyNidVoterOtp()"
+                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase text-[11px]">
+                Verify OTP
+              </button>
+            </div>
+          </div>
+          <div class="flex justify-end pt-0.5">
+            <button onclick="closeNidVoterModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">Resend OTP / Start Over</button>
+          </div>
+        </div>
+
+        <!-- Download Section (shown after OTP verified) -->
+        <div id="nidVoterDownloadSection" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <button id="btnNidVoterDownload" onclick="executeNidVoterDownload()"
+            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
+            ⬇ Download PDF
+          </button>
+        </div>
+
+        <!-- Token Scan Section (shown after download) -->
+        <div id="nidVoterTokenSection" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+          <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
+            <span class="font-bold block mb-1">⚠️ PDF Downloaded!</span>
+            Open the downloaded PDF, scan the QR code inside, copy the URL, and paste it below.
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="font-bold text-slate-700 text-[11px]">Scanned QR URL / Token:</span>
+            <textarea id="nidVoterScannedToken" rows="3" placeholder="Paste the full scanned QR URL here..."
+              class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-blue-500 transition-all"></textarea>
+          </div>
+          <button id="btnNidVoterVerifyToken" onclick="verifyNidVoterToken()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
+            ✅ Verify &amp; Save Token
+          </button>
+        </div>
+
+        <!-- Success Section -->
+        <div id="nidVoterSuccessSection" class="hidden space-y-3 text-center p-5 bg-slate-50 rounded-xl border border-slate-200">
+          <div class="w-14 h-14 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <div class="text-sm font-bold text-emerald-700">Verification Complete!</div>
+          <div class="text-xs text-slate-600">NID card token verified and database updated.</div>
+          <button onclick="closeNidVoterModal()" class="mt-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ── Voter NID modal state ──
+  let _nidVoterCurrentData = null;
+
+  // Called when user clicks "Search" inside the NID Voter fallback/error section
+  async function searchVoterByManualNid() {
+    const nid = document.getElementById("nidVoterMnrNidInput").value.trim();
+    if (!nid) { alert("Please enter the NID number."); return; }
+
+    // Get DOB from portal BS field → convert to AD
+    const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
+    const _dobBsEn  = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+    const _dobAd    = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+    if (!_dobAd) { alert("Could not convert Date of Birth. Make sure BS DOB is filled in."); return; }
+
+    // First name from English full name field
+    const _fullEn   = document.getElementById("portalFullNameEn").value.trim();
+    const _firstName = _fullEn.split(" ")[0].toLowerCase();
+    if (!_firstName) { alert("Please fill in the Full Name (English) field first."); return; }
+
+    const btn = document.querySelector("#nidVoterFallbackSection button");
+    if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/voter-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nin: nid, dob: _dobAd, firstname: _firstName })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.data) {
+        _nidVoterCurrentData = data.data;
+        document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
+        document.getElementById("nidVoterModalSubtitle").innerText = "Record matched. Enter OTP below to proceed.";
+        document.getElementById("nidVoterFallbackSection").classList.add("hidden");
+        openNidVoterModal(data.data, false);  // OTP failed for this person — don't show OTP box
+      } else {
+        const errMsg = data.error || "Voter record not found for this NID.";
+        document.getElementById("nidVoterMnrErrorText").innerText = errMsg;
+      }
+    } catch (err) {
+      alert("Search error: " + err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerText = "Search"; }
+    }
+  }
+
+  function openNidVoterModalWithError(code, rawMsg, voterData = null) {
+    document.getElementById("nidVoterModalTitle").innerText = "⚠️ Verification Error";
+    document.getElementById("nidVoterModalSubtitle").innerText = "OTP could not be processed. Use fallback search.";
+    
+    if (code === "DATA_NOT_FOUND" || (rawMsg && rawMsg.includes("DATA_NOT_FOUND"))) {
+      document.getElementById("nidVoterMnrHeader").innerText = "Data Not Found";
+      document.getElementById("nidVoterMnrErrorText").innerText = rawMsg || "Record not found on government server. Enter NID below to search voter list.";
+    } else {
+      document.getElementById("nidVoterMnrHeader").innerText = "Mobile Not Registered";
+      document.getElementById("nidVoterMnrErrorText").innerText = rawMsg || "Mobile number not registered. Enter NID below to search voter list.";
+    }
+
+    document.getElementById("nidVoterMnrNidInput").value = "";
+    document.getElementById("nidVoterFallbackSection").classList.remove("hidden");
+    
+    if (voterData) {
+      _nidVoterCurrentData = voterData;
+      renderVoterWhiteCardToDataUrl(voterData, (dataUrl) => {
+        document.getElementById("nidVoterWhiteCardImg").src = dataUrl;
+      });
+      document.getElementById("nidVoterWhiteCardSection").classList.remove("hidden");
+    } else {
+      document.getElementById("nidVoterWhiteCardSection").classList.add("hidden");
+    }
+
+    document.getElementById("nidVoterOtpSection").classList.add("hidden");
+    document.getElementById("nidVoterDownloadSection").classList.add("hidden");
+    document.getElementById("nidVoterTokenSection").classList.add("hidden");
+    document.getElementById("nidVoterSuccessSection").classList.add("hidden");
+
+    // Open Modal
+    const modal = document.getElementById("nidVoterModal");
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+  }
+
+  function closeNidVoterModal() {
+    const m = document.getElementById("nidVoterModal");
+    m.classList.add("hidden");
+    m.style.display = "";
+    _nidVoterCurrentData = null;
+
+    // Refresh captcha and show input row on close
+    loadPortalCaptcha(false);
+    document.getElementById("portalCaptchaInputRow").classList.remove("hidden");
+    document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+  }
+
+  function downloadNidVoterPaper() {
+    if (!_nidVoterCurrentData) return;
+    downloadVoterPaper(encodeURIComponent(JSON.stringify(_nidVoterCurrentData)));
+  }
+
+  function toggleNidSearchPortal() {
+    const box = document.getElementById("nidNumberSearchPortalBox");
+    if (box) {
+      if (box.classList.contains("hidden")) {
+        box.classList.remove("hidden");
+      } else {
+        box.classList.add("hidden");
+      }
+    }
+  }
+
+  // Silent background voter search triggered after OTP step 2
+  async function autoVoterSearchForNid(nin, dobAd, firstname) {
+    try {
+      const res = await fetch(`${API_BASE}/api/voter-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nin, dob: dobAd, firstname })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.data) {
+        openNidVoterModal(data.data);
+      }
+    } catch (err) {
+      // Silent fail
+    }
+  }
+
+  // Render the voter white card to a data-URL (without downloading) then call callback
+  function renderVoterWhiteCardToDataUrl(voterData, callback) {
+    const givenEn   = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
+    const surnameEn = (voterData.VoterLastNameEn || "").toUpperCase();
+    const fullNameEn = `${givenEn} ${surnameEn}`.trim() || "—";
+    const fullNameNp = [voterData.VoterFirstName, voterData.VoterMiddleName, voterData.VoterLastName].filter(Boolean).join(" ") || "—";
+    const nid        = voterData.Nidno || "—";
+    const dobNp      = voterData.dobNp || "—";
+    const toleEn     = (voterData.PermanentVillageTol || "—").toUpperCase();
+    const _wardNpRaw = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : "") || "";
+    const ward       = _wardNpRaw ? _wardNpRaw.replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)) : (voterData.WardNo && voterData.WardNo !== 0 ? String(voterData.WardNo) : "—");
+    const addrNames  = getResolvedAddressNames(voterData);
+
+    const canvas = document.createElement("canvas");
+    canvas.width  = 1000;
+    canvas.height = 630;
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 1000, 630);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 26px sans-serif";
+    ctx.fillText("Your National ID Number", 500, 50);
+    ctx.font = "bold 48px monospace";
+    ctx.fillText(nid, 500, 105);
+
+    const photoEl = (() => {
+      if (voterData.PortraitImage && voterData.PortraitStatus !== "ABSENT") {
+        const img = new Image();
+        img.src = "data:image/jpeg;base64," + voterData.PortraitImage;
+        return img;
+      }
+      return null;
+    })();
+
+    const drawAndReturn = () => {
+      const PX = 20, PY = 210, PW = 280, PH = 373;
+      if (photoEl && photoEl.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(PX, PY, PW, PH, 8);
+        ctx.clip();
+        ctx.drawImage(photoEl, PX, PY, PW, PH);
+        ctx.restore();
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(PX, PY, PW, PH, 8);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "#f8fafc";
+        ctx.beginPath();
+        ctx.roundRect(PX, PY, PW, PH, 8);
+        ctx.fill();
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(PX, PY, PW, PH, 8);
+        ctx.stroke();
+        ctx.fillStyle = "#e2e8f0";
+        ctx.beginPath();
+        ctx.arc(PX + PW/2, PY + 120, 55, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(PX + PW/2, PY + PH - 50, 95, 80, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("PHOTO", PX + PW/2, PY + PH - 15);
+      }
+
+      const RX = 325;
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 32px sans-serif";
+      ctx.fillText("Other Citizenship Details", 660, 240);
+
+      const fields = [
+        { label: "Nepali Name",   value: fullNameNp },
+        { label: "English Name",  value: fullNameEn },
+        { label: "Date of Birth", value: dobNp },
+        { label: "Province",      value: addrNames.provinceEn },
+        { label: "District",      value: addrNames.districtEn },
+        { label: "Municipality",  value: addrNames.muniEn },
+        { label: "Tole",          value: toleEn },
+        { label: "Ward",          value: ward }
+      ];
+
+      const COL_LABEL = RX, COL_COLON = 610, COL_VALUE = 630;
+      let curY = 300;
+      const rowH = 42;
+      fields.forEach(f => {
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 22px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(f.label, COL_LABEL, curY);
+        ctx.textAlign = "center";
+        ctx.fillText(":", COL_COLON, curY);
+        ctx.fillStyle = "#1e293b";
+        ctx.textAlign = "left";
+        ctx.fillText(f.value, COL_VALUE, curY);
+        curY += rowH;
+      });
+
+      callback(canvas.toDataURL("image/png"));
+    };
+
+    if (photoEl) {
+      if (photoEl.complete && photoEl.naturalWidth > 0) {
+        drawAndReturn();
+      } else {
+        photoEl.onload  = drawAndReturn;
+        photoEl.onerror = drawAndReturn;
+      }
+    } else {
+      drawAndReturn();
+    }
+  }
+
+  function openNidVoterModal(voterData, showOtp = true) {
+    _nidVoterCurrentData = voterData;
+
+    // Render white card and set as img src
+    renderVoterWhiteCardToDataUrl(voterData, (dataUrl) => {
+      document.getElementById("nidVoterWhiteCardImg").src = dataUrl;
+    });
+
+    // Copy OTP info text from main portal
+    const otpInfoEl = document.getElementById("portalOtpInfoText");
+    document.getElementById("nidVoterOtpInfo").innerText = otpInfoEl ? otpInfoEl.innerText : "—";
+
+    // Ensure correct title
+    document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
+    document.getElementById("nidVoterModalSubtitle").innerText = showOtp
+      ? "Record matched. Enter OTP below to proceed."
+      : "Record matched. OTP not available for this person.";
+
+    // Show white card, hide fallback / other sections
+    document.getElementById("nidVoterWhiteCardSection").classList.remove("hidden");
+    document.getElementById("nidVoterFallbackSection").classList.add("hidden");
+
+    // Show or hide OTP section based on whether OTP was sent
+    if (showOtp) {
+      document.getElementById("nidVoterOtpSection").classList.remove("hidden");
+    } else {
+      document.getElementById("nidVoterOtpSection").classList.add("hidden");
+    }
+    document.getElementById("nidVoterDownloadSection").classList.add("hidden");
+    document.getElementById("nidVoterTokenSection").classList.add("hidden");
+    document.getElementById("nidVoterSuccessSection").classList.add("hidden");
+    document.getElementById("nidVoterOtpCode").value = "";
+
+    // Show modal
+    const modal = document.getElementById("nidVoterModal");
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+  }
+
+
+  function saveNidVoterWhiteCard() {
+    if (!_nidVoterCurrentData) return;
+    saveVoterWhiteCard(encodeURIComponent(JSON.stringify(_nidVoterCurrentData)));
+  }
+
+  async function verifyNidVoterOtp() {
+    const otp = document.getElementById("nidVoterOtpCode").value.trim();
+    if (!otp) { alert("Please enter the OTP code."); return; }
+    if (!portalNinValue) { alert("NIN missing. Please start over."); closeNidVoterModal(); return; }
+
+    // Mirror OTP to main portal field (keeps existing verify flow in sync)
+    document.getElementById("portalOtpCode").value = otp;
+
+    const btn = document.getElementById("btnNidVoterVerifyOtp");
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = "Verifying...";
+
+    try {
+      const res = await fetch(`${API_BASE}/api/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nin: portalNinValue, otp })
+      });
+      if (!res.ok) {
+        let errMsg = res.statusText;
+        try { const e = await res.json(); errMsg = e.error || errMsg; } catch(e) {}
+        alert(`OTP Verification failed: ${errMsg}`);
+        return;
+      }
+      const data = await res.json();
+      portalDownloadToken = data.downloadToken;
+
+      // Advance modal to download step
+      document.getElementById("nidVoterOtpSection").classList.add("hidden");
+      document.getElementById("nidVoterDownloadSection").classList.remove("hidden");
+
+      // Also advance main portal (stays in sync)
+      document.getElementById("portalOtpRow").classList.add("hidden");
+      document.getElementById("portalDownloadRow").classList.remove("hidden");
+      showPortalStep(3);
+    } catch (err) {
+      alert("Network error verifying OTP: " + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+
+  async function executeNidVoterDownload() {
+    const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
+    const fullNameNp = document.getElementById("portalFullNameNp").value.trim();
+    const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
+    const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
+    const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
+    const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
+
+    if (!fullName || !fullNameNp || !dobLoc || !ccnIssuingDateLoc) {
+      alert("Please fill all form fields (name, DOB, citizenship date) first."); return;
+    }
+    if (!portalDownloadToken) {
+      alert("Verification token missing. Please complete OTP verification first."); return;
+    }
+
+    const btn = document.getElementById("btnNidVoterDownload");
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = "Downloading...";
+
+    try {
+      const res = await fetch(`${API_BASE}/api/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Download-Token": portalDownloadToken },
+        body: JSON.stringify({ dob_loc: dobLoc, ccn_issuing_date_loc: ccnIssuingDateLoc, full_name: fullName, full_name_loc: fullNameNp })
+      });
+      if (!res.ok) {
+        let errMsg = res.statusText;
+        try { const e = await res.json(); errMsg = e.error || errMsg; } catch(e) {}
+        alert(`Download failed: ${errMsg}`); return;
+      }
+      const encryptedBlob = await res.blob();
+
+      // Calculate password
+      const nameOnly  = fullName.replace(/\s+/g, "");
+      const namePart  = nameOnly.substring(0, 4).toUpperCase();
+      const dobEn     = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
+      const yearPart  = dobEn.replace(/\//g, "-").split("-")[0].substring(0, 4);
+      const clipCode  = namePart + yearPart;
+
+      try { await navigator.clipboard.writeText(clipCode); } catch(e) {}
+
+      const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
+
+      // Trigger browser download for the PDF file directly to disk
+      const dlLink = document.createElement("a");
+      dlLink.href = URL.createObjectURL(encryptedBlob);
+      dlLink.download = filename;
+      document.body.appendChild(dlLink);
+      dlLink.click();
+      document.body.removeChild(dlLink);
+
+      openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
+
+      // Advance modal to token step
+      document.getElementById("nidVoterDownloadSection").classList.add("hidden");
+      document.getElementById("nidVoterTokenSection").classList.remove("hidden");
+      document.getElementById("nidVoterScannedToken").value = "";
+
+      // Also advance main portal
+      document.getElementById("portalDownloadRow").classList.add("hidden");
+      document.getElementById("portalManualTokenRow").classList.remove("hidden");
+      document.getElementById("portalScannedTokenVal").value = "";
+      showPortalStep(4);
+    } catch (err) {
+      alert(`Error downloading: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+
+  async function verifyNidVoterToken() {
+    const inputVal = document.getElementById("nidVoterScannedToken").value.trim();
+    if (!inputVal) { alert("Please paste the scanned QR URL or token first."); return; }
+
+    // Sync to main portal token field so verifyAndSavePortalScannedToken() works
+    document.getElementById("portalScannedTokenVal").value = inputVal;
+
+    const btn = document.getElementById("btnNidVoterVerifyToken");
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = "Verifying...";
+
+    try {
+      const extracted = extractPortalToken(inputVal);
+
+      const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extracted)}`);
+      if (!checkRes.ok) throw new Error("Token verification request failed.");
+      const checkData = await checkRes.json();
+      if (!checkData.valid) throw new Error("Token could not be verified. Please scan the correct QR code.");
+
+      if (portalNinValue) {
+        const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: extracted, status: "done" })
+        });
+        if (!saveRes.ok) throw new Error("Failed to save verified token to database.");
+      }
+
+      // Show success in modal
+      document.getElementById("nidVoterTokenSection").classList.add("hidden");
+      document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
+
+      // Also advance main portal
+      document.getElementById("portalManualTokenRow").classList.add("hidden");
+      document.getElementById("portalSuccessRow").classList.remove("hidden");
+      showPortalStep(5);
+
+      if (typeof fetchDatabase === "function") fetchDatabase(true);
+    } catch (err) {
+      alert(`❌ Error: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  }
+  </script>
+
 </body>
 
 </html>
