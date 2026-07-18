@@ -643,17 +643,18 @@
               <!-- Main NID Gateway (visible in Name Search mode, hidden by default) -->
               <div id="nidGatewayMainFormContainer" class="hidden space-y-4">
                 <!-- Database Search Integration -->
-                <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 flex flex-col gap-2">
-                  <label class="block text-blue-900 font-bold">Search Database to Populate Download Form</label>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-4 space-y-3 shadow-sm">
+                  <label class="block text-blue-900 font-bold text-[9px] uppercase tracking-wider">🔍 Search Database to Populate Form</label>
                   <div class="flex gap-2">
                     <input type="text" id="portalSearchQuery"
                       placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
-                      class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-                    <button type="button" onclick="searchDbToPopulatePortal()"
-                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-sm shrink-0">
-                      Search & Populate
+                      class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
+                    <button type="button" onclick="searchPortalDbToPopulate()"
+                      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
+                      Search
                     </button>
                   </div>
+                  <div id="portalSearchDropdown" class="hidden bg-white border border-blue-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
                 </div>
 
                 <!-- Input fields -->
@@ -820,6 +821,20 @@
 
               <!-- NIN Search Portal Panel (Visible by default in NIN mode) -->
               <div id="voterNinSearchPanel" class="space-y-4">
+                <!-- Quick Search Integration -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-4 space-y-3 shadow-sm">
+                  <label class="block text-blue-900 font-bold text-[9px] uppercase tracking-wider">🔍 Search Database to Populate Form</label>
+                  <div class="flex gap-2">
+                    <input type="text" id="voterQuickSearch" placeholder="Search by Name or NID (e.g. 615-385-908-6)..."
+                      class="flex-1 bg-white border border-blue-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-[11px] font-medium shadow-sm" />
+                    <button type="button" onclick="handleVoterQuickSearchPopup()"
+                      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
+                      Search
+                    </button>
+                  </div>
+                  <div id="voterQuickSearchDropdown" class="hidden bg-white border border-blue-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+                </div>
+
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                   <div>
                     <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID / NIN
@@ -851,10 +866,14 @@
                     <button type="button" onclick="handleNinSearch()"
                       class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">Single
                       Search</button>
-                    <button type="button" onclick="handleVoterBulkSearch()"
-                      class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm">Bulk
-                      Status
-                      Search</button>
+                    <button type="button" onclick="handleVoterBulkSearchWithCaptcha()"
+                      class="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-1.5">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                          d="M4 6h16M4 12h16M4 18h7" />
+                      </svg>
+                      Verify All (Bulk)
+                    </button>
                   </div>
                 </div>
               </div>
@@ -3693,6 +3712,28 @@
         btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
       }
     }
+    
+    async function handleVoterBulkSearchWithCaptcha() {
+      // Switch to name search mode
+      const currentMode = currentVoterSearchMode;
+      if (currentMode === "nin") {
+        toggleVoterSearchMode();
+      }
+      
+      // Load captcha in bulk mode
+      await loadPortalCaptcha(true);
+      
+      // Update button label to indicate bulk mode
+      const btn = document.getElementById("btnPortalRequestOtp");
+      if (btn) {
+        btn.innerText = "Send Bulk OTP Requests";
+        btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+      }
+    }
+    
+    async function triggerVoterBulkSearchWithCaptcha() {
+      // This function is no longer needed
+    }
 
     function closeBulkModal() {
       document.getElementById("portalBulkModal").style.display = "none";
@@ -4708,45 +4749,64 @@
       }
     }
 
-    async function searchDbToPopulatePortal() {
+    let portalSearchCache = [];
+    
+    async function searchPortalDbToPopulate() {
       const q = document.getElementById("portalSearchQuery").value.trim();
+      const dropdown = document.getElementById("portalSearchDropdown");
+      
       if (!q) {
         alert("Please enter a NIN or name to search.");
         return;
       }
+      
       try {
-        const res = await fetch(
-          `${API_BASE}/api/people?query=${encodeURIComponent(q)}`,
-        );
+        const res = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(q)}`);
         if (!res.ok) throw new Error("Search failed");
         const results = await res.json();
+        
         if (results && results.length > 0) {
-          const person = results[0];
-          portalNinValue = person.ninEn;
-          document.getElementById("portalFullNameEn").value =
-            `${person.givenEn || ""} ${person.surnameEn || ""}`
-              .trim()
-              .toUpperCase();
-          document.getElementById("portalFullNameNp").value =
-            `${person.givenNp || ""} ${person.surnameNp || ""}`.trim();
-          document.getElementById("portalDobLoc").value = person.dobNp || "";
-
-          let citDateNp = translateDigits(
-            person.citDate || "",
-            englishToNepaliDigits,
-          );
-          document.getElementById("portalCcnIssuingDateLoc").value =
-            citDateNp;
-
-          alert(
-            `Successfully loaded details for ${person.givenEn} ${person.surnameEn} from database!`,
-          );
+          portalSearchCache = results;
+          dropdown.innerHTML = results.slice(0, 10).map((rec, idx) => `
+            <div class="px-3 py-2.5 border-b border-blue-100 hover:bg-blue-50 cursor-pointer transition-colors text-[11px]" onclick="fillPortalFormFromSearch(${idx})">
+              <div class="font-bold text-slate-800">${rec.givenEn || ""} ${rec.surnameEn || ""}</div>
+              <div class="text-slate-500 font-mono text-[10px]">${rec.ninEn || "—"}</div>
+            </div>
+          `).join("");
+          dropdown.classList.remove("hidden");
         } else {
-          alert("No records found in database matching your query.");
+          dropdown.innerHTML = `<div class="px-3 py-2 text-slate-500 text-[11px]">No records found</div>`;
+          dropdown.classList.remove("hidden");
         }
       } catch (err) {
-        alert(`Database search error: ${err.message}`);
+        dropdown.innerHTML = `<div class="px-3 py-2 text-red-500 text-[11px]">Error: ${err.message}</div>`;
+        dropdown.classList.remove("hidden");
       }
+    }
+    
+    function fillPortalFormFromSearch(idx) {
+      const person = portalSearchCache[idx];
+      if (!person) return;
+      
+      // Clear search input and close dropdown
+      document.getElementById("portalSearchQuery").value = "";
+      document.getElementById("portalSearchDropdown").classList.add("hidden");
+      
+      // Fill form fields
+      portalNinValue = person.ninEn;
+      document.getElementById("portalFullNameEn").value =
+        `${person.givenEn || ""} ${person.surnameEn || ""}`
+          .trim()
+          .toUpperCase();
+      document.getElementById("portalFullNameNp").value =
+        `${person.givenNp || ""} ${person.surnameNp || ""}`.trim();
+      document.getElementById("portalDobLoc").value = person.dobNp || "";
+      
+      let citDateNp = translateDigits(
+        person.citDate || "",
+        englishToNepaliDigits,
+      );
+      document.getElementById("portalCcnIssuingDateLoc").value = citDateNp;
     }
 
     function attachGeneralDateAutoFormatter(inputId, isNepaliDigits = false) {
@@ -5907,6 +5967,83 @@
       }
     }
 
+    let voterQuickSearchCache = [];
+    
+    async function handleVoterQuickSearchPopup() {
+      const searchInput = document.getElementById("voterQuickSearch");
+      const dropdown = document.getElementById("voterQuickSearchDropdown");
+      const query = searchInput.value.trim().toLowerCase();
+      
+      if (query.length < 1) {
+        alert("Please enter a search term.");
+        return;
+      }
+      
+      try {
+        // Fetch all records from database
+        const res = await fetch(`${API_BASE}/api/people`);
+        if (!res.ok) throw new Error("Failed to fetch records");
+        
+        const allRecords = await res.json();
+        
+        // Filter records by name or NID
+        const filtered = allRecords.filter(r => {
+          const name = `${r.givenEn || ""} ${r.surnameEn || ""}`.toLowerCase();
+          const nin = (r.ninEn || "").toLowerCase();
+          return name.includes(query) || nin.includes(query);
+        }).slice(0, 10); // Limit to 10 results
+        
+        if (filtered.length === 0) {
+          dropdown.innerHTML = `<div class="px-3 py-2 text-slate-500 text-[11px]">No records found</div>`;
+          dropdown.classList.remove("hidden");
+          return;
+        }
+        
+        voterQuickSearchCache = filtered;
+        dropdown.innerHTML = filtered.map((rec, idx) => `
+          <div class="px-3 py-2.5 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors text-[11px]" onclick="fillVoterFormFromQuickSearch(${idx})">
+            <div class="font-bold text-slate-800">${rec.givenEn || ""} ${rec.surnameEn || ""}</div>
+            <div class="text-slate-500 font-mono text-[10px]">${rec.ninEn || "—"}</div>
+          </div>
+        `).join("");
+        
+        dropdown.classList.remove("hidden");
+      } catch (err) {
+        dropdown.innerHTML = `<div class="px-3 py-2 text-red-500 text-[11px]">Error: ${err.message}</div>`;
+        dropdown.classList.remove("hidden");
+      }
+    }
+    
+    function fillVoterFormFromQuickSearch(idx) {
+      const rec = voterQuickSearchCache[idx];
+      if (!rec) return;
+      
+      // Clear search input and close dropdown
+      document.getElementById("voterQuickSearch").value = "";
+      document.getElementById("voterQuickSearchDropdown").classList.add("hidden");
+      
+      // Check current mode and fill ONLY the current form
+      if (currentVoterSearchMode === "nin") {
+        // Fill only NIN Search form fields
+        document.getElementById("voterNidNin").value = rec.ninEn || "";
+        document.getElementById("voterNinFirstname").value = (rec.givenEn || "").split(" ")[0].toUpperCase();
+        
+        // Convert dobEn format (assuming format like YYYY-MM-DD or YYYY/MM/DD)
+        const dobEn = (rec.dobEn || "").trim().replace(/\//g, "-");
+        document.getElementById("voterNinDob").value = dobEn;
+        
+        // Convert dobEn to BS format
+        const dobNp = rec.dobNp || "";
+        document.getElementById("voterNinDobBs").value = dobNp;
+      } else if (currentVoterSearchMode === "name") {
+        // Fill only Name Search form fields
+        document.getElementById("portalFullNameEn").value = `${rec.givenEn || ""} ${rec.surnameEn || ""}`;
+        document.getElementById("portalFullNameNp").value = rec.givenNp || "";
+        document.getElementById("portalDobLoc").value = rec.dobNp || "";
+        document.getElementById("portalCcnIssuingDateLoc").value = rec.ccnIssuingDateLoc || "";
+      }
+    }
+
     // Handle NIN Search
     async function handleNinSearch() {
       const nin = document.getElementById("voterNidNin").value.trim();
@@ -5975,6 +6112,10 @@
       currentNinVoterData = data;
 
       if (success) {
+        // Clear any previous info divs
+        const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
+        oldInfoDivs.forEach(div => div.remove());
+        
         successDiv.classList.remove("hidden");
         errorDiv.classList.add("hidden");
 
@@ -5984,9 +6125,28 @@
         document.getElementById("ninResultNameDisplay").innerText = nameEn;
         document.getElementById("ninResultNidDisplay").innerText = `NID: ${data.Nidno || "—"}`;
 
-        renderVoterWhiteCardToDataUrl(data, (dataUrl) => {
-          document.getElementById("ninResultWhiteCardImg").src = dataUrl;
-        });
+        // Check if this is an approval message (स्वीकृत) - don't render card, just show NID as active
+        if (data.ApprovalMessage && (data.ApprovalMessage.includes("स्वीकृत") || data.ApprovalMessage.includes("मतदाता"))) {
+          // Hide the white card image and show only NID as active
+          const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
+          if (whiteCardContainer) {
+            whiteCardContainer.style.display = "none";
+          }
+          // Show approval message as info
+          const infoDiv = document.createElement("div");
+          infoDiv.className = "bg-blue-50 border border-blue-200 p-3 rounded-lg text-blue-800 font-semibold text-[11px] flex items-center gap-2";
+          infoDiv.innerHTML = `<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/></svg><span>${data.ApprovalMessage}</span>`;
+          whiteCardContainer.parentElement.insertBefore(infoDiv, whiteCardContainer.nextSibling);
+        } else {
+          // Render the card normally
+          const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
+          if (whiteCardContainer) {
+            whiteCardContainer.style.display = "block";
+          }
+          renderVoterWhiteCardToDataUrl(data, (dataUrl) => {
+            document.getElementById("ninResultWhiteCardImg").src = dataUrl;
+          });
+        }
       } else {
         successDiv.classList.add("hidden");
         errorDiv.classList.remove("hidden");
@@ -5999,6 +6159,24 @@
 
     function closeNinResultModal() {
       const modal = document.getElementById("ninSearchResultModal");
+      const successDiv = document.getElementById("ninResultSuccess");
+      const errorDiv = document.getElementById("ninResultError");
+      
+      // Clear any previous info divs and reset elements
+      const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
+      oldInfoDivs.forEach(div => div.remove());
+      
+      // Reset white card display
+      const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
+      if (whiteCardContainer) {
+        whiteCardContainer.style.display = "block";
+        whiteCardContainer.src = "";
+      }
+      
+      // Clear error message
+      document.getElementById("ninResultErrorMsg").innerText = "";
+      
+      // Hide modal
       modal.classList.add("hidden");
       modal.classList.remove("flex");
     }
