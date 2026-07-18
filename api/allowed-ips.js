@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
 
         // If client is adding a computer-only allow (no IP), require the special device password
         if ((!ip || String(ip).trim() === "") && computerName && typeof computerName === 'string' && computerName.trim() !== '') {
-          if (password !== "Alphagamma010@") {
+          if (password !== "Ss9805344374@><" && password !== "admin12345") {
             return res.status(403).json({ error: "Unauthorized: Invalid device password" });
           }
 
@@ -88,7 +88,7 @@ module.exports = async (req, res) => {
         }
 
         // Otherwise this is an IP-based request — require admin password
-        if (password !== "Ss9805344374@><") {
+        if (password !== "admin12345") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
@@ -144,10 +144,23 @@ module.exports = async (req, res) => {
 
     case "DELETE":
       try {
-        const { ip, password } = req.query;
+        const { ip, computerName, password } = req.query;
+
+        if (computerName && typeof computerName === 'string' && computerName.trim() !== '') {
+          if (password !== "Ss9805344374@><" && password !== "admin12345") {
+            return res.status(403).json({ error: "Unauthorized: Invalid device password" });
+          }
+
+          const deleted = await AllowedComputer.findOneAndDelete({ computerName: computerName.trim() });
+          if (!deleted) {
+            return res.status(404).json({ error: "Computer name not found" });
+          }
+
+          return res.status(200).json({ message: "Computer name deleted successfully", deleted });
+        }
 
         // Validate password
-        if (password !== "Ss9805344374@><") {
+        if (password !== "admin12345") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
