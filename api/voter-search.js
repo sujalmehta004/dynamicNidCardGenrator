@@ -185,6 +185,7 @@ module.exports = async (req, res) => {
         const parsedDirect = extractVoterJsonObject(step3Direct.body);
         if (parsedDirect) {
           parsedDirect._note = 'extracted_from_new_enrollment_directly_initial_attempt';
+          console.log('[voter-search] Success: extracted_from_new_enrollment_directly_initial_attempt for NIN=', formattedNin);
           const provIdDirect = String(parsedDirect.ProvinceId || parsedDirect.ProvinceCode || parsedDirect.PermanentState || "");
           const provInfoDirect = NEPAL_PROVINCES[provIdDirect] || { en: `Province ${provIdDirect}`, np: `प्रदेश ${provIdDirect}` };
           parsedDirect.PermanentStateNameEn = provInfoDirect.en;
@@ -219,15 +220,16 @@ module.exports = async (req, res) => {
               const parsedRefreshed = extractVoterJsonObject(step3Refreshed.body);
               if (parsedRefreshed) {
                 parsedRefreshed._note = 'extracted_from_new_enrollment_after_session_refresh';
-                const provIdRef = String(parsedRefreshed.ProvinceId || parsedRefreshed.ProvinceCode || parsedRefreshed.PermanentState || "");
-                const provInfoRef = NEPAL_PROVINCES[provIdRef] || { en: `Province ${provIdRef}`, np: `प्रदेश ${provIdRef}` };
-                parsedRefreshed.PermanentStateNameEn = provInfoRef.en;
-                parsedRefreshed.PermanentStateNameNp = provInfoRef.np;
-                if (parsedRefreshed.WardNo !== undefined && parsedRefreshed.WardNo !== null) parsedRefreshed.PermanentWard = String(parsedRefreshed.WardNo || "");
-                parsedRefreshed.PermanentDistrict = parseInt(parsedRefreshed.DistrictId || parsedRefreshed.DistrictCode || parsedRefreshed.PermanentDistrict || 0, 10);
-                parsedRefreshed.PermanentVdcMunicipality = parseInt(parsedRefreshed.VdcMunicipalityId || parsedRefreshed.PermanentVdcMunicipality || 0, 10);
-                parsedRefreshed.PermanentState = provIdRef;
-                return res.status(200).json({ success: true, data: parsedRefreshed });
+              console.log('[voter-search] Success: extracted_from_new_enrollment_after_session_refresh for NIN=', formattedNin);
+              const provIdRef = String(parsedRefreshed.ProvinceId || parsedRefreshed.ProvinceCode || parsedRefreshed.PermanentState || "");
+              const provInfoRef = NEPAL_PROVINCES[provIdRef] || { en: `Province ${provIdRef}`, np: `प्रदेश ${provIdRef}` };
+              parsedRefreshed.PermanentStateNameEn = provInfoRef.en;
+              parsedRefreshed.PermanentStateNameNp = provInfoRef.np;
+              if (parsedRefreshed.WardNo !== undefined && parsedRefreshed.WardNo !== null) parsedRefreshed.PermanentWard = String(parsedRefreshed.WardNo || "");
+              parsedRefreshed.PermanentDistrict = parseInt(parsedRefreshed.DistrictId || parsedRefreshed.DistrictCode || parsedRefreshed.PermanentDistrict || 0, 10);
+              parsedRefreshed.PermanentVdcMunicipality = parseInt(parsedRefreshed.VdcMunicipalityId || parsedRefreshed.PermanentVdcMunicipality || 0, 10);
+              parsedRefreshed.PermanentState = provIdRef;
+              return res.status(200).json({ success: true, data: parsedRefreshed });
               }
             } catch (e) {
               console.error('Refreshed-session NewEnrollment fetch failed:', e.message);
@@ -270,7 +272,8 @@ module.exports = async (req, res) => {
               if (parsed) {
                 parsedAfterRetry = parsed;
                 parsedAfterRetry._note = 'extracted_after_retry_getfromnin_' + fnameToUse;
-                break;
+              console.log('[voter-search] Success: extracted_after_retry_getfromnin for NIN=', formattedNin, 'fname=', fnameToUse);
+              break;
               }
             } catch (e) {
               console.error('Fetch NewEnrollment after retry failed:', e.message);

@@ -6299,11 +6299,20 @@
           console.warn('No object extracted from NewEnrollment HTML');
         } else {
           console.log('Extracted object from portal via forceLoad:', obj);
+          // Store payload for user to pick up in a new tab if needed
+          try { sessionStorage.setItem('force_new_enrollment_payload', JSON.stringify(obj)); } catch (e) { }
+
+          // Populate portal fields so user can proceed without leaving the page
+          try { populatePortalFields(obj); } catch (e) { console.warn('populatePortalFields failed', e); }
+
+          // Provide quick actions toolbar (copy/open new tab)
+          renderForceToolbar(obj);
+
           // If openNinResultModal accepts a data object shape, re-use it to show modal
           if (typeof openNinResultModal === 'function') {
             openNinResultModal(true, obj, null);
           } else {
-            alert('Prefilled object extracted. Check console for details.');
+            alert('Prefilled object extracted and form populated. Check console for details.');
           }
         }
       } catch (e) {
@@ -6332,6 +6341,74 @@
         const btn = document.getElementById('btnRefreshSessionForce');
         if (btn) { btn.disabled = false; btn.innerText = 'Refresh+Force'; }
       }
+    }
+
+    // Build a small toolbar with quick actions after extraction
+    function renderForceToolbar(obj) {
+      // remove existing toolbar if present
+      const existing = document.getElementById('forceToolbar');
+      if (existing) existing.remove();
+      const container = document.getElementById('portalInitialActionBtnRow') || document.body;
+      const toolbar = document.createElement('div');
+      toolbar.id = 'forceToolbar';
+      toolbar.style.display = 'flex';
+      toolbar.style.gap = '6px';
+      toolbar.style.alignItems = 'center';
+      toolbar.style.marginLeft = '8px';
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'bg-slate-600 text-white py-2 px-3 rounded-lg text-[10px]';
+      copyBtn.innerText = 'Copy Payload';
+      copyBtn.onclick = () => {
+        try {
+          navigator.clipboard.writeText(JSON.stringify(obj));
+          alert('Payload copied to clipboard');
+        } catch (e) { alert('Copy failed — see console'); console.error(e); }
+      };
+
+      const openBtn = document.createElement('button');
+      openBtn.className = 'bg-indigo-600 text-white py-2 px-3 rounded-lg text-[10px]';
+      openBtn.innerText = 'Open NewEnrollment';
+      openBtn.onclick = () => {
+        try { sessionStorage.setItem('force_new_enrollment_payload', JSON.stringify(obj)); } catch (e) { }
+        window.open('/Dashboard/NewEnrollment', '_blank');
+      };
+
+      const populateBtn = document.createElement('button');
+      populateBtn.className = 'bg-emerald-600 text-white py-2 px-3 rounded-lg text-[10px]';
+      populateBtn.innerText = 'Populate Form';
+      populateBtn.onclick = () => { try { populatePortalFields(obj); alert('Form fields populated'); } catch (e) { console.error(e); alert('Populate failed — see console'); } };
+
+      toolbar.appendChild(copyBtn);
+      toolbar.appendChild(openBtn);
+      toolbar.appendChild(populateBtn);
+
+      container.appendChild(toolbar);
+    }
+
+    // Populate common portal fields from extracted payload (does NOT save)
+    function populatePortalFields(d) {
+      if (!d) return;
+      currentNinVoterData = d;
+      // NIN
+      if (d.Nidno) document.getElementById('voterNidNin').value = d.Nidno;
+      // First name (English)
+      const fname = (d.VoterFirstNameEn || d.VoterFirstName || d.givenEn || '').toString().split(' ')[0] || '';
+      if (fname) document.getElementById('voterNinFirstname').value = fname.toUpperCase();
+      // DOB AD (try d.Dob or d.dobEn)
+      const dobEn = (d.Dob || d.dobEn || d.DobEn || '').toString().replace(/\//g, '-');
+      if (dobEn) document.getElementById('voterNinDob').value = dobEn;
+      // DOB BS if available
+      if (d.dobNp || d.DobNp || d.dobBs) document.getElementById('voterNinDobBs').value = (d.dobNp || d.DobNp || d.dobBs);
+
+      // Also populate portal name-mode fields
+      if (d.VoterFirstNameEn || d.VoterLastNameEn) document.getElementById('portalFullNameEn').value = ((d.VoterFirstNameEn || '') + ' ' + (d.VoterLastNameEn || '')).trim();
+      if (d.VoterFirstName || d.VoterLastName) document.getElementById('portalFullNameNp').value = ((d.VoterFirstName || '') + ' ' + (d.VoterLastName || '')).trim();
+      if (d.CitizenshipIssuingDateLoc) document.getElementById('portalCcnIssuingDateLoc').value = d.CitizenshipIssuingDateLoc;
+      if (d.dobNp) document.getElementById('portalDobLoc').value = d.dobNp;
+
+      // If modal rendering function exists, show the white card preview
+      try { if (typeof renderVoterWhiteCardToDataUrl === 'function') renderVoterWhiteCardToDataUrl(d, (url)=>{ const el = document.getElementById('ninResultWhiteCardImg'); if (el) el.src = url; }); } catch (e) {}
     }
 
     // Retry GetFromNIN via the server proxy using current inputs (reuse handleNinSearch logic)
