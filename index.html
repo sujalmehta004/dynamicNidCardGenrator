@@ -3589,6 +3589,7 @@
 
     // Multi-step OTP and Captcha state variables
     let portalNinValue = "";
+    let portalOtpTransactionId = "";
     let portalDownloadToken = "";
     let isBulkMode = false;
     let bulkTargetRecords = [];
@@ -3647,7 +3648,38 @@
       portalDownloadToken = "";
     }
 
+    async function resolvePortalNinValue(preferredNin = "") {
+      if (preferredNin) {
+        portalNinValue = preferredNin;
+        return preferredNin;
+      }
 
+      if (portalNinValue) {
+        return portalNinValue;
+      }
+
+      const inlineNinValue = String(document.getElementById("portalSearchQuery")?.value || "").trim();
+      if (/^\d[\d\- ]{5,}$/.test(inlineNinValue.replace(/\s+/g, ""))) {
+        portalNinValue = inlineNinValue;
+        return portalNinValue;
+      }
+
+      const voterNin = currentNinVoterData && (
+        currentNinVoterData.Nidno ||
+        currentNinVoterData.NIN ||
+        currentNinVoterData.ninEn ||
+        currentNinVoterData.nin ||
+        currentNinVoterData.nidNumber ||
+        currentNinVoterData.idNumber
+      );
+
+      if (voterNin) {
+        portalNinValue = String(voterNin).trim();
+        return portalNinValue;
+      }
+
+      return "";
+    }
 
     async function loadPortalCaptcha(bulkMode = false) {
       isBulkMode = !!bulkMode;
@@ -3839,24 +3871,36 @@
         }
 
         const data = responseBody;
+        const resolvedNin = await resolvePortalNinValue(data.nin || "");
+        const voterNin = currentNinVoterData && (
+          currentNinVoterData.Nidno ||
+          currentNinVoterData.NIN ||
+          currentNinVoterData.ninEn ||
+          currentNinVoterData.nin ||
+          currentNinVoterData.nidNumber ||
+          currentNinVoterData.idNumber
+        );
 
-        // Expected response format: {"code":"OTP_SENT","maskedMobile":"98XXXXX374","nin":"615-385-908-6"}
-        portalNinValue = data.nin;
-        document.getElementById("portalOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${data.nin || "-"}`;
+        // Expected response format: {"code":"OTP_SENT","maskedMobile":"98XXXXX374","transactionId":"..."}
+        portalOtpTransactionId = data.transactionId || "";
+        portalNinValue = resolvedNin || data.nin || (voterNin ? String(voterNin).trim() : "");
+        document.getElementById("portalOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${portalNinValue || data.nin || "-"}`;
 
         // Advance view state
         document.getElementById("portalCaptchaInputRow").classList.add("hidden");
         document.getElementById("portalOtpRow").classList.remove("hidden");
         showPortalStep(2);
 
-        // ── Auto voter-list search using the just-returned NIN ──
-        const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
-        const _dobBsEn = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
-        const _dobAd = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
-        const _fullEnName = document.getElementById("portalFullNameEn").value.trim();
-        const _firstName = _fullEnName.split(" ")[0].toLowerCase();
-        if (data.nin && _dobAd && _firstName) {
-          autoVoterSearchForNid(data.nin, _dobAd, _firstName);
+        // Only auto-search voter-list data for bulk verification flow.
+        if (isBulkMode) {
+          const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
+          const _dobBsEn = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+          const _dobAd = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+          const _fullEnName = document.getElementById("portalFullNameEn").value.trim();
+          const _firstName = _fullEnName.split(" ")[0].toLowerCase();
+          if (resolvedNin && _dobAd && _firstName) {
+            autoVoterSearchForNid(resolvedNin, _dobAd, _firstName);
+          }
         }
       } catch (err) {
         alert("Network error requesting OTP: " + err.message);
@@ -4166,7 +4210,11 @@
         const verifyRes = await fetch(`${API_BASE}/api/verify-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nin: row.record.ninEn, otp })
+          body: JSON.stringify({
+            transactionId: row.transactionId || "",
+            nin: row.record.ninEn,
+            otp
+          })
         });
 
         if (!verifyRes.ok) {
@@ -4554,6 +4602,7 @@
 
             rowObj.resolvedCode = resolvedCode;
             rowObj.responseData = responseBody;
+            rowObj.transactionId = responseBody && responseBody.transactionId ? responseBody.transactionId : null;
 
             if (!res.ok) {
               const errMsg = extractOtpResponseMessage(responseBody) || res.statusText || "OTP request failed";
@@ -4655,10 +4704,16 @@
         alert("Please enter the OTP code received.");
         return;
       }
-      if (!portalNinValue) {
-        alert("NIN value missing. Please request OTP again.");
+
+      const ninToVerify = await resolvePortalNinValue();
+      if (!ninToVerify && !portalOtpTransactionId) {
+        alert("OTP session missing. Please request OTP again.");
         loadPortalCaptcha();
         return;
+      }
+
+      if (ninToVerify) {
+        portalNinValue = ninToVerify;
       }
 
       const btn = document.getElementById("btnPortalVerifyOtp");
@@ -4672,7 +4727,11 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ nin: portalNinValue, otp })
+          body: JSON.stringify({
+            transactionId: portalOtpTransactionId || "",
+            nin: ninToVerify || "",
+            otp
+          })
         });
 
         if (!res.ok) {
@@ -4806,6 +4865,91 @@
       return str;
     }
 
+    function buildPortalPersonPayload(extra = {}) {
+      const fullNameEn = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
+      const fullNameNp = cleanNepaliText(document.getElementById("portalFullNameNp").value.trim());
+      const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
+      const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
+
+      const namesEn = fullNameEn.split(/\s+/).filter(Boolean);
+      const namesNp = fullNameNp.split(/\s+/).filter(Boolean);
+      const givenEn = (extra.givenEn || namesEn[0] || "UNKNOWN").toUpperCase();
+      const surnameEn = (extra.surnameEn || namesEn.slice(1).join(" ") || "UNKNOWN").toUpperCase();
+      const givenNp = extra.givenNp || namesNp[0] || "";
+      const surnameNp = extra.surnameNp || namesNp.slice(1).join(" ") || "";
+
+      const voterData = currentNinVoterData || {};
+      const dobEnValue = extra.dobEn || (dobLocRaw ? translateDigits(dobLocRaw, nepaliToEnglishDigits) : (voterData.Dob || voterData.dobEn || ""));
+      const dobNpValue = extra.dobNp || dobLocRaw || (voterData.dobNp || "");
+      const citDateValue = extra.citDate || ccnIssuingDateLocRaw || (voterData.CitizenshipIssuingDateLoc || voterData.CitizenIssueDate || "");
+      const ninValue = String(extra.ninEn || portalNinValue || voterData.Nidno || voterData.NIN || voterData.ninEn || voterData.nin || voterData.nidNumber || "").trim();
+
+      return {
+        ninEn: ninValue || "",
+        ninNp: extra.ninNp || "",
+        givenEn: (extra.givenEn || givenEn || "UNKNOWN").toUpperCase(),
+        surnameEn: (extra.surnameEn || surnameEn || "UNKNOWN").toUpperCase(),
+        givenNp: extra.givenNp || givenNp || "",
+        surnameNp: extra.surnameNp || surnameNp || "",
+        dobEn: dobEnValue || "",
+        dobNp: dobNpValue || "",
+        citDate: citDateValue || "",
+        status: extra.status || "done",
+        token: extra.token || "",
+        updateDate: extra.updateDate || new Date().toISOString().split("T")[0],
+        downloadDate: extra.downloadDate || new Date().toISOString().split("T")[0],
+        regDate: extra.regDate || new Date().toISOString().split("T")[0],
+        ...extra,
+      };
+    }
+
+    async function persistVerifiedTokenToDatabase({ token, status = "done", payload = null } = {}) {
+      if (!token) throw new Error("Missing verified token.");
+
+      const normalizedNin = String(payload?.ninEn || portalNinValue || (currentNinVoterData && (currentNinVoterData.Nidno || currentNinVoterData.NIN || currentNinVoterData.ninEn || currentNinVoterData.nin || currentNinVoterData.nidNumber)) || "").trim();
+      if (!normalizedNin) throw new Error("Missing NIN for database save.");
+
+      const basePayload = payload || buildPortalPersonPayload({ token, status });
+      const savePayload = {
+        ...basePayload,
+        ninEn: String(basePayload.ninEn || normalizedNin).trim(),
+        token,
+        status,
+        updateDate: basePayload.updateDate || new Date().toISOString().split("T")[0],
+        downloadDate: basePayload.downloadDate || new Date().toISOString().split("T")[0],
+      };
+
+      const updateRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(normalizedNin)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(savePayload)
+      });
+
+      if (updateRes.ok) {
+        return { ok: true, created: false };
+      }
+
+      if (updateRes.status === 404) {
+        const createRes = await fetch(`${API_BASE}/api/people`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(savePayload)
+        });
+
+        if (createRes.ok) {
+          return { ok: true, created: true };
+        }
+
+        let createErr = null;
+        try { createErr = await createRes.json(); } catch (e) { }
+        throw new Error(createErr?.error || createRes.statusText || "Failed to create database record.");
+      }
+
+      let updateErr = null;
+      try { updateErr = await updateRes.json(); } catch (e) { }
+      throw new Error(updateErr?.error || updateRes.statusText || "Failed to save verified token to database.");
+    }
+
     async function verifyAndSavePortalScannedToken() {
       const inputVal = document.getElementById("portalScannedTokenVal").value.trim();
       if (!inputVal) {
@@ -4828,16 +4972,9 @@
           throw new Error("This token could not be verified by the government server. Please make sure you scanned the correct QR code from the downloaded PDF.");
         }
 
-        // Save verified token + status=done in DB
-        if (portalNinValue) {
-          const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: extracted, status: "done" }),
-          });
-          if (!saveRes.ok) throw new Error("Failed to save verified token to database.");
-          console.log("Verified token saved for NIN:", portalNinValue);
-        }
+        // Save verified token + status=done in DB, creating the record if it does not yet exist.
+        await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
+        console.log("Verified token saved for NIN:", portalNinValue);
 
         // Transition to Success state
         document.getElementById("portalManualTokenRow").classList.add("hidden");
@@ -6614,8 +6751,15 @@
     // Handle NIN Search
     async function handleNinSearch() {
       const nin = document.getElementById("voterNidNin").value.trim();
-      const dob = document.getElementById("voterNinDob").value.trim();
+      const dobAd = document.getElementById("voterNinDob").value.trim();
       const firstname = document.getElementById("voterNinFirstname").value.trim();
+
+      const dob = dobAd;
+
+      if (!nin || !dob || !firstname) {
+        alert("Please fill all fields (NIN, DOB, and First Name).");
+        return;
+      }
 
       if (!nin || !dob || !firstname) {
         alert("Please fill all fields (NIN, DOB, and First Name).");
@@ -6631,7 +6775,7 @@
         const res = await fetch(`${API_BASE}/api/voter-search`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nin, dob, firstname })
+          body: JSON.stringify({ nin, dob: dobAd, firstname })
         });
         const data = await res.json();
 
@@ -6670,6 +6814,42 @@
       }
     }
 
+    function populatePortalFieldsFromVoterData(voterData = currentNinVoterData) {
+      if (!voterData) return;
+
+      const fullNameEn = [
+        voterData.VoterFirstNameEn || voterData.FirstName || voterData.givenEn || "",
+        voterData.VoterMiddleNameEn || voterData.MiddleName || "",
+        voterData.VoterLastNameEn || voterData.LastName || voterData.surnameEn || ""
+      ].filter(Boolean).join(" ").trim().toUpperCase();
+
+      const fullNameNp = [
+        voterData.VoterFirstName || voterData.givenNp || "",
+        voterData.VoterMiddleName || "",
+        voterData.VoterLastName || voterData.surnameNp || ""
+      ].filter(Boolean).join(" ").trim();
+
+      const dobValue = voterData.dobNp || voterData.Dob || voterData.dobEn || "";
+      const citDateValue = voterData.CitizenshipIssuingDateLoc || voterData.CitizenIssueDate || voterData.citDate || "";
+      const ninValue = voterData.Nidno || voterData.NIN || voterData.ninEn || voterData.nin || voterData.nidNumber || voterData.idNumber || "";
+
+      const fullNameEnInput = document.getElementById("portalFullNameEn");
+      const fullNameNpInput = document.getElementById("portalFullNameNp");
+      const dobInput = document.getElementById("portalDobLoc");
+      const citDateInput = document.getElementById("portalCcnIssuingDateLoc");
+      const searchQueryInput = document.getElementById("portalSearchQuery");
+
+      if (fullNameEnInput) fullNameEnInput.value = fullNameEn;
+      if (fullNameNpInput) fullNameNpInput.value = fullNameNp;
+      if (dobInput) dobInput.value = dobValue;
+      if (citDateInput) citDateInput.value = citDateValue;
+      if (searchQueryInput && ninValue) searchQueryInput.value = String(ninValue).trim();
+
+      if (ninValue) {
+        portalNinValue = String(ninValue).trim();
+      }
+    }
+
     // Open/Close NIN Result Modal
     function openNinResultModal(success, data, errorMsg) {
       const modal = document.getElementById("ninSearchResultModal");
@@ -6677,8 +6857,9 @@
       const errorDiv = document.getElementById("ninResultError");
 
       currentNinVoterData = data;
-
       if (success) {
+        populatePortalFieldsFromVoterData(data);
+
         // Clear any previous info divs
         const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
         oldInfoDivs.forEach(div => div.remove());
@@ -6900,9 +7081,18 @@
         document.getElementById("nidFlowCaptchaSection").classList.add("hidden");
 
         const data = responseBody;
-        // Store the server-issued NIN so OTP verification uses the exact same value
-        portalNinValue = data.nin || "";
-        document.getElementById("nidFlowOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${data.nin || "-"}`;
+        const voterNin = currentNinVoterData && (
+          currentNinVoterData.Nidno ||
+          currentNinVoterData.NIN ||
+          currentNinVoterData.ninEn ||
+          currentNinVoterData.nin ||
+          currentNinVoterData.nidNumber ||
+          currentNinVoterData.idNumber
+        );
+        // Store the server-issued transaction ID so OTP verification uses the same portal session
+        portalOtpTransactionId = data.transactionId || "";
+        portalNinValue = data.nin || (voterNin ? String(voterNin).trim() : "");
+        document.getElementById("nidFlowOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${portalNinValue || data.nin || "-"}`;
         document.getElementById("nidFlowOtpCode").value = "";
       } catch (err) {
         alert("Error requesting OTP: " + err.message);
@@ -6921,10 +7111,10 @@
         return;
       }
 
-      // Use the NIN returned by the server during OTP request (not raw voter record)
+      // Use the transaction ID from the server when available; fall back to NIN only if present.
       const nin = portalNinValue || (currentNinVoterData ? (currentNinVoterData.Nidno || "") : "");
-      if (!nin) {
-        alert("NIN session missing. Please request OTP again.");
+      if (!portalOtpTransactionId && !nin) {
+        alert("OTP session missing. Please request OTP again.");
         return;
       }
 
@@ -6942,10 +7132,15 @@
       };
 
       try {
+        const payload = { otp, transactionId: portalOtpTransactionId || "" };
+        if (nin) {
+          payload.nin = nin;
+        }
+
         const res = await fetch(`${API_BASE}/api/verify-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nin, otp })
+          body: JSON.stringify(payload)
         });
         const responseBody = await parseResponseBody(res);
 
@@ -6994,8 +7189,6 @@
             <div class="mt-2 w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         `;
-
-        portalNinValue = ""; // clear session
 
         try {
           const dlRes = await fetch(`${API_BASE}/api/download`, {
@@ -7048,8 +7241,15 @@
           if (dlBanner) dlBanner.innerHTML = `
             <p class="text-xs font-bold text-emerald-700">✅ PDF Downloaded!</p>
             <p class="text-[10px] text-slate-500 mt-0.5">Password: <span class="font-mono font-bold text-slate-800">${clipCode}</span> (copied to clipboard)</p>
+            <p class="text-[10px] text-slate-500 mt-2">Scan the QR from the downloaded PDF to verify and save the token.</p>
             <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
           `;
+
+          const portalManualRow = document.getElementById("portalManualTokenRow");
+          const portalScannedInput = document.getElementById("portalScannedTokenVal");
+          if (portalManualRow) portalManualRow.classList.remove("hidden");
+          if (portalScannedInput) portalScannedInput.value = "";
+          if (typeof showPortalStep === "function") showPortalStep(4);
 
         } catch (dlErr) {
           const dlBanner = document.getElementById("nidFlowDownloadingBanner");
@@ -9082,7 +9282,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     async function verifyNidVoterOtp() {
       const otp = document.getElementById("nidVoterOtpCode").value.trim();
       if (!otp) { alert("Please enter the OTP code."); return; }
-      if (!portalNinValue) { alert("NIN missing. Please start over."); closeNidVoterModal(); return; }
+      if (!portalOtpTransactionId && !portalNinValue) { alert("OTP session missing. Please start over."); closeNidVoterModal(); return; }
 
       // Mirror OTP to main portal field (keeps existing verify flow in sync)
       document.getElementById("portalOtpCode").value = otp;
@@ -9093,10 +9293,15 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       btn.innerHTML = "Verifying...";
 
       try {
+        const payload = { otp, transactionId: portalOtpTransactionId || "" };
+        if (portalNinValue) {
+          payload.nin = portalNinValue;
+        }
+
         const res = await fetch(`${API_BASE}/api/verify-otp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nin: portalNinValue, otp })
+          body: JSON.stringify(payload)
         });
         if (!res.ok) {
           let errMsg = res.statusText;
@@ -9215,14 +9420,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         const checkData = await checkRes.json();
         if (!checkData.valid) throw new Error("Token could not be verified. Please scan the correct QR code.");
 
-        if (portalNinValue) {
-          const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token: extracted, status: "done" })
-          });
-          if (!saveRes.ok) throw new Error("Failed to save verified token to database.");
-        }
+        await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
 
         // Show success in modal
         document.getElementById("nidVoterTokenSection").classList.add("hidden");

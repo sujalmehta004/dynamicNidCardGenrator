@@ -67,13 +67,21 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { nin, otp } = req.body;
-  if (!nin || !otp) {
-    return res.status(400).json({ error: "Missing required fields (nin, otp) in request body" });
+  const { transactionId, nin, otp } = req.body;
+  if (!otp) {
+    return res.status(400).json({ error: "Missing required field (otp) in request body" });
+  }
+
+  if (!transactionId && !nin) {
+    return res.status(400).json({ error: "Missing required field (transactionId or nin) in request body" });
   }
 
   const targetUrl = "https://api-citizenportal.donidcr.gov.np/api/v1/mfa/verify-otp";
-  const postPayload = JSON.stringify({ nin, otp });
+  const postPayload = JSON.stringify(
+    transactionId
+      ? { transactionId, otp }
+      : { nin, otp }
+  );
 
   try {
     // OPTIONS preflight request
