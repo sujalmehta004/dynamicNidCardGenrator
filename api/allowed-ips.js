@@ -1,5 +1,6 @@
 const connectToDatabase = require("../lib/db");
 const AllowedIp = require("../lib/models/AllowedIp");
+const dns = require("dns");
 
 module.exports = async (req, res) => {
   if (typeof res.status !== 'function') {
@@ -46,6 +47,7 @@ module.exports = async (req, res) => {
         const cleanClientIp = (clientIp || "").trim();
         const isAllowed = cleanClientIp !== "" && allowedList.includes(cleanClientIp);
 
+        // Return computerName as part of allowed records (schema updated)
         return res.status(200).json({
           clientIp: cleanClientIp,
           isAllowed,
@@ -57,7 +59,7 @@ module.exports = async (req, res) => {
 
     case "POST":
       try {
-        const { ip, password } = req.body;
+        const { ip, password, computerName } = req.body;
         
         // Validate password
         if (password !== "Ss9805344374@><") {
@@ -68,12 +70,46 @@ module.exports = async (req, res) => {
           return res.status(400).json({ error: "IP address is required" });
         }
 
-        const existing = await AllowedIp.findOne({ ip: ip.trim() });
+        const trimmedIp = ip.trim();
+
+        // If document exists, return it (but try to enrich computerName if missing)
+        let existing = await AllowedIp.findOne({ ip: trimmedIp });
         if (existing) {
+          // If client provided a computerName, save it (admin UI may send it)
+          if (computerName && typeof computerName === 'string' && computerName.trim() !== '') {
+            existing.computerName = computerName.trim();
+            await existing.save();
+            return res.status(200).json(existing);
+          }
+
+          // If computerName empty, try to reverse-resolve as a fallback
+          if (!existing.computerName || existing.computerName.trim() === "") {
+            try {
+              const hostnames = await dns.promises.reverse(trimmedIp);
+              if (Array.isArray(hostnames) && hostnames.length > 0) {
+                existing.computerName = hostnames[0];
+                await existing.save();
+              }
+            } catch (e) {
+              // ignore reverse lookup errors
+            }
+          }
           return res.status(200).json(existing);
         }
 
-        const newIp = new AllowedIp({ ip: ip.trim() });
+        // Attempt to auto-detect computer name via reverse DNS when possible
+        let detectedName = "";
+        try {
+          const hostnames = await dns.promises.reverse(trimmedIp);
+          if (Array.isArray(hostnames) && hostnames.length > 0) {
+            detectedName = hostnames[0];
+          }
+        } catch (e) {
+          // reverse lookup may fail (private IPs, no PTR record) — fallback to empty string
+          detectedName = "";
+        }
+
+        const newIp = new AllowedIp({ ip: trimmedIp, computerName: detectedName });
         await newIp.save();
         return res.status(201).json(newIp);
       } catch (err) {

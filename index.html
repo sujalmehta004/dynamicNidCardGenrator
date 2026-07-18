@@ -5211,12 +5211,14 @@
     }
 
     let clientIpAddress = "";
+    let clientComputerName = ""; // populated when possible from WebRTC/mDNS candidates
     let isClientIpAllowed = false;
     let allowedIpsDatabase = [];
     let authenticatedAdmin = false;
     let isDashboardUnlocked = false;
 
     // Detect the machine's private LAN IP via WebRTC (works without a STUN server)
+    // This function also attempts to capture an mDNS/.local name from ICE candidates when available
     function detectPrivateLanIp() {
       return new Promise((resolve) => {
         try {
@@ -5237,7 +5239,18 @@
               done("192.168.1.5");
               return;
             }
-            const line = e.candidate.candidate;
+            const line = e.candidate.candidate || "";
+
+            // Try to extract an mDNS/.local hostname from the candidate (some browsers expose it)
+            try {
+              const mdnsMatch = line.match(/([a-zA-Z0-9\-_.]+\.local)/i);
+              if (mdnsMatch && mdnsMatch[1]) {
+                clientComputerName = mdnsMatch[1];
+              }
+            } catch (e) {
+              // ignore
+            }
+
             const privateMatch = line.match(
               /((?:10|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.[0-9]{1,3}\.[0-9]{1,3})/
             );
@@ -5490,7 +5503,7 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ip, password }),
+          body: JSON.stringify({ ip, password, computerName: clientComputerName || "" }),
         });
 
         if (!res.ok) {
@@ -5534,7 +5547,7 @@
           <td class="px-4 py-2.5 font-mono text-slate-600">${cname ? escapeHtml(cname) : '—'}</td>
           <td class="px-4 py-2.5 text-slate-400 font-mono">${new Date(item.createdAt).toLocaleString()}</td>
           <td class="px-4 py-2.5 text-center">
-            <button onclick="removeIpWhitelist2('${item.ip}')" class="bg-red-500 hover:bg-red-650 text-white px-2 py-1 rounded-md text-[9px] transition-all font-bold shadow-sm">Delete</button>
+            <button onclick="removeIpWhitelist3('${item.ip}')" class="bg-red-500 hover:bg-red-650 text-white px-2 py-1 rounded-md text-[9px] transition-all font-bold shadow-sm">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -5556,6 +5569,25 @@
     }
 
     async function removeIpWhitelist2(ip) {
+      if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=${encodeURIComponent('Ss9805344374@><')}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Failed to delete: ${err.error}`);
+          return;
+        }
+        alert('IP Whitelist removed!');
+        await checkIpAccessControl();
+        loadAllowedIpsTable();
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
+    async function removeIpWhitelist3(ip) {
       if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
       try {
         const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=${encodeURIComponent('Ss9805344374@><')}`, {
@@ -5600,6 +5632,7 @@
           body: JSON.stringify({
             ip: ip,
             password: "Ss9805344374@><",
+            computerName: clientComputerName || ""
           }),
         });
 
@@ -5641,6 +5674,7 @@
           body: JSON.stringify({
             ip: ip,
             password: "Ss9805344374@><",
+            computerName: clientComputerName || ""
           }),
         });
 
