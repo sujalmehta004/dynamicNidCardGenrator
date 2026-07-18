@@ -5214,6 +5214,7 @@
     let clientComputerName = ""; // populated when possible from WebRTC/mDNS candidates
     let isClientIpAllowed = false;
     let allowedIpsDatabase = [];
+    let allowedComputersDatabase = []; // list of allowed computer-name records
     let authenticatedAdmin = false;
     let isDashboardUnlocked = false;
 
@@ -5338,16 +5339,22 @@
         }
 
         allowedIpsDatabase = data.allowedIps || [];
+        allowedComputersDatabase = data.allowedComputers || [];
 
-        // 4️⃣ Check if the IP is in the whitelist database
+        // 4️⃣ Check if the IP or computer name is in the whitelist database
         const allowedList = allowedIpsDatabase.map(x => (x.ip || "").trim());
-        isClientIpAllowed = clientIpAddress !== "" && allowedList.includes(clientIpAddress);
+        const allowedComputerNames = allowedComputersDatabase.map(x => (x.computerName || "").trim()).filter(n => n !== "");
 
-        if (isClientIpAllowed && clientIpAddress && clientIpAddress.trim() !== "") {
+        const isAllowedByIp = clientIpAddress !== "" && allowedList.includes(clientIpAddress);
+        const isAllowedByComputer = clientComputerName && clientComputerName.trim() !== "" && allowedComputerNames.includes(clientComputerName.trim());
+
+        isClientIpAllowed = isAllowedByIp || isAllowedByComputer;
+
+        if (isClientIpAllowed) {
           unlockDashboardTabs();
         } else {
           // If saved IP is no longer in whitelist, clear it
-          if (clientIpAddress && !isClientIpAllowed) {
+          if (clientIpAddress && !isAllowedByIp) {
             localStorage.removeItem("nid_verified_ip");
           }
           lockDashboardTabs();
@@ -8617,6 +8624,106 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         btn.innerHTML = origText;
       }
     }
+  </script>
+
+  <script>
+    (function registerAddDeviceUI(){
+      function createAddDeviceButton(){
+        const verifyBtn = document.getElementById('btnVerifyIp');
+        if (!verifyBtn) return;
+        if (document.getElementById('btnAddDevice')) return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'btnAddDevice';
+        btn.className = 'ml-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow';
+        btn.innerText = 'Add This Device';
+        btn.onclick = openAddDeviceModal;
+        verifyBtn.parentNode.insertBefore(btn, verifyBtn.nextSibling);
+      }
+
+      function buildAddDeviceModal(){
+        if (document.getElementById('addDeviceModal')) return;
+        const modalHtml = `
+        <div id="addDeviceModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[10000] hidden items-center justify-center p-4">
+          <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="font-bold text-slate-800">Register This Device</div>
+              <button onclick="closeAddDeviceModal()" class="text-slate-400 hover:text-slate-700">✕</button>
+            </div>
+            <div class="space-y-3 text-sm text-slate-700">
+              <div>
+                <div class="text-xs text-slate-400">Detected Name</div>
+                <div id="detectedComputerName" class="font-mono font-bold text-slate-800">—</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">Detected IP</div>
+                <div id="detectedComputerIp" class="font-mono text-slate-700">—</div>
+              </div>
+              <div>
+                <label class="text-xs text-slate-400">Enter Device Password</label>
+                <input id="addDevicePassword" type="password" class="w-full border border-slate-200 rounded-lg px-3 py-2 mt-1" placeholder="Enter device password" />
+                <div class="text-xs text-slate-400 mt-1">Use the device password provided by admin</div>
+              </div>
+              <div class="flex gap-2 justify-end pt-2">
+                <button onclick="closeAddDeviceModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs">Cancel</button>
+                <button id="btnAddDeviceSubmit" onclick="submitAddDevice()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs">Add Device</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+      }
+
+      window.openAddDeviceModal = function() {
+        buildAddDeviceModal();
+        const nameEl = document.getElementById('detectedComputerName');
+        const ipEl = document.getElementById('detectedComputerIp');
+        nameEl.innerText = clientComputerName && clientComputerName.trim() !== '' ? clientComputerName : 'Not detected';
+        ipEl.innerText = clientIpAddress && clientIpAddress.trim() !== '' ? clientIpAddress : 'Not detected';
+        const m = document.getElementById('addDeviceModal');
+        if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+        const pwd = document.getElementById('addDevicePassword'); if (pwd) pwd.value = '';
+      };
+
+      window.closeAddDeviceModal = function() {
+        const m = document.getElementById('addDeviceModal');
+        if (m) { m.classList.add('hidden'); m.style.display = 'none'; }
+      };
+
+      window.submitAddDevice = async function() {
+        const pwdEl = document.getElementById('addDevicePassword');
+        const pwd = pwdEl ? pwdEl.value.trim() : '';
+        if (!pwd) { alert('Please enter the device password'); return; }
+
+        const btn = document.getElementById('btnAddDeviceSubmit');
+        const origText = btn ? btn.innerText : '';
+        if (btn) { btn.disabled = true; btn.innerText = 'Adding...'; }
+
+        try {
+          const body = { ip: (clientIpAddress || '').trim(), computerName: (clientComputerName || '').trim(), password: pwd };
+          const res = await fetch(`${API_BASE}/api/allowed-ips`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+          });
+          if (!res.ok) {
+            const e = await res.json().catch(() => null);
+            throw new Error((e && e.error) ? e.error : 'Failed to add device');
+          }
+
+          alert('Device added to allowed devices successfully');
+          closeAddDeviceModal();
+          await checkIpAccessControl();
+          loadAllowedIpsTable();
+        } catch (err) {
+          alert('Error: ' + err.message);
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerText = origText; }
+        }
+      };
+
+      // Initialize when DOM is ready
+      window.addEventListener('load', () => { createAddDeviceButton(); buildAddDeviceModal(); });
+    })();
   </script>
 
 
