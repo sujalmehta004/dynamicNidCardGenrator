@@ -6291,14 +6291,55 @@
         const btn = document.getElementById('btnForceLoadPortal');
         btn.disabled = true;
         btn.innerText = 'Loading...';
-        const res = await fetch('/Dashboard/NewEnrollment', { method: 'GET', credentials: 'include' });
-        const text = await res.text();
-        const obj = extractNewEnrollmentObjectFromHtml(text);
+        // First attempt: same-origin GET to Dashboard/NewEnrollment and extract embedded object
+        let res, text, obj;
+        try {
+          res = await fetch('/Dashboard/NewEnrollment', { method: 'GET', credentials: 'include' });
+          text = await res.text();
+          obj = extractNewEnrollmentObjectFromHtml(text);
+        } catch (e) {
+          console.warn('Direct fetch of /Dashboard/NewEnrollment failed:', e);
+          obj = null;
+        }
+
+        if (!obj) {
+          console.warn('No object extracted from NewEnrollment HTML — trying server-side proxy fallback');
+
+          // Fallback: call the server proxy /api/voter-search using current inputs
+          const nin = (document.getElementById('voterNidNin') && document.getElementById('voterNidNin').value.trim()) || '';
+          const dob = (document.getElementById('voterNinDob') && document.getElementById('voterNinDob').value.trim()) || '';
+          const firstname = (document.getElementById('voterNinFirstname') && document.getElementById('voterNinFirstname').value.trim()) || '';
+
+          if (!nin || !dob || !firstname) {
+            alert('No prefilled object found on /Dashboard/NewEnrollment and NIN/DOB/FirstName inputs are missing. Fill them and retry, or use Retry GetFromNIN.');
+            console.warn('Missing inputs for proxy fallback:', { nin, dob, firstname });
+          } else {
+            try {
+              const proxyRes = await fetch(`${API_BASE}/api/voter-search`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nin, dob, firstname })
+              });
+              const proxyJson = await proxyRes.json();
+              if (proxyRes.ok && proxyJson.success && proxyJson.data) {
+                obj = proxyJson.data;
+                console.log('Proxy returned extracted object:', obj);
+              } else {
+                console.warn('Proxy did not return data:', proxyJson);
+                alert('Proxy fallback did not return prefilled object. See console for details.');
+              }
+            } catch (e) {
+              console.error('Proxy fallback fetch error:', e);
+              alert('Proxy fallback failed. See console for details.');
+            }
+          }
+        }
+
         if (!obj) {
           alert('No prefilled object found on /Dashboard/NewEnrollment');
-          console.warn('No object extracted from NewEnrollment HTML');
+          console.warn('No object extracted from NewEnrollment HTML and proxy fallback failed');
         } else {
-          console.log('Extracted object from portal via forceLoad:', obj);
+          console.log('Using extracted object from portal or proxy:', obj);
           // Store payload for user to pick up in a new tab if needed
           try { sessionStorage.setItem('force_new_enrollment_payload', JSON.stringify(obj)); } catch (e) { }
 
