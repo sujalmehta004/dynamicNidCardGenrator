@@ -1863,11 +1863,7 @@
       // Show "See Listed Computers" button only on the Admin Setup tab
       const listedDevicesBtn = document.getElementById("listedDevicesButtonContainer");
       if (listedDevicesBtn) {
-        if (targetViewTab === "admin") {
-          listedDevicesBtn.classList.remove("hidden");
-        } else {
-          listedDevicesBtn.classList.add("hidden");
-        }
+        listedDevicesBtn.classList.toggle("hidden", targetViewTab !== "admin");
       }
     }
 
