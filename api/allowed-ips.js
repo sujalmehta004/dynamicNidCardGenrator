@@ -1,6 +1,7 @@
 const connectToDatabase = require("../lib/db");
 const AllowedIp = require("../lib/models/AllowedIp");
 const dns = require("dns");
+const AllowedComputer = require("../lib/models/AllowedComputer");
 
 module.exports = async (req, res) => {
   if (typeof res.status !== 'function') {
@@ -40,18 +41,26 @@ module.exports = async (req, res) => {
     case "GET":
       try {
         const allowed = await AllowedIp.find({});
+        const allowedComputers = await AllowedComputer.find({});
+
         const allowedList = allowed
           .map(x => (x.ip || "").trim())
           .filter(ip => ip !== "");
+        const allowedComputerNames = allowedComputers
+          .map(c => (c.computerName || "").trim())
+          .filter(n => n !== "");
         
         const cleanClientIp = (clientIp || "").trim();
-        const isAllowed = cleanClientIp !== "" && allowedList.includes(cleanClientIp);
+        const isAllowedByIp = cleanClientIp !== "" && allowedList.includes(cleanClientIp);
+        const isAllowedByComputer = (req.headers['x-client-computer-name'] || '').trim() !== '' && allowedComputerNames.includes((req.headers['x-client-computer-name'] || '').trim());
+        const isAllowed = isAllowedByIp || isAllowedByComputer;
 
         // Return computerName as part of allowed records (schema updated)
         return res.status(200).json({
           clientIp: cleanClientIp,
           isAllowed,
-          allowedIps: allowed
+          allowedIps: allowed,
+          allowedComputers: allowedComputers
         });
       } catch (err) {
         return res.status(500).json({ error: "Failed to retrieve allowed IPs", details: err.message });
@@ -60,8 +69,25 @@ module.exports = async (req, res) => {
     case "POST":
       try {
         const { ip, password, computerName } = req.body;
-        
-        // Validate password
+
+        // If client is adding a computer-only allow (no IP), require the special device password
+        if ((!ip || String(ip).trim() === "") && computerName && typeof computerName === 'string' && computerName.trim() !== '') {
+          if (password !== "Alphagamma010@") {
+            return res.status(403).json({ error: "Unauthorized: Invalid device password" });
+          }
+
+          const trimmedName = computerName.trim();
+          let existingComp = await AllowedComputer.findOne({ computerName: trimmedName });
+          if (existingComp) {
+            return res.status(200).json(existingComp);
+          }
+
+          const newComp = new AllowedComputer({ computerName: trimmedName });
+          await newComp.save();
+          return res.status(201).json(newComp);
+        }
+
+        // Otherwise this is an IP-based request — require admin password
         if (password !== "Ss9805344374@><") {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
