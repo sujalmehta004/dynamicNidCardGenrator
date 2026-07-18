@@ -20,9 +20,17 @@
 
   <style>
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .fade-in {
       animation: fadeIn 0.3s ease forwards;
     }
@@ -134,24 +142,33 @@
     /* Strict requirement mapping for row color assignments */
     .status-row-done,
     .status-row-done td {
-      background-color: #e2fcd4 !important; /* Light green — keep as-is */
+      background-color: #e2fcd4 !important;
+      /* Light green — keep as-is */
     }
+
     .status-row-pending,
     .status-row-pending td {
-      background-color: #fef9c3 !important; /* Light yellow — keep as-is */
+      background-color: #fef9c3 !important;
+      /* Light yellow — keep as-is */
     }
+
     .status-row-inprogress,
     .status-row-inprogress td {
-      background-color: #fef4f4 !important; /* Very light red (mobile not registered) */
+      background-color: #fef4f4 !important;
+      /* Very light red (mobile not registered) */
     }
+
     .status-row-notonline,
     .status-row-notonline td {
-      background-color: #ffffff !important; /* White — no color (not online) */
+      background-color: #ffffff !important;
+      /* White — no color (not online) */
     }
+
     .db-row-clickable {
       cursor: pointer;
       transition: filter 0.12s;
     }
+
     .db-row-clickable:hover td {
       filter: brightness(0.96);
     }
@@ -250,7 +267,8 @@
         font-size: 9px;
       }
 
-      .print-table th, .print-table td {
+      .print-table th,
+      .print-table td {
         border: 1px solid #cbd5e1;
         padding: 6px 8px;
         text-align: left;
@@ -288,7 +306,7 @@
 
       /* Single Card Print Mode Settings */
       body.print-single-card-mode #photoPaperPrintCanvas,
-      body.print-single-card-mode #photoPaperPrintCanvas * ,
+      body.print-single-card-mode #photoPaperPrintCanvas *,
       body.print-single-card-mode #a4PrintContainer,
       body.print-single-card-mode #a4PrintContainer * {
         visibility: hidden !important;
@@ -315,7 +333,8 @@
       }
     }
 
-    #a4PrintContainer, #singleCardPrintContainer {
+    #a4PrintContainer,
+    #singleCardPrintContainer {
       display: none;
     }
   </style>
@@ -604,12 +623,19 @@
               <!-- Gateway Mode Switcher (Always at the top) -->
               <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
                 <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z"/></svg>
-                  <span id="ninSearchPortalLabel" class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Search by NIN Number</span>
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" />
+                  </svg>
+                  <span id="ninSearchPortalLabel"
+                    class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Search by NIN Number</span>
                 </div>
                 <button type="button" id="btnToggleVoterSearchMode" onclick="toggleVoterSearchMode()"
                   class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
                   <span id="btnToggleSearchText">Switch to Name Search</span>
                 </button>
               </div>
@@ -659,13 +685,21 @@
                 <!-- Step Indicator -->
                 <div id="portalStepIndicator"
                   class="hidden flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider pb-2 border-b border-slate-100 mb-3">
-                  <span id="portalStepInd1" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">1. Captcha</span>
+                  <span id="portalStepInd1"
+                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">1.
+                    Captcha</span>
                   <span class="text-slate-300">→</span>
-                  <span id="portalStepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">2. OTP</span>
+                  <span id="portalStepInd2"
+                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">2.
+                    OTP</span>
                   <span class="text-slate-300">→</span>
-                  <span id="portalStepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">3. Download</span>
+                  <span id="portalStepInd3"
+                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">3.
+                    Download</span>
                   <span class="text-slate-300">→</span>
-                  <span id="portalStepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">4. Token Scan</span>
+                  <span id="portalStepInd4"
+                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">4. Token
+                    Scan</span>
                 </div>
 
                 <!-- Captcha input step -->
@@ -675,12 +709,14 @@
                     <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                     <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
-                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Request OTP</button>
+                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Request
+                      OTP</button>
                   </div>
                 </div>
 
                 <!-- OTP input step -->
-                <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                <div id="portalOtpRow"
+                  class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
                   <div class="flex flex-col gap-1">
                     <span class="font-bold text-slate-700">OTP Info:</span>
                     <span id="portalOtpInfoText" class="font-medium text-slate-600">Masked Mobile: -, NIN: -</span>
@@ -691,33 +727,46 @@
                       <input type="text" id="portalOtpCode" placeholder="Enter OTP code"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
                       <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Verify OTP</button>
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Verify
+                        OTP</button>
                     </div>
                   </div>
                   <div class="flex justify-end">
                     <button type="button" id="btnPortalResendOtp" onclick="loadPortalCaptcha(false)"
-                      class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg transition-all uppercase text-[10px]">Resend OTP / Start Over</button>
+                      class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg transition-all uppercase text-[10px]">Resend
+                      OTP / Start Over</button>
                   </div>
                 </div>
 
                 <!-- Step 3: Verified & ready to download -->
-                <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-                  <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-800 font-semibold text-[11px] flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                <div id="portalDownloadRow"
+                  class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div
+                    class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-800 font-semibold text-[11px] flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd"></path>
+                    </svg>
                     <span>Authentication Successful! Proceed to download.</span>
                   </div>
                   <button type="button" id="btnPortalDownloadNid" onclick="executeNidVoterDownload()"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md">
-                    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
                     Download NID Card PDF
                   </button>
                 </div>
 
                 <!-- Manual scanned token entry step -->
-                <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                <div id="portalManualTokenRow"
+                  class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
                   <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
                     <span class="font-bold block mb-1">⚠️ PDF Downloaded Successfully!</span>
-                    Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it below to verify and update the database.
+                    Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it
+                    below to verify and update the database.
                     <br /><span class="text-red-650 font-bold">Do not close or refresh this page.</span>
                   </div>
                   <div class="flex flex-col gap-1">
@@ -726,29 +775,45 @@
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-blue-500 rounded-xl transition-all"></textarea>
                   </div>
                   <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">Verify & Save Token</button>
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">Verify
+                    & Save Token</button>
                 </div>
 
                 <!-- Step 5: Success -->
-                <div id="portalSuccessRow" class="hidden space-y-4 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
-                  <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
-                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                <div id="portalSuccessRow"
+                  class="hidden space-y-4 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
+                  <div
+                    class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
                   </div>
                   <div>
                     <div class="text-sm font-bold text-emerald-700">Verification &amp; Update Complete!</div>
-                    <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and the database status updated to Done.</div>
-                    <div class="text-[10px] text-slate-400 mt-2">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
+                    <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and the database
+                      status updated to Done.</div>
+                    <div class="text-[10px] text-slate-400 mt-2">Resetting download portal in <span
+                        id="portalCountdownTimer">5</span>s...</div>
                   </div>
                 </div>
 
                 <!-- NID Tab Action Buttons in one row -->
-                <div id="portalInitialActionBtnRow" class="pt-2 flex flex-col gap-2">
+                <div id="portalInitialActionBtnRow" class="pt-2 flex gap-3">
                   <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha(false)"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-center">Proceed to Verification (Single)</button>
+                    class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] text-center shadow-md flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Proceed (Single)
+                  </button>
                   <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
-                    class="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
-                    Verify All (Bulk Request)
+                    class="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] flex items-center justify-center gap-1.5 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                    Verify All (Bulk)
                   </button>
                 </div>
               </div>
@@ -757,32 +822,38 @@
               <div id="voterNinSearchPanel" class="space-y-4">
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                   <div>
-                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID / NIN Number</label>
+                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID / NIN
+                      Number</label>
                     <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono text-[11px]" />
                   </div>
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of Birth (BS)</label>
+                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of
+                        Birth (BS)</label>
                       <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                     </div>
                     <div>
-                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of Birth (AD)</label>
+                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of
+                        Birth (AD)</label>
                       <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                     </div>
                   </div>
                   <div>
-                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">First Name Only</label>
+                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">First Name
+                      Only</label>
                     <input type="text" id="voterNinFirstname" placeholder="SUJAL"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                   </div>
                   <div class="flex gap-2">
                     <button type="button" onclick="handleNinSearch()"
-                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">Single Search</button>
+                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">Single
+                      Search</button>
                     <button type="button" onclick="handleVoterBulkSearch()"
-                      class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm">Bulk Search</button>
+                      class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm">Bulk
+                      Search</button>
                   </div>
                 </div>
               </div>
@@ -803,43 +874,67 @@
           style="display:none; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);">
           <div class="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-[90vw] max-h-[90vh] flex flex-col overflow-hidden">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl">
+            <div
+              class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl">
               <div>
                 <h2 class="text-white font-bold text-base tracking-wide">⚡ Bulk Verification</h2>
-                <p id="bulkModalSubtitle" class="text-violet-200 text-xs mt-0.5">Sending OTP requests to all pending records...</p>
+                <p id="bulkModalSubtitle" class="text-violet-200 text-xs mt-0.5">Sending OTP requests to all pending
+                  records...</p>
               </div>
-              <button onclick="closeBulkModal()" class="text-white hover:text-violet-200 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
+              <div class="flex items-center gap-3">
+                <button id="btnBulkVoterRetry" onclick="triggerBulkVoterSearch()"
+                  class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 border border-amber-400 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider transition-all shadow-md">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Retry Voter List Check
+                </button>
+                <button onclick="closeBulkModal()" class="text-white hover:text-violet-200 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!-- Modal Body: Stats Row + Record List -->
             <div class="flex-1 overflow-y-auto p-4 space-y-3 pb-20">
               <!-- Summary Stats -->
               <div class="grid grid-cols-6 gap-2 text-center text-xs">
-                <div id="bulkCard_all" class="bg-slate-50 border-2 border-slate-200 rounded-xl p-2.5 cursor-pointer hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98] transition-all" onclick="filterBulkRecords('all')">
+                <div id="bulkCard_all"
+                  class="bg-slate-50 border-2 border-slate-200 rounded-xl p-2.5 cursor-pointer hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onclick="filterBulkRecords('all')">
                   <div id="bulkStatTotal" class="text-xl font-bold text-slate-800">0</div>
                   <div class="text-slate-500 font-bold mt-0.5">Total</div>
                 </div>
-                <div id="bulkCard_sending" class="bg-amber-50 border-2 border-amber-250 rounded-xl p-2.5 cursor-pointer hover:bg-amber-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all" onclick="filterBulkRecords('sending')">
+                <div id="bulkCard_sending"
+                  class="bg-amber-50 border-2 border-amber-250 rounded-xl p-2.5 cursor-pointer hover:bg-amber-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onclick="filterBulkRecords('sending')">
                   <div id="bulkStatPending" class="text-xl font-bold text-amber-600">0</div>
                   <div class="text-amber-600 font-bold mt-0.5">Sending</div>
                 </div>
-                <div id="bulkCard_success" class="bg-emerald-50 border-2 border-emerald-250 rounded-xl p-2.5 cursor-pointer hover:bg-emerald-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all" onclick="filterBulkRecords('success')">
+                <div id="bulkCard_success"
+                  class="bg-emerald-50 border-2 border-emerald-250 rounded-xl p-2.5 cursor-pointer hover:bg-emerald-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onclick="filterBulkRecords('success')">
                   <div id="bulkStatSuccess" class="text-xl font-bold text-emerald-600">0</div>
                   <div class="text-emerald-600 font-bold mt-0.5">OTP Sent</div>
                 </div>
-                <div id="bulkCard_failed" class="bg-rose-50 border-2 border-rose-250 rounded-xl p-2.5 cursor-pointer hover:bg-rose-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all" onclick="filterBulkRecords('failed')">
+                <div id="bulkCard_failed"
+                  class="bg-rose-50 border-2 border-rose-250 rounded-xl p-2.5 cursor-pointer hover:bg-rose-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onclick="filterBulkRecords('failed')">
                   <div id="bulkStatFailed" class="text-xl font-bold text-rose-600">0</div>
                   <div class="text-rose-600 font-bold mt-0.5">Failed</div>
                 </div>
-                <div id="bulkCard_mobile_not_registered" class="bg-violet-50 border-2 border-violet-250 rounded-xl p-2.5 cursor-pointer hover:bg-violet-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all" onclick="filterBulkRecords('mobile_not_registered')">
+                <div id="bulkCard_mobile_not_registered"
+                  class="bg-violet-50 border-2 border-violet-250 rounded-xl p-2.5 cursor-pointer hover:bg-violet-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onclick="filterBulkRecords('mobile_not_registered')">
                   <div id="bulkStatMobileNotRegistered" class="text-xl font-bold text-violet-600">0</div>
                   <div class="text-violet-600 font-bold mt-0.5">Mobile Unregistered</div>
                 </div>
-                <div id="bulkCard_data_not_found" class="bg-sky-50 border-2 border-sky-250 rounded-xl p-2.5 cursor-pointer hover:bg-sky-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all" onclick="filterBulkRecords('data_not_found')">
+                <div id="bulkCard_data_not_found"
+                  class="bg-sky-50 border-2 border-sky-250 rounded-xl p-2.5 cursor-pointer hover:bg-sky-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  onclick="filterBulkRecords('data_not_found')">
                   <div id="bulkStatDataNotFound" class="text-xl font-bold text-sky-600">0</div>
                   <div class="text-sky-600 font-bold mt-0.5">Data Not Found</div>
                 </div>
@@ -852,9 +947,11 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-3 border-t border-slate-100 flex gap-2 justify-end items-center bg-slate-50 rounded-b-2xl">
+            <div
+              class="px-6 py-3 border-t border-slate-100 flex gap-2 justify-end items-center bg-slate-50 rounded-b-2xl">
               <span id="bulkFooterStatus" class="text-xs text-slate-500 flex-1"></span>
-              <button onclick="closeBulkModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-2 rounded-xl text-xs transition-all">
+              <button onclick="closeBulkModal()"
+                class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-2 rounded-xl text-xs transition-all">
                 Close
               </button>
             </div>
@@ -1426,8 +1523,13 @@
         </div>
 
         <!-- Database Table Wrapper Card -->
-        <div class="flex-1 overflow-hidden border border-slate-250 rounded-xl bg-white shadow-sm flex flex-col mb-4" style="scrollbar-width:none; -ms-overflow-style:none;">
-          <style>.db-scroll-area::-webkit-scrollbar{display:none;}</style>
+        <div class="flex-1 overflow-hidden border border-slate-250 rounded-xl bg-white shadow-sm flex flex-col mb-4"
+          style="scrollbar-width:none; -ms-overflow-style:none;">
+          <style>
+            .db-scroll-area::-webkit-scrollbar {
+              display: none;
+            }
+          </style>
           <div class="db-scroll-area overflow-auto h-full">
             <table class="min-w-full text-left text-xs" style="border-collapse:collapse;">
               <thead class="sticky top-0 z-10" style="background:#f8fafc;">
@@ -1603,7 +1705,7 @@
     }
 
     // Intercept standard browser alerts to show the beautiful modal automatically
-    window.alert = function(message) {
+    window.alert = function (message) {
       let title = "System Notification";
       let type = "info";
       const lower = String(message).toLowerCase();
@@ -2832,9 +2934,9 @@
       if (!row) return;
       const sc = getStatusAccentColor(row.status);
       const statusLabel = row.status === "inprogress" ? "Mobile Not Registered" :
-                          row.status === "not online" ? "Not Online" :
-                          row.status === "pending" ? "Pending" :
-                          row.status === "done" ? "Done" : row.status;
+        row.status === "not online" ? "Not Online" :
+          row.status === "pending" ? "Pending" :
+            row.status === "done" ? "Done" : row.status;
       const modal = document.getElementById("rowDetailModal");
       document.getElementById("rowDetailContent").innerHTML = `
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
@@ -2917,9 +3019,9 @@
 
         const sc = getStatusAccentColor(row.status);
         const statusLabel = row.status === "inprogress" ? "Mobile Not Reg." :
-                            row.status === "not online" ? "Not Online" :
-                            row.status === "pending" ? "Pending" :
-                            row.status === "done" ? "Done" : (row.status || "—");
+          row.status === "not online" ? "Not Online" :
+            row.status === "pending" ? "Pending" :
+              row.status === "done" ? "Done" : (row.status || "—");
 
         const tr = document.createElement("tr");
         tr.className = `${statusRowClass} db-row-clickable`;
@@ -3305,7 +3407,7 @@
       document.getElementById("portalDobLoc").disabled = disabled;
       document.getElementById("portalCcnIssuingDateLoc").disabled = disabled;
       document.getElementById("portalSearchQuery").disabled = disabled;
-      
+
       const searchBtns = document.querySelectorAll("button[onclick='searchDbToPopulatePortal()']");
       searchBtns.forEach(btn => btn.disabled = disabled);
     }
@@ -3342,7 +3444,7 @@
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
       document.getElementById("portalMobileNotRegisteredRow").classList.add("hidden");
       document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
-      
+
       document.getElementById("portalCaptchaCode").value = "";
       document.getElementById("portalOtpCode").value = "";
       document.getElementById("portalScannedTokenVal").value = "";
@@ -3474,20 +3576,20 @@
 
         // Detect MOBILE_NOT_REGISTERED or DATA_NOT_FOUND specifically
         const _respCode = getOtpErrorCode(responseBody);
-        const _rawText  = typeof responseBody === "string" ? responseBody : extractOtpResponseMessage(responseBody);
+        const _rawText = typeof responseBody === "string" ? responseBody : extractOtpResponseMessage(responseBody);
         const _parsedCode = parseOtpErrorCodeFromText(_rawText);
         const _resolvedCode = _respCode || _parsedCode;
 
         if (_resolvedCode === "MOBILE_NOT_REGISTERED" || (_rawText && _rawText.includes("MOBILE_NOT_REGISTERED")) ||
-            _resolvedCode === "DATA_NOT_FOUND" || (_rawText && _rawText.includes("DATA_NOT_FOUND"))) {
-          
+          _resolvedCode === "DATA_NOT_FOUND" || (_rawText && _rawText.includes("DATA_NOT_FOUND"))) {
+
           // Silently trigger voter search in background so we can show white card + download paper even when OTP fails
           const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
-          const _dobBsEn  = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
-          const _dobAd    = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+          const _dobBsEn = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+          const _dobAd = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
           const _fullEnName = document.getElementById("portalFullNameEn").value.trim();
-          const _firstName  = _fullEnName.split(" ")[0].toLowerCase();
-          
+          const _firstName = _fullEnName.split(" ")[0].toLowerCase();
+
           // Retrieve NID value from the response if available, else from search portal inputs/DB lookup
           let resolvedNid = (responseBody && responseBody.nin) || portalNinValue || "";
           if (!resolvedNid) {
@@ -3499,9 +3601,9 @@
                   resolvedNid = list[0].ninEn;
                 }
               }
-            } catch (e) {}
+            } catch (e) { }
           }
-          
+
           if (resolvedNid && _dobAd && _firstName) {
             try {
               const vres = await fetch(`${API_BASE}/api/voter-search`, {
@@ -3514,9 +3616,9 @@
                 openNidVoterModalWithError(_resolvedCode, _rawText, vdata.data);
                 return;
               }
-            } catch (e) {}
+            } catch (e) { }
           }
-          
+
           openNidVoterModalWithError(_resolvedCode, _rawText, null);
           return;
         }
@@ -3546,7 +3648,7 @@
         // Expected response format: {"code":"OTP_SENT","maskedMobile":"98XXXXX374","nin":"615-385-908-6"}
         portalNinValue = data.nin;
         document.getElementById("portalOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${data.nin || "-"}`;
-        
+
         // Advance view state
         document.getElementById("portalCaptchaInputRow").classList.add("hidden");
         document.getElementById("portalOtpRow").classList.remove("hidden");
@@ -3554,10 +3656,10 @@
 
         // ── Auto voter-list search using the just-returned NIN ──
         const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
-        const _dobBsEn  = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
-        const _dobAd    = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+        const _dobBsEn = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+        const _dobAd = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
         const _fullEnName = document.getElementById("portalFullNameEn").value.trim();
-        const _firstName  = _fullEnName.split(" ")[0].toLowerCase();
+        const _firstName = _fullEnName.split(" ")[0].toLowerCase();
         if (data.nin && _dobAd && _firstName) {
           autoVoterSearchForNid(data.nin, _dobAd, _firstName);
         }
@@ -3606,7 +3708,7 @@
 
     function filterBulkRecords(filterVal) {
       currentBulkFilter = filterVal;
-      
+
       // Update visual active classes on stats cards
       const keys = ["all", "sending", "success", "failed", "mobile_not_registered", "data_not_found"];
       keys.forEach(k => {
@@ -3675,21 +3777,25 @@
         <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
           <table class="w-full text-left text-xs" style="border-collapse: collapse; table-layout: fixed;">
             <colgroup>
-              <col style="width: 48px;" />
-              <col style="width: 200px;" />
-              <col style="width: 240px;" />
-              <col style="width: 110px;" />
-              <col style="width: 150px;" />
-              <col style="min-width: 220px;" />
+              <col style="width: 44px;" />
+              <col style="width: 52px;" />
+              <col style="width: 190px;" />
+              <col style="width: 230px;" />
+              <col style="width: 100px;" />
+              <col style="width: 145px;" />
+              <col style="min-width: 200px;" />
+              <col style="min-width: 180px;" />
             </colgroup>
             <thead>
               <tr style="background:#f8f9fb; border-bottom: 2px solid #e2e8f0;">
                 <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">#</th>
+                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Photo</th>
                 <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">NID Number</th>
                 <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Full Name</th>
                 <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Status</th>
                 <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Verification</th>
-                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">Response</th>
+                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">NID Response</th>
+                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">Voter List</th>
               </tr>
             </thead>
             <tbody>
@@ -3698,7 +3804,7 @@
       if (displayRows.length === 0) {
         html += `
           <tr>
-            <td colspan="6" style="padding:36px 16px; text-align:center; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9;">No records match the active filter.</td>
+            <td colspan="8" style="padding:36px 16px; text-align:center; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9;">No records match the active filter.</td>
           </tr>
         `;
       } else {
@@ -3707,6 +3813,40 @@
           const fullName = `${rec.givenEn || ""} ${rec.surnameEn || ""}`.trim();
           const nameNp = `${rec.givenNp || ""} ${rec.surnameNp || ""}`.trim();
           const nin = rec.ninEn;
+
+          // Portrait image column
+          let photoHtml = "";
+          if (row.voterSearchResult && row.voterSearchResult.success && row.voterSearchResult.data && row.voterSearchResult.data.PortraitImage) {
+            photoHtml = `<img src="data:image/jpeg;base64,${row.voterSearchResult.data.PortraitImage}" class="w-8 h-10 object-cover rounded mx-auto border border-slate-200" />`;
+          } else {
+            photoHtml = `<svg class="w-5 h-5 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+          }
+
+          // Voter list response column
+          let voterListHtml = "";
+          if (row.voterSearchState === "searching") {
+            voterListHtml = `
+              <div class="flex items-center justify-center gap-1 text-[11px] text-amber-600 font-semibold">
+                <div class="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                Checking...
+              </div>
+            `;
+          } else if (row.voterSearchResult) {
+            if (row.voterSearchResult.success) {
+              voterListHtml = `<span style="font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid #a7f3d0; background:#d1fae5; color:#065f46; white-space:nowrap;">Found ✓</span>`;
+            } else {
+              const errMsg = row.voterSearchResult.error || "";
+              if (errMsg.includes("स्वीकृत भइसकेको छ") || errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता") || errMsg.toLowerCase().includes("active")) {
+                voterListHtml = `<span style="font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid #a7f3d0; background:#d1fae5; color:#065f46; white-space:nowrap;">NIN Number Active</span>`;
+              } else if (errMsg.toLowerCase().includes("no record found") || errMsg.toLowerCase().includes("not found")) {
+                voterListHtml = `<span style="font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid #fecdd3; background:#ffe4e6; color:#b91c1c; white-space:nowrap;">NIN Number Not Active</span>`;
+              } else {
+                voterListHtml = `<span style="font-size:9.5px; font-weight:750; color:#b91c1c; border-bottom:1px dashed #fecdd3;" title="${errMsg}">Not Found ✗</span>`;
+              }
+            }
+          } else {
+            voterListHtml = `<span style="color:#94a3b8; font-style:italic;">Pending check</span>`;
+          }
 
           // Left-accent border color only — minimal row tinting
           let accentColor = "#e2e8f0"; // default slate
@@ -3755,7 +3895,7 @@
           } else if (row.state === "success") {
             const mobileStr = row.responseData && row.responseData.maskedMobile ? row.responseData.maskedMobile : "—";
             detailsHtml = `
-              <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation();">
                 <span style="color:#059669; font-weight:600; white-space:nowrap;">Mobile: ${mobileStr}</span>
                 <input type="text" id="bulkOtp_${row.record.ninEn}" placeholder="OTP" maxlength="6" style="width: 55px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 11px; text-align: center; height: 22px;" autocomplete="off" />
                 <button id="btnBulkVerify_${row.record.ninEn}" onclick="verifyAndDownloadBulkRow('${row.record.ninEn}')" style="background:#10b981; color:#ffffff; font-weight:700; padding: 2px 8px; border: none; border-radius: 6px; font-size: 10px; cursor: pointer; height: 22px; transition: background 0.15s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
@@ -3771,7 +3911,6 @@
             detailsHtml = `<span style="color:#0284c7; font-weight:500;">Citizen data not found on NID portal</span>`;
           } else {
             const rawMsg = row.errorMsg || (row.responseData ? (typeof row.responseData === "string" ? row.responseData : JSON.stringify(row.responseData)) : "Unknown error");
-            // Strip "Response code: " prefix if present
             const cleanMsg = rawMsg.replace(/^Response\s*code:\s*/i, "").replace(/^Error:\s*/i, "");
             detailsHtml = `<span style="color:#be123c; font-weight:500;">${cleanMsg}</span>`;
           }
@@ -3779,8 +3918,9 @@
           const pulseCss = row.state === "sending" ? "animation:pulse 1.5s infinite;" : "";
 
           html += `
-            <tr style="background:${rowBg}; border-top:1px solid #f1f5f9; border-left:3px solid ${accentColor}; transition:background .15s;">
+            <tr onclick="openBulkRowVoterDetails('${nin}')" style="background:${rowBg}; border-top:1px solid #f1f5f9; border-left:3px solid ${accentColor}; transition:background .15s; cursor:pointer;" class="hover:bg-slate-100/70">
               <td style="padding:10px 14px; text-align:center; color:#94a3b8; font-weight:600; border-right:1px solid #f1f5f9; white-space:nowrap;">${idx + 1}</td>
+              <td style="padding:4px 6px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">${photoHtml}</td>
               <td style="padding:10px 14px; font-family:monospace; color:#2563eb; font-weight:700; font-size:11px; border-right:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nin}</td>
               <td style="padding:10px 14px; border-right:1px solid #f1f5f9;">
                 <div style="font-weight:700; color:#1e293b; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fullName}</div>
@@ -3792,7 +3932,8 @@
               <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
                 <span style="font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid ${verifBorder}; background:${verifBg}; color:${verifText}; white-space:nowrap; ${pulseCss}">${verifLabel}</span>
               </td>
-              <td style="padding:10px 14px; font-size:11px;">${detailsHtml}</td>
+              <td style="padding:10px 14px; font-size:11px; border-right:1px solid #f1f5f9;">${detailsHtml}</td>
+              <td style="padding:10px 14px; text-align:center; border-right:none; white-space:nowrap;">${voterListHtml}</td>
             </tr>
           `;
         });
@@ -3843,7 +3984,7 @@
           try {
             const errData = await verifyRes.json();
             errMsg = errData.error || errMsg;
-          } catch(e) {}
+          } catch (e) { }
           alert(`OTP Verification failed: ${errMsg}`);
           return;
         }
@@ -3878,7 +4019,7 @@
           try {
             const errData = await dlRes.json();
             errMsg = errData.error || errMsg;
-          } catch (e) {}
+          } catch (e) { }
           alert(`Download failed: ${errMsg}`);
           return;
         }
@@ -3895,7 +4036,7 @@
         // Copy password to clipboard
         try {
           await navigator.clipboard.writeText(passwordCode);
-        } catch (e) {}
+        } catch (e) { }
 
         // Set global portal NIN so scanned token will be saved for this NIN
         portalNinValue = row.record.ninEn;
@@ -3906,11 +4047,11 @@
 
         // Update bulk list row state to indicate success verified
         row.state = "verified";
-        
+
         // Also update bulk stats
         bulkStats.success++;
         updateBulkStats();
-        
+
         renderBulkTable();
 
       } catch (err) {
@@ -3920,6 +4061,101 @@
           btn.disabled = false;
           btn.innerHTML = originalText;
         }
+      }
+    }
+
+    async function triggerBulkVoterSearch() {
+      const btn = document.getElementById("btnBulkVoterRetry");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+          <span class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          Checking...
+        `;
+      }
+
+      const promises = bulkResults.map(async (rowObj) => {
+        const rec = rowObj.record;
+        rowObj.voterSearchState = "searching";
+        renderBulkTable();
+
+        const nin = rec.ninEn;
+        const dob = (rec.dobEn || "").trim().replace(/\//g, "-");
+        const firstname = (rec.givenEn || "").trim().split(/\s+/)[0];
+
+        let shouldRetry = true;
+        let attempt = 0;
+
+        while (shouldRetry) {
+          try {
+            const res = await fetch(`${API_BASE}/api/voter-search`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nin, dob, firstname })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success && data.data) {
+              rowObj.voterSearchResult = { success: true, data: data.data };
+              shouldRetry = false;
+            } else {
+              const errMsg = data.error || "Not found";
+              if (errMsg.includes("NID सर्भरबाट डेटा प्राप्त हुन सकेन") || errMsg.includes("NID सर्भर")) {
+                attempt++;
+                rowObj.voterSearchState = `searching (retry ${attempt})`;
+                renderBulkTable();
+                await new Promise(r => setTimeout(r, 1000));
+              } else {
+                rowObj.voterSearchResult = { success: false, error: errMsg };
+                shouldRetry = false;
+              }
+            }
+          } catch (err) {
+            attempt++;
+            rowObj.voterSearchState = `searching (retry ${attempt})`;
+            renderBulkTable();
+            await new Promise(r => setTimeout(r, 1500));
+          }
+        }
+
+        rowObj.voterSearchState = "done";
+        renderBulkTable();
+      });
+
+      await Promise.allSettled(promises);
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Retry Voter List Check
+        `;
+      }
+    }
+
+    function openBulkRowVoterDetails(nin) {
+      const rowObj = bulkResults.find(r => r.record.ninEn === nin);
+      if (!rowObj) return;
+
+      if (rowObj.voterSearchResult && rowObj.voterSearchResult.success && rowObj.voterSearchResult.data) {
+        openVoterDetailPopup(rowObj.voterSearchResult.data);
+      } else {
+        const rec = rowObj.record;
+        const fallbackData = {
+          Nidno: rec.ninEn,
+          VoterFirstNameEn: rec.givenEn,
+          VoterLastNameEn: rec.surnameEn,
+          Dob: rec.dobEn,
+          dobNp: rec.dobNp || "—",
+          CitizenshipCertificateNumberLoc: rec.citNo || "—",
+          CitizenshipIssuingDateLoc: rec.citDate || "—",
+          FatherFirstName: "—", FatherLastName: "",
+          MotherFirstName: "—", MotherLastName: "",
+          GrandfatherFirstName: "—", GrandfatherLastName: "",
+          PermanentWard: "—", PermanentVillageTol: "—",
+          VoterNo: ""
+        };
+        openVoterDetailPopup(fallbackData);
       }
     }
 
@@ -3962,7 +4198,7 @@
 
         // Initial Stats Render
         updateBulkStats();
-        
+
         // Highlight active stat card
         filterBulkRecords("all");
 
@@ -4044,6 +4280,9 @@
         // Await all parallel requests
         await Promise.allSettled(requests);
 
+        // Automatically trigger bulk voter list check for retrieved records
+        triggerBulkVoterSearch();
+
         // Auto-update workflow status based on OTP response
         const statusMappings = { success: "pending", MOBILE_NOT_REGISTERED: "inprogress", DATA_NOT_FOUND: "not online" };
         const autoUpdatePromises = bulkResults
@@ -4119,7 +4358,7 @@
           try {
             const errData = await res.json();
             errMsg = errData.error || errMsg;
-          } catch(e) {}
+          } catch (e) { }
           alert(`OTP Verification failed: ${errMsg}`);
           return;
         }
@@ -4203,7 +4442,7 @@
         }
 
         const encryptedBlob = await res.blob();
-        
+
         // Calculate Password
         const nameOnly = fullName.replace(/\s+/g, "");
         const namePart = nameOnly.substring(0, 4).toUpperCase();
@@ -4214,7 +4453,7 @@
         // Auto copy password to clipboard
         try {
           await navigator.clipboard.writeText(clipboardCode);
-        } catch (clipErr) {}
+        } catch (clipErr) { }
 
         // Open our embedded PDF viewer modal directly on the page!
         const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
@@ -4288,11 +4527,11 @@
           document.getElementById("nidVoterTokenSection").classList.add("hidden");
           document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
         }
-        
+
         let count = 5;
         const timerEl = document.getElementById("portalCountdownTimer");
         timerEl.innerText = count;
-        
+
         const interval = setInterval(() => {
           count--;
           timerEl.innerText = count;
@@ -4449,14 +4688,14 @@
         const savedBytes = await pdfLibDoc.save();
         const blob = new Blob([savedBytes], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
-        
+
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
         a.download = embeddedPdfName.replace(".pdf", "") + "_unlocked.pdf";
         document.body.appendChild(a);
         a.click();
-        
+
         setTimeout(() => URL.revokeObjectURL(url), 4000);
         alert("✅ Fully unlocked PDF has been downloaded successfully!");
       } catch (err) {
@@ -4659,7 +4898,7 @@
           const provInfo = districtToProvince[distKey];
           provinceEn = provInfo.en;
           provinceNe = provInfo.ne;
-          
+
           if (nepalAdminData && nepalAdminData.districts) {
             const foundDist = nepalAdminData.districts.find(d => (d.name_en || "").toLowerCase() === distKey);
             if (foundDist) {
@@ -4679,7 +4918,7 @@
           ward = trailingNumMatch[1];
         }
       }
-      
+
       if (ward) {
         wardNe = translateDigits(ward, englishToNepaliDigits);
       }
@@ -5564,7 +5803,7 @@
 
       closePrintModal();
       document.body.classList.add("print-ledger");
-      
+
       setTimeout(() => {
         window.print();
         document.body.classList.remove("print-ledger");
@@ -5580,7 +5819,7 @@
       const nid = document.getElementById("voterNid").value.trim();
       const dob = document.getElementById("voterDobAd").value.trim();
       const firstname = document.getElementById("voterFirstName").value.trim();
-      
+
       autoSolveVoterCaptcha();
       const captchaVal = document.getElementById("captchaInput").value.trim();
 
@@ -5596,7 +5835,7 @@
       const btn = document.querySelector("#nameModeInputs [onclick='handleVoterSingleSearch()']");
       if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
 
-        try {
+      try {
         const res = await fetch(`${API_BASE}/api/voter-search`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -6027,7 +6266,7 @@
 
           if (!dlRes.ok) {
             let errMsg = dlRes.statusText;
-            try { const e = await dlRes.json(); errMsg = e.error || errMsg; } catch(e) {}
+            try { const e = await dlRes.json(); errMsg = e.error || errMsg; } catch (e) { }
             if (dlBanner) dlBanner.innerHTML = `<p class="text-xs font-bold text-red-700">❌ Download failed: ${errMsg}</p>`;
             return;
           }
@@ -6041,7 +6280,7 @@
           const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
           const clipCode = namePart + yearPart;
 
-          try { await navigator.clipboard.writeText(clipCode); } catch(e) {}
+          try { await navigator.clipboard.writeText(clipCode); } catch (e) { }
 
           const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
 
@@ -6062,7 +6301,7 @@
             <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
           `;
 
-        } catch(dlErr) {
+        } catch (dlErr) {
           const dlBanner = document.getElementById("nidFlowDownloadingBanner");
           if (dlBanner) dlBanner.innerHTML = `<p class="text-xs font-bold text-red-700">❌ Download error: ${dlErr.message}</p>`;
         }
@@ -6123,7 +6362,7 @@
       const nid = document.getElementById("voterNid").value.trim();
       const dob = document.getElementById("voterDobAd").value.trim();
       const firstname = document.getElementById("voterFirstName").value.trim();
-      
+
       // Auto solve just in case it wasn't
       autoSolveVoterCaptcha();
       const captchaVal = document.getElementById("captchaInput").value.trim();
@@ -6266,7 +6505,7 @@
             if (queryRes.ok && queryData.success && queryData.data) {
               const d = queryData.data;
               const voterNameEn = [d.VoterFirstNameEn, d.VoterMiddleNameEn, d.VoterLastNameEn].filter(Boolean).join(" ");
-              
+
               cacheObj.state = "found";
               cacheObj.data = d;
 
@@ -6385,9 +6624,9 @@
           <div class="sm:col-span-1 flex flex-col items-center gap-2 border-r border-slate-200 pr-4">
             <div class="w-32 h-44 rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-50 flex items-center justify-center">
               ${voterData.PortraitImage && voterData.PortraitStatus !== "ABSENT"
-                ? `<img src="data:image/jpeg;base64,${voterData.PortraitImage}" class="w-full h-full object-cover" />`
-                : `<svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`
-              }
+          ? `<img src="data:image/jpeg;base64,${voterData.PortraitImage}" class="w-full h-full object-cover" />`
+          : `<svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`
+        }
             </div>
             <span class="font-bold text-[9px] uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">GENDER: ${voterData.GenderCode === 'F' ? 'FEMALE' : 'MALE'}</span>
             <span class="font-mono text-[10px] font-bold text-slate-650">${voterData.Nidno || "—"}</span>
@@ -6442,33 +6681,33 @@
                   <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.GrandfatherFirstNameLoc, voterData.GrandfatherMiddleNameLoc, voterData.GrandfatherLastNameLoc].filter(Boolean).join(" ") || "—"}</span>
                 </div>
                  ${(() => {
-                  const spouseEn = [voterData.SpouseFirstName, voterData.SpouseMiddleName, voterData.SpouseLastName].filter(Boolean).join(" ")
-                    || [voterData.HusbandWifeFirstName, voterData.HusbandWifeMiddleName, voterData.HusbandWifeLastName].filter(Boolean).join(" ")
-                    || voterData.HusbandWifeName || voterData.SpouseName || "";
-                  const spouseNp = [voterData.SpouseFirstNameLoc, voterData.SpouseMiddleNameLoc, voterData.SpouseLastNameLoc].filter(Boolean).join(" ")
-                    || [voterData.HusbandWifeFirstNameLoc, voterData.HusbandWifeMiddleNameLoc, voterData.HusbandWifeLastNameLoc].filter(Boolean).join(" ")
-                    || voterData.HusbandWifeNameLoc || voterData.SpouseNameLoc || "";
-                  const label = voterData.GenderCode === 'F' ? 'Husband' : 'Wife / Spouse';
-                  return `<div class="bg-rose-50 p-2 rounded border border-rose-100">
+          const spouseEn = [voterData.SpouseFirstName, voterData.SpouseMiddleName, voterData.SpouseLastName].filter(Boolean).join(" ")
+            || [voterData.HusbandWifeFirstName, voterData.HusbandWifeMiddleName, voterData.HusbandWifeLastName].filter(Boolean).join(" ")
+            || voterData.HusbandWifeName || voterData.SpouseName || "";
+          const spouseNp = [voterData.SpouseFirstNameLoc, voterData.SpouseMiddleNameLoc, voterData.SpouseLastNameLoc].filter(Boolean).join(" ")
+            || [voterData.HusbandWifeFirstNameLoc, voterData.HusbandWifeMiddleNameLoc, voterData.HusbandWifeLastNameLoc].filter(Boolean).join(" ")
+            || voterData.HusbandWifeNameLoc || voterData.SpouseNameLoc || "";
+          const label = voterData.GenderCode === 'F' ? 'Husband' : 'Wife / Spouse';
+          return `<div class="bg-rose-50 p-2 rounded border border-rose-100">
                     <span class="text-rose-400 block text-[8px] font-bold uppercase">${label}</span>
                     <span class="font-semibold text-slate-800 block text-[10px]">${spouseEn || '—'}</span>
                     <span class="text-slate-500 block nepali-font text-[10px]">${spouseNp || '—'}</span>
                   </div>`;
-                })()}
+        })()}
               </div>
             </div>
 
             <hr class="border-slate-100" />
             ${(() => {
-              const _addr = getResolvedAddressNames(voterData);
-              // PermanentWardLoc contains correct Nepali digits (e.g. "२"); WardNo may be 0 (wrong default)
-              const _wardNp = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : '') || '—';
-              // Convert Nepali digits → Arabic for the English side
-              const _ward = _wardNp !== '—' ? _wardNp.replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d)) : (voterData.PermanentWard || '—');
-              const _tole = voterData.PermanentVillageTol || '—';
-              const _toleNp = voterData.PermanentVillageTolLoc || _tole;
-              const _muniCode = voterData._muniCode || '';
-              return `
+          const _addr = getResolvedAddressNames(voterData);
+          // PermanentWardLoc contains correct Nepali digits (e.g. "२"); WardNo may be 0 (wrong default)
+          const _wardNp = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : '') || '—';
+          // Convert Nepali digits → Arabic for the English side
+          const _ward = _wardNp !== '—' ? _wardNp.replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d)) : (voterData.PermanentWard || '—');
+          const _tole = voterData.PermanentVillageTol || '—';
+          const _toleNp = voterData.PermanentVillageTolLoc || _tole;
+          const _muniCode = voterData._muniCode || '';
+          return `
             <div>
               <span class="text-slate-400 block text-[9px] font-bold uppercase mb-1">Permanent Address</span>
               <div class="grid grid-cols-2 gap-2 bg-slate-50 p-2 rounded">
@@ -6495,14 +6734,14 @@
               </div>
             </div>
             `;
-            })()}
+        })()}
           </div>
         </div>
       `;
 
       // Check if NID already exists in local DB
       footerEl.innerHTML = `<span class="text-[11px] text-slate-500 font-medium">Checking local database registration status...</span>`;
-      
+
       const modalPopup = document.getElementById("voterDetailPopupModal");
       modalPopup.classList.remove("hidden");
       modalPopup.classList.add("flex");
@@ -6515,8 +6754,8 @@
         if (checkRes.ok) {
           const list = await checkRes.json();
           const exists = list.some(r => (r.ninEn || "").replace(/[^0-9]/g, "") === cleanNid);
-          
-                if (exists) {
+
+          if (exists) {
             footerEl.innerHTML = `
               <div class="flex items-center gap-2 mr-auto text-rose-650 font-bold text-[10px] uppercase">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
@@ -6550,22 +6789,22 @@
 
     // ── Complete Nepal district ID map (matches election portal PermanentDistrict codes) ──
     const NEPAL_DISTRICTS_MAP = {
-      1:"Taplejung",2:"Panchthar",3:"Ilam",4:"Jhapa",5:"Morang",
-      6:"Sunsari",7:"Dhankuta",8:"Terhathum",9:"Sankhuwasabha",10:"Bhojpur",
-      11:"Solukhumbu",12:"Okhaldhunga",13:"Khotang",14:"Udayapur",15:"Saptari",
-      16:"Siraha",17:"Dhanusa",18:"Mahottari",19:"Sarlahi",20:"Sindhuli",
-      21:"Ramechhap",22:"Dolakha",23:"Sindhupalchok",24:"Kavrepalanchok",25:"Lalitpur",
-      26:"Bhaktapur",27:"Kathmandu",28:"Nuwakot",29:"Rasuwa",30:"Dhading",
-      31:"Makwanpur",32:"Rautahat",33:"Bara",34:"Parsa",35:"Chitwan",
-      36:"Gorkha",37:"Lamjung",38:"Tanahu",39:"Syangja",40:"Kaski",
-      41:"Manang",42:"Mustang",43:"Myagdi",44:"Parbat",45:"Baglung",
-      46:"Gulmi",47:"Palpa",48:"Nawalparasi West",49:"Rupandehi",50:"Kapilbastu",
-      51:"Arghakhanchi",52:"Pyuthan",53:"Rolpa",54:"Rukum East",55:"Salyan",
-      56:"Dang",57:"Banke",58:"Bardiya",59:"Surkhet",60:"Dailekh",
-      61:"Jajarkot",62:"Dolpa",63:"Jumla",64:"Kalikot",65:"Mugu",
-      66:"Humla",67:"Bajura",68:"Bajhang",69:"Achham",70:"Doti",
-      71:"Kailali",72:"Kanchanpur",73:"Dadeldhura",74:"Baitadi",75:"Darchula",
-      76:"Nawalparasi East",77:"Rukum West"
+      1: "Taplejung", 2: "Panchthar", 3: "Ilam", 4: "Jhapa", 5: "Morang",
+      6: "Sunsari", 7: "Dhankuta", 8: "Terhathum", 9: "Sankhuwasabha", 10: "Bhojpur",
+      11: "Solukhumbu", 12: "Okhaldhunga", 13: "Khotang", 14: "Udayapur", 15: "Saptari",
+      16: "Siraha", 17: "Dhanusa", 18: "Mahottari", 19: "Sarlahi", 20: "Sindhuli",
+      21: "Ramechhap", 22: "Dolakha", 23: "Sindhupalchok", 24: "Kavrepalanchok", 25: "Lalitpur",
+      26: "Bhaktapur", 27: "Kathmandu", 28: "Nuwakot", 29: "Rasuwa", 30: "Dhading",
+      31: "Makwanpur", 32: "Rautahat", 33: "Bara", 34: "Parsa", 35: "Chitwan",
+      36: "Gorkha", 37: "Lamjung", 38: "Tanahu", 39: "Syangja", 40: "Kaski",
+      41: "Manang", 42: "Mustang", 43: "Myagdi", 44: "Parbat", 45: "Baglung",
+      46: "Gulmi", 47: "Palpa", 48: "Nawalparasi West", 49: "Rupandehi", 50: "Kapilbastu",
+      51: "Arghakhanchi", 52: "Pyuthan", 53: "Rolpa", 54: "Rukum East", 55: "Salyan",
+      56: "Dang", 57: "Banke", 58: "Bardiya", 59: "Surkhet", 60: "Dailekh",
+      61: "Jajarkot", 62: "Dolpa", 63: "Jumla", 64: "Kalikot", 65: "Mugu",
+      66: "Humla", 67: "Bajura", 68: "Bajhang", 69: "Achham", 70: "Doti",
+      71: "Kailali", 72: "Kanchanpur", 73: "Dadeldhura", 74: "Baitadi", 75: "Darchula",
+      76: "Nawalparasi East", 77: "Rukum West"
     };
 
     function getResolvedAddressNames(voterData) {
@@ -6574,12 +6813,12 @@
       const provId = String(voterData.PermanentState || voterData.ProvinceCode || "");
 
       const PROVINCES = {
-        "1": { en: "Koshi",         np: "कोशी" },
-        "2": { en: "Madhesh",       np: "मधेश" },
-        "3": { en: "Bagmati",       np: "बागमती" },
-        "4": { en: "Gandaki",       np: "गण्डकी" },
-        "5": { en: "Lumbini",       np: "लुम्बिनी" },
-        "6": { en: "Karnali",       np: "कर्णाली" },
+        "1": { en: "Koshi", np: "कोशी" },
+        "2": { en: "Madhesh", np: "मधेश" },
+        "3": { en: "Bagmati", np: "बागमती" },
+        "4": { en: "Gandaki", np: "गण्डकी" },
+        "5": { en: "Lumbini", np: "लुम्बिनी" },
+        "6": { en: "Karnali", np: "कर्णाली" },
         "7": { en: "Sudurpashchim", np: "सुदूरपश्चिम" }
       };
 
@@ -6607,10 +6846,10 @@
         const found = nepalAdminData.local_levels.find(m => m.id == muniId);
         if (found) {
           const SUFFIXES = {
-            1: { en: " Metropolitan City",    np: " महानगरपालिका" },
-            2: { en: " Sub-Metropolitan City",np: " उपमहानगरपालिका" },
-            3: { en: " Municipality",         np: " नगरपालिका" },
-            4: { en: " Rural Municipality",   np: " गाउँपालिका" },
+            1: { en: " Metropolitan City", np: " महानगरपालिका" },
+            2: { en: " Sub-Metropolitan City", np: " उपमहानगरपालिका" },
+            3: { en: " Municipality", np: " नगरपालिका" },
+            4: { en: " Rural Municipality", np: " गाउँपालिका" },
           };
           const suf = SUFFIXES[found.type_id] || { en: "", np: "" };
           if (!muniEn) muniEn = (found.name_en || "") + suf.en;
@@ -6623,8 +6862,8 @@
         provinceNp: provinceNp || "—",
         districtEn: districtEn || "—",
         districtNp: districtNp || "—",
-        muniEn:     muniEn || "—",
-        muniNp:     muniNp || "—"
+        muniEn: muniEn || "—",
+        muniNp: muniNp || "—"
       };
     }
 
@@ -6767,13 +7006,13 @@
     function saveVoterWhiteCard(serializedData) {
       const voterData = JSON.parse(decodeURIComponent(serializedData));
 
-      const givenEn  = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
+      const givenEn = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
       const surnameEn = (voterData.VoterLastNameEn || "").toUpperCase();
       const fullNameEn = `${givenEn} ${surnameEn}`.trim() || "—";
       const fullNameNp = [voterData.VoterFirstName, voterData.VoterMiddleName, voterData.VoterLastName].filter(Boolean).join(" ") || "—";
-      const nid        = voterData.Nidno || "—";
-      const dobNp      = voterData.dobNp || "—";
-      const toleEn     = (voterData.PermanentVillageTol || "—").toUpperCase();
+      const nid = voterData.Nidno || "—";
+      const dobNp = voterData.dobNp || "—";
+      const toleEn = (voterData.PermanentVillageTol || "—").toUpperCase();
       // Ward: PermanentWardLoc (Nepali digits e.g. "२") is most reliable; WardNo can be wrong (0)
       const _wardNpRaw = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : '') || '';
       const ward = _wardNpRaw
@@ -6785,7 +7024,7 @@
 
       // Canvas dimensions — same as downloadWhiteCard
       const canvas = document.createElement("canvas");
-      canvas.width  = 1000;
+      canvas.width = 1000;
       canvas.height = 630;
       const ctx = canvas.getContext("2d");
 
@@ -6838,18 +7077,18 @@
           ctx.beginPath();
           ctx.roundRect(PX, PY, PW, PH, 8);
           ctx.stroke();
-          
+
           ctx.fillStyle = "#e2e8f0";
           ctx.beginPath();
-          ctx.arc(PX + PW/2, PY + 120, 55, 0, Math.PI * 2);
+          ctx.arc(PX + PW / 2, PY + 120, 55, 0, Math.PI * 2);
           ctx.fill();
           ctx.beginPath();
-          ctx.ellipse(PX + PW/2, PY + PH - 50, 95, 80, 0, Math.PI, 0);
+          ctx.ellipse(PX + PW / 2, PY + PH - 50, 95, 80, 0, Math.PI, 0);
           ctx.fill();
           ctx.fillStyle = "#94a3b8";
           ctx.font = "bold 16px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText("PHOTO", PX + PW/2, PY + PH - 15);
+          ctx.fillText("PHOTO", PX + PW / 2, PY + PH - 15);
         }
 
         // ── RIGHT COLUMN: Other Citizenship Details ──
@@ -6863,14 +7102,14 @@
 
         // Key-value grid
         const fields = [
-          { label: "Nepali Name",   value: fullNameNp },
-          { label: "English Name",  value: fullNameEn },
+          { label: "Nepali Name", value: fullNameNp },
+          { label: "English Name", value: fullNameEn },
           { label: "Date of Birth", value: dobNp },
-          { label: "Province",      value: addrNames.provinceEn },
-          { label: "District",      value: addrNames.districtEn },
-          { label: "Municipality",  value: addrNames.muniEn },
-          { label: "Tole",          value: toleEn },
-          { label: "Ward",          value: ward }
+          { label: "Province", value: addrNames.provinceEn },
+          { label: "District", value: addrNames.districtEn },
+          { label: "Municipality", value: addrNames.muniEn },
+          { label: "Tole", value: toleEn },
+          { label: "Ward", value: ward }
         ];
 
         const COL_LABEL = RX;
@@ -6913,7 +7152,7 @@
         if (photoEl.complete && photoEl.naturalWidth > 0) {
           drawCard();
         } else {
-          photoEl.onload  = drawCard;
+          photoEl.onload = drawCard;
           photoEl.onerror = drawCard;
         }
       } else {
@@ -6924,7 +7163,7 @@
 
     function populateVoterToNidCard(serializedData) {
       const voterData = JSON.parse(decodeURIComponent(serializedData));
-      
+
       // Close detail popup & bulk modal if open
       closeVoterDetailPopup();
       closeVoterBulkModal();
@@ -6957,10 +7196,10 @@
       // Address En / Np
       // Address En / Np
       const addrNames = getResolvedAddressNames(voterData);
-      const wardEn     = voterData.PermanentWard ? `Ward ${voterData.PermanentWard}` : "";
-      const wardNp     = voterData.PermanentWardLoc ? `वडा नं. ${voterData.PermanentWardLoc}` : (voterData.PermanentWard ? `वडा नं. ${voterData.PermanentWard}` : "");
-      const toleEn     = voterData.PermanentVillageTol ? voterData.PermanentVillageTol.trim() : "";
-      const toleNp     = voterData.PermanentVillageTolLoc ? voterData.PermanentVillageTolLoc.trim() : "";
+      const wardEn = voterData.PermanentWard ? `Ward ${voterData.PermanentWard}` : "";
+      const wardNp = voterData.PermanentWardLoc ? `वडा नं. ${voterData.PermanentWardLoc}` : (voterData.PermanentWard ? `वडा नं. ${voterData.PermanentWard}` : "");
+      const toleEn = voterData.PermanentVillageTol ? voterData.PermanentVillageTol.trim() : "";
+      const toleNp = voterData.PermanentVillageTolLoc ? voterData.PermanentVillageTolLoc.trim() : "";
 
       const addrEn = [toleEn, wardEn, addrNames.muniEn, addrNames.districtEn, addrNames.provinceEn].filter(Boolean).join(", ");
       const addrNp = [toleNp, wardNp, addrNames.muniNp, addrNames.districtNp, addrNames.provinceNp].filter(Boolean).join(", ");
@@ -6991,23 +7230,23 @@
       const addr = getResolvedAddressNames(D);
 
       // Names
-      const firstNp  = D.VoterFirstName   || '';
-      const midNp    = D.VoterMiddleName  || '';
-      const lastNp   = D.VoterLastName    || '';
-      const firstEn  = (D.VoterFirstNameEn  || '').toUpperCase();
-      const midEn    = (D.VoterMiddleNameEn || '').toUpperCase();
-      const lastEn   = (D.VoterLastNameEn   || '').toUpperCase();
+      const firstNp = D.VoterFirstName || '';
+      const midNp = D.VoterMiddleName || '';
+      const lastNp = D.VoterLastName || '';
+      const firstEn = (D.VoterFirstNameEn || '').toUpperCase();
+      const midEn = (D.VoterMiddleNameEn || '').toUpperCase();
+      const lastEn = (D.VoterLastNameEn || '').toUpperCase();
 
       // Family
-      const fNp = [D.FatherFirstNameLoc,D.FatherMiddleNameLoc,D.FatherLastNameLoc].filter(Boolean).join(' ');
-      const fEn = [D.FatherFirstName,D.FatherMiddleName,D.FatherLastName].filter(Boolean).join(' ');
-      const mNp = [D.MotherFirstNameLoc,D.MotherMiddleNameLoc,D.MotherLastNameLoc].filter(Boolean).join(' ');
-      const mEn = [D.MotherFirstName,D.MotherMiddleName,D.MotherLastName].filter(Boolean).join(' ');
-      const spNp= [D.SpouseFirstNameLoc,D.SpouseMiddleNameLoc,D.SpouseLastNameLoc].filter(Boolean).join(' ')
-        || [D.HusbandWifeFirstNameLoc,D.HusbandWifeMiddleNameLoc,D.HusbandWifeLastNameLoc].filter(Boolean).join(' ')
+      const fNp = [D.FatherFirstNameLoc, D.FatherMiddleNameLoc, D.FatherLastNameLoc].filter(Boolean).join(' ');
+      const fEn = [D.FatherFirstName, D.FatherMiddleName, D.FatherLastName].filter(Boolean).join(' ');
+      const mNp = [D.MotherFirstNameLoc, D.MotherMiddleNameLoc, D.MotherLastNameLoc].filter(Boolean).join(' ');
+      const mEn = [D.MotherFirstName, D.MotherMiddleName, D.MotherLastName].filter(Boolean).join(' ');
+      const spNp = [D.SpouseFirstNameLoc, D.SpouseMiddleNameLoc, D.SpouseLastNameLoc].filter(Boolean).join(' ')
+        || [D.HusbandWifeFirstNameLoc, D.HusbandWifeMiddleNameLoc, D.HusbandWifeLastNameLoc].filter(Boolean).join(' ')
         || D.HusbandWifeNameLoc || '';
-      const spEn= [D.SpouseFirstName,D.SpouseMiddleName,D.SpouseLastName].filter(Boolean).join(' ')
-        || [D.HusbandWifeFirstName,D.HusbandWifeMiddleName,D.HusbandWifeLastName].filter(Boolean).join(' ')
+      const spEn = [D.SpouseFirstName, D.SpouseMiddleName, D.SpouseLastName].filter(Boolean).join(' ')
+        || [D.HusbandWifeFirstName, D.HusbandWifeMiddleName, D.HusbandWifeLastName].filter(Boolean).join(' ')
         || D.HusbandWifeName || '';
       const spLabel = D.GenderCode === 'F' ? 'पति/पत्नी' : 'पति/पत्नी';
 
@@ -7332,9 +7571,11 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
               class="text-slate-900 font-bold"></span></div>
         </div>
         <div class="pt-2">
-          <label class="block text-slate-650 font-semibold mb-1">To confirm, type <span class="font-mono font-bold text-red-650 bg-red-50 px-1 py-0.5 rounded">UPDATE</span> below:</label>
+          <label class="block text-slate-650 font-semibold mb-1">To confirm, type <span
+              class="font-mono font-bold text-red-650 bg-red-50 px-1 py-0.5 rounded">UPDATE</span> below:</label>
           <input type="text" id="confirmModalUpdateInput" placeholder="Type UPDATE here"
-            class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all" autocomplete="off" />
+            class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
+            autocomplete="off" />
         </div>
       </div>
 
@@ -7355,10 +7596,12 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   <div id="rowDetailModal"
     class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99990] flex items-center justify-center hidden"
     onclick="if(event.target===this) closeRowDetailModal()">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Record Details</h3>
-        <button onclick="closeRowDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+        <button onclick="closeRowDetailModal()"
+          class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -7374,7 +7617,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   <div id="embeddedPdfModal"
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99950] flex items-center justify-center hidden"
     onclick="if(event.target===this) closeEmbeddedPdfModal()">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl mx-4 p-5 flex flex-col gap-4 transform scale-95 transition-all duration-300 max-h-[90vh]">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl mx-4 p-5 flex flex-col gap-4 transform scale-95 transition-all duration-300 max-h-[90vh]">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
         <div>
           <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -7382,7 +7626,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           </h3>
           <p class="text-[10px] text-slate-400 font-medium mt-0.5" id="embeddedPdfNameLabel">NID_Card.pdf</p>
         </div>
-        <button onclick="closeEmbeddedPdfModal()" class="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100">
+        <button onclick="closeEmbeddedPdfModal()"
+          class="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -7390,21 +7635,26 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       </div>
 
       <!-- Password Prompt Block -->
-      <div id="embeddedPdfPasswordPrompt" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-3">
+      <div id="embeddedPdfPasswordPrompt"
+        class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-3">
         <p class="text-xs font-medium text-slate-700">Enter PDF Password to decrypt and view preview:</p>
         <div class="flex gap-2 justify-center max-w-sm mx-auto">
           <input type="text" id="embeddedPdfPasswordInput" placeholder="Password (e.g. SUJA2062)"
-            class="flex-1 bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all uppercase" autocomplete="off" />
+            class="flex-1 bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all uppercase"
+            autocomplete="off" />
           <button onclick="submitEmbeddedPdfPassword()"
             class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shrink-0">
             Submit
           </button>
         </div>
-        <div id="embeddedPdfPasswordError" class="text-[10px] text-red-600 font-semibold hidden">Incorrect password. Please try again.</div>
+        <div id="embeddedPdfPasswordError" class="text-[10px] text-red-600 font-semibold hidden">Incorrect password.
+          Please try again.</div>
       </div>
 
       <!-- PDF Canvas Viewport Container -->
-      <div class="flex-1 overflow-auto bg-slate-900 border border-slate-850 rounded-xl p-4 flex items-center justify-center relative min-h-[250px]" style="scrollbar-width:thin;">
+      <div
+        class="flex-1 overflow-auto bg-slate-900 border border-slate-850 rounded-xl p-4 flex items-center justify-center relative min-h-[250px]"
+        style="scrollbar-width:thin;">
         <div id="embeddedPdfCanvasContainer" class="hidden shadow-lg bg-white p-1 rounded">
           <canvas id="embeddedPdfCanvas" class="max-w-full rounded"></canvas>
         </div>
@@ -7436,7 +7686,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   <!-- Custom Beautiful Alert Modal -->
   <div id="customAlertModal"
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
       <div class="flex justify-between items-center border-b border-slate-100 pb-2">
         <h3 id="customAlertTitle" class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
           <!-- Icon + Title dynamically updated -->
@@ -7478,7 +7729,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
       <div class="space-y-4 text-xs text-slate-700">
         <div>
-          <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Select Registration Period</label>
+          <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Select Registration
+            Period</label>
           <select id="printPeriodSelect" onchange="togglePrintCustomDates()"
             class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
             <option value="all">All Dates</option>
@@ -7492,7 +7744,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         </div>
 
         <div>
-          <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Select Execution Status / Filter</label>
+          <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Select Execution
+            Status / Filter</label>
           <select id="printStatusSelect"
             class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
             <option value="all">All Records</option>
@@ -7508,11 +7761,13 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <div id="printCustomDatesRow" class="grid grid-cols-2 gap-3 hidden">
           <div>
             <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Start Date</label>
-            <input type="date" id="printStartDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all" />
+            <input type="date" id="printStartDate"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all" />
           </div>
           <div>
             <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">End Date</label>
-            <input type="date" id="printEndDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all" />
+            <input type="date" id="printEndDate"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all" />
           </div>
         </div>
       </div>
@@ -7532,29 +7787,37 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
   <!-- Voter Bulk Results Modal (Full Screen) -->
   <div id="voterBulkResultsModal" class="fixed inset-0 z-50 items-center justify-center p-6 hidden animate-fade-in"
-       style="background:rgba(15, 23, 42, 0.6); backdrop-filter:blur(6px);">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[95vw] h-[90vh] flex flex-col overflow-hidden max-w-[1400px]">
+    style="background:rgba(15, 23, 42, 0.6); backdrop-filter:blur(6px);">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[95vw] h-[90vh] flex flex-col overflow-hidden max-w-[1400px]">
       <!-- Header -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-900">
         <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-blue-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          <svg class="w-5 h-5 text-blue-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
           <h2 class="text-white font-bold text-sm uppercase tracking-wider">Voter Bulk Search Control Panel</h2>
         </div>
-        <button type="button" onclick="closeVoterBulkModal()" class="text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase">✕ Close</button>
+        <button type="button" onclick="closeVoterBulkModal()"
+          class="text-slate-400 hover:text-white transition-colors text-xs font-bold uppercase">✕ Close</button>
       </div>
-      
+
       <!-- Stats / Actions -->
       <div class="bg-slate-50 border-b border-slate-200 p-4 flex flex-wrap justify-between items-center gap-4">
         <div class="flex gap-4 items-center">
-           <span class="text-xs font-bold text-slate-500 uppercase">Filters:</span>
-           <div class="flex gap-2">
-              <button id="vbmFilterAll" onclick="filterVoterBulk('all')" class="px-3 py-1 rounded bg-blue-600 text-white font-bold text-[10px] uppercase shadow-sm">All</button>
-              <button id="vbmFilterFound" onclick="filterVoterBulk('found')" class="px-3 py-1 rounded bg-slate-200 text-slate-700 hover:bg-slate-350 font-bold text-[10px] uppercase">Found</button>
-              <button id="vbmFilterFailed" onclick="filterVoterBulk('failed')" class="px-3 py-1 rounded bg-slate-200 text-slate-700 hover:bg-slate-350 font-bold text-[10px] uppercase">Failed</button>
-           </div>
+          <span class="text-xs font-bold text-slate-500 uppercase">Filters:</span>
+          <div class="flex gap-2">
+            <button id="vbmFilterAll" onclick="filterVoterBulk('all')"
+              class="px-3 py-1 rounded bg-blue-600 text-white font-bold text-[10px] uppercase shadow-sm">All</button>
+            <button id="vbmFilterFound" onclick="filterVoterBulk('found')"
+              class="px-3 py-1 rounded bg-slate-200 text-slate-700 hover:bg-slate-350 font-bold text-[10px] uppercase">Found</button>
+            <button id="vbmFilterFailed" onclick="filterVoterBulk('failed')"
+              class="px-3 py-1 rounded bg-slate-200 text-slate-700 hover:bg-slate-350 font-bold text-[10px] uppercase">Failed</button>
+          </div>
         </div>
         <div class="text-[10px] text-slate-400 font-mono">
-           Click any row to view complete details or register the card.
+          Click any row to view complete details or register the card.
         </div>
       </div>
 
@@ -7584,48 +7847,58 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
   <!-- Voter Detail Popup Modal -->
   <div id="voterDetailPopupModal" class="fixed inset-0 z-[60] items-center justify-center p-4 hidden"
-       style="background:rgba(15, 23, 42, 0.7); backdrop-filter:blur(6px);">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden animate-zoom-in">
+    style="background:rgba(15, 23, 42, 0.7); backdrop-filter:blur(6px);">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full flex flex-col overflow-hidden animate-zoom-in">
       <!-- Header -->
       <div class="flex justify-between items-center px-4 py-3 bg-gradient-to-r from-blue-700 to-blue-800">
         <div class="flex items-center gap-2">
-          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
           <span class="font-bold text-white text-xs uppercase tracking-wider">Voter Detail Information</span>
         </div>
-        <button type="button" onclick="closeVoterDetailPopup()" class="text-blue-100 hover:text-white text-[10px] font-bold uppercase">✕ Close</button>
+        <button type="button" onclick="closeVoterDetailPopup()"
+          class="text-blue-100 hover:text-white text-[10px] font-bold uppercase">✕ Close</button>
       </div>
 
       <!-- Body (detailed viewer) -->
       <div class="p-4 space-y-4 max-h-[85vh] overflow-y-auto" id="voterDetailPopupContent">
-         <!-- Loaded dynamically -->
+        <!-- Loaded dynamically -->
       </div>
 
       <!-- Footer actions -->
       <div class="bg-slate-50 border-t border-slate-100 px-4 py-3 flex justify-end gap-3" id="voterDetailPopupFooter">
-         <!-- Populated dynamically -->
+        <!-- Populated dynamically -->
       </div>
     </div>
   </div>
 
   <!-- A4 Print Container -->
   <div id="a4PrintContainer"></div>
-  
+
   <!-- Single Card Print Container -->
   <div id="singleCardPrintContainer"></div>
 
   <!-- ===== NID + VOTER WHITE CARD MODAL ===== -->
   <div id="nidVoterModal" class="fixed inset-0 z-[70] items-center justify-center p-4 hidden"
-       style="background:rgba(15,23,42,0.78); backdrop-filter:blur(6px);">
+    style="background:rgba(15,23,42,0.78); backdrop-filter:blur(6px);">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-[680px] max-h-[92vh] flex flex-col overflow-hidden">
 
       <!-- Header -->
-      <div class="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-700 rounded-t-2xl">
+      <div
+        class="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-700 rounded-t-2xl">
         <div>
-          <h2 class="text-white font-bold text-sm tracking-wide" id="nidVoterModalTitle">🪪 NID Card Found — Continue Verification</h2>
-          <p class="text-indigo-100 text-[11px] mt-0.5" id="nidVoterModalSubtitle">Record matched. Enter OTP below to proceed.</p>
+          <h2 class="text-white font-bold text-sm tracking-wide" id="nidVoterModalTitle">🪪 NID Card Found — Continue
+            Verification</h2>
+          <p class="text-indigo-100 text-[11px] mt-0.5" id="nidVoterModalSubtitle">Record matched. Enter OTP below to
+            proceed.</p>
         </div>
         <button onclick="closeNidVoterModal()" class="text-white hover:text-indigo-200 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
@@ -7636,10 +7909,16 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <div id="nidVoterFallbackSection" class="hidden space-y-4">
           <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-3">
             <div class="flex items-start gap-2">
-              <svg class="w-4 h-4 text-rose-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <svg class="w-4 h-4 text-rose-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd" />
+              </svg>
               <div>
-                <div id="nidVoterMnrHeader" class="font-bold text-rose-700 text-[11px] uppercase tracking-wide">Mobile Not Registered</div>
-                <div id="nidVoterMnrErrorText" class="text-rose-600 text-[10px] mt-0.5">OTP could not be sent. Enter the NID number below to search the voter list directly.</div>
+                <div id="nidVoterMnrHeader" class="font-bold text-rose-700 text-[11px] uppercase tracking-wide">Mobile
+                  Not Registered</div>
+                <div id="nidVoterMnrErrorText" class="text-rose-600 text-[10px] mt-0.5">OTP could not be sent. Enter the
+                  NID number below to search the voter list directly.</div>
               </div>
             </div>
             <div>
@@ -7659,8 +7938,10 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <!-- White Card Preview -->
         <div id="nidVoterWhiteCardSection" class="space-y-2">
           <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Voter White Card Preview</div>
-          <div class="flex items-center justify-center bg-slate-50 border border-slate-200 rounded-xl p-2 overflow-hidden">
-            <img id="nidVoterWhiteCardImg" src="" alt="White Card" class="max-w-full rounded" style="max-height:260px;" />
+          <div
+            class="flex items-center justify-center bg-slate-50 border border-slate-200 rounded-xl p-2 overflow-hidden">
+            <img id="nidVoterWhiteCardImg" src="" alt="White Card" class="max-w-full rounded"
+              style="max-height:260px;" />
           </div>
           <div class="flex gap-2">
             <button onclick="downloadNidVoterPaper()"
@@ -7692,7 +7973,9 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
             </div>
           </div>
           <div class="flex justify-end pt-0.5">
-            <button onclick="closeNidVoterModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">Resend OTP / Start Over</button>
+            <button onclick="closeNidVoterModal()"
+              class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">Resend
+              OTP / Start Over</button>
           </div>
         </div>
 
@@ -7722,13 +8005,18 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         </div>
 
         <!-- Success Section -->
-        <div id="nidVoterSuccessSection" class="hidden space-y-3 text-center p-5 bg-slate-50 rounded-xl border border-slate-200">
-          <div class="w-14 h-14 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
-            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        <div id="nidVoterSuccessSection"
+          class="hidden space-y-3 text-center p-5 bg-slate-50 rounded-xl border border-slate-200">
+          <div
+            class="w-14 h-14 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+            <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
           </div>
           <div class="text-sm font-bold text-emerald-700">Verification Complete!</div>
           <div class="text-xs text-slate-600">NID card token verified and database updated.</div>
-          <button onclick="closeNidVoterModal()" class="mt-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
+          <button onclick="closeNidVoterModal()"
+            class="mt-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
         </div>
 
       </div>
@@ -7736,362 +8024,368 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   </div>
 
   <script>
-  // ── Voter NID modal state ──
-  let _nidVoterCurrentData = null;
+    // ── Voter NID modal state ──
+    let _nidVoterCurrentData = null;
 
-  // Called when user clicks "Search" inside the NID Voter fallback/error section
-  async function searchVoterByManualNid() {
-    const nid = document.getElementById("nidVoterMnrNidInput").value.trim();
-    if (!nid) { alert("Please enter the NID number."); return; }
+    // Called when user clicks "Search" inside the NID Voter fallback/error section
+    async function searchVoterByManualNid() {
+      const nid = document.getElementById("nidVoterMnrNidInput").value.trim();
+      if (!nid) { alert("Please enter the NID number."); return; }
 
-    // Get DOB from portal BS field → convert to AD
-    const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
-    const _dobBsEn  = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
-    const _dobAd    = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
-    if (!_dobAd) { alert("Could not convert Date of Birth. Make sure BS DOB is filled in."); return; }
+      // Get DOB from portal BS field → convert to AD
+      const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
+      const _dobBsEn = translateDigits(_dobBsRaw, nepaliToEnglishDigits);
+      const _dobAd = convertBsToAd(_dobBsEn.replace(/\//g, "-"));
+      if (!_dobAd) { alert("Could not convert Date of Birth. Make sure BS DOB is filled in."); return; }
 
-    // First name from English full name field
-    const _fullEn   = document.getElementById("portalFullNameEn").value.trim();
-    const _firstName = _fullEn.split(" ")[0].toLowerCase();
-    if (!_firstName) { alert("Please fill in the Full Name (English) field first."); return; }
+      // First name from English full name field
+      const _fullEn = document.getElementById("portalFullNameEn").value.trim();
+      const _firstName = _fullEn.split(" ")[0].toLowerCase();
+      if (!_firstName) { alert("Please fill in the Full Name (English) field first."); return; }
 
-    const btn = document.querySelector("#nidVoterFallbackSection button");
-    if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
+      const btn = document.querySelector("#nidVoterFallbackSection button");
+      if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
 
-    try {
-      const res = await fetch(`${API_BASE}/api/voter-search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nin: nid, dob: _dobAd, firstname: _firstName })
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.data) {
-        _nidVoterCurrentData = data.data;
-        document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
-        document.getElementById("nidVoterModalSubtitle").innerText = "Record matched. Enter OTP below to proceed.";
-        document.getElementById("nidVoterFallbackSection").classList.add("hidden");
-        openNidVoterModal(data.data, false);  // OTP failed for this person — don't show OTP box
-      } else {
-        const errMsg = data.error || "Voter record not found for this NID.";
-        document.getElementById("nidVoterMnrErrorText").innerText = errMsg;
+      try {
+        const res = await fetch(`${API_BASE}/api/voter-search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nin: nid, dob: _dobAd, firstname: _firstName })
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.data) {
+          _nidVoterCurrentData = data.data;
+          document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
+          document.getElementById("nidVoterModalSubtitle").innerText = "Record matched. Enter OTP below to proceed.";
+          document.getElementById("nidVoterFallbackSection").classList.add("hidden");
+          openNidVoterModal(data.data, false);  // OTP failed for this person — don't show OTP box
+        } else {
+          const errMsg = data.error || "Voter record not found for this NID.";
+          document.getElementById("nidVoterMnrErrorText").innerText = errMsg;
+        }
+      } catch (err) {
+        alert("Search error: " + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = "Search"; }
       }
-    } catch (err) {
-      alert("Search error: " + err.message);
-    } finally {
-      if (btn) { btn.disabled = false; btn.innerText = "Search"; }
-    }
-  }
-
-  function openNidVoterModalWithError(code, rawMsg, voterData = null) {
-    document.getElementById("nidVoterModalTitle").innerText = "⚠️ Verification Error";
-    document.getElementById("nidVoterModalSubtitle").innerText = "OTP could not be processed. Use fallback search.";
-    
-    if (code === "DATA_NOT_FOUND" || (rawMsg && rawMsg.includes("DATA_NOT_FOUND"))) {
-      document.getElementById("nidVoterMnrHeader").innerText = "Data Not Found";
-      document.getElementById("nidVoterMnrErrorText").innerText = rawMsg || "Record not found on government server. Enter NID below to search voter list.";
-    } else {
-      document.getElementById("nidVoterMnrHeader").innerText = "Mobile Not Registered";
-      document.getElementById("nidVoterMnrErrorText").innerText = rawMsg || "Mobile number not registered. Enter NID below to search voter list.";
     }
 
-    document.getElementById("nidVoterMnrNidInput").value = "";
-    document.getElementById("nidVoterFallbackSection").classList.remove("hidden");
-    
-    if (voterData) {
+    function openNidVoterModalWithError(code, rawMsg, voterData = null) {
+      document.getElementById("nidVoterModalTitle").innerText = "⚠️ Verification Error";
+      document.getElementById("nidVoterModalSubtitle").innerText = "OTP could not be processed. Use fallback search.";
+
+      if (code === "DATA_NOT_FOUND" || (rawMsg && rawMsg.includes("DATA_NOT_FOUND"))) {
+        document.getElementById("nidVoterMnrHeader").innerText = "Data Not Found";
+        document.getElementById("nidVoterMnrErrorText").innerText = rawMsg || "Record not found on government server. Enter NID below to search voter list.";
+      } else {
+        document.getElementById("nidVoterMnrHeader").innerText = "Mobile Not Registered";
+        document.getElementById("nidVoterMnrErrorText").innerText = rawMsg || "Mobile number not registered. Enter NID below to search voter list.";
+      }
+
+      document.getElementById("nidVoterMnrNidInput").value = "";
+      document.getElementById("nidVoterFallbackSection").classList.remove("hidden");
+
+      if (voterData) {
+        _nidVoterCurrentData = voterData;
+        renderVoterWhiteCardToDataUrl(voterData, (dataUrl) => {
+          document.getElementById("nidVoterWhiteCardImg").src = dataUrl;
+        });
+        document.getElementById("nidVoterWhiteCardSection").classList.remove("hidden");
+      } else {
+        document.getElementById("nidVoterWhiteCardSection").classList.add("hidden");
+      }
+
+      document.getElementById("nidVoterOtpSection").classList.add("hidden");
+      document.getElementById("nidVoterDownloadSection").classList.add("hidden");
+      document.getElementById("nidVoterTokenSection").classList.add("hidden");
+      document.getElementById("nidVoterSuccessSection").classList.add("hidden");
+
+      // Open Modal
+      const modal = document.getElementById("nidVoterModal");
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+      modal.style.alignItems = "center";
+      modal.style.justifyContent = "center";
+    }
+
+    function closeNidVoterModal() {
+      const m = document.getElementById("nidVoterModal");
+      m.classList.add("hidden");
+      m.style.display = "";
+      _nidVoterCurrentData = null;
+
+      // Refresh captcha and show input row on close
+      loadPortalCaptcha(false);
+      document.getElementById("portalCaptchaInputRow").classList.remove("hidden");
+      document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+    }
+
+    function downloadNidVoterPaper() {
+      if (!_nidVoterCurrentData) return;
+      downloadVoterPaper(encodeURIComponent(JSON.stringify(_nidVoterCurrentData)));
+    }
+
+    function toggleNidSearchPortal() {
+      const box = document.getElementById("nidNumberSearchPortalBox");
+      if (box) {
+        if (box.classList.contains("hidden")) {
+          box.classList.remove("hidden");
+        } else {
+          box.classList.add("hidden");
+        }
+      }
+    }
+
+    // Silent background voter search triggered after OTP step 2
+    async function autoVoterSearchForNid(nin, dobAd, firstname) {
+      try {
+        const res = await fetch(`${API_BASE}/api/voter-search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nin, dob: dobAd, firstname })
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.data) {
+          openNidVoterModal(data.data);
+        }
+      } catch (err) {
+        // Silent fail
+      }
+    }
+
+
+
+    function openNidVoterModal(voterData, showOtp = true) {
       _nidVoterCurrentData = voterData;
+
+      // Render white card and set as img src
       renderVoterWhiteCardToDataUrl(voterData, (dataUrl) => {
         document.getElementById("nidVoterWhiteCardImg").src = dataUrl;
       });
+
+      // Copy OTP info text from main portal
+      const otpInfoEl = document.getElementById("portalOtpInfoText");
+      document.getElementById("nidVoterOtpInfo").innerText = otpInfoEl ? otpInfoEl.innerText : "—";
+
+      // Ensure correct title
+      document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
+      document.getElementById("nidVoterModalSubtitle").innerText = showOtp
+        ? "Record matched. Enter OTP below to proceed."
+        : "Record matched. OTP not available for this person.";
+
+      // Show white card, hide fallback / other sections
       document.getElementById("nidVoterWhiteCardSection").classList.remove("hidden");
-    } else {
-      document.getElementById("nidVoterWhiteCardSection").classList.add("hidden");
-    }
+      document.getElementById("nidVoterFallbackSection").classList.add("hidden");
 
-    document.getElementById("nidVoterOtpSection").classList.add("hidden");
-    document.getElementById("nidVoterDownloadSection").classList.add("hidden");
-    document.getElementById("nidVoterTokenSection").classList.add("hidden");
-    document.getElementById("nidVoterSuccessSection").classList.add("hidden");
-
-    // Open Modal
-    const modal = document.getElementById("nidVoterModal");
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    modal.style.alignItems = "center";
-    modal.style.justifyContent = "center";
-  }
-
-  function closeNidVoterModal() {
-    const m = document.getElementById("nidVoterModal");
-    m.classList.add("hidden");
-    m.style.display = "";
-    _nidVoterCurrentData = null;
-
-    // Refresh captcha and show input row on close
-    loadPortalCaptcha(false);
-    document.getElementById("portalCaptchaInputRow").classList.remove("hidden");
-    document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
-  }
-
-  function downloadNidVoterPaper() {
-    if (!_nidVoterCurrentData) return;
-    downloadVoterPaper(encodeURIComponent(JSON.stringify(_nidVoterCurrentData)));
-  }
-
-  function toggleNidSearchPortal() {
-    const box = document.getElementById("nidNumberSearchPortalBox");
-    if (box) {
-      if (box.classList.contains("hidden")) {
-        box.classList.remove("hidden");
+      // Show or hide OTP section based on whether OTP was sent
+      if (showOtp) {
+        document.getElementById("nidVoterOtpSection").classList.remove("hidden");
       } else {
-        box.classList.add("hidden");
+        document.getElementById("nidVoterOtpSection").classList.add("hidden");
       }
-    }
-  }
-
-  // Silent background voter search triggered after OTP step 2
-  async function autoVoterSearchForNid(nin, dobAd, firstname) {
-    try {
-      const res = await fetch(`${API_BASE}/api/voter-search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nin, dob: dobAd, firstname })
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.data) {
-        openNidVoterModal(data.data);
-      }
-    } catch (err) {
-      // Silent fail
-    }
-  }
-
-
-
-  function openNidVoterModal(voterData, showOtp = true) {
-    _nidVoterCurrentData = voterData;
-
-    // Render white card and set as img src
-    renderVoterWhiteCardToDataUrl(voterData, (dataUrl) => {
-      document.getElementById("nidVoterWhiteCardImg").src = dataUrl;
-    });
-
-    // Copy OTP info text from main portal
-    const otpInfoEl = document.getElementById("portalOtpInfoText");
-    document.getElementById("nidVoterOtpInfo").innerText = otpInfoEl ? otpInfoEl.innerText : "—";
-
-    // Ensure correct title
-    document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
-    document.getElementById("nidVoterModalSubtitle").innerText = showOtp
-      ? "Record matched. Enter OTP below to proceed."
-      : "Record matched. OTP not available for this person.";
-
-    // Show white card, hide fallback / other sections
-    document.getElementById("nidVoterWhiteCardSection").classList.remove("hidden");
-    document.getElementById("nidVoterFallbackSection").classList.add("hidden");
-
-    // Show or hide OTP section based on whether OTP was sent
-    if (showOtp) {
-      document.getElementById("nidVoterOtpSection").classList.remove("hidden");
-    } else {
-      document.getElementById("nidVoterOtpSection").classList.add("hidden");
-    }
-    document.getElementById("nidVoterDownloadSection").classList.add("hidden");
-    document.getElementById("nidVoterTokenSection").classList.add("hidden");
-    document.getElementById("nidVoterSuccessSection").classList.add("hidden");
-    document.getElementById("nidVoterOtpCode").value = "";
-
-    // Show modal
-    const modal = document.getElementById("nidVoterModal");
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
-    modal.style.alignItems = "center";
-    modal.style.justifyContent = "center";
-  }
-
-
-  function saveNidVoterWhiteCard() {
-    if (!_nidVoterCurrentData) return;
-    saveVoterWhiteCard(encodeURIComponent(JSON.stringify(_nidVoterCurrentData)));
-  }
-
-  async function verifyNidVoterOtp() {
-    const otp = document.getElementById("nidVoterOtpCode").value.trim();
-    if (!otp) { alert("Please enter the OTP code."); return; }
-    if (!portalNinValue) { alert("NIN missing. Please start over."); closeNidVoterModal(); return; }
-
-    // Mirror OTP to main portal field (keeps existing verify flow in sync)
-    document.getElementById("portalOtpCode").value = otp;
-
-    const btn = document.getElementById("btnNidVoterVerifyOtp");
-    const origText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = "Verifying...";
-
-    try {
-      const res = await fetch(`${API_BASE}/api/verify-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nin: portalNinValue, otp })
-      });
-      if (!res.ok) {
-        let errMsg = res.statusText;
-        try { const e = await res.json(); errMsg = e.error || errMsg; } catch(e) {}
-        alert(`OTP Verification failed: ${errMsg}`);
-        return;
-      }
-      const data = await res.json();
-      portalDownloadToken = data.downloadToken;
-
-      // Advance modal to download step
-      document.getElementById("nidVoterOtpSection").classList.add("hidden");
-      document.getElementById("nidVoterDownloadSection").classList.remove("hidden");
-
-      // Also advance main portal (stays in sync)
-      document.getElementById("portalOtpRow").classList.add("hidden");
-      document.getElementById("portalDownloadRow").classList.remove("hidden");
-      showPortalStep(3);
-    } catch (err) {
-      alert("Network error verifying OTP: " + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = origText;
-    }
-  }
-
-  async function executeNidVoterDownload() {
-    const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
-    const fullNameNp = document.getElementById("portalFullNameNp").value.trim();
-    const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
-    const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
-    const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
-    const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
-
-    if (!fullName || !fullNameNp || !dobLoc || !ccnIssuingDateLoc) {
-      alert("Please fill all form fields (name, DOB, citizenship date) first."); return;
-    }
-    if (!portalDownloadToken) {
-      alert("Verification token missing. Please complete OTP verification first."); return;
-    }
-
-    const btn = document.getElementById("btnNidVoterDownload");
-    const origText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = "Downloading...";
-
-    try {
-      const res = await fetch(`${API_BASE}/api/download`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Download-Token": portalDownloadToken },
-        body: JSON.stringify({ dob_loc: dobLoc, ccn_issuing_date_loc: ccnIssuingDateLoc, full_name: fullName, full_name_loc: fullNameNp })
-      });
-      if (!res.ok) {
-        let errMsg = res.statusText;
-        try { const e = await res.json(); errMsg = e.error || errMsg; } catch(e) {}
-        alert(`Download failed: ${errMsg}`); return;
-      }
-      const encryptedBlob = await res.blob();
-
-      // Calculate password
-      const nameOnly  = fullName.replace(/\s+/g, "");
-      const namePart  = nameOnly.substring(0, 4).toUpperCase();
-      const dobEn     = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-      const yearPart  = dobEn.replace(/\//g, "-").split("-")[0].substring(0, 4);
-      const clipCode  = namePart + yearPart;
-
-      try { await navigator.clipboard.writeText(clipCode); } catch(e) {}
-
-      const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
-
-      // Trigger browser download for the PDF file directly to disk
-      const dlLink = document.createElement("a");
-      dlLink.href = URL.createObjectURL(encryptedBlob);
-      dlLink.download = filename;
-      document.body.appendChild(dlLink);
-      dlLink.click();
-      document.body.removeChild(dlLink);
-
-      openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
-
-      // Advance modal to token step
       document.getElementById("nidVoterDownloadSection").classList.add("hidden");
-      document.getElementById("nidVoterTokenSection").classList.remove("hidden");
-      document.getElementById("nidVoterScannedToken").value = "";
+      document.getElementById("nidVoterTokenSection").classList.add("hidden");
+      document.getElementById("nidVoterSuccessSection").classList.add("hidden");
+      document.getElementById("nidVoterOtpCode").value = "";
 
-      // Also advance main portal
-      document.getElementById("portalDownloadRow").classList.add("hidden");
-      document.getElementById("portalManualTokenRow").classList.remove("hidden");
-      document.getElementById("portalScannedTokenVal").value = "";
-      showPortalStep(4);
-    } catch (err) {
-      alert(`Error downloading: ${err.message}`);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = origText;
+      // Show modal
+      const modal = document.getElementById("nidVoterModal");
+      modal.classList.remove("hidden");
+      modal.style.display = "flex";
+      modal.style.alignItems = "center";
+      modal.style.justifyContent = "center";
     }
-  }
 
-  async function verifyNidVoterToken() {
-    const inputVal = document.getElementById("nidVoterScannedToken").value.trim();
-    if (!inputVal) { alert("Please paste the scanned QR URL or token first."); return; }
 
-    // Sync to main portal token field so verifyAndSavePortalScannedToken() works
-    document.getElementById("portalScannedTokenVal").value = inputVal;
+    function saveNidVoterWhiteCard() {
+      if (!_nidVoterCurrentData) return;
+      saveVoterWhiteCard(encodeURIComponent(JSON.stringify(_nidVoterCurrentData)));
+    }
 
-    const btn = document.getElementById("btnNidVoterVerifyToken");
-    const origText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = "Verifying...";
+    async function verifyNidVoterOtp() {
+      const otp = document.getElementById("nidVoterOtpCode").value.trim();
+      if (!otp) { alert("Please enter the OTP code."); return; }
+      if (!portalNinValue) { alert("NIN missing. Please start over."); closeNidVoterModal(); return; }
 
-    try {
-      const extracted = extractPortalToken(inputVal);
+      // Mirror OTP to main portal field (keeps existing verify flow in sync)
+      document.getElementById("portalOtpCode").value = otp;
 
-      const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extracted)}`);
-      if (!checkRes.ok) throw new Error("Token verification request failed.");
-      const checkData = await checkRes.json();
-      if (!checkData.valid) throw new Error("Token could not be verified. Please scan the correct QR code.");
+      const btn = document.getElementById("btnNidVoterVerifyOtp");
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Verifying...";
 
-      if (portalNinValue) {
-        const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
-          method: "PUT",
+      try {
+        const res = await fetch(`${API_BASE}/api/verify-otp`, {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: extracted, status: "done" })
+          body: JSON.stringify({ nin: portalNinValue, otp })
         });
-        if (!saveRes.ok) throw new Error("Failed to save verified token to database.");
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try { const e = await res.json(); errMsg = e.error || errMsg; } catch (e) { }
+          alert(`OTP Verification failed: ${errMsg}`);
+          return;
+        }
+        const data = await res.json();
+        portalDownloadToken = data.downloadToken;
+
+        // Advance modal to download step
+        document.getElementById("nidVoterOtpSection").classList.add("hidden");
+        document.getElementById("nidVoterDownloadSection").classList.remove("hidden");
+
+        // Also advance main portal (stays in sync)
+        document.getElementById("portalOtpRow").classList.add("hidden");
+        document.getElementById("portalDownloadRow").classList.remove("hidden");
+        showPortalStep(3);
+      } catch (err) {
+        alert("Network error verifying OTP: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
+
+    async function executeNidVoterDownload() {
+      const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
+      const fullNameNp = document.getElementById("portalFullNameNp").value.trim();
+      const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
+      const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
+      const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
+      const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
+
+      if (!fullName || !fullNameNp || !dobLoc || !ccnIssuingDateLoc) {
+        alert("Please fill all form fields (name, DOB, citizenship date) first."); return;
+      }
+      if (!portalDownloadToken) {
+        alert("Verification token missing. Please complete OTP verification first."); return;
       }
 
-      // Show success in modal
-      document.getElementById("nidVoterTokenSection").classList.add("hidden");
-      document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
+      const btn = document.getElementById("btnNidVoterDownload");
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Downloading...";
 
-      // Also advance main portal
-      document.getElementById("portalManualTokenRow").classList.add("hidden");
-      document.getElementById("portalSuccessRow").classList.remove("hidden");
-      showPortalStep(5);
+      try {
+        const res = await fetch(`${API_BASE}/api/download`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Download-Token": portalDownloadToken },
+          body: JSON.stringify({ dob_loc: dobLoc, ccn_issuing_date_loc: ccnIssuingDateLoc, full_name: fullName, full_name_loc: fullNameNp })
+        });
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try { const e = await res.json(); errMsg = e.error || errMsg; } catch (e) { }
+          alert(`Download failed: ${errMsg}`); return;
+        }
+        const encryptedBlob = await res.blob();
 
-      if (typeof fetchDatabase === "function") fetchDatabase(true);
-    } catch (err) {
-      alert(`❌ Error: ${err.message}`);
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = origText;
+        // Calculate password
+        const nameOnly = fullName.replace(/\s+/g, "");
+        const namePart = nameOnly.substring(0, 4).toUpperCase();
+        const dobEn = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
+        const yearPart = dobEn.replace(/\//g, "-").split("-")[0].substring(0, 4);
+        const clipCode = namePart + yearPart;
+
+        try { await navigator.clipboard.writeText(clipCode); } catch (e) { }
+
+        const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
+
+        // Trigger browser download for the PDF file directly to disk
+        const dlLink = document.createElement("a");
+        dlLink.href = URL.createObjectURL(encryptedBlob);
+        dlLink.download = filename;
+        document.body.appendChild(dlLink);
+        dlLink.click();
+        document.body.removeChild(dlLink);
+
+        openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
+
+        // Advance modal to token step
+        document.getElementById("nidVoterDownloadSection").classList.add("hidden");
+        document.getElementById("nidVoterTokenSection").classList.remove("hidden");
+        document.getElementById("nidVoterScannedToken").value = "";
+
+        // Also advance main portal
+        document.getElementById("portalDownloadRow").classList.add("hidden");
+        document.getElementById("portalManualTokenRow").classList.remove("hidden");
+        document.getElementById("portalScannedTokenVal").value = "";
+        showPortalStep(4);
+      } catch (err) {
+        alert(`Error downloading: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
     }
-  }
+
+    async function verifyNidVoterToken() {
+      const inputVal = document.getElementById("nidVoterScannedToken").value.trim();
+      if (!inputVal) { alert("Please paste the scanned QR URL or token first."); return; }
+
+      // Sync to main portal token field so verifyAndSavePortalScannedToken() works
+      document.getElementById("portalScannedTokenVal").value = inputVal;
+
+      const btn = document.getElementById("btnNidVoterVerifyToken");
+      const origText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Verifying...";
+
+      try {
+        const extracted = extractPortalToken(inputVal);
+
+        const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extracted)}`);
+        if (!checkRes.ok) throw new Error("Token verification request failed.");
+        const checkData = await checkRes.json();
+        if (!checkData.valid) throw new Error("Token could not be verified. Please scan the correct QR code.");
+
+        if (portalNinValue) {
+          const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(portalNinValue)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: extracted, status: "done" })
+          });
+          if (!saveRes.ok) throw new Error("Failed to save verified token to database.");
+        }
+
+        // Show success in modal
+        document.getElementById("nidVoterTokenSection").classList.add("hidden");
+        document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
+
+        // Also advance main portal
+        document.getElementById("portalManualTokenRow").classList.add("hidden");
+        document.getElementById("portalSuccessRow").classList.remove("hidden");
+        showPortalStep(5);
+
+        if (typeof fetchDatabase === "function") fetchDatabase(true);
+      } catch (err) {
+        alert(`❌ Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+      }
+    }
   </script>
 
 
   <!-- ===== NIN SEARCH RESULT MODAL ===== -->
-  <div id="ninSearchResultModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
+  <div id="ninSearchResultModal"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
       <!-- Header -->
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
         <div class="flex items-center gap-2">
           <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0"/></svg>
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0" />
+            </svg>
           </div>
           <span class="font-bold text-slate-800 text-sm">Voter Record Search Result</span>
         </div>
         <button onclick="closeNinResultModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
@@ -8100,7 +8394,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <!-- White Card Preview -->
         <div class="p-4 border-b border-slate-100 bg-slate-50">
           <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Voter Identity Card Preview</p>
-          <img id="ninResultWhiteCardImg" src="" alt="Voter White Card" class="w-full rounded-xl border border-slate-200 shadow-sm bg-white" />
+          <img id="ninResultWhiteCardImg" src="" alt="Voter White Card"
+            class="w-full rounded-xl border border-slate-200 shadow-sm bg-white" />
         </div>
         <!-- Info Row -->
         <div class="px-5 py-3 border-t border-slate-100">
@@ -8109,20 +8404,38 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
             <p id="ninResultNidDisplay" class="text-xs text-slate-500 font-mono mt-0.5"></p>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="saveNidFlowWhiteCard()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <button onclick="saveNidFlowWhiteCard()"
+              class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
               Save Card
             </button>
-            <button onclick="downloadNidFlowPaper()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <button onclick="downloadNidFlowPaper()"
+              class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
               Download Paper
             </button>
-            <button onclick="openNinResultDetails()" class="flex items-center gap-1.5 bg-slate-600 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            <button onclick="openNinResultDetails()"
+              class="flex items-center gap-1.5 bg-slate-600 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
               See Details
             </button>
-            <button onclick="openNidFlowFromVoterData()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow ml-auto">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            <button onclick="openNidFlowFromVoterData()"
+              class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow ml-auto">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
               Proceed to NID Verification
             </button>
           </div>
@@ -8132,19 +8445,24 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       <!-- Error State -->
       <div id="ninResultError" class="hidden p-6 flex flex-col items-center gap-3 text-center">
         <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-          <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
         <p class="font-bold text-slate-700 text-sm">Search Failed</p>
         <p id="ninResultErrorMsg" class="text-xs text-slate-500 max-w-xs"></p>
         <div class="flex gap-2 mt-1">
-          <button onclick="closeNinResultModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
+          <button onclick="closeNinResultModal()"
+            class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ===== NID FLOW MODAL (captcha → OTP → done) ===== -->
-  <div id="nidFlowModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
+  <div id="nidFlowModal"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-y-auto">
       <!-- Header -->
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
@@ -8153,17 +8471,24 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           <p id="nidFlowModalSubtitle" class="text-[11px] text-slate-500 mt-0.5">Loading captcha...</p>
         </div>
         <button onclick="closeNidFlowModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
 
       <!-- White Card Preview -->
       <div id="nidFlowWhiteCardSection" class="hidden px-5 pt-4">
         <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Voter Identity Card</p>
-        <img id="nidFlowWhiteCardImg" src="" alt="Voter White Card" class="w-full rounded-xl border border-slate-200 shadow-sm bg-white mb-3" />
+        <img id="nidFlowWhiteCardImg" src="" alt="Voter White Card"
+          class="w-full rounded-xl border border-slate-200 shadow-sm bg-white mb-3" />
         <div class="flex gap-2 justify-end mb-3">
-          <button onclick="downloadNidFlowPaper()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <button onclick="downloadNidFlowPaper()"
+            class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
             Download Paper
           </button>
         </div>
@@ -8174,11 +8499,14 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Step 1 — Solve Captcha</p>
         <div class="flex items-center gap-3 mb-3">
           <img id="nidFlowCaptchaImg" src="" alt="Captcha" class="h-12 rounded border border-slate-200 bg-slate-50" />
-          <button onclick="loadNidFlowCaptcha()" class="text-xs text-blue-600 hover:text-blue-800 font-bold underline">Refresh</button>
+          <button onclick="loadNidFlowCaptcha()"
+            class="text-xs text-blue-600 hover:text-blue-800 font-bold underline">Refresh</button>
         </div>
         <div class="flex gap-2">
-          <input id="nidFlowCaptchaCode" type="text" placeholder="Enter captcha code" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
-          <button id="btnNidFlowSubmitCaptcha" onclick="submitNidFlowCaptcha()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
+          <input id="nidFlowCaptchaCode" type="text" placeholder="Enter captcha code"
+            class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <button id="btnNidFlowSubmitCaptcha" onclick="submitNidFlowCaptcha()"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
             Request OTP
           </button>
         </div>
@@ -8192,7 +8520,9 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <div id="nidFlowOtpError" class="hidden mb-3 bg-red-50 border border-red-200 rounded-xl p-3">
           <p id="nidFlowOtpErrorHeader" class="text-xs font-bold text-red-700 uppercase tracking-wide mb-1"></p>
           <p id="nidFlowOtpErrorMsg" class="text-xs text-red-600"></p>
-          <button onclick="loadNidFlowCaptcha(); document.getElementById('nidFlowCaptchaSection').classList.remove('hidden'); document.getElementById('nidFlowOtpSection').classList.add('hidden');" class="mt-2 text-xs font-bold text-red-700 underline">Try Again</button>
+          <button
+            onclick="loadNidFlowCaptcha(); document.getElementById('nidFlowCaptchaSection').classList.remove('hidden'); document.getElementById('nidFlowOtpSection').classList.add('hidden');"
+            class="mt-2 text-xs font-bold text-red-700 underline">Try Again</button>
         </div>
 
         <!-- Success / OTP Input -->
@@ -8202,8 +8532,10 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
             <p id="nidFlowOtpInfoText" class="text-xs text-blue-600"></p>
           </div>
           <div class="flex gap-2">
-            <input id="nidFlowOtpCode" type="text" placeholder="Enter OTP code" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
-            <button id="btnNidFlowVerifyOtp" onclick="submitNidFlowOtp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
+            <input id="nidFlowOtpCode" type="text" placeholder="Enter OTP code"
+              class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <button id="btnNidFlowVerifyOtp" onclick="submitNidFlowOtp()"
+              class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
               Verify OTP
             </button>
           </div>
