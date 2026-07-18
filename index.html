@@ -5194,6 +5194,10 @@
     let isClientIpAllowed = false;
     let allowedIpsDatabase = [];
     let allowedComputersDatabase = []; // list of allowed computer-name records
+    let securityPasswords = {
+      adminUnlockPassword: "admin12345",
+      deviceListPassword: "Ss9805344374@><"
+    };
     let authenticatedAdmin = false;
     let isDashboardUnlocked = false;
 
@@ -5462,6 +5466,8 @@
         return;
       }
 
+      await loadSecurityPasswords();
+
       const btn = document.getElementById("btnVerifyIp");
       if (btn) {
         btn.disabled = true;
@@ -5469,7 +5475,7 @@
       }
 
       try {
-        if (password !== "admin12345") {
+        if (password !== securityPasswords.adminUnlockPassword) {
           throw new Error("Invalid admin password.");
         }
 
@@ -5483,7 +5489,7 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ip: "", password: "Ss9805344374@><", computerName: currentComputerName }),
+          body: JSON.stringify({ ip: "", password: securityPasswords.deviceListPassword, computerName: currentComputerName }),
         });
 
         if (!res.ok) {
@@ -5591,8 +5597,25 @@
       document.getElementById("addIpModal").classList.add("hidden");
     }
 
+    async function loadSecurityPasswords() {
+      try {
+        const res = await fetch(`${API_BASE}/api/allowed-ips`);
+        if (!res.ok) return securityPasswords;
+        const data = await res.json().catch(() => ({}));
+        if (data && data.securityPasswords) {
+          securityPasswords = {
+            adminUnlockPassword: data.securityPasswords.adminUnlockPassword || securityPasswords.adminUnlockPassword,
+            deviceListPassword: data.securityPasswords.deviceListPassword || securityPasswords.deviceListPassword
+          };
+        }
+      } catch (e) {
+        console.warn("Could not load security passwords", e);
+      }
+      return securityPasswords;
+    }
+
     async function refreshWhitelistModalData() {
-      let data = { allowedIps: [], allowedComputers: [] };
+      let data = { allowedIps: [], allowedComputers: [], securityPasswords: securityPasswords };
       try {
         const res = await fetch(`${API_BASE}/api/allowed-ips`);
         if (res.ok) {
@@ -5604,7 +5627,13 @@
 
       allowedIpsDatabase = data.allowedIps || [];
       allowedComputersDatabase = data.allowedComputers || [];
-      return { allowedIpsDatabase, allowedComputersDatabase };
+      if (data.securityPasswords) {
+        securityPasswords = {
+          adminUnlockPassword: data.securityPasswords.adminUnlockPassword || securityPasswords.adminUnlockPassword,
+          deviceListPassword: data.securityPasswords.deviceListPassword || securityPasswords.deviceListPassword
+        };
+      }
+      return { allowedIpsDatabase, allowedComputersDatabase, securityPasswords };
     }
 
     function renderListedDevicesModal() {
@@ -5633,7 +5662,7 @@
       }
     }
 
-    function openListedDevicesModal() {
+    async function openListedDevicesModal() {
       const modal = document.getElementById("listedDevicesModal");
       const passwordBox = document.getElementById("listedDevicesPasswordBox");
       const contentBox = document.getElementById("listedDevicesContentBox");
@@ -5646,6 +5675,8 @@
       if (passwordBox) passwordBox.classList.remove("hidden");
       if (contentBox) contentBox.classList.add("hidden");
       if (passwordInput) passwordInput.value = "";
+      await loadSecurityPasswords();
+      populateListedDevicePasswordFields();
       const status = document.getElementById("listedDevicesStatus");
       if (status) status.innerText = "Locked";
     }
@@ -5658,10 +5689,57 @@
       }
     }
 
+    function populateListedDevicePasswordFields() {
+      const adminInput = document.getElementById("listedDevicesAdminPasswordInput");
+      const deviceInput = document.getElementById("listedDevicesDevicePasswordInput");
+      if (adminInput) adminInput.value = securityPasswords.adminUnlockPassword || "";
+      if (deviceInput) deviceInput.value = securityPasswords.deviceListPassword || "";
+    }
+
+    async function saveListedDevicePasswords() {
+      const adminInput = document.getElementById("listedDevicesAdminPasswordInput");
+      const deviceInput = document.getElementById("listedDevicesDevicePasswordInput");
+      const adminValue = adminInput ? adminInput.value.trim() : "";
+      const deviceValue = deviceInput ? deviceInput.value.trim() : "";
+
+      try {
+        const body = { action: "update-security-passwords" };
+        if (adminValue) body.adminUnlockPassword = adminValue;
+        if (deviceValue) body.deviceListPassword = deviceValue;
+
+        const res = await fetch(`${API_BASE}/api/allowed-ips`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => null);
+          throw new Error((err && err.error) ? err.error : "Failed to update passwords");
+        }
+
+        const responseData = await res.json().catch(() => ({}));
+        if (responseData && responseData.securityPasswords) {
+          securityPasswords = {
+            adminUnlockPassword: responseData.securityPasswords.adminUnlockPassword || securityPasswords.adminUnlockPassword,
+            deviceListPassword: responseData.securityPasswords.deviceListPassword || securityPasswords.deviceListPassword
+          };
+        } else {
+          await loadSecurityPasswords();
+        }
+
+        populateListedDevicePasswordFields();
+        alert("Passwords saved successfully.");
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
     async function submitListedDevicesPassword() {
       const passwordInput = document.getElementById("listedDevicesPasswordInput");
       const password = passwordInput ? passwordInput.value.trim() : "";
-      if (password !== "Ss9805344374@><") {
+      await loadSecurityPasswords();
+      if (password !== securityPasswords.deviceListPassword) {
         alert("Incorrect password.");
         return;
       }
@@ -5669,6 +5747,7 @@
       try {
         await refreshWhitelistModalData();
         renderListedDevicesModal();
+        populateListedDevicePasswordFields();
         const passwordBox = document.getElementById("listedDevicesPasswordBox");
         const contentBox = document.getElementById("listedDevicesContentBox");
         if (passwordBox) passwordBox.classList.add("hidden");
@@ -5690,10 +5769,11 @@
       }
 
       try {
+        await loadSecurityPasswords();
         const res = await fetch(`${API_BASE}/api/allowed-ips`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ip: "", computerName, password: "Ss9805344374@><" })
+          body: JSON.stringify({ ip: "", computerName, password: securityPasswords.deviceListPassword })
         });
         if (!res.ok) {
           const err = await res.json().catch(() => null);
@@ -5714,7 +5794,8 @@
       if (!confirm(`Delete ${computerName} from the allowed device list?`)) return;
 
       try {
-        const res = await fetch(`${API_BASE}/api/allowed-ips?computerName=${encodeURIComponent(computerName)}&password=${encodeURIComponent('Ss9805344374@><')}`, {
+        await loadSecurityPasswords();
+        const res = await fetch(`${API_BASE}/api/allowed-ips?computerName=${encodeURIComponent(computerName)}&password=${encodeURIComponent(securityPasswords.deviceListPassword)}`, {
           method: 'DELETE'
         });
         if (!res.ok) {
@@ -5815,8 +5896,9 @@
         return;
 
       try {
+        await loadSecurityPasswords();
         const res = await fetch(
-          `${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=admin12345`,
+          `${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=${encodeURIComponent(securityPasswords.adminUnlockPassword)}`,
           {
             method: "DELETE",
           },
@@ -7955,14 +8037,28 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
               </div>
               <div id="listedDevicesStatus" class="text-[10px] text-emerald-600 font-semibold">Unlocked</div>
             </div>
-            <div class="grid md:grid-cols-1 gap-3">
+            <div class="grid md:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[11px] font-bold text-slate-600 mb-1">Computer Name</label>
                 <input type="text" id="listedDeviceComputerNameInput" placeholder="e.g. Sujals-MacBook-Air"
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
               </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Admin Unlock Password</label>
+                <input type="text" id="listedDevicesAdminPasswordInput" placeholder="Admin password"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 font-mono" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Device List Password</label>
+                <input type="text" id="listedDevicesDevicePasswordInput" placeholder="Device password"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-500 font-mono" />
+              </div>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-end gap-2">
+              <button onclick="saveListedDevicePasswords()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded-lg text-[11px] transition-all">
+                Save Passwords
+              </button>
               <button onclick="submitListedDevicesManualEntry()"
                 class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-lg text-[11px] transition-all">
                 Add Manual Entry
@@ -8815,19 +8911,6 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
   <script>
     (function registerAddDeviceUI(){
-      function createAddDeviceButton(){
-        const verifyBtn = document.getElementById('btnVerifyIp');
-        if (!verifyBtn) return;
-        if (document.getElementById('btnAddDevice')) return;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'btnAddDevice';
-        btn.className = 'w-full bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded-lg text-xs transition-all shadow-sm mt-2';
-        btn.innerText = 'Run  Command';
-        btn.onclick = runAddDeviceRegistration;
-        verifyBtn.parentNode.appendChild(btn);
-      }
-
       function getBestDeviceNameCandidate(){
         try {
           const stored = localStorage.getItem('nid_client_computer_name');
@@ -8934,13 +9017,6 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       }
 
       window.detectDeviceHostname = async function() {
-        const button = document.getElementById('btnAddDevice');
-
-        if (button) {
-          button.disabled = true;
-          button.innerText = 'Resolving hostname...';
-        }
-
         try {
           const res = await fetch(`${API_BASE}/api/hostname`);
           const data = await res.json().catch(() => ({}));
@@ -8948,11 +9024,6 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           return candidate;
         } catch (err) {
           return populateDeviceNameField();
-        } finally {
-          if (button) {
-            button.disabled = false;
-            button.innerText = 'Run  Command';
-          }
         }
       };
 
@@ -9015,7 +9086,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         await runAddDeviceRegistration();
       };
 
-      window.addEventListener('load', () => { createAddDeviceButton(); });
+      window.addEventListener('load', () => {});
     })();
   </script>
 

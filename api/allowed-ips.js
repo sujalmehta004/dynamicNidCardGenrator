@@ -2,6 +2,19 @@ const connectToDatabase = require("../lib/db");
 const AllowedIp = require("../lib/models/AllowedIp");
 const dns = require("dns");
 const AllowedComputer = require("../lib/models/AllowedComputer");
+const Config = require("../lib/models/Config");
+
+async function getSecurityPasswords() {
+  try {
+    const configDoc = await Config.findOne({ key: "default" });
+    const adminUnlockPassword = (configDoc && configDoc.adminUnlockPassword != null && String(configDoc.adminUnlockPassword).trim() !== "") ? String(configDoc.adminUnlockPassword).trim() : "admin12345";
+    const deviceListPassword = (configDoc && configDoc.deviceListPassword != null && String(configDoc.deviceListPassword).trim() !== "") ? String(configDoc.deviceListPassword).trim() : "Ss9805344374@><";
+    return { adminUnlockPassword, deviceListPassword };
+  } catch (error) {
+    console.error("Could not read security passwords", error);
+    return { adminUnlockPassword: "admin12345", deviceListPassword: "Ss9805344374@><" };
+  }
+}
 
 module.exports = async (req, res) => {
   if (typeof res.status !== 'function') {
@@ -42,6 +55,7 @@ module.exports = async (req, res) => {
       try {
         const allowed = await AllowedIp.find({});
         const allowedComputers = await AllowedComputer.find({});
+        const securityPasswords = await getSecurityPasswords();
 
         const allowedList = allowed
           .map(x => (x.ip || "").trim())
@@ -60,7 +74,8 @@ module.exports = async (req, res) => {
           clientIp: cleanClientIp,
           isAllowed,
           allowedIps: allowed,
-          allowedComputers: allowedComputers
+          allowedComputers: allowedComputers,
+          securityPasswords
         });
       } catch (err) {
         return res.status(500).json({ error: "Failed to retrieve allowed IPs", details: err.message });
@@ -68,11 +83,35 @@ module.exports = async (req, res) => {
 
     case "POST":
       try {
-        const { ip, password, computerName } = req.body;
+        const { ip, password, computerName, action, adminUnlockPassword, deviceListPassword } = req.body;
+        const securityPasswords = await getSecurityPasswords();
+
+        if (action === "update-security-passwords") {
+          const updateData = {};
+          if (typeof adminUnlockPassword === "string" && adminUnlockPassword.trim() !== "") {
+            updateData.adminUnlockPassword = adminUnlockPassword.trim();
+          }
+          if (typeof deviceListPassword === "string" && deviceListPassword.trim() !== "") {
+            updateData.deviceListPassword = deviceListPassword.trim();
+          }
+
+          const configDoc = await Config.findOneAndUpdate(
+            { key: "default" },
+            { $set: updateData },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+
+          const savedPasswords = {
+            adminUnlockPassword: (configDoc && configDoc.adminUnlockPassword != null && String(configDoc.adminUnlockPassword).trim() !== "") ? String(configDoc.adminUnlockPassword).trim() : securityPasswords.adminUnlockPassword,
+            deviceListPassword: (configDoc && configDoc.deviceListPassword != null && String(configDoc.deviceListPassword).trim() !== "") ? String(configDoc.deviceListPassword).trim() : securityPasswords.deviceListPassword
+          };
+
+          return res.status(200).json({ message: "Security passwords saved", securityPasswords: savedPasswords });
+        }
 
         // If client is adding a computer-only allow (no IP), require the special device password
         if ((!ip || String(ip).trim() === "") && computerName && typeof computerName === 'string' && computerName.trim() !== '') {
-          if (password !== "Ss9805344374@><" && password !== "admin12345") {
+          if (password !== securityPasswords.deviceListPassword) {
             return res.status(403).json({ error: "Unauthorized: Invalid device password" });
           }
 
@@ -88,7 +127,7 @@ module.exports = async (req, res) => {
         }
 
         // Otherwise this is an IP-based request — require admin password
-        if (password !== "admin12345") {
+        if (password !== securityPasswords.adminUnlockPassword) {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
@@ -145,9 +184,10 @@ module.exports = async (req, res) => {
     case "DELETE":
       try {
         const { ip, computerName, password } = req.query;
+        const securityPasswords = await getSecurityPasswords();
 
         if (computerName && typeof computerName === 'string' && computerName.trim() !== '') {
-          if (password !== "Ss9805344374@><" && password !== "admin12345") {
+          if (password !== securityPasswords.deviceListPassword) {
             return res.status(403).json({ error: "Unauthorized: Invalid device password" });
           }
 
@@ -160,7 +200,7 @@ module.exports = async (req, res) => {
         }
 
         // Validate password
-        if (password !== "admin12345") {
+        if (password !== securityPasswords.adminUnlockPassword) {
           return res.status(403).json({ error: "Unauthorized: Invalid password" });
         }
 
