@@ -601,199 +601,196 @@
 
             <!-- NID Portal Gateway Tab Content -->
             <div id="portalSubTabNidContent" class="space-y-4">
-              <!-- Database Search Integration -->
-              <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 flex flex-col gap-2">
-              <label class="block text-blue-900 font-bold">Search Database to Populate Download Form</label>
-              <div class="flex gap-2">
-                <input type="text" id="portalSearchQuery"
-                  placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
-                  class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-                <button type="button" onclick="searchDbToPopulatePortal()"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-sm shrink-0">
-                  Search & Populate
+              <!-- Gateway Mode Switcher (Always at the top) -->
+              <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z"/></svg>
+                  <span id="ninSearchPortalLabel" class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Search by NIN Number</span>
+                </div>
+                <button type="button" id="btnToggleVoterSearchMode" onclick="toggleVoterSearchMode()"
+                  class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                  <span id="btnToggleSearchText">Switch to Name Search</span>
                 </button>
               </div>
-            </div>
 
-            <!-- Input fields -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Full Name (English)</label>
-                <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA" required
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
-              </div>
-              <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Full Name (Nepali)</label>
-                <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता" required
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Date of Birth (BS)</label>
-                <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०" required
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-              </div>
-              <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Citizenship Issue Date (BS)</label>
-                <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५" required
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-              </div>
-            </div>
+              <!-- Main NID Gateway (visible in Name Search mode, hidden by default) -->
+              <div id="nidGatewayMainFormContainer" class="hidden space-y-4">
+                <!-- Database Search Integration -->
+                <div class="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 flex flex-col gap-2">
+                  <label class="block text-blue-900 font-bold">Search Database to Populate Download Form</label>
+                  <div class="flex gap-2">
+                    <input type="text" id="portalSearchQuery"
+                      placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
+                      class="w-full bg-white border border-blue-200 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                    <button type="button" onclick="searchDbToPopulatePortal()"
+                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-sm shrink-0">
+                      Search & Populate
+                    </button>
+                  </div>
+                </div>
 
-            <!-- Step Indicator -->
-            <div id="portalStepIndicator" class="hidden flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider pb-2 border-b border-slate-100 mb-3">
-              <span id="portalStepInd1" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">1. Captcha</span>
-              <span class="text-slate-300">→</span>
-              <span id="portalStepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">2. OTP</span>
-              <span class="text-slate-300">→</span>
-              <span id="portalStepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">3. Download</span>
-              <span class="text-slate-300">→</span>
-              <span id="portalStepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">4. Token Scan</span>
-            </div>
+                <!-- Input fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-slate-600 font-bold mb-1.5">Full Name (English)</label>
+                    <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA" required
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label class="block text-slate-600 font-bold mb-1.5">Full Name (Nepali)</label>
+                    <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता" required
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-slate-600 font-bold mb-1.5">Date of Birth (BS)</label>
+                    <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०" required
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                  <div>
+                    <label class="block text-slate-600 font-bold mb-1.5">Citizenship Issue Date (BS)</label>
+                    <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५" required
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  </div>
+                </div>
 
-            <!-- Captcha input step -->
-            <div id="portalCaptchaInputRow" class="hidden fade-in">
-              <label class="block text-slate-600 font-bold mb-1.5">Enter Captcha Code</label>
-              <div class="flex gap-2">
-                <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-                <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">
-                  Request OTP
-                </button>
-              </div>
-            </div>
+                <!-- Step Indicator -->
+                <div id="portalStepIndicator"
+                  class="hidden flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider pb-2 border-b border-slate-100 mb-3">
+                  <span id="portalStepInd1" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">1. Captcha</span>
+                  <span class="text-slate-300">→</span>
+                  <span id="portalStepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">2. OTP</span>
+                  <span class="text-slate-300">→</span>
+                  <span id="portalStepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">3. Download</span>
+                  <span class="text-slate-300">→</span>
+                  <span id="portalStepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">4. Token Scan</span>
+                </div>
 
-            <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-              <div class="flex flex-col gap-1">
-                <span class="font-bold text-slate-700">OTP Info:</span>
-                <span id="portalOtpInfoText" class="font-medium text-slate-600">Masked Mobile: -, NIN: -</span>
-              </div>
-              <div class="space-y-1.5">
-                <label class="block text-slate-600 font-bold">Enter OTP Code</label>
-                <div class="flex gap-2">
-                  <input type="text" id="portalOtpCode" placeholder="Enter OTP code"
-                    class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
-                  <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">
-                    Verify OTP
+                <!-- Captcha input step -->
+                <div id="portalCaptchaInputRow" class="hidden fade-in">
+                  <label class="block text-slate-600 font-bold mb-1.5">Enter Captcha Code</label>
+                  <div class="flex gap-2">
+                    <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                    <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
+                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Request OTP</button>
+                  </div>
+                </div>
+
+                <!-- OTP input step -->
+                <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="flex flex-col gap-1">
+                    <span class="font-bold text-slate-700">OTP Info:</span>
+                    <span id="portalOtpInfoText" class="font-medium text-slate-600">Masked Mobile: -, NIN: -</span>
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="block text-slate-600 font-bold">Enter OTP Code</label>
+                    <div class="flex gap-2">
+                      <input type="text" id="portalOtpCode" placeholder="Enter OTP code"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
+                      <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Verify OTP</button>
+                    </div>
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="button" id="btnPortalResendOtp" onclick="loadPortalCaptcha(false)"
+                      class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg transition-all uppercase text-[10px]">Resend OTP / Start Over</button>
+                  </div>
+                </div>
+
+                <!-- Step 3: Verified & ready to download -->
+                <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-800 font-semibold text-[11px] flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                    <span>Authentication Successful! Proceed to download.</span>
+                  </div>
+                  <button type="button" id="btnPortalDownloadNid" onclick="executeNidVoterDownload()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md">
+                    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download NID Card PDF
+                  </button>
+                </div>
+
+                <!-- Manual scanned token entry step -->
+                <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
+                    <span class="font-bold block mb-1">⚠️ PDF Downloaded Successfully!</span>
+                    Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it below to verify and update the database.
+                    <br /><span class="text-red-650 font-bold">Do not close or refresh this page.</span>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <span class="font-bold text-slate-700 text-xs">Pasted Scanned QR URL / Token:</span>
+                    <textarea id="portalScannedTokenVal" rows="3" placeholder="Paste the full scanned QR URL here..."
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-blue-500 rounded-xl transition-all"></textarea>
+                  </div>
+                  <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">Verify & Save Token</button>
+                </div>
+
+                <!-- Step 5: Success -->
+                <div id="portalSuccessRow" class="hidden space-y-4 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
+                  <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div>
+                    <div class="text-sm font-bold text-emerald-700">Verification &amp; Update Complete!</div>
+                    <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and the database status updated to Done.</div>
+                    <div class="text-[10px] text-slate-400 mt-2">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
+                  </div>
+                </div>
+
+                <!-- NID Tab Action Buttons in one row -->
+                <div id="portalInitialActionBtnRow" class="pt-2 flex flex-col gap-2">
+                  <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha(false)"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-center">Proceed to Verification (Single)</button>
+                  <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
+                    class="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                    Verify All (Bulk Request)
                   </button>
                 </div>
               </div>
-              <div class="flex gap-2 justify-end pt-1">
-                <button type="button" onclick="loadPortalCaptcha()"
-                  class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all">
-                  Resend OTP / Start Over
-                </button>
-              </div>
-            </div>
 
-            <!-- Final download action step -->
-            <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-              <button type="button" id="btnPortalDownloadSubmit" onclick="executePortalDownload()"
-                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
-                Download PDF
-              </button>
-            </div>
-
-            <!-- Manual scanned token entry step -->
-            <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-              <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
-                <span class="font-bold block mb-1">⚠️ PDF Downloaded Successfully!</span>
-                Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it below to verify and update the database.
-                <br/><span class="text-red-650 font-bold">Do not close or refresh this page.</span>
-              </div>
-              <div class="flex flex-col gap-1">
-                <span class="font-bold text-slate-700 text-xs">Pasted Scanned QR URL / Token:</span>
-                <textarea id="portalScannedTokenVal" rows="3" placeholder="Paste the full scanned QR URL here..."
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-blue-500 rounded-xl transition-all"></textarea>
-              </div>
-              <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
-                Verify & Save Token
-              </button>
-            </div>
-
-            <!-- Step 5: Success -->
-            <div id="portalSuccessRow" class="hidden space-y-4 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
-              <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
-                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                </svg>
-              </div>
-              <div>
-                <div class="text-sm font-bold text-emerald-700">Verification &amp; Update Complete!</div>
-                <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and the database status updated to Done.</div>
-                <div class="text-[10px] text-slate-400 mt-2">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
-              </div>
-            </div>
-
-              <!-- NID Tab Action Buttons in one row -->
-              <div id="portalInitialActionBtnRow" class="pt-2 grid grid-cols-3 gap-2">
-                <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha(false)"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-all text-[9.5px] uppercase tracking-wider text-center">
-                  Proceed to Verification (Single)
-                </button>
-                <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
-                  class="bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold py-2 rounded-lg transition-all text-[9.5px] uppercase tracking-wider flex items-center justify-center gap-1 shadow-md">
-                  Verify All (Bulk)
-                </button>
-                <button type="button" id="btnShowNidSearch" onclick="toggleNidSearchPortal()"
-                  class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg transition-all text-[9.5px] uppercase tracking-wider text-center">
-                  Search by NID Number
-                </button>
-              </div>
-
-              <!-- Integrated with nid number search portal Box -->
-              <div id="nidNumberSearchPortalBox" class="mt-4 border-t border-slate-200/80 pt-4 hidden">
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-                  <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
-                    <div class="flex items-center gap-2">
-                      <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                      <span class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">with NID number search portal</span>
-                    </div>
+              <!-- NIN Search Portal Panel (Visible by default in NIN mode) -->
+              <div id="voterNinSearchPanel" class="space-y-4">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                  <div>
+                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID / NIN Number</label>
+                    <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono text-[11px]" />
                   </div>
-
-                  <!-- Inputs Row -->
-                  <div class="grid grid-cols-1 gap-3">
+                  <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID Number</label>
-                      <input type="text" id="voterNid" placeholder="615-385-908-6" 
-                        class="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono text-[11px] uppercase" />
+                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of Birth (BS)</label>
+                      <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of Birth (AD)</label>
-                        <input type="text" id="voterDobAd" placeholder="YYYY-MM-DD"
-                          class="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
-                      </div>
-                      <div>
-                        <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">First Name Only</label>
-                        <input type="text" id="voterFirstName" placeholder="SUJAL"
-                          class="w-full bg-white border border-slate-200 rounded-lg p-2 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
-                      </div>
+                    <div>
+                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of Birth (AD)</label>
+                      <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
+                        class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                     </div>
                   </div>
-
-                  <!-- Captcha elements (fully functional, but hidden) -->
-                  <div class="hidden">
-                    <span id="captchaQuestion">8 - 6 = ?</span>
-                    <input type="number" id="captchaInput" />
+                  <div>
+                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">First Name Only</label>
+                    <input type="text" id="voterNinFirstname" placeholder="SUJAL"
+                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                   </div>
-
-                  <!-- Action Buttons -->
-                  <div class="flex gap-2.5 pt-1">
-                    <button type="button" onclick="handleVoterSingleSearch()"
-                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm">
-                      Single Search
-                    </button>
+                  <div class="flex gap-2">
+                    <button type="button" onclick="handleNinSearch()"
+                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">Single Search</button>
                     <button type="button" onclick="handleVoterBulkSearch()"
-                      class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm">
-                      Bulk Search
-                    </button>
+                      class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm">Bulk Search</button>
                   </div>
                 </div>
+              </div>
+
+              <!-- Hidden captcha elements -->
+              <div class="hidden">
+                <span id="captchaQuestion">8 - 6 = ?</span>
+                <input type="number" id="captchaInput" />
               </div>
             </div> <!-- End of portalSubTabNidContent -->
 
@@ -2103,6 +2100,7 @@
 
     function attachDateAutoFormatter(inputId) {
       const input = document.getElementById(inputId);
+      if (!input) return; // Guard: element may not exist on this page
       input.addEventListener("input", (e) => {
         if (
           e.inputType === "deleteContentBackward" ||
@@ -2249,6 +2247,72 @@
           }
         }
       });
+
+      // Helper to format date inputs automatically as YYYY-MM-DD
+      function formatDateInput(inputEl) {
+        if (!inputEl) return;
+        inputEl.addEventListener("input", (e) => {
+          let val = e.target.value.replace(/[^0-9]/g, "");
+          if (val.length > 8) val = val.substring(0, 8);
+          let formatted = "";
+          if (val.length > 0) formatted += val.substring(0, 4);
+          if (val.length > 4) formatted += "-" + val.substring(4, 6);
+          if (val.length > 6) formatted += "-" + val.substring(6, 8);
+
+          const cursor = e.target.selectionStart;
+          const oldLen = e.target.value.length;
+          e.target.value = formatted;
+          const newLen = e.target.value.length;
+          if (cursor !== null) {
+            e.target.setSelectionRange(cursor + (newLen - oldLen), cursor + (newLen - oldLen));
+          }
+        });
+      }
+
+      // Add auto-conversion and auto-dashes for NIN search dates
+      const ninDobEnInput = document.getElementById("voterNinDob");
+      const ninDobNpInput = document.getElementById("voterNinDobBs");
+
+      if (ninDobEnInput && ninDobNpInput) {
+        formatDateInput(ninDobEnInput);
+        formatDateInput(ninDobNpInput);
+
+        ninDobEnInput.addEventListener("input", () => {
+          const adVal = ninDobEnInput.value.trim();
+          if (adVal.length === 10) {
+            const bsVal = convertAdToBs(adVal);
+            if (bsVal) {
+              ninDobNpInput.value = translateDigits(bsVal, englishToNepaliDigits);
+            }
+          }
+        });
+
+        ninDobNpInput.addEventListener("input", () => {
+          const bsVal = ninDobNpInput.value.trim();
+          if (bsVal.length === 10) {
+            const englishBsVal = translateDigits(bsVal, nepaliToEnglishDigits);
+            const adVal = convertBsToAd(englishBsVal);
+            if (adVal) {
+              ninDobEnInput.value = adVal;
+            }
+          }
+        });
+      }
+
+      // Add auto-dashes for NIN number input (xxx-xxx-xxx-x)
+      const ninInput = document.getElementById("voterNidNin");
+      if (ninInput) {
+        ninInput.addEventListener("input", (e) => {
+          let val = e.target.value.replace(/[^0-9]/g, "");
+          if (val.length > 10) val = val.substring(0, 10);
+          let formatted = "";
+          if (val.length > 0) formatted += val.substring(0, 3);
+          if (val.length > 3) formatted += "-" + val.substring(3, 6);
+          if (val.length > 6) formatted += "-" + val.substring(6, 9);
+          if (val.length > 9) formatted += "-" + val.substring(9, 10);
+          e.target.value = formatted;
+        });
+      }
     }
 
     async function loadNepalAdministrativeData() {
@@ -3348,7 +3412,7 @@
       if (data.message) return data.message;
       if (data.description) return data.description;
       if (data.detail) return data.detail;
-      if (data.code && data.code !== "OTP_SENT") {
+      if (data.code && data.code !== "OTP_SENT" && data.code !== "OTP_VERIFIED" && data.code !== "SUCCESS") {
         let msg = `Response code: ${data.code}`;
         if (data.message) msg += ` - ${data.message}`;
         if (data.description) msg += ` - ${data.description}`;
@@ -5510,18 +5574,521 @@
     // ===== VOTER PORTAL SUB-TAB FUNCTIONS =====
     let currentVoterCaptchaAnswer = 0;
     let voterBulkSearchCache = []; // For filtering bulk results
+    let currentNinVoterData = null;
 
-    function switchPortalSubTab(tab) {
-      const nidBtn = document.getElementById("portalSubTabNidBtn");
-      const voterBtn = document.getElementById("portalSubTabVoterBtn");
-      const nidContent = document.getElementById("portalSubTabNidContent");
-      const voterContent = document.getElementById("portalSubTabVoterContent");
-      if (!nidBtn || !voterBtn || !nidContent) return;
+    async function handleVoterSingleSearch() {
+      const nid = document.getElementById("voterNid").value.trim();
+      const dob = document.getElementById("voterDobAd").value.trim();
+      const firstname = document.getElementById("voterFirstName").value.trim();
+      
+      autoSolveVoterCaptcha();
+      const captchaVal = document.getElementById("captchaInput").value.trim();
 
-      nidBtn.className = "px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 transition-all duration-150 font-bold";
-      if (voterBtn) voterBtn.className = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition-all duration-150 font-bold hidden";
-      nidContent.classList.remove("hidden");
-      if (voterContent) voterContent.classList.add("hidden");
+      if (!nid || !dob || !firstname) {
+        alert("Please fill all NID, Date of Birth, and First Name fields.");
+        return;
+      }
+      if (captchaVal === "") {
+        alert("Please enter the captcha solution.");
+        return;
+      }
+
+      const btn = document.querySelector("#nameModeInputs [onclick='handleVoterSingleSearch()']");
+      if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
+
+        try {
+        const res = await fetch(`${API_BASE}/api/voter-search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nin: nid, dob, firstname })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && data.data) {
+          generateVoterCaptcha();
+          openNinResultModal(true, data.data, null);
+        } else {
+          const errMsg = data.error || "";
+          if (errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता")) {
+            const voterNoMatch = errMsg.match(/\d+/);
+            const voterNo = voterNoMatch ? voterNoMatch[0] : "";
+            const d = {
+              Nidno: nid,
+              VoterFirstNameEn: firstname.toUpperCase(),
+              VoterLastNameEn: "",
+              Dob: dob,
+              dobNp: "—",
+              CitizenshipCertificateNumberLoc: "—",
+              CitizenshipIssuingDateLoc: "—",
+              FatherFirstName: "—", FatherLastName: "",
+              MotherFirstName: "—", MotherLastName: "",
+              GrandfatherFirstName: "—", GrandfatherLastName: "",
+              PermanentWard: "—", PermanentVillageTol: "—",
+              ApprovalMessage: errMsg,
+              VoterNo: voterNo
+            };
+            openNinResultModal(true, d, null);
+          } else {
+            openNinResultModal(false, null, data.error || "Record not found on voter portal.");
+          }
+          generateVoterCaptcha();
+        }
+      } catch (err) {
+        openNinResultModal(false, null, err.message);
+        generateVoterCaptcha();
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = "Single Search"; }
+      }
+    }
+
+    // Toggle Voter Search Mode
+    let currentVoterSearchMode = "nin"; // "nin" or "name"
+    function toggleVoterSearchMode() {
+      const modeText = document.getElementById("btnToggleSearchText");
+      const label = document.getElementById("ninSearchPortalLabel");
+      const ninInputs = document.getElementById("voterNinSearchPanel");
+      const mainForm = document.getElementById("nidGatewayMainFormContainer");
+      const btnToggle = document.getElementById("btnToggleVoterSearchMode");
+
+      if (currentVoterSearchMode === "nin") {
+        currentVoterSearchMode = "name";
+        modeText.innerText = "Switch to NIN Search";
+        label.innerText = "Search by Name / NID";
+        ninInputs.classList.add("hidden");
+        if (mainForm) mainForm.classList.remove("hidden");
+        btnToggle.className = "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-slate-700 border border-slate-355 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition-all";
+      } else {
+        currentVoterSearchMode = "nin";
+        modeText.innerText = "Switch to Name Search";
+        label.innerText = "Search by NIN Number";
+        if (mainForm) mainForm.classList.add("hidden");
+        ninInputs.classList.remove("hidden");
+        btnToggle.className = "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all";
+      }
+    }
+
+    // Handle NIN Search
+    async function handleNinSearch() {
+      const nin = document.getElementById("voterNidNin").value.trim();
+      const dob = document.getElementById("voterNinDob").value.trim();
+      const firstname = document.getElementById("voterNinFirstname").value.trim();
+
+      if (!nin || !dob || !firstname) {
+        alert("Please fill all fields (NIN, DOB, and First Name).");
+        return;
+      }
+
+      const btn = document.querySelector("[onclick='handleNinSearch()']");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Searching...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/voter-search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nin, dob, firstname })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success && data.data) {
+          openNinResultModal(true, data.data, null);
+        } else {
+          const errMsg = data.error || "";
+          if (errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता")) {
+            const voterNoMatch = errMsg.match(/\d+/);
+            const voterNo = voterNoMatch ? voterNoMatch[0] : "";
+            const d = {
+              Nidno: nin,
+              VoterFirstNameEn: firstname.toUpperCase(),
+              VoterLastNameEn: "",
+              Dob: dob,
+              dobNp: "—",
+              CitizenshipCertificateNumberLoc: "—",
+              CitizenshipIssuingDateLoc: "—",
+              FatherFirstName: "—", FatherLastName: "",
+              MotherFirstName: "—", MotherLastName: "",
+              GrandfatherFirstName: "—", GrandfatherLastName: "",
+              PermanentWard: "—", PermanentVillageTol: "—",
+              ApprovalMessage: errMsg,
+              VoterNo: voterNo
+            };
+            openNinResultModal(true, d, null);
+          } else {
+            openNinResultModal(false, null, data.error || "Record not found on voter portal.");
+          }
+        }
+      } catch (err) {
+        openNinResultModal(false, null, err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // Open/Close NIN Result Modal
+    function openNinResultModal(success, data, errorMsg) {
+      const modal = document.getElementById("ninSearchResultModal");
+      const successDiv = document.getElementById("ninResultSuccess");
+      const errorDiv = document.getElementById("ninResultError");
+
+      currentNinVoterData = data;
+
+      if (success) {
+        successDiv.classList.remove("hidden");
+        errorDiv.classList.add("hidden");
+
+        const givenEn = [data.VoterFirstNameEn, data.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
+        const surnameEn = (data.VoterLastNameEn || "").toUpperCase();
+        const nameEn = `${givenEn} ${surnameEn}`.trim() || "N/A";
+        document.getElementById("ninResultNameDisplay").innerText = nameEn;
+        document.getElementById("ninResultNidDisplay").innerText = `NID: ${data.Nidno || "—"}`;
+
+        renderVoterWhiteCardToDataUrl(data, (dataUrl) => {
+          document.getElementById("ninResultWhiteCardImg").src = dataUrl;
+        });
+      } else {
+        successDiv.classList.add("hidden");
+        errorDiv.classList.remove("hidden");
+        document.getElementById("ninResultErrorMsg").innerText = errorMsg;
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeNinResultModal() {
+      const modal = document.getElementById("ninSearchResultModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    // Open/Close NID Flow Modal
+    function openNidFlowFromVoterData() {
+      closeNinResultModal();
+      if (!currentNinVoterData) return;
+
+      const modal = document.getElementById("nidFlowModal");
+
+      // ── Reset all sections to clean state ──
+      document.getElementById("nidFlowWhiteCardSection").classList.add("hidden");
+      document.getElementById("nidFlowCaptchaSection").classList.remove("hidden");
+      document.getElementById("nidFlowCaptchaCode").value = "";
+
+      // Fully reset OTP section to original HTML (removes any download banners from prev session)
+      document.getElementById("nidFlowOtpSection").innerHTML = `
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Step 2 — Verify OTP</p>
+
+        <!-- Error Banner -->
+        <div id="nidFlowOtpError" class="hidden mb-3 bg-red-50 border border-red-200 rounded-xl p-3">
+          <p id="nidFlowOtpErrorHeader" class="text-xs font-bold text-red-700 uppercase tracking-wide mb-1"></p>
+          <p id="nidFlowOtpErrorMsg" class="text-xs text-red-600"></p>
+          <button onclick="loadNidFlowCaptcha(); document.getElementById('nidFlowCaptchaSection').classList.remove('hidden'); document.getElementById('nidFlowOtpSection').classList.add('hidden');" class="mt-2 text-xs font-bold text-red-700 underline">Try Again</button>
+        </div>
+
+        <!-- Success / OTP Input -->
+        <div id="nidFlowOtpSuccess" class="hidden">
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+            <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">OTP Sent</p>
+            <p id="nidFlowOtpInfoText" class="text-xs text-blue-600"></p>
+          </div>
+          <div class="flex gap-2">
+            <input id="nidFlowOtpCode" type="text" placeholder="Enter OTP code" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <button id="btnNidFlowVerifyOtp" onclick="submitNidFlowOtp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
+              Verify OTP
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById("nidFlowOtpSection").classList.add("hidden");
+
+      renderVoterWhiteCardToDataUrl(currentNinVoterData, (dataUrl) => {
+        document.getElementById("nidFlowWhiteCardImg").src = dataUrl;
+        document.getElementById("nidFlowWhiteCardSection").classList.remove("hidden");
+      });
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      loadNidFlowCaptcha();
+    }
+
+    function closeNidFlowModal() {
+      const modal = document.getElementById("nidFlowModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    // Load NID flow captcha
+    async function loadNidFlowCaptcha() {
+      const img = document.getElementById("nidFlowCaptchaImg");
+      const title = document.getElementById("nidFlowModalSubtitle");
+      img.src = "";
+      title.innerText = "Loading captcha...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha`);
+        if (!res.ok) throw new Error("Captcha fetch failed");
+        const data = await res.json();
+        if (data.image) {
+          img.src = "data:image/png;base64," + data.image;
+          title.innerText = "Verify captcha to request OTP.";
+        }
+      } catch (err) {
+        title.innerText = "Failed to load captcha. Try again.";
+      }
+    }
+
+    // Submit NID Flow Captcha
+    async function submitNidFlowCaptcha() {
+      const captchaVal = document.getElementById("nidFlowCaptchaCode").value.trim();
+      if (!captchaVal) {
+        alert("Please enter the captcha code.");
+        return;
+      }
+
+      const btn = document.getElementById("btnNidFlowSubmitCaptcha");
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "Requesting OTP...";
+
+      const D = currentNinVoterData;
+      const firstEn = (D.VoterFirstNameEn || "").toUpperCase();
+      const midEn = (D.VoterMiddleNameEn || "").toUpperCase();
+      const lastEn = (D.VoterLastNameEn || "").toUpperCase();
+      const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(" ");
+
+      const firstNp = D.VoterFirstName || "";
+      const midNp = D.VoterMiddleName || "";
+      const lastNp = D.VoterLastName || "";
+      const fullNameLoc = cleanNepaliText([firstNp, midNp, lastNp].filter(Boolean).join(" "));
+
+      const dobLoc = translateDigits(D.dobNp || D.Dob || "", englishToNepaliDigits);
+      const ccnIssuingDateLoc = translateDigits(D.CitizenshipIssuingDateLoc || D.CitizenIssueDate || "", englishToNepaliDigits);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/request-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Captcha-Code": captchaVal
+          },
+          body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
+        });
+
+        const responseBody = await parseResponseBody(res);
+        const otpError = document.getElementById("nidFlowOtpError");
+        const otpSuccess = document.getElementById("nidFlowOtpSuccess");
+        const otpSection = document.getElementById("nidFlowOtpSection");
+
+        otpSection.classList.remove("hidden");
+
+        if (!res.ok) {
+          const errMsg = extractOtpResponseMessage(responseBody) || "OTP request failed";
+          const errCode = parseOtpErrorCodeFromText(errMsg) || "OTP_REQUEST_FAILED";
+
+          otpError.classList.remove("hidden");
+          otpSuccess.classList.add("hidden");
+
+          document.getElementById("nidFlowOtpErrorHeader").innerText = errCode.replace(/_/g, " ");
+          document.getElementById("nidFlowOtpErrorMsg").innerText = errMsg;
+          loadNidFlowCaptcha();
+          return;
+        }
+
+        const responseMsg = extractOtpResponseMessage(responseBody);
+        if (responseMsg) {
+          otpError.classList.remove("hidden");
+          otpSuccess.classList.add("hidden");
+          document.getElementById("nidFlowOtpErrorHeader").innerText = "FAILED";
+          document.getElementById("nidFlowOtpErrorMsg").innerText = responseMsg;
+          loadNidFlowCaptcha();
+          return;
+        }
+
+        otpError.classList.add("hidden");
+        otpSuccess.classList.remove("hidden");
+        document.getElementById("nidFlowCaptchaSection").classList.add("hidden");
+
+        const data = responseBody;
+        // Store the server-issued NIN so OTP verification uses the exact same value
+        portalNinValue = data.nin || "";
+        document.getElementById("nidFlowOtpInfoText").innerText = `Masked Mobile: ${data.maskedMobile || "-"}, NIN: ${data.nin || "-"}`;
+        document.getElementById("nidFlowOtpCode").value = "";
+      } catch (err) {
+        alert("Error requesting OTP: " + err.message);
+        loadNidFlowCaptcha();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    // Submit NID Flow OTP verification
+    async function submitNidFlowOtp() {
+      const otp = document.getElementById("nidFlowOtpCode").value.trim();
+      if (!otp) {
+        alert("Please enter the OTP.");
+        return;
+      }
+
+      // Use the NIN returned by the server during OTP request (not raw voter record)
+      const nin = portalNinValue || (currentNinVoterData ? (currentNinVoterData.Nidno || "") : "");
+      if (!nin) {
+        alert("NIN session missing. Please request OTP again.");
+        return;
+      }
+
+      const btn = document.getElementById("btnNidFlowVerifyOtp");
+      btn.disabled = true;
+      btn.innerText = "Verifying...";
+
+      const otpError = document.getElementById("nidFlowOtpError");
+      const otpSuccess = document.getElementById("nidFlowOtpSuccess");
+
+      const showOtpError = (header, msg) => {
+        otpError.classList.remove("hidden");
+        document.getElementById("nidFlowOtpErrorHeader").innerText = header;
+        document.getElementById("nidFlowOtpErrorMsg").innerText = msg;
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/verify-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nin, otp })
+        });
+        const responseBody = await parseResponseBody(res);
+
+        if (!res.ok) {
+          const errMsg = extractOtpResponseMessage(responseBody) || res.statusText || "Verification failed";
+          showOtpError("Verification Failed", errMsg);
+          return;
+        }
+
+        // Check for error messages inside a 200 OK response body
+        const inlineMsg = extractOtpResponseMessage(responseBody);
+        if (inlineMsg) {
+          showOtpError("Verification Failed", inlineMsg);
+          return;
+        }
+
+        // ✅ OTP Verified — extract download token and trigger PDF download
+        const downloadToken = responseBody.downloadToken;
+        if (!downloadToken) {
+          showOtpError("Download Error", "OTP verified but no download token received. Please try again.");
+          return;
+        }
+
+        // Store token globally for reuse
+        portalDownloadToken = downloadToken;
+
+        // Build fields from voter data
+        const D = currentNinVoterData;
+        const firstEn = (D.VoterFirstNameEn || "").toUpperCase();
+        const midEn = (D.VoterMiddleNameEn || "").toUpperCase();
+        const lastEn = (D.VoterLastNameEn || "").toUpperCase();
+        const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(" ");
+        const fullNameLoc = cleanNepaliText([D.VoterFirstName, D.VoterMiddleName, D.VoterLastName].filter(Boolean).join(" "));
+        const dobLocRaw = D.dobNp || D.Dob || "";
+        const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
+        const ccnIssuingDateLocRaw = D.CitizenshipIssuingDateLoc || D.CitizenIssueDate || "";
+        const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
+
+        // Show downloading state in modal
+        otpSuccess.classList.add("hidden");
+        otpError.classList.add("hidden");
+        const otpSection = document.getElementById("nidFlowOtpSection");
+        otpSection.innerHTML += `
+          <div id="nidFlowDownloadingBanner" class="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+            <p class="text-xs font-bold text-blue-700">✅ OTP Verified! Downloading PDF...</p>
+            <div class="mt-2 w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
+        `;
+
+        portalNinValue = ""; // clear session
+
+        try {
+          const dlRes = await fetch(`${API_BASE}/api/download`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Download-Token": downloadToken
+            },
+            body: JSON.stringify({
+              dob_loc: dobLoc,
+              ccn_issuing_date_loc: ccnIssuingDateLoc,
+              full_name: fullName,
+              full_name_loc: fullNameLoc
+            })
+          });
+
+          const dlBanner = document.getElementById("nidFlowDownloadingBanner");
+
+          if (!dlRes.ok) {
+            let errMsg = dlRes.statusText;
+            try { const e = await dlRes.json(); errMsg = e.error || errMsg; } catch(e) {}
+            if (dlBanner) dlBanner.innerHTML = `<p class="text-xs font-bold text-red-700">❌ Download failed: ${errMsg}</p>`;
+            return;
+          }
+
+          const encryptedBlob = await dlRes.blob();
+
+          // Calculate password: first 4 chars of name + birth year
+          const nameOnly = fullName.replace(/\s+/g, "");
+          const namePart = nameOnly.substring(0, 4).toUpperCase();
+          const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
+          const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
+          const clipCode = namePart + yearPart;
+
+          try { await navigator.clipboard.writeText(clipCode); } catch(e) {}
+
+          const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
+
+          // Open embedded PDF viewer
+          openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
+
+          // Also trigger browser download
+          const dlLink = document.createElement("a");
+          dlLink.href = URL.createObjectURL(encryptedBlob);
+          dlLink.download = filename;
+          document.body.appendChild(dlLink);
+          dlLink.click();
+          document.body.removeChild(dlLink);
+
+          if (dlBanner) dlBanner.innerHTML = `
+            <p class="text-xs font-bold text-emerald-700">✅ PDF Downloaded!</p>
+            <p class="text-[10px] text-slate-500 mt-0.5">Password: <span class="font-mono font-bold text-slate-800">${clipCode}</span> (copied to clipboard)</p>
+            <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
+          `;
+
+        } catch(dlErr) {
+          const dlBanner = document.getElementById("nidFlowDownloadingBanner");
+          if (dlBanner) dlBanner.innerHTML = `<p class="text-xs font-bold text-red-700">❌ Download error: ${dlErr.message}</p>`;
+        }
+
+      } catch (err) {
+        showOtpError("Error", err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Verify OTP";
+      }
+    }
+
+    function downloadNidFlowPaper() {
+      if (!currentNinVoterData) return;
+      downloadVoterPaper(encodeURIComponent(JSON.stringify(currentNinVoterData)));
+    }
+
+    function saveNidFlowWhiteCard() {
+      if (!currentNinVoterData) return;
+      saveVoterWhiteCard(encodeURIComponent(JSON.stringify(currentNinVoterData)));
+    }
+
+    function openNinResultDetails() {
+      if (!currentNinVoterData) return;
+      closeNinResultModal();
+      openVoterDetailPopup(currentNinVoterData);
     }
 
     function autoSolveVoterCaptcha() {
@@ -5570,7 +6137,7 @@
         return;
       }
 
-      const btn = document.querySelector("[onclick='handleVoterSingleSearch()']");
+      const btn = document.querySelector("#nameModeInputs [onclick='handleVoterSingleSearch()']");
       if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
 
       try {
@@ -6059,6 +6626,142 @@
         muniEn:     muniEn || "—",
         muniNp:     muniNp || "—"
       };
+    }
+
+    function renderVoterWhiteCardToDataUrl(voterData, callback) {
+      const givenEn = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
+      const surnameEn = (voterData.VoterLastNameEn || "").toUpperCase();
+      const fullNameEn = `${givenEn} ${surnameEn}`.trim() || "—";
+      const fullNameNp = [voterData.VoterFirstName, voterData.VoterMiddleName, voterData.VoterLastName].filter(Boolean).join(" ") || "—";
+      const nid = voterData.Nidno || "—";
+      const dobNp = voterData.dobNp || "—";
+      const toleEn = (voterData.PermanentVillageTol || "—").toUpperCase();
+      const _wardNpRaw = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : '') || '';
+      const ward = _wardNpRaw
+        ? _wardNpRaw.replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d))
+        : (voterData.WardNo && voterData.WardNo !== 0 ? String(voterData.WardNo) : '—');
+
+      const addrNames = getResolvedAddressNames(voterData);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 1000;
+      canvas.height = 630;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 1000, 630);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 26px sans-serif";
+      ctx.fillText("Your National ID Number", 500, 50);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 48px monospace";
+      ctx.fillText(nid, 500, 105);
+
+      const photoEl = (() => {
+        if (voterData.PortraitImage && voterData.PortraitStatus !== "ABSENT") {
+          const img = new Image();
+          img.src = "data:image/jpeg;base64," + voterData.PortraitImage;
+          return img;
+        }
+        return null;
+      })();
+
+      const drawCard = () => {
+        const PX = 20, PY = 210, PW = 280, PH = 373;
+        if (photoEl && photoEl.naturalWidth > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.roundRect(PX, PY, PW, PH, 8);
+          ctx.clip();
+          ctx.drawImage(photoEl, PX, PY, PW, PH);
+          ctx.restore();
+          ctx.strokeStyle = "#cbd5e1";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(PX, PY, PW, PH, 8);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "#f8fafc";
+          ctx.beginPath();
+          ctx.roundRect(PX, PY, PW, PH, 8);
+          ctx.fill();
+          ctx.strokeStyle = "#cbd5e1";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(PX, PY, PW, PH, 8);
+          ctx.stroke();
+
+          ctx.fillStyle = "#e2e8f0";
+          ctx.beginPath();
+          ctx.arc(PX + PW / 2, PY + 120, 55, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(PX + PW / 2, PY + PH - 50, 95, 80, 0, Math.PI, 0);
+          ctx.fill();
+          ctx.fillStyle = "#94a3b8";
+          ctx.font = "bold 16px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("PHOTO", PX + PW / 2, PY + PH - 15);
+        }
+
+        const RX = 325;
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 32px sans-serif";
+        ctx.fillText("Other Citizenship Details", 660, 240);
+
+        const fields = [
+          { label: "Nepali Name", value: fullNameNp },
+          { label: "English Name", value: fullNameEn },
+          { label: "Date of Birth", value: dobNp },
+          { label: "Province", value: addrNames.provinceEn },
+          { label: "District", value: addrNames.districtEn },
+          { label: "Municipality", value: addrNames.muniEn },
+          { label: "Tole", value: toleEn },
+          { label: "Ward", value: ward }
+        ];
+
+        const COL_LABEL = RX;
+        const COL_COLON = 610;
+        const COL_VALUE = 630;
+        let curY = 300;
+        const rowH = 42;
+
+        fields.forEach(f => {
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "bold 22px sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText(f.label, COL_LABEL, curY);
+
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "bold 22px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(":", COL_COLON, curY);
+
+          ctx.fillStyle = "#1e293b";
+          ctx.font = "bold 22px sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText(f.value, COL_VALUE, curY);
+
+          curY += rowH;
+        });
+
+        callback(canvas.toDataURL("image/png"));
+      };
+
+      if (photoEl) {
+        if (photoEl.complete && photoEl.naturalWidth > 0) {
+          drawCard();
+        } else {
+          photoEl.onload = drawCard;
+          photoEl.onerror = drawCard;
+        }
+      } else {
+        drawCard();
+      }
     }
 
     function saveVoterWhiteCard(serializedData) {
@@ -7162,127 +7865,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     }
   }
 
-  // Render the voter white card to a data-URL (without downloading) then call callback
-  function renderVoterWhiteCardToDataUrl(voterData, callback) {
-    const givenEn   = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
-    const surnameEn = (voterData.VoterLastNameEn || "").toUpperCase();
-    const fullNameEn = `${givenEn} ${surnameEn}`.trim() || "—";
-    const fullNameNp = [voterData.VoterFirstName, voterData.VoterMiddleName, voterData.VoterLastName].filter(Boolean).join(" ") || "—";
-    const nid        = voterData.Nidno || "—";
-    const dobNp      = voterData.dobNp || "—";
-    const toleEn     = (voterData.PermanentVillageTol || "—").toUpperCase();
-    const _wardNpRaw = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : "") || "";
-    const ward       = _wardNpRaw ? _wardNpRaw.replace(/[०-९]/g, d => "०१२३४५६७८९".indexOf(d)) : (voterData.WardNo && voterData.WardNo !== 0 ? String(voterData.WardNo) : "—");
-    const addrNames  = getResolvedAddressNames(voterData);
 
-    const canvas = document.createElement("canvas");
-    canvas.width  = 1000;
-    canvas.height = 630;
-    const ctx = canvas.getContext("2d");
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, 1000, 630);
-
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#0f172a";
-    ctx.font = "bold 26px sans-serif";
-    ctx.fillText("Your National ID Number", 500, 50);
-    ctx.font = "bold 48px monospace";
-    ctx.fillText(nid, 500, 105);
-
-    const photoEl = (() => {
-      if (voterData.PortraitImage && voterData.PortraitStatus !== "ABSENT") {
-        const img = new Image();
-        img.src = "data:image/jpeg;base64," + voterData.PortraitImage;
-        return img;
-      }
-      return null;
-    })();
-
-    const drawAndReturn = () => {
-      const PX = 20, PY = 210, PW = 280, PH = 373;
-      if (photoEl && photoEl.naturalWidth > 0) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(PX, PY, PW, PH, 8);
-        ctx.clip();
-        ctx.drawImage(photoEl, PX, PY, PW, PH);
-        ctx.restore();
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(PX, PY, PW, PH, 8);
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = "#f8fafc";
-        ctx.beginPath();
-        ctx.roundRect(PX, PY, PW, PH, 8);
-        ctx.fill();
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.roundRect(PX, PY, PW, PH, 8);
-        ctx.stroke();
-        ctx.fillStyle = "#e2e8f0";
-        ctx.beginPath();
-        ctx.arc(PX + PW/2, PY + 120, 55, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(PX + PW/2, PY + PH - 50, 95, 80, 0, Math.PI, 0);
-        ctx.fill();
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 16px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("PHOTO", PX + PW/2, PY + PH - 15);
-      }
-
-      const RX = 325;
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 32px sans-serif";
-      ctx.fillText("Other Citizenship Details", 660, 240);
-
-      const fields = [
-        { label: "Nepali Name",   value: fullNameNp },
-        { label: "English Name",  value: fullNameEn },
-        { label: "Date of Birth", value: dobNp },
-        { label: "Province",      value: addrNames.provinceEn },
-        { label: "District",      value: addrNames.districtEn },
-        { label: "Municipality",  value: addrNames.muniEn },
-        { label: "Tole",          value: toleEn },
-        { label: "Ward",          value: ward }
-      ];
-
-      const COL_LABEL = RX, COL_COLON = 610, COL_VALUE = 630;
-      let curY = 300;
-      const rowH = 42;
-      fields.forEach(f => {
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 22px sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText(f.label, COL_LABEL, curY);
-        ctx.textAlign = "center";
-        ctx.fillText(":", COL_COLON, curY);
-        ctx.fillStyle = "#1e293b";
-        ctx.textAlign = "left";
-        ctx.fillText(f.value, COL_VALUE, curY);
-        curY += rowH;
-      });
-
-      callback(canvas.toDataURL("image/png"));
-    };
-
-    if (photoEl) {
-      if (photoEl.complete && photoEl.naturalWidth > 0) {
-        drawAndReturn();
-      } else {
-        photoEl.onload  = drawAndReturn;
-        photoEl.onerror = drawAndReturn;
-      }
-    } else {
-      drawAndReturn();
-    }
-  }
 
   function openNidVoterModal(voterData, showOtp = true) {
     _nidVoterCurrentData = voterData;
@@ -7495,6 +8078,142 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   }
   </script>
 
+
+  <!-- ===== NIN SEARCH RESULT MODAL ===== -->
+  <div id="ninSearchResultModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0"/></svg>
+          </div>
+          <span class="font-bold text-slate-800 text-sm">Voter Record Search Result</span>
+        </div>
+        <button onclick="closeNinResultModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Success State -->
+      <div id="ninResultSuccess" class="hidden flex-col overflow-y-auto">
+        <!-- White Card Preview -->
+        <div class="p-4 border-b border-slate-100 bg-slate-50">
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Voter Identity Card Preview</p>
+          <img id="ninResultWhiteCardImg" src="" alt="Voter White Card" class="w-full rounded-xl border border-slate-200 shadow-sm bg-white" />
+        </div>
+        <!-- Info Row -->
+        <div class="px-5 py-3 border-t border-slate-100">
+          <div class="mb-2">
+            <p id="ninResultNameDisplay" class="font-bold text-slate-800 text-base"></p>
+            <p id="ninResultNidDisplay" class="text-xs text-slate-500 font-mono mt-0.5"></p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="saveNidFlowWhiteCard()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Save Card
+            </button>
+            <button onclick="downloadNidFlowPaper()" class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Download Paper
+            </button>
+            <button onclick="openNinResultDetails()" class="flex items-center gap-1.5 bg-slate-600 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              See Details
+            </button>
+            <button onclick="openNidFlowFromVoterData()" class="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow ml-auto">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              Proceed to NID Verification
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="ninResultError" class="hidden p-6 flex flex-col items-center gap-3 text-center">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <p class="font-bold text-slate-700 text-sm">Search Failed</p>
+        <p id="ninResultErrorMsg" class="text-xs text-slate-500 max-w-xs"></p>
+        <div class="flex gap-2 mt-1">
+          <button onclick="closeNinResultModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NID FLOW MODAL (captcha → OTP → done) ===== -->
+  <div id="nidFlowModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <div>
+          <p class="font-bold text-slate-800 text-sm">🪪 NID Card Verification</p>
+          <p id="nidFlowModalSubtitle" class="text-[11px] text-slate-500 mt-0.5">Loading captcha...</p>
+        </div>
+        <button onclick="closeNidFlowModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- White Card Preview -->
+      <div id="nidFlowWhiteCardSection" class="hidden px-5 pt-4">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Voter Identity Card</p>
+        <img id="nidFlowWhiteCardImg" src="" alt="Voter White Card" class="w-full rounded-xl border border-slate-200 shadow-sm bg-white mb-3" />
+        <div class="flex gap-2 justify-end mb-3">
+          <button onclick="downloadNidFlowPaper()" class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download Paper
+          </button>
+        </div>
+      </div>
+
+      <!-- Captcha Section -->
+      <div id="nidFlowCaptchaSection" class="px-5 py-4 border-b border-slate-100">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Step 1 — Solve Captcha</p>
+        <div class="flex items-center gap-3 mb-3">
+          <img id="nidFlowCaptchaImg" src="" alt="Captcha" class="h-12 rounded border border-slate-200 bg-slate-50" />
+          <button onclick="loadNidFlowCaptcha()" class="text-xs text-blue-600 hover:text-blue-800 font-bold underline">Refresh</button>
+        </div>
+        <div class="flex gap-2">
+          <input id="nidFlowCaptchaCode" type="text" placeholder="Enter captcha code" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <button id="btnNidFlowSubmitCaptcha" onclick="submitNidFlowCaptcha()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
+            Request OTP
+          </button>
+        </div>
+      </div>
+
+      <!-- OTP Section -->
+      <div id="nidFlowOtpSection" class="hidden px-5 py-4">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Step 2 — Verify OTP</p>
+
+        <!-- Error Banner -->
+        <div id="nidFlowOtpError" class="hidden mb-3 bg-red-50 border border-red-200 rounded-xl p-3">
+          <p id="nidFlowOtpErrorHeader" class="text-xs font-bold text-red-700 uppercase tracking-wide mb-1"></p>
+          <p id="nidFlowOtpErrorMsg" class="text-xs text-red-600"></p>
+          <button onclick="loadNidFlowCaptcha(); document.getElementById('nidFlowCaptchaSection').classList.remove('hidden'); document.getElementById('nidFlowOtpSection').classList.add('hidden');" class="mt-2 text-xs font-bold text-red-700 underline">Try Again</button>
+        </div>
+
+        <!-- Success / OTP Input -->
+        <div id="nidFlowOtpSuccess" class="hidden">
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
+            <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wide mb-0.5">OTP Sent</p>
+            <p id="nidFlowOtpInfoText" class="text-xs text-blue-600"></p>
+          </div>
+          <div class="flex gap-2">
+            <input id="nidFlowOtpCode" type="text" placeholder="Enter OTP code" class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <button id="btnNidFlowVerifyOtp" onclick="submitNidFlowOtp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
+              Verify OTP
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </body>
+
 
 </html>
