@@ -164,6 +164,139 @@ module.exports = async (req, res) => {
     try { step2Json = JSON.parse(step2.body); }
     catch (e) { return res.status(500).json({ error: "Invalid response from GetFromNIN", details: step2.body }); }
 
+    // If the portal reports the record exists (already registered) the portal often returns data:false with
+    // a Nepali message like "तपाईको निवेदन स्वीकृत भइसकेको छ ... मतदाता नं ...". In that case attempt two fallbacks:
+    // 1) Try to GET the NewEnrollment page directly and extract the prefilled JSON (some sessions allow this).
+    // 2) If that fails, retry the GetFromNIN POST with an alternate firstname (use provided firstname unless it
+    //    looks like a date/garbage; fallback to 'sujal' which is known to trigger new-enrollment path in the portal).
+
+    const alreadyRegisteredMsgRegex = /निवेदन स्वीकृत|मतदाता\s*न\.?/i;
+
+    if ((!step2Json.data || step2Json.status !== 1) && typeof step2Json.message === 'string' && alreadyRegisteredMsgRegex.test(step2Json.message)) {
+      // The portal indicates the record is already registered (often with a Nepali message).
+      // Try forcing the full payload by directly GETting the NewEnrollment dashboard first —
+      // this is the most reliable way to obtain the prefilled JSON when the session already
+      // has data associated with the NIN (user requested "forceful" fetch).
+      try {
+        const step3Direct = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
+          method: 'GET',
+          headers: { 'Cookie': sessionCookie, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' }
+        });
+        const parsedDirect = extractVoterJsonObject(step3Direct.body);
+        if (parsedDirect) {
+          parsedDirect._note = 'extracted_from_new_enrollment_directly_initial_attempt';
+          const provIdDirect = String(parsedDirect.ProvinceId || parsedDirect.ProvinceCode || parsedDirect.PermanentState || "");
+          const provInfoDirect = NEPAL_PROVINCES[provIdDirect] || { en: `Province ${provIdDirect}`, np: `प्रदेश ${provIdDirect}` };
+          parsedDirect.PermanentStateNameEn = provInfoDirect.en;
+          parsedDirect.PermanentStateNameNp = provInfoDirect.np;
+          if (parsedDirect.WardNo !== undefined && parsedDirect.WardNo !== null) parsedDirect.PermanentWard = String(parsedDirect.WardNo || "");
+          parsedDirect.PermanentDistrict = parseInt(parsedDirect.DistrictId || parsedDirect.DistrictCode || parsedDirect.PermanentDistrict || 0, 10);
+          parsedDirect.PermanentVdcMunicipality = parseInt(parsedDirect.VdcMunicipalityId || parsedDirect.PermanentVdcMunicipality || 0, 10);
+          parsedDirect.PermanentState = provIdDirect;
+          return res.status(200).json({ success: true, data: parsedDirect });
+        }
+      } catch (e) {
+        console.error('Direct NewEnrollment initial fetch failed:', e.message);
+      }
+
+      // Try refreshing the session cookie and re-requesting Dashboard/NewEnrollment —
+      // some portal sessions only return the prefilled payload after a fresh session is established.
+      try {
+        const refresh = await makeRequest('https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo', {
+          method: 'GET',
+          headers: { 'User-Agent': UA, 'Accept': 'text/html' }
+        });
+        const setCookie2 = refresh.headers && refresh.headers['set-cookie'];
+        if (setCookie2) {
+          const sessionCookieMatch2 = setCookie2.join('; ').match(/\.AdventureWorks\.Session=[^;]+/);
+          if (sessionCookieMatch2) {
+            const sessionCookie2 = sessionCookieMatch2[0];
+            try {
+              const step3Refreshed = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
+                method: 'GET',
+                headers: { 'Cookie': sessionCookie2, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' }
+              });
+              const parsedRefreshed = extractVoterJsonObject(step3Refreshed.body);
+              if (parsedRefreshed) {
+                parsedRefreshed._note = 'extracted_from_new_enrollment_after_session_refresh';
+                const provIdRef = String(parsedRefreshed.ProvinceId || parsedRefreshed.ProvinceCode || parsedRefreshed.PermanentState || "");
+                const provInfoRef = NEPAL_PROVINCES[provIdRef] || { en: `Province ${provIdRef}`, np: `प्रदेश ${provIdRef}` };
+                parsedRefreshed.PermanentStateNameEn = provInfoRef.en;
+                parsedRefreshed.PermanentStateNameNp = provInfoRef.np;
+                if (parsedRefreshed.WardNo !== undefined && parsedRefreshed.WardNo !== null) parsedRefreshed.PermanentWard = String(parsedRefreshed.WardNo || "");
+                parsedRefreshed.PermanentDistrict = parseInt(parsedRefreshed.DistrictId || parsedRefreshed.DistrictCode || parsedRefreshed.PermanentDistrict || 0, 10);
+                parsedRefreshed.PermanentVdcMunicipality = parseInt(parsedRefreshed.VdcMunicipalityId || parsedRefreshed.PermanentVdcMunicipality || 0, 10);
+                parsedRefreshed.PermanentState = provIdRef;
+                return res.status(200).json({ success: true, data: parsedRefreshed });
+              }
+            } catch (e) {
+              console.error('Refreshed-session NewEnrollment fetch failed:', e.message);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Session refresh failed:', e.message);
+      }
+
+      // If direct GET didn't yield a payload, fall back to retrying GetFromNIN with alternate firstnames
+      // (portal sometimes requires a particular firstname value to trigger the JSON response).
+      const triedFirstnames = [];
+      const candidates = [];
+      if (formattedFirstname && !/^[0-9\-/]{2,}$/.test(formattedFirstname)) candidates.push(formattedFirstname);
+      candidates.push('sujal');
+      candidates.push('');
+
+      let parsedAfterRetry = null;
+      for (const cand of candidates) {
+        if (triedFirstnames.indexOf(cand) !== -1) continue;
+        triedFirstnames.push(cand);
+        try {
+          const fnameToUse = cand || 'sujal';
+          const step2Retry = await makeRequest(
+            `https://applyvr.election.gov.np/Login/GetFromNIN?NIN=${encodeURIComponent(formattedNin)}&dob=${encodeURIComponent(formattedDob)}&firstname=${encodeURIComponent(fnameToUse)}`,
+            { method: 'POST', headers: { ...authHeaders, 'Content-Length': '0', 'Origin': 'https://applyvr.election.gov.np', 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' } }
+          );
+
+          let retryJson = null;
+          try { retryJson = JSON.parse(step2Retry.body); } catch (e) { retryJson = null; }
+
+          if (retryJson && retryJson.data) {
+            try {
+              const step3 = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
+                method: 'GET',
+                headers: { 'Cookie': sessionCookie, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' }
+              });
+              const parsed = extractVoterJsonObject(step3.body);
+              if (parsed) {
+                parsedAfterRetry = parsed;
+                parsedAfterRetry._note = 'extracted_after_retry_getfromnin_' + fnameToUse;
+                break;
+              }
+            } catch (e) {
+              console.error('Fetch NewEnrollment after retry failed:', e.message);
+            }
+          }
+        } catch (e) {
+          console.error('GetFromNIN retry attempt failed for firstname', cand, e.message);
+        }
+      }
+
+      if (parsedAfterRetry) {
+        const provId = String(parsedAfterRetry.ProvinceId || parsedAfterRetry.ProvinceCode || parsedAfterRetry.PermanentState || "");
+        const provInfo = NEPAL_PROVINCES[provId] || { en: `Province ${provId}`, np: `प्रदेश ${provId}` };
+        parsedAfterRetry.PermanentStateNameEn = provInfo.en;
+        parsedAfterRetry.PermanentStateNameNp = provInfo.np;
+        if (parsedAfterRetry.WardNo !== undefined && parsedAfterRetry.WardNo !== null) parsedAfterRetry.PermanentWard = String(parsedAfterRetry.WardNo || "");
+        parsedAfterRetry.PermanentDistrict = parseInt(parsedAfterRetry.DistrictId || parsedAfterRetry.DistrictCode || parsedAfterRetry.PermanentDistrict || 0, 10);
+        parsedAfterRetry.PermanentVdcMunicipality = parseInt(parsedAfterRetry.VdcMunicipalityId || parsedAfterRetry.PermanentVdcMunicipality || 0, 10);
+        parsedAfterRetry.PermanentState = provId;
+        return res.status(200).json({ success: true, data: parsedAfterRetry });
+      }
+
+      // None of the fallbacks worked — return the original portal message to the caller (with a helpful hint)
+      return res.status(404).json({ error: step2Json.message || "Record not found or verification failed.", hint: "Tried direct NewEnrollment fetch, then alternate firstnames and direct dashboard fetch to force new enrollment" });
+    }
+
     if (!step2Json.data || step2Json.status !== 1) {
       return res.status(404).json({ error: step2Json.message || "Record not found or verification failed." });
     }

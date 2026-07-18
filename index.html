@@ -816,6 +816,25 @@
                     </svg>
                     Verify All (Bulk)
                   </button>
+
+                  <!-- Added helper buttons for forcing/extracting portal data -->
+                  <button type="button" id="btnForceLoadPortal" onclick="forceLoadPortalData()"
+                    title="Force load prefilled portal payload from /Dashboard/NewEnrollment"
+                    class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] flex items-center justify-center gap-1.5 shadow-md">
+                    Force Load
+                  </button>
+
+                  <button type="button" id="btnRefreshSessionForce" onclick="refreshSessionAndForceLoad()"
+                    title="Refresh session cookie and then attempt to load portal payload"
+                    class="flex-1 bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] flex items-center justify-center gap-1.5 shadow-md">
+                    Refresh+Force
+                  </button>
+
+                  <button type="button" id="btnRetryGetFromNin" onclick="retryGetFromNinFromInputs()"
+                    title="Retry GetFromNIN via the server proxy using current form inputs"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] flex items-center justify-center gap-1.5 shadow-md">
+                    Retry GetFromNIN
+                  </button>
                 </div>
               </div>
 
@@ -6238,6 +6257,117 @@
     }
 
     // Load NID flow captcha
+
+    // Helper: extract the JS object passed to newEnrollmentController from raw HTML
+    function extractNewEnrollmentObjectFromHtml(html) {
+      const marker = 'newEnrollmentController(';
+      const idx = html.indexOf(marker);
+      if (idx === -1) return null;
+      const startObj = html.indexOf('{', idx);
+      if (startObj === -1) return null;
+      let depth = 0;
+      for (let i = startObj; i < html.length; i++) {
+        const ch = html[i];
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) {
+            const jsonStr = html.slice(startObj, i + 1);
+            try {
+              return (new Function('return ' + jsonStr))();
+            } catch (e) {
+              console.error('Failed to parse extracted newEnrollment object', e);
+              return null;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    // Force-load dashboard NewEnrollment HTML and extract the embedded payload
+    async function forceLoadPortalData() {
+      try {
+        const btn = document.getElementById('btnForceLoadPortal');
+        btn.disabled = true;
+        btn.innerText = 'Loading...';
+        const res = await fetch('/Dashboard/NewEnrollment', { method: 'GET', credentials: 'include' });
+        const text = await res.text();
+        const obj = extractNewEnrollmentObjectFromHtml(text);
+        if (!obj) {
+          alert('No prefilled object found on /Dashboard/NewEnrollment');
+          console.warn('No object extracted from NewEnrollment HTML');
+        } else {
+          console.log('Extracted object from portal via forceLoad:', obj);
+          // If openNinResultModal accepts a data object shape, re-use it to show modal
+          if (typeof openNinResultModal === 'function') {
+            openNinResultModal(true, obj, null);
+          } else {
+            alert('Prefilled object extracted. Check console for details.');
+          }
+        }
+      } catch (e) {
+        console.error('forceLoadPortalData failed', e);
+        alert('Force load failed. Check console for details.');
+      } finally {
+        const btn = document.getElementById('btnForceLoadPortal');
+        if (btn) { btn.disabled = false; btn.innerText = 'Force Load'; }
+      }
+    }
+
+    // Refresh session cookie by hitting EnterMobileNo and then attempt force load
+    async function refreshSessionAndForceLoad() {
+      try {
+        const btn = document.getElementById('btnRefreshSessionForce');
+        btn.disabled = true;
+        btn.innerText = 'Refreshing...';
+        // Request enter mobile page to refresh session cookie (same-origin; browser will store new cookie)
+        await fetch('/Login/Preregistration/EnterMobileNo', { method: 'GET', credentials: 'include' });
+        // Now attempt to load NewEnrollment
+        await forceLoadPortalData();
+      } catch (e) {
+        console.error('refreshSessionAndForceLoad failed', e);
+        alert('Refresh+Force failed. Check console for details.');
+      } finally {
+        const btn = document.getElementById('btnRefreshSessionForce');
+        if (btn) { btn.disabled = false; btn.innerText = 'Refresh+Force'; }
+      }
+    }
+
+    // Retry GetFromNIN via the server proxy using current inputs (reuse handleNinSearch logic)
+    function retryGetFromNinFromInputs() {
+      // If handleNinSearch exists, call it; otherwise perform a direct POST
+      if (typeof handleNinSearch === 'function') {
+        // Ensure required inputs are present; if not, ask the user to fill them
+        const nin = document.getElementById('voterNidNin').value.trim();
+        const dob = document.getElementById('voterNinDob').value.trim();
+        const fname = document.getElementById('voterNinFirstname').value.trim();
+        if (!nin || !dob || !fname) { alert('Please fill NIN, DOB, and First Name fields before retrying GetFromNIN.'); return; }
+        handleNinSearch();
+        return;
+      }
+
+      // Fallback direct call to /api/voter-search
+      (async function () {
+        const nin = document.getElementById('voterNidNin').value.trim();
+        const dob = document.getElementById('voterNinDob').value.trim();
+        const firstname = document.getElementById('voterNinFirstname').value.trim();
+        if (!nin || !dob || !firstname) { alert('Please fill all fields (NIN, DOB, and First Name).'); return; }
+        try {
+          const res = await fetch(`${API_BASE}/api/voter-search`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nin, dob, firstname })
+          });
+          const data = await res.json();
+          if (res.ok && data.success && data.data) openNinResultModal(true, data.data, null);
+          else {
+            alert('GetFromNIN retry did not return payload. See console for details.');
+            console.warn('GetFromNIN retry result:', data);
+          }
+        } catch (e) { console.error('retryGetFromNinFromInputs error', e); alert('Error: ' + e.message); }
+      })();
+    }
+
     async function loadNidFlowCaptcha() {
       const img = document.getElementById("nidFlowCaptchaImg");
       const title = document.getElementById("nidFlowModalSubtitle");
