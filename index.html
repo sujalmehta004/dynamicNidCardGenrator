@@ -8695,7 +8695,15 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         const ipEl = document.getElementById('detectedComputerIp');
       const stored = localStorage.getItem('nid_client_computer_name');
       if (nameInput) {
-        nameInput.value = (stored && stored.trim() !== '') ? stored : (clientComputerName && clientComputerName.trim() !== '' ? clientComputerName : '');
+        // If there's no stored or detected name, create a readable fallback from navigator info
+        let fallback = '';
+        try {
+          const platform = navigator.platform || '';
+          const uaMatch = (navigator.userAgent || '').match(/\(([^)]+)\)/);
+          const uaInfo = uaMatch && uaMatch[1] ? uaMatch[1] : '';
+          fallback = (platform ? platform + (uaInfo ? ' - ' + uaInfo : '') : (uaInfo || '')).trim();
+        } catch (e) { fallback = ''; }
+        nameInput.value = (stored && stored.trim() !== '') ? stored : (clientComputerName && clientComputerName.trim() !== '' ? clientComputerName : (fallback || ''));
       }
       ipEl.innerText = clientIpAddress && clientIpAddress.trim() !== '' ? clientIpAddress : 'Not detected';
       const m = document.getElementById('addDeviceModal');
@@ -8721,6 +8729,11 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           // Send device-only registration: do not include IP so server treats this as device registration
           const chosenNameInput = document.getElementById('detectedComputerNameInput');
           const chosenName = chosenNameInput ? chosenNameInput.value.trim() : (clientComputerName || '').trim();
+          if (!chosenName || chosenName.trim() === '') {
+            alert('Please enter a device name before adding the device. If the browser cannot detect your hostname, enter a friendly name (e.g. "Johns-MacBook").');
+            if (btn) { btn.disabled = false; btn.innerText = origText; }
+            return;
+          }
           const body = { ip: "", computerName: chosenName, password: pwd };
           const res = await fetch(`${API_BASE}/api/allowed-ips`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
