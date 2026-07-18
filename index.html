@@ -31,6 +31,40 @@
       }
     }
 
+    // Bulk update NIN status by re-querying the voter-search endpoint for all records (throttled)
+    async function updateNinStatusAll() {
+      if (!confirm('This will re-query the voterlist for every record and update statuses. Continue?')) return;
+      const btn = document.getElementById('btnUpdateNinStatus');
+      btn.disabled = true;
+      btn.innerText = '⏳ Updating...';
+      const records = allCachedRecords.slice();
+      const concurrency = 3;
+      let idx = 0;
+      async function worker() {
+        while (idx < records.length) {
+          const i = idx++;
+          const rec = records[i];
+          try {
+            const payload = { nidNumber: rec.ninEn || rec.nin || '', dob: rec.dobEn || rec.dob || '', firstName: rec.givenEn || rec.given || '' };
+            await fetch(`${API_BASE}/api/voter-search`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+            // Optionally refresh saved secondary DB or people DB here
+          } catch (e) {
+            console.warn('Update failed for', rec.ninEn, e);
+          }
+          // small delay to avoid hammering
+          await new Promise(r => setTimeout(r, 350));
+        }
+      }
+      const workers = [];
+      for (let w=0; w<concurrency; w++) workers.push(worker());
+      await Promise.all(workers);
+      btn.disabled = false;
+      btn.innerText = '🔄 Update NIN Status';
+      await loadSavedVoterListRecords();
+      renderDatabaseTableRows();
+      alert('Update complete (background).');
+    }
+
     .fade-in {
       animation: fadeIn 0.3s ease forwards;
     }
@@ -980,10 +1014,11 @@
 
 
 
-        <div class="flex justify-end mb-3">
+        <div id="listedDevicesButtonContainer" class="flex justify-end mb-3 hidden">
           <button type="button" onclick="openListedDevicesModal()"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded-lg text-[11px] transition-all shadow-sm">
-            See Listed Computers Device
+            class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded-lg text-[11px] transition-all shadow-sm">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            See Listed Computers
           </button>
         </div>
 
@@ -1396,6 +1431,11 @@
                     NID Number
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-voterDb" checked onclick="toggleColumn('voterDb')"
+                      class="accent-blue-600" />
+                    NIN Status VL
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                     <input type="checkbox" id="colCheckbox-name" checked onclick="toggleColumn('name')"
                       class="accent-blue-600" />
                     Full Name
@@ -1453,6 +1493,12 @@
             <button onclick="backupDatabase()"
               class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
               💾 Backup DB
+            </button>
+
+            <!-- Update NIN Status Button -->
+            <button id="btnUpdateNinStatus" onclick="updateNinStatusAll()"
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
+              🔄 Update NIN Status
             </button>
 
             <!-- Print Records Button -->
@@ -1553,6 +1599,8 @@
     let selectedRecordId = null;
     let documentIdentityDb = [];
     let allCachedRecords = [];
+    // Cached voter-list records saved in secondary DB keyed by nidNumber
+    let voterListIndex = {};
     let nepalAdminData = { districts: [], local_levels: [] };
 
     const englishToNepaliDigits = {
@@ -1639,7 +1687,7 @@
       });
 
       loadNepalAdministrativeData();
-      fetchDatabase();
+      loadSavedVoterListRecords().then(() => fetchDatabase()).catch(() => fetchDatabase());
       checkIpAccessControl();
       loadSavedBordersAndBackgrounds();
       loadSavedColumnVisibility();
@@ -1810,6 +1858,16 @@
         mainGrid.className = "block w-full lg:h-full lg:overflow-y-auto";
         leftColumn.className = "hidden";
         rightColumn.className = "hidden";
+      }
+
+      // Show "See Listed Computers" button only on the Admin Setup tab
+      const listedDevicesBtn = document.getElementById("listedDevicesButtonContainer");
+      if (listedDevicesBtn) {
+        if (targetViewTab === "admin") {
+          listedDevicesBtn.classList.remove("hidden");
+        } else {
+          listedDevicesBtn.classList.add("hidden");
+        }
       }
     }
 
@@ -2651,6 +2709,7 @@
     let currentSortOrder = "desc";
 
     let columnVisibility = {
+      voterDb: true,
       nin: true,
       name: true,
       token: true,
@@ -2712,6 +2771,18 @@
       updateColumnVisibilityButtons();
     }
 
+    function loadSavedVoterListRecords() {
+      return fetch(`${API_BASE}/api/save-voter-list-record`)
+        .then(r => r.json())
+        .then(data => {
+          const recs = data.records || [];
+          voterListIndex = {};
+          recs.forEach(r => {
+            if (r && r.nidNumber) voterListIndex[String(r.nidNumber).trim()] = r;
+          });
+        }).catch(err => { console.warn('Failed to load saved voter list records', err); });
+    }
+
     function updateStatsDashboard() {
       const stats = {
         total: allCachedRecords.length,
@@ -2751,6 +2822,13 @@
     function renderTableHeader() {
       const headerRow = document.getElementById("dbTableHeaderRow");
       headerRow.innerHTML = "";
+      // First special column: Voter DB status / portrait
+      if (columnVisibility.voterDb) {
+        const firstTh = document.createElement('th');
+        firstTh.style.cssText = "padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; white-space:nowrap; border-right:1px solid #e2e8f0; background:#f8fafc; user-select:none;";
+        firstTh.innerText = 'NIN Status VL';
+        headerRow.appendChild(firstTh);
+      }
 
       const cols = [
         { key: "nin", label: "NID Number", sortKey: "ninEn" },
@@ -2932,6 +3010,12 @@
     function openRowDetailPopup(ninEn) {
       const row = documentIdentityDb.find(r => r.ninEn === ninEn);
       if (!row) return;
+      const savedPortrait = voterListIndex[String(row.ninEn || '').trim()];
+      const portraitHtml = savedPortrait && savedPortrait.portraitImage
+        ? `<div style="width:84px; min-width:84px; max-height:104px; overflow:hidden; border-radius:14px; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center;">
+             <img src="data:image/jpeg;base64,${savedPortrait.portraitImage}" class="w-full h-full object-cover" />
+           </div>`
+        : "";
       const sc = getStatusAccentColor(row.status);
       const statusLabel = row.status === "inprogress" ? "Mobile Not Registered" :
         row.status === "not online" ? "Not Online" :
@@ -2939,9 +3023,9 @@
             row.status === "done" ? "Done" : row.status;
       const modal = document.getElementById("rowDetailModal");
       document.getElementById("rowDetailContent").innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
-          <div style="width:4px; height:40px; border-radius:4px; background:${sc.left}; flex-shrink:0;"></div>
-          <div>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          ${portraitHtml}
+          <div style="flex:1; min-width:0;">
             <div style="font-weight:800; font-size:14px; color:#1e293b;">${row.givenEn || ""} ${row.surnameEn || ""}</div>
             <div style="font-size:11px; color:#64748b; font-family:inherit;" class="nepali-font">${row.givenNp || ""} ${row.surnameNp || ""}</div>
           </div>
@@ -3032,6 +3116,39 @@
         };
 
         const CELL = "padding:9px 14px; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;";
+
+        // First column: Voter DB info (portrait / registered message / not-found)
+        if (columnVisibility.voterDb) {
+          const tdDb = document.createElement('td');
+          tdDb.style.cssText = CELL + 'text-align:center; vertical-align:middle; width:84px; cursor:pointer;';
+          tdDb.onclick = (e) => { e.stopPropagation(); openVoterDbDirectDetail(String(row.ninEn || '').trim()); };
+          try {
+            const saved = voterListIndex[String(row.ninEn || '').trim()];
+            if (saved) {
+              // If portrait available
+              if (saved.portraitImage) {
+                tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
+              } else if (saved.voterListNumber || (saved.profileData && (saved.profileData.ApprovalMessage || saved.profileData.ApprovalMessage === '')) ) {
+                const voterNo = saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo)) || '';
+                if (voterNo) {
+                  tdDb.innerHTML = `<div style="text-align:center; font-size:11px; color:#065f46; font-weight:700;">तपाईको निवेदन स्वीकृत भइसकेको छ ।<br/>तपाईको मतदाता नं ${voterNo} रहेको छ ।</div>`;
+                } else {
+                  const msg = (saved.profileData && saved.profileData.ApprovalMessage) || (saved.rawPayload && saved.rawPayload.ApprovalMessage) || 'Registered';
+                  tdDb.innerHTML = `<div style="text-align:center; font-size:11px; color:#065f46; font-weight:700;">${msg}</div>`;
+                }
+              } else if (saved.status && saved.status.toLowerCase().includes('not')) {
+                tdDb.innerHTML = `<div style="width:64px; margin:0 auto; text-align:center;"><svg class="w-10 h-10 text-rose-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.29 3.86L1.82 12.34a2 2 0 000 2.83l8.47 8.48a2 2 0 002.83 0l8.48-8.48a2 2 0 000-2.83L13.12 3.86a2 2 0 00-2.83 0zM12 9v4m0 4h.01"/></svg><div style="font-size:10px; color:#9f1239; font-weight:600; margin-top:4px;">Not Found</div></div>`;
+              } else {
+                tdDb.innerHTML = `<svg class="w-6 h-6 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+              }
+            } else {
+              tdDb.innerHTML = `<svg class="w-6 h-6 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+            }
+          } catch (e) {
+            tdDb.innerHTML = `<svg class="w-6 h-6 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+          }
+          tr.appendChild(tdDb);
+        }
 
         // Col 1: NIN
         if (columnVisibility.nin) {
@@ -3805,8 +3922,7 @@
               <col style="width: 230px;" />
               <col style="width: 100px;" />
               <col style="width: 145px;" />
-              <col style="min-width: 200px;" />
-              <col style="min-width: 180px;" />
+              <col style="min-width: 260px;" />
             </colgroup>
             <thead>
               <tr style="background:#f8f9fb; border-bottom: 2px solid #e2e8f0;">
@@ -3816,8 +3932,7 @@
                 <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Full Name</th>
                 <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Status</th>
                 <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Verification</th>
-                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">NID Response</th>
-                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">Voter List</th>
+                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">NID Response</th>
               </tr>
             </thead>
             <tbody>
@@ -3826,7 +3941,7 @@
       if (displayRows.length === 0) {
         html += `
           <tr>
-            <td colspan="8" style="padding:36px 16px; text-align:center; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9;">No records match the active filter.</td>
+            <td colspan="7" style="padding:36px 16px; text-align:center; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9;">No records match the active filter.</td>
           </tr>
         `;
       } else {
@@ -3836,7 +3951,8 @@
           const nameNp = `${rec.givenNp || ""} ${rec.surnameNp || ""}`.trim();
           const nin = rec.ninEn;
 
-          // Portrait image column
+          // New first column: fetch voterlist DB info and render portrait / messages / not-found
+              // Portrait image column (small photo column)
           let photoHtml = "";
           if (row.voterSearchResult && row.voterSearchResult.success && row.voterSearchResult.data && row.voterSearchResult.data.PortraitImage) {
             photoHtml = `<img src="data:image/jpeg;base64,${row.voterSearchResult.data.PortraitImage}" class="w-8 h-10 object-cover rounded mx-auto border border-slate-200" />`;
@@ -3844,31 +3960,6 @@
             photoHtml = `<svg class="w-5 h-5 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
           }
 
-          // Voter list response column
-          let voterListHtml = "";
-          if (row.voterSearchState === "searching") {
-            voterListHtml = `
-              <div class="flex items-center justify-center gap-1 text-[11px] text-amber-600 font-semibold">
-                <div class="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                Checking...
-              </div>
-            `;
-          } else if (row.voterSearchResult) {
-            if (row.voterSearchResult.success) {
-              voterListHtml = `<span style="font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid #a7f3d0; background:#d1fae5; color:#065f46; white-space:nowrap;">Found ✓</span>`;
-            } else {
-              const errMsg = row.voterSearchResult.error || "";
-              if (errMsg.includes("स्वीकृत भइसकेको छ") || errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता") || errMsg.toLowerCase().includes("active")) {
-                voterListHtml = `<span style="font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid #a7f3d0; background:#d1fae5; color:#065f46; white-space:nowrap;">NIN Number Active</span>`;
-              } else if (errMsg.toLowerCase().includes("no record found") || errMsg.toLowerCase().includes("not found")) {
-                voterListHtml = `<span style="font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid #fecdd3; background:#ffe4e6; color:#b91c1c; white-space:nowrap;">NIN Number Not Active</span>`;
-              } else {
-                voterListHtml = `<span style="font-size:9.5px; font-weight:750; color:#b91c1c; border-bottom:1px dashed #fecdd3;" title="${errMsg}">Not Found ✗</span>`;
-              }
-            }
-          } else {
-            voterListHtml = `<span style="color:#94a3b8; font-style:italic;">Pending check</span>`;
-          }
 
           // Left-accent border color only — minimal row tinting
           let accentColor = "#e2e8f0"; // default slate
@@ -3954,8 +4045,7 @@
               <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
                 <span style="font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid ${verifBorder}; background:${verifBg}; color:${verifText}; white-space:nowrap; ${pulseCss}">${verifLabel}</span>
               </td>
-              <td style="padding:10px 14px; font-size:11px; border-right:1px solid #f1f5f9;">${detailsHtml}</td>
-              <td style="padding:10px 14px; text-align:center; border-right:none; white-space:nowrap;">${voterListHtml}</td>
+              <td style="padding:10px 14px; font-size:11px; border-right:none;">${detailsHtml}</td>
             </tr>
           `;
         });
@@ -4086,6 +4176,41 @@
       }
     }
 
+    async function persistVoterListRecordToSecondaryDb(nin, voterData, status = "pending", voterListNumber = "") {
+      if (!nin || !voterData) return;
+      try {
+        // Resolve actual district/province/municipality names from numeric codes
+        let resolvedAddr = null;
+        try { resolvedAddr = getResolvedAddressNames(voterData); } catch(e) {}
+
+        // Enrich voterData with resolved human-readable address fields
+        const enrichedData = Object.assign({}, voterData);
+        if (resolvedAddr) {
+          enrichedData._resolvedProvinceEn  = resolvedAddr.provinceEn  || "";
+          enrichedData._resolvedProvinceNp  = resolvedAddr.provinceNp  || "";
+          enrichedData._resolvedDistrictEn  = resolvedAddr.districtEn  || "";
+          enrichedData._resolvedDistrictNp  = resolvedAddr.districtNp  || "";
+          enrichedData._resolvedMuniEn      = resolvedAddr.muniEn      || "";
+          enrichedData._resolvedMuniNp      = resolvedAddr.muniNp      || "";
+        }
+
+        await fetch(`${API_BASE}/api/save-voter-list-record`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nidNumber: String(nin).trim(),
+            portraitImage: enrichedData.PortraitImage || "",
+            status,
+            voterListNumber,
+            profileData: enrichedData,
+            rawPayload: enrichedData
+          })
+        });
+      } catch (err) {
+        console.warn("Failed to save voter list record to secondary DB", err);
+      }
+    }
+
     async function triggerBulkVoterSearch() {
       const btn = document.getElementById("btnBulkVoterRetry");
       if (btn) {
@@ -4118,17 +4243,34 @@
             const data = await res.json();
 
             if (res.ok && data.success && data.data) {
+              // Portrait + full data retrieved → status: pending
               rowObj.voterSearchResult = { success: true, data: data.data };
+              await persistVoterListRecordToSecondaryDb(nin, data.data, "pending", "");
               shouldRetry = false;
             } else {
               const errMsg = data.error || "Not found";
               if (errMsg.includes("NID सर्भरबाट डेटा प्राप्त हुन सकेन") || errMsg.includes("NID सर्भर")) {
+                // Server-side transient error — keep retrying
                 attempt++;
                 rowObj.voterSearchState = `searching (retry ${attempt})`;
                 renderBulkTable();
                 await new Promise(r => setTimeout(r, 1000));
-              } else {
+              } else if (errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता") || errMsg.toLowerCase().includes("active")) {
+                // Already approved/registered — extract voter list number
+                const voterNoMatch = errMsg.match(/\d{5,}/);  // voter numbers are typically long
+                const voterListNo = voterNoMatch ? voterNoMatch[0] : "";
                 rowObj.voterSearchResult = { success: false, error: errMsg };
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg, ApprovalMessage: errMsg, VoterNo: voterListNo }, "pending", voterListNo);
+                shouldRetry = false;
+              } else if (errMsg.toLowerCase().includes("no record found") || errMsg.toLowerCase().includes("not found") || errMsg.toLowerCase().includes("not active") || errMsg.toLowerCase().includes("data not found")) {
+                // Record not found → status: not online
+                rowObj.voterSearchResult = { success: false, error: errMsg };
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "not online", "");
+                shouldRetry = false;
+              } else {
+                // Other errors → pending
+                rowObj.voterSearchResult = { success: false, error: errMsg };
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "pending", "");
                 shouldRetry = false;
               }
             }
@@ -4159,26 +4301,106 @@
       const rowObj = bulkResults.find(r => r.record.ninEn === nin);
       if (!rowObj) return;
 
-      if (rowObj.voterSearchResult && rowObj.voterSearchResult.success && rowObj.voterSearchResult.data) {
-        openVoterDetailPopup(rowObj.voterSearchResult.data);
-      } else {
-        const rec = rowObj.record;
-        const fallbackData = {
-          Nidno: rec.ninEn,
-          VoterFirstNameEn: rec.givenEn,
-          VoterLastNameEn: rec.surnameEn,
-          Dob: rec.dobEn,
-          dobNp: rec.dobNp || "—",
-          CitizenshipCertificateNumberLoc: rec.citNo || "—",
-          CitizenshipIssuingDateLoc: rec.citDate || "—",
-          FatherFirstName: "—", FatherLastName: "",
-          MotherFirstName: "—", MotherLastName: "",
-          GrandfatherFirstName: "—", GrandfatherLastName: "",
-          PermanentWard: "—", PermanentVillageTol: "—",
-          VoterNo: ""
-        };
-        openVoterDetailPopup(fallbackData);
+      const voterResult = rowObj.voterSearchResult || {};
+      const approvalText = (voterResult.data && (voterResult.data.ApprovalMessage || voterResult.data.Approvalmessage || voterResult.data.ApprovalMassage)) || "";
+      const errMsg = String(voterResult.error || "");
+      const isApproval = /स्वीकृत|मतदाता/i.test(approvalText || errMsg);
+      const isNotFound = /(no record found|data not found|not found|please verify nin)/i.test(errMsg);
+
+      if (isApproval) {
+        showCustomAlert('Approval Notice', approvalText || errMsg || 'This voter has already been approved.', 'success');
+        return;
       }
+
+      if (isNotFound) {
+        showCustomAlert('No record found', 'No record found for this NIN on voter portal.', 'warning');
+        return;
+      }
+
+      if (voterResult.success && voterResult.data) {
+        openVoterDetailPopup(voterResult.data);
+        return;
+      }
+
+      showCustomAlert('Voter Search Result', errMsg || 'No record found for this NIN on voter portal.', 'info');
+    }
+
+    async function openVoterDbDirectDetail(nid) {
+      const cleanNid = String(nid || '').trim();
+      if (!cleanNid) return;
+
+      let saved = voterListIndex[cleanNid];
+      if (!saved) {
+        try {
+          const res = await fetch(`${API_BASE}/api/save-voter-list-record?nidNumber=${encodeURIComponent(cleanNid)}`);
+          if (res.ok) {
+            const j = await res.json();
+            saved = j.found || j.record || null;
+          }
+        } catch (e) {
+          console.warn('Failed to load voter list record for direct details', e);
+        }
+      }
+
+      const approvalText = saved && ((saved.profileData && saved.profileData.ApprovalMessage) || (saved.rawPayload && saved.rawPayload.ApprovalMessage) || "");
+      const savedError = saved && (saved.error || "") || "";
+      const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) || "";
+      const isApproval = approvalText && /स्वीकृत|मतदाता/i.test(approvalText);
+      const isNotFound = saved && ((saved.status && String(saved.status).toLowerCase().includes('not')) || /(no record found|data not found|not found|please verify nin)/i.test(approvalText || savedError));
+
+      if (saved && (isApproval || isNotFound)) {
+        if (isApproval) {
+          const message = voterNo
+            ? `तपाईको निवेदन स्वीकृत भइसकेको छ । तपाईको मतदाता नं ${voterNo} रहेको छ ।`
+            : approvalText;
+          showCustomAlert('Approval Notice', message || 'This voter has already been approved.', 'success');
+          return;
+        }
+
+        if (isNotFound) {
+          showCustomAlert('No record found', 'No record found for this NIN in the voter list database.', 'warning');
+          return;
+        }
+      }
+
+      if (!saved) {
+        showCustomAlert('No record found', 'No record found for this NIN in the voter list database.', 'warning');
+        return;
+      }
+
+      let profile = (saved && (saved.profileData || saved.rawPayload)) || {};
+      if (!profile || Object.keys(profile).length === 0) {
+        const row = documentIdentityDb.find(r => String(r.ninEn || '').trim() === cleanNid);
+        if (row) {
+          profile = {
+            Nidno: cleanNid,
+            VoterFirstNameEn: row.givenEn || '',
+            VoterLastNameEn: row.surnameEn || '',
+            Dob: row.dobEn || '',
+            dobNp: row.dobNp || '',
+            CitizenshipCertificateNumberLoc: row.citNo || '',
+            CitizenshipIssuingDateLoc: row.citDate || '',
+            FatherFirstName: row.fatherFirstName || '—',
+            FatherLastName: row.fatherLastName || '',
+            MotherFirstName: row.motherFirstName || '—',
+            MotherLastName: row.motherLastName || '',
+            GrandfatherFirstName: row.grandfatherFirstName || '—',
+            PermanentWard: row.ward || '—',
+            PermanentVillageTol: row.village || '—'
+          };
+        }
+      }
+
+      const voterData = Object.assign({}, profile || {});
+      voterData.Nidno = voterData.Nidno || cleanNid;
+      if (saved && saved.portraitImage) voterData.PortraitImage = saved.portraitImage;
+      if (saved && saved.portraitStatus) voterData.PortraitStatus = saved.portraitStatus;
+      if (!voterData.VoterFirstNameEn && voterData.FirstName) voterData.VoterFirstNameEn = voterData.FirstName;
+      if (!voterData.VoterLastNameEn && voterData.LastName) voterData.VoterLastNameEn = voterData.LastName;
+      if (!voterData.Dob && voterData.dob) voterData.Dob = voterData.dob;
+      if (!voterData.dobNp && voterData.dobNp) voterData.dobNp = voterData.dobNp;
+
+      openVoterDetailPopup(voterData);
     }
 
     async function requestPortalBulkOtp() {
@@ -8140,7 +8362,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99990] flex items-center justify-center hidden"
     onclick="if(event.target===this) closeRowDetailModal()">
     <div
-      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
         <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Record Details</h3>
         <button onclick="closeRowDetailModal()"
