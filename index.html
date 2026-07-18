@@ -31,40 +31,6 @@
       }
     }
 
-    // Bulk update NIN status by re-querying the voter-search endpoint for all records (throttled)
-    async function updateNinStatusAll() {
-      if (!confirm('This will re-query the voterlist for every record and update statuses. Continue?')) return;
-      const btn = document.getElementById('btnUpdateNinStatus');
-      btn.disabled = true;
-      btn.innerText = '⏳ Updating...';
-      const records = allCachedRecords.slice();
-      const concurrency = 3;
-      let idx = 0;
-      async function worker() {
-        while (idx < records.length) {
-          const i = idx++;
-          const rec = records[i];
-          try {
-            const payload = { nidNumber: rec.ninEn || rec.nin || '', dob: rec.dobEn || rec.dob || '', firstName: rec.givenEn || rec.given || '' };
-            await fetch(`${API_BASE}/api/voter-search`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-            // Optionally refresh saved secondary DB or people DB here
-          } catch (e) {
-            console.warn('Update failed for', rec.ninEn, e);
-          }
-          // small delay to avoid hammering
-          await new Promise(r => setTimeout(r, 350));
-        }
-      }
-      const workers = [];
-      for (let w=0; w<concurrency; w++) workers.push(worker());
-      await Promise.all(workers);
-      btn.disabled = false;
-      btn.innerText = '🔄 Update NIN Status';
-      await loadSavedVoterListRecords();
-      renderDatabaseTableRows();
-      alert('Update complete (background).');
-    }
-
     .fade-in {
       animation: fadeIn 0.3s ease forwards;
     }
@@ -1635,6 +1601,74 @@
       4: { en: "Rural Municipality", ne: "गाउँपालिका" },
     };
 
+    window.updateNinStatusAll = async function () {
+      const confirmed = await showConfirmModal(
+        "Update NIN Status",
+        "This will re-query the voterlist for every record and update statuses. Continue?"
+      );
+      if (!confirmed) return;
+
+      const btn = document.getElementById("btnUpdateNinStatus");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Updating...";
+      }
+
+      const records = Array.isArray(allCachedRecords) ? allCachedRecords.slice() : [];
+      const concurrency = 3;
+      let idx = 0;
+
+      async function worker() {
+        while (idx < records.length) {
+          const i = idx++;
+          const rec = records[i];
+
+          try {
+            const payload = {
+              nin: rec?.ninEn || rec?.nin || "",
+              dob: rec?.dobEn || rec?.dob || "",
+              firstname: String(rec?.givenEn || rec?.given || "").trim().split(/\s+/)[0].toLowerCase(),
+            };
+
+            if (payload.nin && payload.dob && payload.firstname) {
+              await fetch(`${API_BASE}/api/voter-search`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+            }
+          } catch (e) {
+            console.warn("Update failed for", rec?.ninEn || rec?.nin, e);
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 350));
+        }
+      }
+
+      const workers = [];
+      for (let w = 0; w < concurrency; w++) {
+        workers.push(worker());
+      }
+
+      try {
+        await Promise.all(workers);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🔄 Update NIN Status";
+        }
+      }
+
+      try {
+        await loadSavedVoterListRecords();
+        renderDatabaseTableRows();
+      } catch (e) {
+        console.warn("Failed to refresh table after NIN status update", e);
+      }
+
+      showCustomAlert("Update Complete", "Update complete (background).", "success");
+    };
+
     window.addEventListener("DOMContentLoaded", () => {
       // Listen for scanned token from the secure PDF viewer page
       window.addEventListener("message", (event) => {
@@ -1711,6 +1745,54 @@
       // and doesn't blend into a bottom loop with Ga (\u0917)
       clean = clean.replace(/ङ्ग/g, 'ङ्\u200Dग');
       return clean;
+    }
+
+    let pendingConfirmResolver = null;
+
+    function showConfirmModal(title, message, confirmLabel = "Confirm", cancelLabel = "Cancel") {
+      return new Promise((resolve) => {
+        pendingConfirmResolver = resolve;
+
+        const modal = document.getElementById("confirmActionModal");
+        const titleEl = document.getElementById("confirmActionTitle");
+        const messageEl = document.getElementById("confirmActionMessage");
+        const confirmBtn = document.getElementById("confirmActionConfirmBtn");
+        const cancelBtn = document.getElementById("confirmActionCancelBtn");
+
+        if (titleEl) titleEl.textContent = title;
+        if (messageEl) messageEl.textContent = message;
+        if (confirmBtn) confirmBtn.textContent = confirmLabel;
+        if (cancelBtn) cancelBtn.textContent = cancelLabel;
+
+        if (modal) {
+          modal.classList.remove("hidden");
+          setTimeout(() => {
+            if (modal.firstElementChild) {
+              modal.firstElementChild.classList.remove("scale-95");
+              modal.firstElementChild.classList.add("scale-100");
+            }
+          }, 10);
+        }
+      });
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById("confirmActionModal");
+      if (!modal || !modal.firstElementChild) return;
+      modal.firstElementChild.classList.remove("scale-100");
+      modal.firstElementChild.classList.add("scale-95");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 150);
+    }
+
+    function handleConfirmModalDecision(confirmed) {
+      const resolver = pendingConfirmResolver;
+      pendingConfirmResolver = null;
+      closeConfirmModal();
+      if (resolver) {
+        resolver(confirmed);
+      }
     }
 
     function showCustomAlert(title, message, type = 'info') {
@@ -8439,6 +8521,40 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <button onclick="closeEmbeddedPdfModal()"
           class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-bold px-5 py-2 rounded-xl text-xs transition-all">
           Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Action Modal -->
+  <div id="confirmActionModal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300"
+      onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 id="confirmActionTitle" class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+          Confirm Action
+        </h3>
+        <button onclick="handleConfirmModalDecision(false)" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div id="confirmActionMessage" class="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line">
+        Are you sure you want to continue?
+      </div>
+
+      <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <button id="confirmActionCancelBtn" onclick="handleConfirmModalDecision(false)"
+          class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+          Cancel
+        </button>
+        <button id="confirmActionConfirmBtn" onclick="handleConfirmModalDecision(true)"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+          Confirm
         </button>
       </div>
     </div>
