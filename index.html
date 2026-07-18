@@ -1081,6 +1081,7 @@
                 <thead class="bg-slate-50 text-slate-505 font-mono text-[9px] uppercase tracking-wider bg-slate-50">
                   <tr>
                     <th class="px-4 py-2.5 font-bold">IP Address</th>
+                    <th class="px-4 py-2.5 font-bold">Computer Name</th>
                     <th class="px-4 py-2.5 font-bold">Added Date</th>
                     <th class="px-4 py-2.5 text-center font-bold">Actions</th>
                   </tr>
@@ -5527,15 +5528,50 @@
       allowedIpsDatabase.forEach((item) => {
         const tr = document.createElement("tr");
         tr.className = "border-b border-slate-100 text-[11px] bg-white";
+        const cname = (item.computerName || "").trim();
         tr.innerHTML = `
           <td class="px-4 py-2.5 font-mono font-bold text-slate-800">${item.ip}</td>
+          <td class="px-4 py-2.5 font-mono text-slate-600">${cname ? escapeHtml(cname) : '—'}</td>
           <td class="px-4 py-2.5 text-slate-400 font-mono">${new Date(item.createdAt).toLocaleString()}</td>
           <td class="px-4 py-2.5 text-center">
-            <button onclick="removeIpWhitelist('${item.ip}')" class="bg-red-500 hover:bg-red-650 text-white px-2 py-1 rounded-md text-[9px] transition-all font-bold shadow-sm">Delete</button>
+            <button onclick="removeIpWhitelist2('${item.ip}')" class="bg-red-500 hover:bg-red-650 text-white px-2 py-1 rounded-md text-[9px] transition-all font-bold shadow-sm">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"/]/g, function (s) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;',
+          '/': '&#x2F;'
+        })[s];
+      });
+    }
+
+    async function removeIpWhitelist2(ip) {
+      if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=${encodeURIComponent('Ss9805344374@><')}`, {
+          method: 'DELETE'
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(`Failed to delete: ${err.error}`);
+          return;
+        }
+        alert('IP Whitelist removed!');
+        await checkIpAccessControl();
+        loadAllowedIpsTable();
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
     }
 
     function openAddIpModal() {
