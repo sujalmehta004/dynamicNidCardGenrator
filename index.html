@@ -5211,7 +5211,7 @@
     }
 
     let clientIpAddress = "";
-    let clientComputerName = ""; // populated when possible from WebRTC/mDNS candidates
+    let clientComputerName = ""; // populated when possible from WebRTC/mDNS candidates or localStorage
     let isClientIpAllowed = false;
     let allowedIpsDatabase = [];
     let allowedComputersDatabase = []; // list of allowed computer-name records
@@ -5246,7 +5246,11 @@
             try {
               const mdnsMatch = line.match(/([a-zA-Z0-9\-_.]+\.local)/i);
               if (mdnsMatch && mdnsMatch[1]) {
-                clientComputerName = mdnsMatch[1];
+                // Only set detected name if no persistent chosen name exists
+                const storedChosen = localStorage.getItem('nid_client_computer_name');
+                if (!storedChosen || storedChosen.trim() === '') {
+                  clientComputerName = mdnsMatch[1];
+                }
               }
             } catch (e) {
               // ignore
@@ -5313,6 +5317,16 @@
           }
         }
 
+        // Load stored chosen computer name (if user previously registered/confirmed a name)
+        try {
+          const storedChosen = localStorage.getItem('nid_client_computer_name');
+          if (storedChosen && storedChosen.trim() !== '') {
+            clientComputerName = storedChosen.trim();
+          }
+        } catch (e) {
+          // ignore localStorage errors
+        }
+
         // Update UI with detected or fallback status before making the server call
         const ipBox = document.getElementById("adminDetectedIp");
         if (ipBox) {
@@ -5326,7 +5340,7 @@
         if (regDeviceIpInput) regDeviceIpInput.value = clientIpAddress;
 
         // 3️⃣ Fetch the whitelist from the server
-        let data = { allowedIps: [] };
+        let data = { allowedIps: [], allowedComputers: [] };
         try {
           const res = await fetch(`${API_BASE}/api/allowed-ips`);
           if (res.ok) {
@@ -8653,7 +8667,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
             <div class="space-y-3 text-sm text-slate-700">
               <div>
                 <div class="text-xs text-slate-400">Detected Name</div>
-                <div id="detectedComputerName" class="font-mono font-bold text-slate-800">—</div>
+                <input id="detectedComputerNameInput" class="w-full font-mono font-bold text-slate-800 border border-slate-200 rounded px-2 py-1" />
               </div>
               <div>
                 <div class="text-xs text-slate-400">Detected IP</div>
@@ -8677,13 +8691,16 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
       window.openAddDeviceModal = function() {
         buildAddDeviceModal();
-        const nameEl = document.getElementById('detectedComputerName');
+      const nameInput = document.getElementById('detectedComputerNameInput');
         const ipEl = document.getElementById('detectedComputerIp');
-        nameEl.innerText = clientComputerName && clientComputerName.trim() !== '' ? clientComputerName : 'Not detected';
-        ipEl.innerText = clientIpAddress && clientIpAddress.trim() !== '' ? clientIpAddress : 'Not detected';
-        const m = document.getElementById('addDeviceModal');
-        if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
-        const pwd = document.getElementById('addDevicePassword'); if (pwd) pwd.value = '';
+      const stored = localStorage.getItem('nid_client_computer_name');
+      if (nameInput) {
+        nameInput.value = (stored && stored.trim() !== '') ? stored : (clientComputerName && clientComputerName.trim() !== '' ? clientComputerName : '');
+      }
+      ipEl.innerText = clientIpAddress && clientIpAddress.trim() !== '' ? clientIpAddress : 'Not detected';
+      const m = document.getElementById('addDeviceModal');
+      if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+      const pwd = document.getElementById('addDevicePassword'); if (pwd) pwd.value = '';
       };
 
       window.closeAddDeviceModal = function() {
@@ -8701,7 +8718,10 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         if (btn) { btn.disabled = true; btn.innerText = 'Adding...'; }
 
         try {
-          const body = { ip: (clientIpAddress || '').trim(), computerName: (clientComputerName || '').trim(), password: pwd };
+          // Send device-only registration: do not include IP so server treats this as device registration
+          const chosenNameInput = document.getElementById('detectedComputerNameInput');
+          const chosenName = chosenNameInput ? chosenNameInput.value.trim() : (clientComputerName || '').trim();
+          const body = { ip: "", computerName: chosenName, password: pwd };
           const res = await fetch(`${API_BASE}/api/allowed-ips`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
           });
@@ -8711,6 +8731,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           }
 
           alert('Device added to allowed devices successfully');
+          // Save chosen name persistently so detection remains stable
+          try { localStorage.setItem('nid_client_computer_name', chosenName); clientComputerName = chosenName; } catch (e) { }
           closeAddDeviceModal();
           await checkIpAccessControl();
           loadAllowedIpsTable();
