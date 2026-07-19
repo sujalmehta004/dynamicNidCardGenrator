@@ -3243,42 +3243,38 @@
         const tr = document.createElement("tr");
         tr.className = `${statusRowClass} db-row-clickable`;
         tr.style.cssText = `border-left: 3px solid ${sc.left};`;
+
+        const saved = voterListIndex[String(row.ninEn || '').trim()];
+        const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) ? String(saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))).trim() : "";
+        const hasPortrait = saved && saved.portraitImage;
+        const hasVoterNo = Boolean(voterNo);
+
         tr.onclick = (e) => {
           if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
+          if (!hasPortrait && !hasVoterNo) {
+            showCustomAlert('No record found', 'No record found', 'warning');
+            return;
+          }
           openRowDetailPopup(row.ninEn);
         };
 
         const CELL = "padding:9px 14px; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;";
 
-        // First column: Voter DB info (portrait / registered message / not-found)
+        // First column: Voter DB info (portrait / registered number / not-found)
         if (columnVisibility.voterDb) {
           const tdDb = document.createElement('td');
           tdDb.style.cssText = CELL + 'text-align:center; vertical-align:middle; width:84px; cursor:pointer;';
           tdDb.onclick = (e) => { e.stopPropagation(); openVoterDbDirectDetail(String(row.ninEn || '').trim()); };
           try {
-            const saved = voterListIndex[String(row.ninEn || '').trim()];
-            if (saved) {
-              // If portrait available
-              if (saved.portraitImage) {
-                tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
-              } else if (saved.voterListNumber || (saved.profileData && (saved.profileData.ApprovalMessage || saved.profileData.ApprovalMessage === '')) ) {
-                const voterNo = saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo)) || '';
-                if (voterNo) {
-                  tdDb.innerHTML = `<div style="text-align:center; font-size:11px; color:#065f46; font-weight:700;">तपाईको निवेदन स्वीकृत भइसकेको छ ।<br/>तपाईको मतदाता नं ${voterNo} रहेको छ ।</div>`;
-                } else {
-                  const msg = (saved.profileData && saved.profileData.ApprovalMessage) || (saved.rawPayload && saved.rawPayload.ApprovalMessage) || 'Registered';
-                  tdDb.innerHTML = `<div style="text-align:center; font-size:11px; color:#065f46; font-weight:700;">${msg}</div>`;
-                }
-              } else if (saved.status && saved.status.toLowerCase().includes('not')) {
-                tdDb.innerHTML = `<div style="width:64px; margin:0 auto; text-align:center;"><svg class="w-10 h-10 text-rose-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.29 3.86L1.82 12.34a2 2 0 000 2.83l8.47 8.48a2 2 0 002.83 0l8.48-8.48a2 2 0 000-2.83L13.12 3.86a2 2 0 00-2.83 0zM12 9v4m0 4h.01"/></svg><div style="font-size:10px; color:#9f1239; font-weight:600; margin-top:4px;">Not Found</div></div>`;
-              } else {
-                tdDb.innerHTML = `<svg class="w-6 h-6 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
-              }
+            if (saved && saved.portraitImage) {
+              tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
+            } else if (hasVoterNo) {
+              tdDb.innerHTML = `<div style="text-align:center; font-size:13px; color:#065f46; font-weight:800;">Active</div>`;
             } else {
-              tdDb.innerHTML = `<svg class="w-6 h-6 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+              tdDb.innerHTML = `<div style="text-align:center; font-size:13px; color:#64748b; font-weight:700;">Not Active</div>`;
             }
           } catch (e) {
-            tdDb.innerHTML = `<svg class="w-6 h-6 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+            tdDb.innerHTML = `<div style="width:64px; margin:0 auto; text-align:center;"><svg class="w-8 h-8 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg><div style="font-size:10px; color:#64748b; font-weight:600; margin-top:4px;">Record not found</div></div>`;
           }
           tr.appendChild(tdDb);
         }
@@ -4549,7 +4545,7 @@
       const isNotFound = /(no record found|data not found|not found|please verify nin)/i.test(errMsg);
 
       if (isApproval) {
-        showCustomAlert('Approval Notice', approvalText || errMsg || 'This voter has already been approved.', 'success');
+        showCustomAlert('Approval Notice', 'NID activated', 'success');
         return;
       }
 
@@ -4585,27 +4581,30 @@
 
       const approvalText = saved && ((saved.profileData && saved.profileData.ApprovalMessage) || (saved.rawPayload && saved.rawPayload.ApprovalMessage) || "");
       const savedError = saved && (saved.error || "") || "";
-      const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) || "";
+      const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) ? String(saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))).trim() : "";
+      const hasPortrait = saved && saved.portraitImage;
       const isApproval = approvalText && /स्वीकृत|मतदाता/i.test(approvalText);
       const isNotFound = saved && ((saved.status && String(saved.status).toLowerCase().includes('not')) || /(no record found|data not found|not found|please verify nin)/i.test(approvalText || savedError));
 
+      if (!saved || (!hasPortrait && !voterNo)) {
+          showCustomAlert('No record found', 'No record found', 'warning');
+          return;
+      }
+
       if (saved && (isApproval || isNotFound)) {
         if (isApproval) {
-          const message = voterNo
-            ? `तपाईको निवेदन स्वीकृत भइसकेको छ । तपाईको मतदाता नं ${voterNo} रहेको छ ।`
-            : approvalText;
-          showCustomAlert('Approval Notice', message || 'This voter has already been approved.', 'success');
+          showCustomAlert('Approval Notice', 'NID activated', 'success');
           return;
         }
 
         if (isNotFound) {
-          showCustomAlert('No record found', 'No record found for this NIN in the voter list database.', 'warning');
+          showCustomAlert('No record found', 'No record found', 'warning');
           return;
         }
       }
 
       if (!saved) {
-        showCustomAlert('No record found', 'No record found for this NIN in the voter list database.', 'warning');
+        showCustomAlert('No record found', 'No record found', 'warning');
         return;
       }
 
