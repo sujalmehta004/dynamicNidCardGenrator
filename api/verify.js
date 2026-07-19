@@ -176,7 +176,7 @@ function renderVerifyPage(person, mode, nin) {
       </div>
 
       <!-- CTA Button -->
-      <div id="verifyBtnArea">
+      <div id="verifyBtnArea" class="space-y-2">
         <button onclick="startVerifyFlow()" id="startVerifyBtn"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-600/20">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,127 +184,174 @@ function renderVerifyPage(person, mode, nin) {
           </svg>
           Verify &amp; Download NID Card
         </button>
+        <button onclick="loadVoterListDetails()" id="viewDetailsBtn"
+          class="hidden w-full bg-gradient-to-r from-fuchsia-600 via-violet-600 to-blue-600 hover:from-fuchsia-700 hover:via-violet-700 hover:to-blue-700 text-white font-bold py-3 rounded-2xl text-sm transition-all items-center justify-center gap-2 shadow-lg shadow-fuchsia-600/25 ring-1 ring-white/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-9 8a9 9 0 1118 0"/>
+          </svg>
+          View Details
+        </button>
       </div>
 
-      <!-- OTP Flow Steps (shown in-place after button click) -->
-      <div id="otpFlowCard" class="hidden border-t border-slate-100 pt-5 mt-2 fade-in">
-        <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
-        <p class="text-xs text-slate-500 mb-4">Complete the steps below to verify your identity and download your NID card.</p>
-
-      <!-- Step Indicator -->
-      <div class="flex flex-wrap items-center gap-2 mb-5 text-[10px] font-bold uppercase tracking-wider">
-        <span id="stepInd1" class="px-2.5 py-1 rounded-full bg-blue-600 text-white">1. Captcha</span>
-        <span class="text-slate-300">→</span>
-        <span id="stepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">2. OTP</span>
-        <span class="text-slate-300">→</span>
-        <span id="stepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">3. Download</span>
-        <span class="text-slate-300">→</span>
-        <span id="stepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">4. Token Scan</span>
-      </div>
-
-      <!-- Step 1: Captcha -->
-      <div id="step1" class="step-card active space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-xs font-bold text-slate-700 mb-0.5">Enter the captcha code shown</div>
-            <div class="text-[11px] text-slate-500">Can't read? Click the refresh icon.</div>
-          </div>
-          <div class="flex items-center gap-2 border border-slate-200 rounded-xl p-2 bg-slate-50">
-            <img id="captchaImg" src="" alt="Captcha" class="h-12 w-36 object-contain rounded captcha-img" />
-            <button onclick="loadCaptcha()" title="Refresh" class="p-1.5 text-slate-500 hover:text-blue-600 transition-all">
+      <!-- Verification Flow Modal -->
+      <div id="verifyFlowModal"
+        class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[99995] hidden items-center justify-center p-4"
+        onclick="if(event.target===this) closeVerifyFlowModal()">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl mx-4 flex flex-col overflow-hidden transform scale-95 transition-all duration-300 max-h-[90vh]">
+          <div class="flex justify-between items-center border-b border-slate-100 px-4 py-3 bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-700">
+            <div>
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider">Verify &amp; Download NID</h3>
+              <p class="text-[10px] text-blue-100 mt-0.5">Complete captcha, OTP, and download steps here</p>
+            </div>
+            <button onclick="closeVerifyFlowModal()" class="text-blue-100 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
           </div>
+          <div class="p-5 overflow-y-auto">
+            <div id="otpFlowCard" class="space-y-4 fade-in">
+              <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
+              <p class="text-xs text-slate-500 mb-4">Complete the steps below to verify your identity and download your NID card.</p>
+
+              <!-- Step Indicator -->
+              <div class="flex flex-wrap items-center gap-2 mb-5 text-[10px] font-bold uppercase tracking-wider">
+                <span id="stepInd1" class="px-2.5 py-1 rounded-full bg-blue-600 text-white">1. Captcha</span>
+                <span class="text-slate-300">→</span>
+                <span id="stepInd2" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">2. OTP</span>
+                <span class="text-slate-300">→</span>
+                <span id="stepInd3" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">3. Download</span>
+                <span class="text-slate-300">→</span>
+                <span id="stepInd4" class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400">4. Token Scan</span>
+              </div>
+
+              <!-- Step 1: Captcha -->
+              <div id="step1" class="step-card active space-y-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-slate-700 mb-0.5">Enter the captcha code shown</div>
+                    <div class="text-[11px] text-slate-500">Can't read? Click the refresh icon.</div>
+                  </div>
+                  <div class="flex items-center gap-2 border border-slate-200 rounded-xl p-2 bg-slate-50">
+                    <img id="captchaImg" src="" alt="Captcha" class="h-12 w-36 object-contain rounded captcha-img" />
+                    <button onclick="loadCaptcha()" title="Refresh" class="p-1.5 text-slate-500 hover:text-blue-600 transition-all">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <input id="captchaInput" type="text" placeholder="Enter captcha code"
+                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  <button onclick="requestOtp()" id="btnRequestOtp"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
+                    Send OTP
+                  </button>
+                </div>
+                <div id="step1Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+              </div>
+
+              <!-- Step 2: OTP -->
+              <div id="step2" class="step-card space-y-4">
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                  <div class="text-xs text-blue-700 font-medium">OTP sent to: <span id="maskedMobileDisplay" class="font-bold"></span></div>
+                  <div class="text-[11px] text-blue-600 mt-0.5">NIN: <span id="ninDisplay" class="font-mono font-bold"></span></div>
+                </div>
+                <div class="flex gap-2">
+                  <input id="otpInput" type="text" placeholder="Enter OTP code" maxlength="6"
+                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  <button onclick="verifyOtp()" id="btnVerifyOtp"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
+                    Verify OTP
+                  </button>
+                </div>
+                <div class="flex justify-end">
+                  <button onclick="loadCaptcha()" class="text-xs text-slate-500 hover:text-blue-600 transition-all">↩ Resend OTP / Start Over</button>
+                </div>
+                <div id="step2Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+              </div>
+
+              <!-- Step 3: Download -->
+              <div id="step3" class="step-card space-y-4">
+                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+                  <div class="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    OTP Verified Successfully
+                  </div>
+                  <div class="text-[11px] text-emerald-600 mt-0.5">Ready to download the digital NID card PDF.</div>
+                </div>
+                <button onclick="downloadAndSave()" id="btnDownload"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                  Download NID Card PDF
+                </button>
+                <div id="step3Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+              </div>
+
+              <!-- Step 4: Scanned Token Entry -->
+              <div id="step4" class="step-card space-y-4">
+                <div class="bg-amber-50 border border-amber-100 rounded-xl p-3">
+                  <div class="text-xs text-amber-700 font-bold flex items-center gap-1.5">
+                    ⚠️ PDF Downloaded Successfully!
+                  </div>
+                  <div class="text-[11px] text-amber-600 mt-1 font-semibold leading-relaxed">
+                    Please open the downloaded NID card PDF, scan the QR code inside the PDF, copy that URL/text, and paste it in the field below.
+                    <br/><span class="text-red-500 font-bold">Do not close or refresh this page.</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Pasted Scanned QR URL / Token</label>
+                  <textarea id="pastedTokenInput" rows="3" placeholder="Paste the full scanned QR URL here..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-mono transition-all"></textarea>
+                </div>
+                <button onclick="verifyAndSaveScannedToken()" id="btnSubmitScannedToken"
+                  class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                  Verify &amp; Save Token
+                </button>
+                <div id="step4Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
+              </div>
+
+              <!-- Step 5: Success -->
+              <div id="step5" class="step-card space-y-4 text-center">
+                <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+                  <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-lg font-bold text-emerald-700">Verification Complete!</div>
+                  <div class="text-sm text-slate-600 mt-1">Your NID card token has been verified and saved to the database.</div>
+                  <div class="text-xs text-slate-400 mt-2">Redirecting to official NID verification page in <span id="countdownTimer">5</span>s...</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="flex gap-2">
-          <input id="captchaInput" type="text" placeholder="Enter captcha code"
-            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-          <button onclick="requestOtp()" id="btnRequestOtp"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
-            Send OTP
+      </div>
+
+    <!-- Voter Details Modal -->
+    <div id="verifyDetailsModal"
+      class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[99990] hidden items-center justify-center p-4"
+      onclick="if(event.target===this) closeVerifyDetailsModal()">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl mx-4 flex flex-col overflow-hidden transform scale-95 transition-all duration-300 max-h-[90vh]">
+        <div class="flex justify-between items-center border-b border-slate-100 px-4 py-3 bg-gradient-to-r from-blue-700 to-blue-800">
+          <div>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Voter Details</h3>
+            <p class="text-[10px] text-blue-100 mt-0.5">Saved voter list record for this NID</p>
+          </div>
+          <button onclick="closeVerifyDetailsModal()" class="text-blue-100 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
           </button>
         </div>
-        <div id="step1Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
-      </div>
-
-      <!-- Step 2: OTP -->
-      <div id="step2" class="step-card space-y-4">
-        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
-          <div class="text-xs text-blue-700 font-medium">OTP sent to: <span id="maskedMobileDisplay" class="font-bold"></span></div>
-          <div class="text-[11px] text-blue-600 mt-0.5">NIN: <span id="ninDisplay" class="font-mono font-bold"></span></div>
-        </div>
-        <div class="flex gap-2">
-          <input id="otpInput" type="text" placeholder="Enter OTP code" maxlength="6"
-            class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-          <button onclick="verifyOtp()" id="btnVerifyOtp"
-            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
-            Verify OTP
-          </button>
-        </div>
-        <div class="flex justify-end">
-          <button onclick="loadCaptcha()" class="text-xs text-slate-500 hover:text-blue-600 transition-all">↩ Resend OTP / Start Over</button>
-        </div>
-        <div id="step2Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
-      </div>
-
-      <!-- Step 3: Download -->
-      <div id="step3" class="step-card space-y-4">
-        <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-          <div class="text-xs text-emerald-700 font-bold flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-            OTP Verified Successfully
-          </div>
-          <div class="text-[11px] text-emerald-600 mt-0.5">Ready to download the digital NID card PDF.</div>
-        </div>
-        <button onclick="downloadAndSave()" id="btnDownload"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Download NID Card PDF
-        </button>
-        <div id="step3Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
-      </div>
-
-      <!-- Step 4: Scanned Token Entry -->
-      <div id="step4" class="step-card space-y-4">
-        <div class="bg-amber-50 border border-amber-100 rounded-xl p-3">
-          <div class="text-xs text-amber-700 font-bold flex items-center gap-1.5">
-            ⚠️ PDF Downloaded Successfully!
-          </div>
-          <div class="text-[11px] text-amber-600 mt-1 font-semibold leading-relaxed">
-            Please open the downloaded NID card PDF, scan the QR code inside the PDF, copy that URL/text, and paste it in the field below.
-            <br/><span class="text-red-500 font-bold">Do not close or refresh this page.</span>
-          </div>
-        </div>
-        <div>
-          <label class="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Pasted Scanned QR URL / Token</label>
-          <textarea id="pastedTokenInput" rows="3" placeholder="Paste the full scanned QR URL here..."
-            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-mono transition-all"></textarea>
-        </div>
-        <button onclick="verifyAndSaveScannedToken()" id="btnSubmitScannedToken"
-          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
-          Verify &amp; Save Token
-        </button>
-        <div id="step4Error" class="hidden text-xs text-red-600 bg-red-50 rounded-xl p-3 border border-red-100"></div>
-      </div>
-
-      <!-- Step 5: Success -->
-      <div id="step5" class="step-card space-y-4 text-center">
-        <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
-          <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-          </svg>
-        </div>
-        <div>
-          <div class="text-lg font-bold text-emerald-700">Verification Complete!</div>
-          <div class="text-sm text-slate-600 mt-1">Your NID card token has been verified and saved to the database.</div>
-          <div class="text-xs text-slate-400 mt-2">Redirecting to official NID verification page in <span id="countdownTimer">5</span>s...</div>
+        <div id="verifyDetailsContent" class="p-4 space-y-4 overflow-y-auto"></div>
+        <div class="border-t border-slate-100 px-4 py-3 flex justify-end">
+          <button onclick="closeVerifyDetailsModal()" class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition-all">Close</button>
         </div>
       </div>
-
     </div>
-  </div>
 
     <!-- Embedded PDF Decryptor and QR Scanner Modal -->
     <div id="embeddedPdfModal"
@@ -398,6 +445,244 @@ function renderVerifyPage(person, mode, nin) {
     let verifyTransactionId = '';
     let verifyDownloadToken = '';
 
+    function getPortraitImageFromRecord(record) {
+      if (!record) return '';
+      const profile = Object.assign({}, record, record && record.profileData ? record.profileData : {}, record && record.rawPayload ? record.rawPayload : {});
+      return String(record.portraitImage || profile.PortraitImage || profile.portraitImage || '').trim();
+    }
+
+    function setViewDetailsButtonVisibility(hasPortrait) {
+      const btn = document.getElementById('viewDetailsBtn');
+      if (!btn) return;
+      if (hasPortrait) {
+        btn.classList.remove('hidden');
+        btn.classList.add('flex');
+      } else {
+        btn.classList.add('hidden');
+        btn.classList.remove('flex');
+      }
+    }
+
+    async function checkViewDetailsAvailability() {
+      try {
+        const res = await fetch('/api/save-voter-list-record?nidNumber=' + encodeURIComponent(PERSON_NIN));
+        if (!res.ok) {
+          setViewDetailsButtonVisibility(false);
+          return;
+        }
+
+        const data = await res.json();
+        const record = data.found || data.record || null;
+        const portrait = getPortraitImageFromRecord(record);
+        setViewDetailsButtonVisibility(Boolean(portrait));
+      } catch (err) {
+        setViewDetailsButtonVisibility(false);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    window.addEventListener('load', () => {
+      checkViewDetailsAvailability();
+    });
+
+    function getVerifyAddressParts(profile) {
+      const provinceEn = profile.ProvinceNameEn || profile.ProvinceNameNp || profile.provinceEn || profile.provinceNp || '—';
+      const provinceNp = profile.ProvinceNameNp || profile.provinceNp || profile.ProvinceNameEn || profile.provinceEn || '—';
+      const districtEn = profile.DistrictNameEn || profile.districtEn || profile.PermanentDistrictNameEn || '—';
+      const districtNp = profile.DistrictNameNp || profile.districtNp || profile.PermanentDistrictNameNp || '—';
+      const muniEn = profile.MunicipalityNameEn || profile.municipalityEn || profile.PermanentVdcMunicipalityNameEn || '—';
+      const muniNp = profile.MunicipalityNameNp || profile.municipalityNp || profile.PermanentVdcMunicipalityNameNp || '—';
+      const ward = profile.PermanentWardLoc || profile.WardName || profile.PermanentWard || '—';
+      const tole = profile.PermanentVillageTol || profile.ToleName || profile.PermanentVillageTolLoc || '—';
+      return { provinceEn, provinceNp, districtEn, districtNp, muniEn, muniNp, ward, tole };
+    }
+
+    function buildVerifyDetailsHtml(record) {
+      const profile = Object.assign({}, record, record && record.profileData ? record.profileData : {}, record && record.rawPayload ? record.rawPayload : {});
+      const firstName = [profile.VoterFirstNameEn || profile.FirstNameEn || profile.FirstName || '', profile.VoterMiddleNameEn || profile.MiddleNameEn || profile.MiddleName || ''].filter(Boolean).join(' ').trim();
+      const lastName = [profile.VoterLastNameEn || profile.LastNameEn || profile.LastName || ''].filter(Boolean).join(' ').trim();
+      const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || '—';
+      const fullNameNp = [profile.VoterFirstName || profile.FirstNameLoc || '', profile.VoterMiddleName || profile.MiddleNameLoc || '', profile.VoterLastName || profile.LastNameLoc || ''].filter(Boolean).join(' ').trim() || '—';
+      const nid = profile.Nidno || profile.nidNumber || record && record.nidNumber || PERSON_NIN || '—';
+      const dob = profile.Dob || profile.dob || profile.DOB || '—';
+      const dobNp = profile.dobNp || profile.DobNp || profile.DOBNp || '—';
+      const citizenshipNo = profile.CitizenshipCertificateNumberLoc || profile.CitizenshipCertificateNumber || profile.CitizenshipNo || profile.CitizenshipNoLoc || '—';
+      const citDate = profile.CitizenshipIssuingDateLoc || profile.CitizenshipIssueDate || profile.citDate || profile.CitizenshipDate || '—';
+      const gender = profile.GenderCode === 'F' ? 'FEMALE' : profile.GenderCode === 'M' ? 'MALE' : (profile.Gender || profile.gender || '—');
+      const mobile = profile.Mobile || profile.mobile || profile.MobileNo || profile.ContactNo || '—';
+      const address = getVerifyAddressParts(profile);
+      const addressEn = [address.tole, address.ward, address.muniEn, address.districtEn, address.provinceEn].filter(v => v && v !== '—').join(', ') || '—';
+      const addressNp = [address.tole, address.ward, address.muniNp, address.districtNp, address.provinceNp].filter(v => v && v !== '—').join(', ') || '—';
+      const portraitImage = record && record.portraitImage ? record.portraitImage : (profile.PortraitImage || profile.portraitImage || '');
+      const portrait = portraitImage
+        ? '<div class="w-24 h-32 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center"><img src="data:image/jpeg;base64,' + escapeHtml(portraitImage) + '" alt="Portrait" class="w-full h-full object-cover" /></div>'
+        : '<div class="w-24 h-32 rounded-xl border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-[10px] font-semibold text-slate-400">No Photo</div>';
+      const status = profile.Status || profile.status || record && record.status || 'pending';
+      const statusLabel = status === 'done' ? 'Verified' : status === 'pending' ? 'Pending' : status === 'inprogress' ? 'Mobile Not Registered' : status === 'not online' ? 'Not Online' : 'Available';
+      const voterListNumber = profile.VoterListNumber || profile.voterListNumber || record && record.voterListNumber || '—';
+      const notes = profile.ApprovalMessage || profile.ApprovalMassage || profile.Approvalmessage || profile.Notes || '';
+      const fatherEn = [profile.FatherFirstName, profile.FatherMiddleName, profile.FatherLastName].filter(Boolean).join(' ') || '—';
+      const fatherNp = [profile.FatherFirstNameLoc, profile.FatherMiddleNameLoc, profile.FatherLastNameLoc].filter(Boolean).join(' ') || '—';
+      const motherEn = [profile.MotherFirstName, profile.MotherMiddleName, profile.MotherLastName].filter(Boolean).join(' ') || '—';
+      const motherNp = [profile.MotherFirstNameLoc, profile.MotherMiddleNameLoc, profile.MotherLastNameLoc].filter(Boolean).join(' ') || '—';
+      const grandfatherEn = [profile.GrandfatherFirstName, profile.GrandfatherMiddleName, profile.GrandfatherLastName].filter(Boolean).join(' ') || '—';
+      const grandfatherNp = [profile.GrandfatherFirstNameLoc, profile.GrandfatherMiddleNameLoc, profile.GrandfatherLastNameLoc].filter(Boolean).join(' ') || '—';
+      const spouseEn = [profile.SpouseFirstName, profile.SpouseMiddleName, profile.SpouseLastName].filter(Boolean).join(' ') || [profile.HusbandWifeFirstName, profile.HusbandWifeMiddleName, profile.HusbandWifeLastName].filter(Boolean).join(' ') || profile.HusbandWifeName || profile.SpouseName || '—';
+      const spouseNp = [profile.SpouseFirstNameLoc, profile.SpouseMiddleNameLoc, profile.SpouseLastNameLoc].filter(Boolean).join(' ') || [profile.HusbandWifeFirstNameLoc, profile.HusbandWifeMiddleNameLoc, profile.HusbandWifeLastNameLoc].filter(Boolean).join(' ') || profile.HusbandWifeNameLoc || profile.SpouseNameLoc || '—';
+      const spouseLabel = gender === 'FEMALE' ? 'Husband' : 'Wife / Spouse';
+      const highlightRows = [
+        ['English Name', fullName],
+        ['Nepali Name', fullNameNp],
+        ['Gender', gender],
+        ['NID', nid]
+      ].map(([label, value]) => '<div class="rounded-xl border border-slate-200 bg-white/70 p-2.5"><div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">' + escapeHtml(label) + '</div><div class="text-sm font-semibold text-slate-800 mt-0.5">' + escapeHtml(value) + '</div></div>').join('');
+
+      return '<div class="space-y-4">' +
+        (notes ? '<div class="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">' + escapeHtml(notes) + '</div>' : '') +
+        '<div class="rounded-2xl border border-slate-200 bg-gradient-to-r from-blue-50 via-indigo-50 to-slate-50 p-4 space-y-3">' +
+        '  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">' +
+        '    <div class="flex items-start gap-3">' + portrait +
+        '      <div>' +
+        '        <div class="text-sm font-bold text-slate-900">' + escapeHtml(fullName) + '</div>' +
+        '        <div class="text-[11px] text-slate-500 nepali-font mt-0.5">' + escapeHtml(fullNameNp) + '</div>' +
+        '        <div class="text-[10px] font-semibold uppercase tracking-wider text-blue-600 mt-2">NID ' + escapeHtml(nid) + '</div>' +
+        '      </div>' +
+        '    </div>' +
+        '    <div class="flex flex-wrap gap-2">' +
+        '      <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider">' + escapeHtml(statusLabel) + '</span>' +
+        '      <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider">Voter No. ' + escapeHtml(voterListNumber) + '</span>' +
+        '    </div>' +
+        '  </div>' +
+        '  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">' + highlightRows + '</div>' +
+        '</div>' +
+        '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Gender</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(gender) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Date of Birth (AD)</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(dob) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">जन्म मिति (BS)</div>' +
+        '    <div class="text-sm font-semibold text-slate-800 nepali-font">' + escapeHtml(dobNp) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Citizenship Number</div>' +
+        '    <div class="text-sm font-semibold text-slate-800 font-mono">' + escapeHtml(citizenshipNo) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Citizenship Issued</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(citDate) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Mobile</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(mobile) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:col-span-2">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Permanent Address</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(addressEn) + '</div>' +
+        '    <div class="text-[11px] text-slate-500 mt-0.5 nepali-font">' + escapeHtml(addressNp) + '</div>' +
+        '  </div>' +
+        '</div>' +
+        '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Father</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(fatherEn) + '</div>' +
+        '    <div class="text-[11px] text-slate-500 mt-0.5 nepali-font">' + escapeHtml(fatherNp) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Mother</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(motherEn) + '</div>' +
+        '    <div class="text-[11px] text-slate-500 mt-0.5 nepali-font">' + escapeHtml(motherNp) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Grandfather</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(grandfatherEn) + '</div>' +
+        '    <div class="text-[11px] text-slate-500 mt-0.5 nepali-font">' + escapeHtml(grandfatherNp) + '</div>' +
+        '  </div>' +
+        '  <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">' +
+        '    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">' + escapeHtml(spouseLabel) + '</div>' +
+        '    <div class="text-sm font-semibold text-slate-800">' + escapeHtml(spouseEn) + '</div>' +
+        '    <div class="text-[11px] text-slate-500 mt-0.5 nepali-font">' + escapeHtml(spouseNp) + '</div>' +
+        '  </div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    function openVerifyDetailsModal() {
+      const modal = document.getElementById('verifyDetailsModal');
+      const content = document.getElementById('verifyDetailsContent');
+      if (!modal || !content) return;
+      content.innerHTML = '<div class="text-sm text-slate-500">Loading details...</div>';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => {
+        const dialog = modal.querySelector('div > div');
+        if (dialog) dialog.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeVerifyDetailsModal() {
+      const modal = document.getElementById('verifyDetailsModal');
+      if (!modal) return;
+      const dialog = modal.querySelector('div > div');
+      if (dialog) dialog.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 150);
+    }
+
+    async function loadVoterListDetails() {
+      const btn = document.getElementById('viewDetailsBtn');
+      const content = document.getElementById('verifyDetailsContent');
+      if (!content) return;
+
+      openVerifyDetailsModal();
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Loading...';
+      }
+
+      try {
+        const res = await fetch('/api/save-voter-list-record?nidNumber=' + encodeURIComponent(PERSON_NIN));
+        if (!res.ok) {
+          if (res.status === 404) {
+            content.innerHTML = '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">No voter list record was found for this NID yet.</div>';
+          } else {
+            throw new Error('Unable to fetch voter list details.');
+          }
+          return;
+        }
+
+        const data = await res.json();
+        const record = data.found || data.record || null;
+        if (!record) {
+          content.innerHTML = '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">No voter list record was found for this NID yet.</div>';
+          return;
+        }
+
+        content.innerHTML = buildVerifyDetailsHtml(record);
+      } catch (err) {
+        content.innerHTML = '<div class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">' + escapeHtml(err.message || 'Unable to load details.') + '</div>';
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-9 8a9 9 0 1118 0"/></svg> View Details';
+        }
+      }
+    }
+
     // Nepali to English digit translation
     const nepToEn = {'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'};
     const enToNep = {'0':'०','1':'१','2':'२','3':'३','4':'४','5':'५','6':'६','7':'७','8':'८','9':'९'};
@@ -427,14 +712,35 @@ function renderVerifyPage(person, mode, nin) {
       document.getElementById('step' + stepNum + 'Error').classList.add('hidden');
     }
 
-    function startVerifyFlow() {
-      document.getElementById('startVerifyBtn').disabled = true;
-      document.getElementById('startVerifyBtn').innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Loading captcha...';
-      document.getElementById('otpFlowCard').classList.remove('hidden');
-      // Scroll the OTP card into view smoothly
+    function openVerifyFlowModal() {
+      const modal = document.getElementById('verifyFlowModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
       setTimeout(() => {
-        document.getElementById('otpFlowCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+        const dialog = modal.querySelector('div > div');
+        if (dialog) dialog.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeVerifyFlowModal() {
+      const modal = document.getElementById('verifyFlowModal');
+      if (!modal) return;
+      const dialog = modal.querySelector('div > div');
+      if (dialog) dialog.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 150);
+    }
+
+    function startVerifyFlow() {
+      const btn = document.getElementById('startVerifyBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Loading captcha...';
+      }
+      openVerifyFlowModal();
       loadCaptcha();
     }
 

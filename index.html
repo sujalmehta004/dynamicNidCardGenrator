@@ -7970,27 +7970,15 @@
           const list = await checkRes.json();
           const exists = list.some(r => (r.ninEn || "").replace(/[^0-9]/g, "") === cleanNid);
 
-          if (exists) {
-            footerEl.innerHTML = `
-              <div class="flex items-center gap-2 mr-auto text-rose-650 font-bold text-[10px] uppercase">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
-                Already Registered in NID Card
-              </div>
-              <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">📄 Download Paper</button>
-              <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
-              <button onclick="closeVoterDetailPopup()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
-            `;
-          } else {
-            footerEl.innerHTML = `
-              <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1">📄 Download Paper</button>
-              <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
-              <button onclick="closeVoterDetailPopup()" class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-semibold px-4 py-2 rounded-lg text-xs transition-all">Cancel</button>
-              <button onclick="populateVoterToNidCard('${serialized}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2 rounded-lg text-xs shadow-sm transition-all flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                Register Card
-              </button>
-            `;
-          }
+          footerEl.innerHTML = `
+            <div class="flex items-center gap-2 mr-auto text-rose-650 font-bold text-[10px] uppercase">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+              Already Registered in NID Card
+            </div>
+            <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">📄 Download Paper</button>
+            <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
+            <button onclick="closeVoterDetailPopup()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
+          `;
         }
       } catch (err) {
         footerEl.innerHTML = `
