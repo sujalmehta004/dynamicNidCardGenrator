@@ -649,9 +649,10 @@
                     <input type="text" id="portalSearchQuery"
                       placeholder="Search by English NIN or Name..."
                       class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
-                    <input type="text" id="portalSearchNin"
+                    <input type="text" id="portalSearchNin" readonly
                       placeholder="NIN Number (optional)"
-                      class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
+                      title="Auto-filled after selecting a search result. Used only for display."
+                      class="flex-1 bg-slate-100 border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 transition-all shadow-sm cursor-not-allowed" />
                     <button type="button" onclick="searchPortalDbToPopulate()"
                       class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
                       Search
@@ -3699,6 +3700,8 @@
       document.getElementById("portalCaptchaCode").value = "";
       document.getElementById("portalOtpCode").value = "";
       document.getElementById("portalScannedTokenVal").value = "";
+      document.getElementById("portalSearchQuery").value = "";
+      document.getElementById("portalSearchNin").value = "";
       portalNinValue = "";
       portalDownloadToken = "";
     }
@@ -5139,7 +5142,7 @@
 
       if (!finalNin) {
         console.debug('[persistVerifiedTokenToDatabase] could not find matching people record');
-        throw new Error('Missing NIN for database save.');
+        throw new Error('Record not found in local database. PDF downloaded successfully and password copied, but token save cannot proceed because the record is missing.');
       }
       console.debug('[persistVerifiedTokenToDatabase] finalNin', finalNin);
 
@@ -5223,6 +5226,10 @@
         // Immediately refresh local DB view so UI shows updated token without full page reload
         if (typeof fetchDatabase === 'function') fetchDatabase(true);
 
+        // Clear the portal search fields but keep the rest of the portal form intact
+        document.getElementById("portalSearchQuery").value = "";
+        document.getElementById("portalSearchNin").value = "";
+
         // Transition to Success state
         document.getElementById("portalManualTokenRow").classList.add("hidden");
         document.getElementById("portalSuccessRow").classList.remove("hidden");
@@ -5252,6 +5259,10 @@
 
       } catch (err) {
         alert(`❌ Error: ${err.message}`);
+        const errMessage = String(err.message || "").toLowerCase();
+        if (errMessage.includes("record not found in local database") || errMessage.includes("record is missing")) {
+          resetPortalToInitial();
+        }
       } finally {
         tokenVerificationInProgress = false;
         hideTokenVerifyingModal();
@@ -5419,15 +5430,16 @@
     
     async function searchPortalDbToPopulate() {
       const q = document.getElementById("portalSearchQuery").value.trim();
-      const qNin = document.getElementById("portalSearchNin").value.trim();
       const dropdown = document.getElementById("portalSearchDropdown");
       
-      if (!q && !qNin) {
-        alert("Please enter a NIN or name to search.");
+      if (!q) {
+        alert("Please enter an English NIN or name to search.");
         return;
       }
       
-      const queryValue = qNin || q;
+      // Always search by the main query field; the optional NIN field is display-only.
+      document.getElementById("portalSearchNin").value = "";
+      const queryValue = q;
       
       try {
         const res = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(queryValue)}`);
@@ -9460,10 +9472,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       m.style.display = "";
       _nidVoterCurrentData = null;
 
-      // Refresh captcha and show input row on close
-      loadPortalCaptcha(false);
-      document.getElementById("portalCaptchaInputRow").classList.remove("hidden");
-      document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+      // Reset portal UI back to the initial normal state when modal closes
+      resetPortalToInitial();
     }
 
     function downloadNidVoterPaper() {
