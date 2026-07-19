@@ -395,6 +395,7 @@ function renderVerifyPage(person, mode, nin) {
     });
 
     let verifyNin = '';
+    let verifyTransactionId = '';
     let verifyDownloadToken = '';
 
     // Nepali to English digit translation
@@ -511,6 +512,7 @@ function renderVerifyPage(person, mode, nin) {
           loadCaptcha();
           return;
         }
+        verifyTransactionId = data.transactionId || '';
         verifyNin = data.nin || PERSON_NIN;
         document.getElementById('maskedMobileDisplay').textContent = data.maskedMobile || '—';
         document.getElementById('ninDisplay').textContent = verifyNin;
@@ -534,10 +536,14 @@ function renderVerifyPage(person, mode, nin) {
       btn.textContent = 'Verifying...';
 
       try {
+        const payload = verifyTransactionId
+          ? { transactionId: verifyTransactionId, otp }
+          : { nin: verifyNin, otp };
+
         const res = await fetch('/api/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nin: verifyNin, otp }),
+          body: JSON.stringify(payload),
         });
 
         // Safe body parsing

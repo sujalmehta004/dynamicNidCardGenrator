@@ -645,9 +645,12 @@
                 <!-- Database Search Integration -->
                 <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-4 space-y-3 shadow-sm">
                   <label class="block text-blue-900 font-bold text-[9px] uppercase tracking-wider">🔍 Search Database to Populate Form</label>
-                  <div class="flex gap-2">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <input type="text" id="portalSearchQuery"
-                      placeholder="Search by English NIN (e.g. 615-385-908-6) or Name..."
+                      placeholder="Search by English NIN or Name..."
+                      class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
+                    <input type="text" id="portalSearchNin"
+                      placeholder="NIN Number (optional)"
                       class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
                     <button type="button" onclick="searchPortalDbToPopulate()"
                       class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
@@ -751,7 +754,7 @@
                     </svg>
                     <span>Authentication Successful! Proceed to download.</span>
                   </div>
-                  <button type="button" id="btnPortalDownloadNid" onclick="executeNidVoterDownload()"
+                  <button type="button" id="btnPortalDownloadNid" onclick="executePortalDownload()"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md">
                     <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -2897,6 +2900,57 @@
       applyFiltersClientSide();
     }
 
+    // Lightweight polling to refresh data table when DB changes externally
+    let dbPollIntervalId = null;
+    let lastDbSnapshotHash = null;
+
+    function computeDbSnapshotHash(list) {
+      if (!Array.isArray(list)) return '';
+      // Hash based on id + updateDate + token for minimal change detection
+      const arr = list.map(r => `${r._id || r.ninEn || ''}::${r.updateDate || ''}::${r.token || ''}`);
+      arr.sort();
+      return arr.join('|');
+    }
+
+    async function pollDatabaseChanges() {
+      try {
+        const res = await fetch(`${API_BASE}/api/people`);
+        if (!res.ok) return;
+        const latest = await res.json();
+        const hash = computeDbSnapshotHash(latest);
+        if (hash !== lastDbSnapshotHash) {
+          lastDbSnapshotHash = hash;
+          allCachedRecords = latest;
+          updateStatsDashboard();
+          applyFiltersClientSide();
+        }
+      } catch (e) {
+        // ignore transient errors
+      }
+    }
+
+    function startDatabasePolling(intervalMs = 8000) {
+      if (dbPollIntervalId) return;
+      // initialize snapshot
+      (async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/people`);
+          if (res.ok) {
+            const latest = await res.json();
+            lastDbSnapshotHash = computeDbSnapshotHash(latest);
+            allCachedRecords = latest;
+            updateStatsDashboard();
+            applyFiltersClientSide();
+          }
+        } catch (e) {}
+      })();
+      dbPollIntervalId = setInterval(pollDatabaseChanges, intervalMs);
+    }
+
+    function stopDatabasePolling() {
+      if (dbPollIntervalId) { clearInterval(dbPollIntervalId); dbPollIntervalId = null; }
+    }
+
     function renderTableHeader() {
       const headerRow = document.getElementById("dbTableHeaderRow");
       headerRow.innerHTML = "";
@@ -3591,6 +3645,7 @@
     let portalNinValue = "";
     let portalOtpTransactionId = "";
     let portalDownloadToken = "";
+    let tokenVerificationInProgress = false;
     let isBulkMode = false;
     let bulkTargetRecords = [];
     let bulkResults = [];
@@ -3648,19 +3703,74 @@
       portalDownloadToken = "";
     }
 
+    // ----- Token verifying modal helpers -----
+    function showTokenVerifyingModal(message = "Verifying token, please wait...") {
+      const m = document.getElementById("tokenVerifyingModal");
+      if (!m) return;
+      const msgEl = m.querySelector(".token-verify-message");
+      if (msgEl) msgEl.innerText = message;
+      m.classList.remove("hidden");
+      m.classList.add("flex");
+    }
+
+    function hideTokenVerifyingModal() {
+      const m = document.getElementById("tokenVerifyingModal");
+      if (!m) return;
+      m.classList.add("hidden");
+      m.classList.remove("flex");
+    }
+
+
+    function setAllDownloadButtonsDisabled(disabled) {
+      const selectors = [
+        '#btnNidVoterDownload',
+        '#btnPortalDownloadNid',
+        '#btnPortalDownloadSubmit',
+        '#btnPortalScannedTokenSubmit',
+        '#btnPortalVerifyOtp',
+        'button[onclick="downloadNidFlowPaper()"]',
+        'button[onclick*="downloadVoterPaper("]',
+        'button[onclick*="executeNidVoterDownload("]',
+        'button[onclick*="executePortalDownload("]',
+        'button[onclick*="downloadEmbeddedUnlocked("]',
+        'button[onclick*="verifyAndDownloadBulkRow("]'
+      ];
+      const els = document.querySelectorAll(selectors.join(','));
+      els.forEach(el => { try { el.disabled = disabled; } catch(e){} });
+    }
+
+    function setButtonLoading(btn, loading, text) {
+      if (!btn) return;
+      try {
+        if (loading) {
+          if (!btn.dataset.origHtml) btn.dataset.origHtml = btn.innerHTML;
+          btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>${text || btn.innerText || 'Processing...'}`;
+          btn.disabled = true;
+        } else {
+          if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+          btn.disabled = false;
+          delete btn.dataset.origHtml;
+        }
+      } catch (e) {}
+    }
+
     async function resolvePortalNinValue(preferredNin = "") {
+      console.debug('[resolvePortalNinValue] start', { preferredNin, portalNinValue, currentNinVoterData });
       if (preferredNin) {
         portalNinValue = preferredNin;
+        console.debug('[resolvePortalNinValue] returning preferredNin', preferredNin);
         return preferredNin;
       }
 
       if (portalNinValue) {
+        console.debug('[resolvePortalNinValue] using portalNinValue', portalNinValue);
         return portalNinValue;
       }
 
       const inlineNinValue = String(document.getElementById("portalSearchQuery")?.value || "").trim();
       if (/^\d[\d\- ]{5,}$/.test(inlineNinValue.replace(/\s+/g, ""))) {
         portalNinValue = inlineNinValue;
+        console.debug('[resolvePortalNinValue] using inlineNinValue', inlineNinValue);
         return portalNinValue;
       }
 
@@ -3675,9 +3785,11 @@
 
       if (voterNin) {
         portalNinValue = String(voterNin).trim();
+        console.debug('[resolvePortalNinValue] using voterNin from currentNinVoterData', portalNinValue);
         return portalNinValue;
       }
 
+      console.debug('[resolvePortalNinValue] no NIN resolved');
       return "";
     }
 
@@ -4748,7 +4860,39 @@
         // Expected response: {"code":"OTP_VERIFIED","downloadToken":"eyJhbG..."}
         portalDownloadToken = data.downloadToken;
 
-        // Advance view state
+        // Keep the download token for later use
+        portalDownloadToken = data.downloadToken;
+
+        // Try to reuse the existing search-by-NIN flow: look up voter data and open the NID modal
+        try {
+          const resolvedNin = await resolvePortalNinValue();
+          const dobBsRaw = document.getElementById("portalDobLoc").value.trim();
+          const dobEn = translateDigits(dobBsRaw, nepaliToEnglishDigits);
+          const dobAd = convertBsToAd(dobEn.replace(/\//g, "-"));
+          const fullEnName = document.getElementById("portalFullNameEn").value.trim();
+          const firstName = fullEnName.split(" ")[0].toLowerCase();
+
+          if (resolvedNin && dobAd && firstName) {
+            const vres = await fetch(`${API_BASE}/api/voter-search`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nin: resolvedNin, dob: dobAd, firstname: firstName })
+            });
+            const vdata = await vres.json();
+            if (vres.ok && vdata && vdata.success && vdata.data) {
+              // Open the same NID modal used by search-by-NIN and bulk flows
+              openNidVoterModal(vdata.data, true);
+              // Keep portal UI state in sync
+              document.getElementById("portalOtpRow").classList.add("hidden");
+              showPortalStep(3);
+              return;
+            }
+          }
+        } catch (e) {
+          // ignore and fallback to showing download button
+        }
+
+        // Fallback: show portal download row if voter data not found
         document.getElementById("portalOtpRow").classList.add("hidden");
         document.getElementById("portalDownloadRow").classList.remove("hidden");
         showPortalStep(3);
@@ -4761,6 +4905,7 @@
     }
 
     async function executePortalDownload() {
+      if (tokenVerificationInProgress) { alert("A download/verification is already in progress. Please wait."); return; }
       const fullName = document
         .getElementById("portalFullNameEn")
         .value.trim()
@@ -4788,10 +4933,9 @@
         return;
       }
 
-      const btn = document.getElementById("btnPortalDownloadSubmit");
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = "Downloading...";
+      const btn = document.getElementById("btnPortalDownloadNid") || document.getElementById("btnPortalDownloadSubmit");
+      setAllDownloadButtonsDisabled(true);
+      setButtonLoading(btn, true, "Downloading...");
 
       try {
         const res = await fetch(`${API_BASE}/api/download`, {
@@ -4846,11 +4990,17 @@
         document.getElementById("portalScannedTokenVal").value = "";
         showPortalStep(4);
 
+        // Enter token-waiting state: disable further downloads and show verifying modal
+        tokenVerificationInProgress = true;
+        showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
+
       } catch (err) {
         alert(`Error executing download: ${err.message}`);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        setButtonLoading(btn, false);
+        // keep global disabled state active while waiting for token; any further resets are handled by verify flows
+        // if download actually failed, re-enable
+        if (!tokenVerificationInProgress) setAllDownloadButtonsDisabled(false);
       }
     }
 
@@ -4905,31 +5055,124 @@
 
     async function persistVerifiedTokenToDatabase({ token, status = "done", payload = null } = {}) {
       if (!token) throw new Error("Missing verified token.");
+      const fallbackNinFromInputs = String((document.getElementById("portalSearchQuery")?.value || document.getElementById("formNinEn")?.value || document.getElementById("voterNidNin")?.value || document.getElementById("nidVoterScannedToken")?.value) || "").trim();
+      const normalizedNin = String(payload?.ninEn || portalNinValue || (currentNinVoterData && (currentNinVoterData.Nidno || currentNinVoterData.NIN || currentNinVoterData.ninEn || currentNinVoterData.nin || currentNinVoterData.nidNumber || currentNinVoterData.idNumber)) || fallbackNinFromInputs || "").trim();
+      console.debug('[persistVerifiedTokenToDatabase] initial NIN candidates', { payloadNin: payload?.ninEn, portalNinValue, currentNinVoterData, fallbackNinFromInputs, normalizedNin });
 
-      const normalizedNin = String(payload?.ninEn || portalNinValue || (currentNinVoterData && (currentNinVoterData.Nidno || currentNinVoterData.NIN || currentNinVoterData.ninEn || currentNinVoterData.nin || currentNinVoterData.nidNumber)) || "").trim();
-      if (!normalizedNin) throw new Error("Missing NIN for database save.");
+      // Try resolving via existing helper which checks portal inputs and current voter data
+      let finalNin = normalizedNin;
+      if (!finalNin && typeof resolvePortalNinValue === 'function') {
+        try {
+          const resolved = await resolvePortalNinValue();
+          if (resolved) finalNin = String(resolved).trim();
+        } catch (e) {}
+      }
 
-      const basePayload = payload || buildPortalPersonPayload({ token, status });
-      const savePayload = {
-        ...basePayload,
-        ninEn: String(basePayload.ninEn || normalizedNin).trim(),
+      // If still missing, prompt the user with a small app modal to enter the NIN manually
+      if (!finalNin) {
+        // If the portal search form already includes a NIN field, use it first.
+        const portalSearchNin = String(document.getElementById('portalSearchNin')?.value || '').trim();
+        if (portalSearchNin) {
+          finalNin = portalSearchNin;
+          portalNinValue = finalNin;
+          console.debug('[persistVerifiedTokenToDatabase] using portalSearchNin', finalNin);
+        }
+      }
+
+      if (!finalNin) {
+        const searchCandidates = [];
+        try {
+          const q1 = String(document.getElementById('portalSearchQuery')?.value || '').trim();
+          const q2 = String(document.getElementById('portalSearchNin')?.value || '').trim();
+          const q3 = String(document.getElementById('portalFullNameEn')?.value || '').trim();
+          if (q1) searchCandidates.push(q1);
+          if (q2) searchCandidates.push(q2);
+          if (q3) searchCandidates.push(q3);
+          const payloadName = (payload && (payload.givenEn || payload.surnameEn)) ? `${payload.givenEn || ''} ${payload.surnameEn || ''}`.trim() : '';
+          if (payloadName) searchCandidates.push(payloadName);
+        } catch (e) {}
+
+        const portalFullName = String(document.getElementById('portalFullNameEn')?.value || '').trim().toUpperCase();
+        const portalDobLoc = String(document.getElementById('portalDobLoc')?.value || '').trim();
+        const portalCitLoc = String(document.getElementById('portalCcnIssuingDateLoc')?.value || '').trim();
+        const normalizedPortalName = portalFullName.replace(/\s+/g, ' ');
+        const dobEnCandidate = portalDobLoc ? translateDigits(portalDobLoc, nepaliToEnglishDigits).replace(/[^0-9]/g, '') : '';
+        const citCandidate = portalCitLoc ? portalCitLoc.replace(/[^0-9]/g, '') : '';
+
+        for (const q of searchCandidates) {
+          if (!q) continue;
+          try {
+            const r = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(q)}`);
+            if (!r.ok) continue;
+            const list = await r.json();
+            if (!Array.isArray(list) || list.length === 0) continue;
+
+            let matched = null;
+            for (const person of list) {
+              try {
+                const personName = `${String(person.givenEn || '').trim()} ${String(person.surnameEn || '').trim()}`.toUpperCase().replace(/\s+/g, ' ');
+                const personDob = String(person.dobEn || person.Dob || person.dob || '').replace(/[^0-9]/g, '');
+                const personCit = String(person.citDate || person.CitizenshipIssuingDateLoc || person.CitizenIssueDate || '').replace(/[^0-9]/g, '');
+                const nameMatch = normalizedPortalName && personName.includes(normalizedPortalName);
+                const dobMatch = dobEnCandidate && personDob && personDob.endsWith(dobEnCandidate);
+                const citMatch = citCandidate && personCit && personCit.endsWith(citCandidate);
+                const ninMatch = q && person.ninEn && person.ninEn.replace(/\s+/g, '') === q.replace(/\s+/g, '');
+
+                if (ninMatch) { matched = person; break; }
+                if (dobMatch && citMatch) { matched = person; break; }
+                if (dobMatch && nameMatch) { matched = person; break; }
+                if (!matched && nameMatch) { matched = person; }
+              } catch (e) {}
+            }
+
+            const person = matched || list[0];
+            if (person && person.ninEn) {
+              finalNin = String(person.ninEn).trim();
+              portalNinValue = finalNin;
+              currentNinVoterData = person;
+              console.debug('[persistVerifiedTokenToDatabase] resolved NIN via people record', { q, finalNin });
+              break;
+            }
+          } catch (e) { }
+        }
+      }
+
+      if (!finalNin) {
+        console.debug('[persistVerifiedTokenToDatabase] could not find matching people record');
+        throw new Error('Missing NIN for database save.');
+      }
+      console.debug('[persistVerifiedTokenToDatabase] finalNin', finalNin);
+
+      // First try to update only the token (and minimal metadata) to avoid overwriting other fields
+      const minimalUpdate = {
         token,
         status,
-        updateDate: basePayload.updateDate || new Date().toISOString().split("T")[0],
-        downloadDate: basePayload.downloadDate || new Date().toISOString().split("T")[0],
+        updateDate: new Date().toISOString().split("T")[0]
       };
 
-      const updateRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(normalizedNin)}`, {
+      console.debug('[persistVerifiedTokenToDatabase] attempting minimal update', { finalNin, minimalUpdate });
+      const updateRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(finalNin)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(savePayload)
+        body: JSON.stringify(minimalUpdate)
       });
 
       if (updateRes.ok) {
         return { ok: true, created: false };
       }
 
+      // If record not found (404), create full payload using existing helpers
       if (updateRes.status === 404) {
+        const basePayload = payload || buildPortalPersonPayload({ token, status });
+        const savePayload = {
+          ...basePayload,
+          ninEn: String(basePayload.ninEn || finalNin).trim(),
+          token,
+          status,
+          updateDate: basePayload.updateDate || new Date().toISOString().split("T")[0],
+          downloadDate: basePayload.downloadDate || new Date().toISOString().split("T")[0],
+        };
+
         const createRes = await fetch(`${API_BASE}/api/people`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -4956,12 +5199,13 @@
         alert("Please paste the scanned QR URL or token first.");
         return;
       }
-
       const extracted = extractPortalToken(inputVal);
       const btn = document.getElementById("btnPortalScannedTokenSubmit");
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = "Verifying...";
+      const originalText = btn ? btn.innerHTML : "Verify & Save";
+      if (btn) { btn.disabled = true; btn.innerHTML = "Verifying..."; }
+
+      tokenVerificationInProgress = true;
+      showTokenVerifyingModal("Verifying token and updating database...");
 
       try {
         // Verify token against government server
@@ -4972,9 +5216,12 @@
           throw new Error("This token could not be verified by the government server. Please make sure you scanned the correct QR code from the downloaded PDF.");
         }
 
-        // Save verified token + status=done in DB, creating the record if it does not yet exist.
+        // Save verified token + status=done in DB, updating only the token for existing records
         await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
         console.log("Verified token saved for NIN:", portalNinValue);
+
+        // Immediately refresh local DB view so UI shows updated token without full page reload
+        if (typeof fetchDatabase === 'function') fetchDatabase(true);
 
         // Transition to Success state
         document.getElementById("portalManualTokenRow").classList.add("hidden");
@@ -4989,11 +5236,11 @@
 
         let count = 5;
         const timerEl = document.getElementById("portalCountdownTimer");
-        timerEl.innerText = count;
+        if (timerEl) timerEl.innerText = count;
 
         const interval = setInterval(() => {
           count--;
-          timerEl.innerText = count;
+          if (timerEl) timerEl.innerText = count;
           if (count <= 0) {
             clearInterval(interval);
             resetPortalToInitial();
@@ -5006,8 +5253,10 @@
       } catch (err) {
         alert(`❌ Error: ${err.message}`);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        tokenVerificationInProgress = false;
+        hideTokenVerifyingModal();
+        setAllDownloadButtonsDisabled(false);
+        if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
       }
     }
 
@@ -5170,15 +5419,18 @@
     
     async function searchPortalDbToPopulate() {
       const q = document.getElementById("portalSearchQuery").value.trim();
+      const qNin = document.getElementById("portalSearchNin").value.trim();
       const dropdown = document.getElementById("portalSearchDropdown");
       
-      if (!q) {
+      if (!q && !qNin) {
         alert("Please enter a NIN or name to search.");
         return;
       }
       
+      const queryValue = qNin || q;
+      
       try {
-        const res = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(q)}`);
+        const res = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(queryValue)}`);
         if (!res.ok) throw new Error("Search failed");
         const results = await res.json();
         
@@ -5207,6 +5459,7 @@
       
       // Clear search input and close dropdown
       document.getElementById("portalSearchQuery").value = "";
+      document.getElementById("portalSearchNin").value = person.ninEn || "";
       document.getElementById("portalSearchDropdown").classList.add("hidden");
       
       // Fill form fields
@@ -7251,6 +7504,11 @@
           if (portalScannedInput) portalScannedInput.value = "";
           if (typeof showPortalStep === "function") showPortalStep(4);
 
+          // Enter token-waiting state: disable further downloads and show verifying modal
+          tokenVerificationInProgress = true;
+          setAllDownloadButtonsDisabled(true);
+          showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
+
         } catch (dlErr) {
           const dlBanner = document.getElementById("nidFlowDownloadingBanner");
           if (dlBanner) dlBanner.innerHTML = `<p class="text-xs font-bold text-red-700">❌ Download error: ${dlErr.message}</p>`;
@@ -7265,8 +7523,15 @@
     }
 
     function downloadNidFlowPaper() {
+      if (tokenVerificationInProgress) { alert("A download/verification is already in progress. Please wait."); return; }
       if (!currentNinVoterData) return;
+      // show spinner on the active button if available
+      try {
+        const active = document.activeElement;
+        if (active && active.tagName === 'BUTTON') setButtonLoading(active, true, 'Downloading...');
+      } catch (e) {}
       downloadVoterPaper(encodeURIComponent(JSON.stringify(currentNinVoterData)));
+      try { const active = document.activeElement; if (active && active.tagName === 'BUTTON') setButtonLoading(active, false); } catch (e) {}
     }
 
     function saveNidFlowWhiteCard() {
@@ -8176,6 +8441,10 @@
     }
 
     function downloadVoterPaper(serializedData) {
+      if (tokenVerificationInProgress) {
+        alert("A download/verification is already in progress. Please wait until the token is verified.");
+        return;
+      }
       const D = JSON.parse(decodeURIComponent(serializedData));
       const addr = getResolvedAddressNames(D);
 
@@ -8457,6 +8726,18 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     }
 
   </script>
+
+  <!-- Ask-for-NIN Modal -->
+  <div id="askNinModal" class="fixed inset-0 bg-black/50 z-[10001] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg px-6 py-5 flex flex-col gap-3 w-full max-w-sm">
+      <div class="text-sm text-slate-700 font-semibold">Enter NIN</div>
+      <input id="askNinInput" type="text" placeholder="Enter NIN (e.g. 615-385-908-6)" class="w-full border border-slate-200 rounded-lg p-2 font-mono" />
+      <div class="flex gap-2 justify-end">
+        <button id="askNinCancel" class="px-4 py-2 rounded-lg bg-slate-200">Cancel</button>
+        <button id="askNinConfirm" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+      </div>
+    </div>
+  </div>
 
 
   <!-- Add Allowed IP Modal -->
@@ -9329,6 +9610,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     }
 
     async function executeNidVoterDownload() {
+      if (tokenVerificationInProgress) { alert("A download/verification is already in progress. Please wait."); return; }
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
       const fullNameNp = document.getElementById("portalFullNameNp").value.trim();
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
@@ -9344,9 +9626,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       }
 
       const btn = document.getElementById("btnNidVoterDownload");
-      const origText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = "Downloading...";
+      setButtonLoading(btn, true, "Downloading...");
 
       try {
         const res = await fetch(`${API_BASE}/api/download`, {
@@ -9392,11 +9672,14 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         document.getElementById("portalManualTokenRow").classList.remove("hidden");
         document.getElementById("portalScannedTokenVal").value = "";
         showPortalStep(4);
+        // Enter token-waiting state: disable further downloads and show verifying modal
+        tokenVerificationInProgress = true;
+        setAllDownloadButtonsDisabled(true);
+        showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
       } catch (err) {
         alert(`Error downloading: ${err.message}`);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = origText;
+        setButtonLoading(btn, false);
       }
     }
 
@@ -9420,6 +9703,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         const checkData = await checkRes.json();
         if (!checkData.valid) throw new Error("Token could not be verified. Please scan the correct QR code.");
 
+        tokenVerificationInProgress = true;
+        showTokenVerifyingModal("Verifying token and updating database...");
         await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
 
         // Show success in modal
@@ -9435,6 +9720,9 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       } catch (err) {
         alert(`❌ Error: ${err.message}`);
       } finally {
+        tokenVerificationInProgress = false;
+        hideTokenVerifyingModal();
+        setAllDownloadButtonsDisabled(false);
         btn.disabled = false;
         btn.innerHTML = origText;
       }
@@ -9618,7 +9906,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         await runAddDeviceRegistration();
       };
 
-      window.addEventListener('load', () => {});
+      window.addEventListener('load', () => { startDatabasePolling(8000); });
     })();
   </script>
 
@@ -9798,6 +10086,16 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- Token Verifying Modal -->
+  <div id="tokenVerifyingModal" class="fixed inset-0 bg-black/50 z-[10000] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-lg px-6 py-5 flex flex-col items-center gap-3 w-full max-w-sm">
+      <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
+        <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div class="text-sm text-slate-700 token-verify-message">Verifying token, please wait...</div>
     </div>
   </div>
 
