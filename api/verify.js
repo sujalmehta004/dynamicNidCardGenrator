@@ -59,13 +59,62 @@ async function checkTokenValid(token) {
   }
 }
 
+function getVerifyHeaderCopy(person, mode) {
+  const normalizedStatus = String(person && person.status ? person.status : '').trim().toLowerCase();
+
+  if (normalizedStatus === 'done') {
+    return {
+      title: 'Verification Ready',
+      subtitle: 'Your e-NID token has already been configured and the system is ready for the next step. If you are not redirected automatically, it may have expired or been misplaced, and you can simply re-verify using the steps below.',
+      badgeColor: 'emerald'
+    };
+  }
+
+  if (normalizedStatus === 'inprogress') {
+    return {
+      title: 'Mobile Number Not Yet Updated',
+      subtitle: 'To proceed with the e-NID verification process, your mobile number must be updated in the system. If you believe it has already been updated, please wait a little while for the information to sync online. Once the update is reflected, your status will change from “Mobile Not Registered” to “Pending”.',
+      badgeColor: 'red'
+    };
+  }
+
+  if (normalizedStatus === 'not online') {
+    return {
+      title: 'Not Updated in the Citizen Portal',
+      subtitle: 'Your information has not yet been updated in the official citizen portal, or the details currently available do not match your NIN records. If your information is correct, please wait for some time for the portal to reflect the update. Once it becomes available, your status will change and you can continue the verification process.',
+      badgeColor: 'amber'
+    };
+  }
+
+  if (normalizedStatus === 'pending') {
+    return {
+      title: 'Ready for e-NID Verification',
+      subtitle: 'Your account is now ready for the e-NID verification process. Please complete the verification steps below using the OTP and follow the instructions carefully.',
+      badgeColor: 'blue'
+    };
+  }
+
+  if (mode === 'expired_token') {
+    return {
+      title: 'Token Expired — Re-verification Required',
+      subtitle: 'Your NID download token has expired or is no longer valid. Please complete the verification process again so that a fresh token can be generated for your e-NID card.',
+      badgeColor: 'red'
+    };
+  }
+
+  return {
+    title: 'Identity Token Not Configured',
+    subtitle: 'Your NID card has not been verified yet. Please use the option below to complete the verification process and obtain your digital NID card.',
+    badgeColor: 'amber'
+  };
+}
+
 function renderVerifyPage(person, mode, nin) {
   // mode: "no_token" | "expired_token"
-  const title = mode === "expired_token" ? "Token Expired — Re-verification Required" : "Identity Token Not Configured";
-  const subtitle = mode === "expired_token"
-    ? "Your NID download token has expired or is invalid. Please complete verification to get a new one."
-    : "Your NID card has not been verified yet. Click below to verify and obtain your digital NID card.";
-  const badgeColor = mode === "expired_token" ? "red" : "amber";
+  const statusCopy = getVerifyHeaderCopy(person, mode);
+  const title = statusCopy.title;
+  const subtitle = statusCopy.subtitle;
+  const badgeColor = statusCopy.badgeColor;
 
   const dobNpJs = (person.dobNp || "").replace(/'/g, "\\'");
   const citDateJs = (person.citDate || "").replace(/'/g, "\\'");
@@ -116,20 +165,20 @@ function renderVerifyPage(person, mode, nin) {
           <div class="text-xs text-slate-500">राष्ट्रिय परिचयपत्र प्रणाली</div>
         </div>
         <div class="ml-auto">
-          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${badgeColor === "red" ? "bg-red-50 text-red-600 border-red-200" : "bg-amber-50 text-amber-600 border-amber-200"} uppercase tracking-wider">
-            ${mode === "expired_token" ? "Token Expired" : "Unverified"}
+          <span class="text-[10px] font-bold px-2.5 py-1 rounded-full border ${badgeColor === "red" ? "bg-red-50 text-red-600 border-red-200" : badgeColor === "blue" ? "bg-blue-50 text-blue-600 border-blue-200" : badgeColor === "emerald" ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-amber-50 text-amber-600 border-amber-200"} uppercase tracking-wider">
+            ${badgeColor === "red" ? "Re-verify" : badgeColor === "blue" ? "Pending" : badgeColor === "emerald" ? "Ready" : "Unverified"}
           </span>
         </div>
       </div>
 
       <!-- Status Message -->
-      <div class="flex items-start gap-3 p-4 rounded-xl ${badgeColor === "red" ? "bg-red-50 border border-red-100" : "bg-amber-50 border border-amber-100"} mb-5">
-        <svg class="w-5 h-5 ${badgeColor === "red" ? "text-red-500" : "text-amber-500"} mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="flex items-start gap-3 p-4 rounded-xl ${badgeColor === "red" ? "bg-red-50 border border-red-100" : badgeColor === "blue" ? "bg-blue-50 border border-blue-100" : badgeColor === "emerald" ? "bg-emerald-50 border border-emerald-100" : "bg-amber-50 border border-amber-100"} mb-5">
+        <svg class="w-5 h-5 ${badgeColor === "red" ? "text-red-500" : badgeColor === "blue" ? "text-blue-500" : badgeColor === "emerald" ? "text-emerald-500" : "text-amber-500"} mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
         <div>
-          <div class="text-sm font-bold ${badgeColor === "red" ? "text-red-700" : "text-amber-700"}">${title}</div>
-          <div class="text-xs ${badgeColor === "red" ? "text-red-600" : "text-amber-600"} mt-0.5">${subtitle}</div>
+          <div class="text-sm font-bold ${badgeColor === "red" ? "text-red-700" : badgeColor === "blue" ? "text-blue-700" : badgeColor === "emerald" ? "text-emerald-700" : "text-amber-700"}">${title}</div>
+          <div class="text-xs ${badgeColor === "red" ? "text-red-600" : badgeColor === "blue" ? "text-blue-600" : badgeColor === "emerald" ? "text-emerald-600" : "text-amber-600"} mt-0.5">${subtitle}</div>
         </div>
       </div>
 
@@ -337,7 +386,7 @@ function renderVerifyPage(person, mode, nin) {
       <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl mx-4 flex flex-col overflow-hidden transform scale-95 transition-all duration-300 max-h-[90vh]">
         <div class="flex justify-between items-center border-b border-slate-100 px-4 py-3 bg-gradient-to-r from-blue-700 to-blue-800">
           <div>
-            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Voter Details</h3>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">NIN Details</h3>
             <p class="text-[10px] text-blue-100 mt-0.5">Saved voter list record for this NID</p>
           </div>
           <button onclick="closeVerifyDetailsModal()" class="text-blue-100 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10">
@@ -444,6 +493,9 @@ function renderVerifyPage(person, mode, nin) {
     let verifyNin = '';
     let verifyTransactionId = '';
     let verifyDownloadToken = '';
+    let currentVerifyFlowSession = 0;
+    let verifyFlowActive = false;
+    let verifySuccessTimer = null;
 
     function getPortraitImageFromRecord(record) {
       if (!record) return '';
@@ -715,6 +767,8 @@ function renderVerifyPage(person, mode, nin) {
     function openVerifyFlowModal() {
       const modal = document.getElementById('verifyFlowModal');
       if (!modal) return;
+      verifyFlowActive = true;
+      currentVerifyFlowSession += 1;
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       setTimeout(() => {
@@ -723,21 +777,41 @@ function renderVerifyPage(person, mode, nin) {
       }, 10);
     }
 
+    function resetStartVerifyButton() {
+      const btn = document.getElementById('startVerifyBtn');
+      if (!btn) return;
+      btn.disabled = false;
+      btn.classList.remove('opacity-70');
+      btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg> Verify &amp; Download NID Card';
+    }
+
     function closeVerifyFlowModal() {
       const modal = document.getElementById('verifyFlowModal');
+      const verifyArea = document.getElementById('verifyBtnArea');
       if (!modal) return;
+      verifyFlowActive = false;
+      currentVerifyFlowSession += 1;
+      if (verifySuccessTimer) {
+        clearInterval(verifySuccessTimer);
+        verifySuccessTimer = null;
+      }
       const dialog = modal.querySelector('div > div');
       if (dialog) dialog.classList.add('scale-95');
       setTimeout(() => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        if (verifyArea) {
+          verifyArea.classList.remove('hidden');
+        }
+        resetStartVerifyButton();
       }, 150);
     }
 
     function startVerifyFlow() {
       const btn = document.getElementById('startVerifyBtn');
       if (btn) {
-        btn.disabled = true;
+        btn.disabled = false;
+        btn.classList.add('opacity-70');
         btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Loading captcha...';
       }
       openVerifyFlowModal();
@@ -759,20 +833,16 @@ function renderVerifyPage(person, mode, nin) {
         const data = await res.json();
         if (!data.image) throw new Error('Invalid captcha format');
         document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.image;
-        // Hide verify button now that OTP card is fully loaded
-        document.getElementById('verifyBtnArea').classList.add('hidden');
+        resetStartVerifyButton();
       } catch (err) {
         showError(1, 'Could not load captcha: ' + err.message);
         // Re-enable button if captcha failed to load
-        const btn = document.getElementById('startVerifyBtn');
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg> Verify &amp; Download NID Card';
-        }
+        resetStartVerifyButton();
       }
     }
 
     async function requestOtp() {
+      const sessionId = currentVerifyFlowSession;
       hideError(1);
       const captchaCode = document.getElementById('captchaInput').value.trim();
       if (!captchaCode) { showError(1, 'Please enter the captcha code.'); return; }
@@ -800,6 +870,8 @@ function renderVerifyPage(person, mode, nin) {
         const rawText = await res.text();
         let data;
         try { data = JSON.parse(rawText); } catch (e) { data = rawText; }
+
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
 
         if (!res.ok) {
           let errMsg = "";
@@ -833,6 +905,7 @@ function renderVerifyPage(person, mode, nin) {
     }
 
     async function verifyOtp() {
+      const sessionId = currentVerifyFlowSession;
       hideError(2);
       const otp = document.getElementById('otpInput').value.trim();
       if (!otp) { showError(2, 'Please enter the OTP code.'); return; }
@@ -857,6 +930,8 @@ function renderVerifyPage(person, mode, nin) {
         let data;
         try { data = JSON.parse(rawText); } catch (e) { data = rawText; }
 
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
+
         if (!res.ok) {
           let errMsg = "";
           if (typeof data === "object" && data !== null) {
@@ -868,6 +943,7 @@ function renderVerifyPage(person, mode, nin) {
           return;
         }
         verifyDownloadToken = data.downloadToken;
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
         showStep(3);
         if (data.downloadToken) {
           // Auto-trigger download
@@ -882,6 +958,7 @@ function renderVerifyPage(person, mode, nin) {
     }
 
     async function downloadAndSave() {
+      const sessionId = currentVerifyFlowSession;
       hideError(3);
       const btn = document.getElementById('btnDownload');
       btn.disabled = true;
@@ -905,6 +982,8 @@ function renderVerifyPage(person, mode, nin) {
             ccn_issuing_date_loc: ccnIssuingDateLoc,
           }),
         });
+
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
 
         if (!res.ok) {
           let errMsg = res.statusText;
@@ -944,6 +1023,8 @@ function renderVerifyPage(person, mode, nin) {
         // Open embedded PDF viewer modal on the same page
         const filename = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\\s+/g,'_') + '.pdf';
         openEmbeddedPdfModal(encryptedBlob, filename, clipboardCode);
+
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
 
         // Show step 4
         showStep(4);
@@ -1092,6 +1173,7 @@ function renderVerifyPage(person, mode, nin) {
     // ─────────────────────────────────────────────────────────────────────────
 
     async function verifyAndSaveScannedToken() {
+      const sessionId = currentVerifyFlowSession;
       hideError(4);
       const inputVal = document.getElementById('pastedTokenInput').value.trim();
       if (!inputVal) {
@@ -1105,6 +1187,8 @@ function renderVerifyPage(person, mode, nin) {
       btn.textContent = 'Verifying...';
 
       try {
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
+
         // Verify with API
         const checkRes = await fetch('/api/check-token?token=' + encodeURIComponent(extracted));
         if (!checkRes.ok) throw new Error('Verification request failed.');
@@ -1112,6 +1196,8 @@ function renderVerifyPage(person, mode, nin) {
         if (!checkData.valid) {
           throw new Error('This token could not be verified by the government server.');
         }
+
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
 
         // Save token + status=done in DB
         const saveRes = await fetch('/api/people?originalNin=' + encodeURIComponent(PERSON_NIN), {
@@ -1121,6 +1207,8 @@ function renderVerifyPage(person, mode, nin) {
         });
         if (!saveRes.ok) throw new Error('Failed to save verified token to database.');
 
+        if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
+
         // Save to webpage cache (localStorage) for refreshing
         localStorage.setItem('nid_token_' + PERSON_NIN, extracted);
 
@@ -1129,13 +1217,16 @@ function renderVerifyPage(person, mode, nin) {
 
         // Countdown redirect
         let count = 5;
-        const timer = setInterval(() => {
+        verifySuccessTimer = setInterval(() => {
           count--;
           const el = document.getElementById('countdownTimer');
           if (el) el.textContent = count;
           if (count <= 0) {
-            clearInterval(timer);
-            window.location.href = 'https://citizenportal.donidcr.gov.np/en/verify?token=' + encodeURIComponent(extracted);
+            clearInterval(verifySuccessTimer);
+            verifySuccessTimer = null;
+            if (verifyFlowActive && sessionId === currentVerifyFlowSession) {
+              window.location.href = 'https://citizenportal.donidcr.gov.np/en/verify?token=' + encodeURIComponent(extracted);
+            }
           }
         }, 1000);
 
