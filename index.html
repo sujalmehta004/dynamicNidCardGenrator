@@ -3289,10 +3289,6 @@
 
         tr.onclick = (e) => {
           if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
-          if (!hasPortrait && !hasVoterNo) {
-            showCustomAlert('No record found', 'No record found', 'warning');
-            return;
-          }
           openRowDetailPopup(row.ninEn);
         };
 
