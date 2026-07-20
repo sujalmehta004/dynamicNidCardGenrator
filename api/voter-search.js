@@ -137,55 +137,98 @@ module.exports = async (req, res) => {
   const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
 
   try {
-    // Step 1: Get session cookie (use whole set-cookie string as cookie header)
-    const step1 = await makeRequest('https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo', {
-      method: 'GET',
-      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' },
-      timeout: 10000
-    });
+    // Parallel approach: create multiple independent sessions and POST GetFromNIN concurrently
+    const requestedParallel = parseInt(req.body.parallelCount || req.query && req.query.parallel || 10, 10) || 10;
+    const parallelCount = Math.min(20, Math.max(1, requestedParallel));
 
-    const setCookie = step1.headers && step1.headers['set-cookie'];
-    if (!setCookie || !Array.isArray(setCookie) || setCookie.length === 0) {
-      return res.status(500).json({ error: "Failed to obtain session from election portal" });
-    }
-
-    // Use the full cookie header (join all set-cookie values) to preserve needed cookies
-    const sessionCookie = setCookie.join('; ');
-
-    const authHeaders = {
-      'Cookie': sessionCookie,
-      'User-Agent': UA,
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-
-    // Step 2: POST GetFromNIN — add retries/backoff to be more robust
-    const getFromNinUrl = `https://applyvr.election.gov.np/Login/GetFromNIN?NIN=${encodeURIComponent(formattedNin)}&dob=${encodeURIComponent(formattedDob)}&firstname=${encodeURIComponent(formattedFirstname)}`;
-    let step2 = null;
-    let step2Json = null;
-    let lastStep2Body = null;
-    const maxAttempts = 3;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const makeAttempt = async (fnameCandidate) => {
       try {
-        step2 = await makeRequest(getFromNinUrl, {
-          method: 'POST',
-          headers: { ...authHeaders, 'Content-Length': '0', 'Origin': 'https://applyvr.election.gov.np', 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
+        // new session per attempt
+        const s1 = await makeRequest('https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo', {
+          method: 'GET',
+          headers: { 'User-Agent': UA, 'Accept': 'text/html' },
           timeout: 10000
         });
-        lastStep2Body = step2.body;
-        try { step2Json = JSON.parse(step2.body); } catch (e) { step2Json = null; }
+        const sc = s1.headers && s1.headers['set-cookie'];
+        if (!sc || !Array.isArray(sc) || sc.length === 0) return { ok: false, reason: 'no-cookie' };
+        const cookieStr = sc.join('; ');
 
-        // If we got a JSON with a success flag or a 200 status, break early
-        if (step2Json && (step2Json.data || step2Json.status !== undefined)) break;
-        if (step2.status === 200 && step2Json) break;
+        const hdrs = { 'Cookie': cookieStr, 'User-Agent': UA, 'X-Requested-With': 'XMLHttpRequest' };
+        const postUrl = `https://applyvr.election.gov.np/Login/GetFromNIN?NIN=${encodeURIComponent(formattedNin)}&dob=${encodeURIComponent(formattedDob)}&firstname=${encodeURIComponent(fnameCandidate)}`;
+        const p = await makeRequest(postUrl, {
+          method: 'POST',
+          headers: { ...hdrs, 'Content-Length': '0', 'Origin': 'https://applyvr.election.gov.np', 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
+          timeout: 10000
+        });
+        let json = null;
+        try { json = JSON.parse(p.body); } catch (e) { json = null; }
+
+        // If json indicates data present, return it
+        if (json && json.data && json.status === 1) return { ok: true, type: 'json', data: json, cookie: cookieStr };
+
+        // If portal indicates already registered, try to GET dashboard and extract prefilled JSON
+        if (( !json || !json.data || json.status !== 1 ) && typeof (json && json.message) === 'string') {
+          const step3 = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
+            method: 'GET',
+            headers: { 'Cookie': cookieStr, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
+            timeout: 10000
+          });
+          const parsed = extractVoterJsonObject(step3.body);
+          if (parsed) return { ok: true, type: 'parsed', data: parsed, cookie: cookieStr };
+        }
+
+        return { ok: false, body: p.body, json };
       } catch (err) {
-        // network/timeout error — log and retry with backoff
-        console.error('[voter-search] GetFromNIN attempt', attempt, 'failed:', err.message);
+        return { ok: false, error: err.message };
       }
-      // small exponential backoff
-      await new Promise(r => setTimeout(r, 300 * attempt));
+    };
+
+    const candidates = [];
+    if (formattedFirstname && !/^[0-9\-/]{2,}$/.test(formattedFirstname)) candidates.push(formattedFirstname);
+    candidates.push('sujal');
+    candidates.push('');
+    while (candidates.length < parallelCount) candidates.push('sujal' + Math.floor(Math.random() * 10000));
+
+    const attemptPromises = candidates.slice(0, parallelCount).map(c => makeAttempt(c));
+    const results = await Promise.all(attemptPromises);
+    const successResult = results.find(r => r.ok === true);
+    let step2 = null;
+    let step2Json = null;
+    let sessionCookie = null;
+    if (successResult) {
+      if (successResult.type === 'parsed') {
+        const parsedDirect = successResult.data;
+        parsedDirect._note = 'extracted_from_new_enrollment_parallel_attempt';
+        const provIdDirect = String(parsedDirect.ProvinceId || parsedDirect.ProvinceCode || parsedDirect.PermanentState || "");
+        const provInfoDirect = NEPAL_PROVINCES[provIdDirect] || { en: `Province ${provIdDirect}`, np: `प्रदेश ${provIdDirect}` };
+        parsedDirect.PermanentStateNameEn = provInfoDirect.en;
+        parsedDirect.PermanentStateNameNp = provInfoDirect.np;
+        if (parsedDirect.WardNo !== undefined && parsedDirect.WardNo !== null) parsedDirect.PermanentWard = String(parsedDirect.WardNo || "");
+        parsedDirect.PermanentDistrict = parseInt(parsedDirect.DistrictId || parsedDirect.DistrictCode || parsedDirect.PermanentDistrict || 0, 10);
+        parsedDirect.PermanentVdcMunicipality = parseInt(parsedDirect.VdcMunicipalityId || parsedDirect.PermanentVdcMunicipality || 0, 10);
+        parsedDirect.PermanentState = provIdDirect;
+        return res.status(200).json({ success: true, data: parsedDirect });
+      }
+      if (successResult.type === 'json') {
+        step2Json = successResult.data;
+        sessionCookie = successResult.cookie;
+      }
+    } else {
+      // no success — try to pick a json error if any result had json with message
+      const anyJson = results.find(r => r.json && typeof r.json.message === 'string');
+      if (anyJson) {
+        step2Json = anyJson.json;
+      } else {
+        return res.status(500).json({ error: "NID सर्भरबाट डेटा प्राप्त हुन सकेन। कृपया केही समयपछि पुनः प्रयास गर्नुहोस्।", details: results.slice(0,5) });
+      }
     }
 
-    if (!step2) return res.status(500).json({ error: "Failed to contact election portal for GetFromNIN" });
+    // build authHeaders for downstream API calls
+    const authHeaders = {
+      'Cookie': sessionCookie || '' ,
+      'User-Agent': UA,
+      'X-Requested-With': 'XMLHttpRequest'
+    };
 
     // If the portal reports the record exists (already registered) the portal often returns data:false with
     // a Nepali message like "तपाईको निवेदन स्वीकृत भइसकेको छ ... मतदाता नं ...". In that case attempt two fallbacks:

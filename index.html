@@ -653,10 +653,16 @@
                       placeholder="NIN Number (optional)"
                       title="Auto-filled after selecting a search result. Used only for display."
                       class="flex-1 bg-slate-100 border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 transition-all shadow-sm cursor-not-allowed" />
-                    <button type="button" onclick="searchPortalDbToPopulate()"
-                      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
-                      Search
-                    </button>
+                    <div class="flex gap-2 shrink-0">
+                      <button type="button" onclick="clearPortalSearchForm()"
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg transition-all shadow-sm uppercase text-[10px] border border-slate-200">
+                        Clear
+                      </button>
+                      <button type="button" onclick="searchPortalDbToPopulate()"
+                        class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
+                        Search
+                      </button>
+                    </div>
                   </div>
                   <div id="portalSearchDropdown" class="hidden bg-white border border-blue-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
                 </div>
@@ -1691,6 +1697,8 @@
       processFormMetricsSync();
       attachLocalImageReaders();
       attachNidFormattingListener();
+      attachVoterNidFormattingListener();
+      attachNidVoterMnrFormattingListener();
       attachDateConversionListeners();
 
       // Auto-format YYYY-MM-DD input helpers
@@ -2337,6 +2345,36 @@
         ninEnInput.value = formatted;
         ninNpInput.value = translateDigits(formatted, englishToNepaliDigits);
         processFormMetricsSync();
+      });
+    }
+
+    function attachVoterNidFormattingListener() {
+      const ninInput = document.getElementById("voterNidNin");
+      if (!ninInput) return;
+      ninInput.addEventListener("input", (e) => {
+        let val = ninInput.value || "";
+        let digits = val.replace(/\D/g, "");
+        let formatted = "";
+        if (digits.length > 0) formatted += digits.substring(0, 3);
+        if (digits.length > 3) formatted += "-" + digits.substring(3, 6);
+        if (digits.length > 6) formatted += "-" + digits.substring(6, 9);
+        if (digits.length > 9) formatted += "-" + digits.substring(9, 10);
+        ninInput.value = formatted;
+      });
+    }
+
+    function attachNidVoterMnrFormattingListener() {
+      const inp = document.getElementById("nidVoterMnrNidInput");
+      if (!inp) return;
+      inp.addEventListener("input", (e) => {
+        let v = inp.value || "";
+        let d = v.replace(/\D/g, "");
+        let f = "";
+        if (d.length > 0) f += d.substring(0, 3);
+        if (d.length > 3) f += "-" + d.substring(3, 6);
+        if (d.length > 6) f += "-" + d.substring(6, 9);
+        if (d.length > 9) f += "-" + d.substring(9, 10);
+        inp.value = f;
       });
     }
 
@@ -3684,22 +3722,80 @@
     function resetPortalToInitial() {
       setPortalInputsDisabled(false);
       showPortalStep(0);
-      document.getElementById("portalCaptchaInputRow").classList.add("hidden");
-      document.getElementById("portalOtpRow").classList.add("hidden");
-      document.getElementById("portalDownloadRow").classList.add("hidden");
-      document.getElementById("portalManualTokenRow").classList.add("hidden");
-      document.getElementById("portalSuccessRow").classList.add("hidden");
-      document.getElementById("portalCaptchaContainer").classList.add("hidden");
-      document.getElementById("portalMobileNotRegisteredRow").classList.add("hidden");
-      document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
 
-      document.getElementById("portalCaptchaCode").value = "";
-      document.getElementById("portalOtpCode").value = "";
-      document.getElementById("portalScannedTokenVal").value = "";
-      document.getElementById("portalSearchQuery").value = "";
-      document.getElementById("portalSearchNin").value = "";
+      const portalRowsToHide = [
+        "portalCaptchaInputRow",
+        "portalOtpRow",
+        "portalDownloadRow",
+        "portalManualTokenRow",
+        "portalSuccessRow",
+        "portalCaptchaContainer",
+        "portalMobileNotRegisteredRow"
+      ];
+
+      portalRowsToHide.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.add("hidden");
+        }
+      });
+
+      const initialActionRow = document.getElementById("portalInitialActionBtnRow");
+      if (initialActionRow) {
+        initialActionRow.classList.remove("hidden");
+      }
+
+      const portalCaptchaCode = document.getElementById("portalCaptchaCode");
+      if (portalCaptchaCode) portalCaptchaCode.value = "";
+
+      const portalOtpCode = document.getElementById("portalOtpCode");
+      if (portalOtpCode) portalOtpCode.value = "";
+
+      const portalScannedTokenVal = document.getElementById("portalScannedTokenVal");
+      if (portalScannedTokenVal) portalScannedTokenVal.value = "";
+
+      const portalSearchQuery = document.getElementById("portalSearchQuery");
+      if (portalSearchQuery) portalSearchQuery.value = "";
+
+      const portalSearchNin = document.getElementById("portalSearchNin");
+      if (portalSearchNin) portalSearchNin.value = "";
+
       portalNinValue = "";
       portalDownloadToken = "";
+    }
+
+    function clearPortalSearchForm() {
+      resetPortalToInitial();
+
+      const fieldsToClear = [
+        "portalFullNameEn",
+        "portalFullNameNp",
+        "portalDobLoc",
+        "portalCcnIssuingDateLoc"
+      ];
+
+      fieldsToClear.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = "";
+        }
+      });
+
+      const portalSearchDropdown = document.getElementById("portalSearchDropdown");
+      if (portalSearchDropdown) {
+        portalSearchDropdown.innerHTML = "";
+        portalSearchDropdown.classList.add("hidden");
+      }
+
+      const portalOtpInfoText = document.getElementById("portalOtpInfoText");
+      if (portalOtpInfoText) {
+        portalOtpInfoText.innerText = "Masked Mobile: -, NIN: -";
+      }
+
+      const portalFullNameEn = document.getElementById("portalFullNameEn");
+      if (portalFullNameEn) {
+        portalFullNameEn.focus();
+      }
     }
 
     // ----- Token verifying modal helpers -----
@@ -7226,15 +7322,20 @@
       const searchQueryInput = document.getElementById("portalSearchQuery");
       const portalNinInput = document.getElementById("portalSearchNin");
 
-      if (fullNameEnInput) fullNameEnInput.value = fullNameEn;
-      if (fullNameNpInput) fullNameNpInput.value = fullNameNp;
-      if (dobInput) dobInput.value = dobValue;
-      if (citDateInput) citDateInput.value = citDateValue;
-      if (searchQueryInput && ninValue) searchQueryInput.value = String(ninValue).trim();
-      if (portalNinInput && ninValue) portalNinInput.value = String(ninValue).trim();
-
-      if (ninValue) {
-        portalNinValue = String(ninValue).trim();
+      // Only populate the Name-search form fields when the current search mode is 'name'.
+      // When searching by NIN we should not overwrite the name-search inputs.
+      if (currentVoterSearchMode === "name") {
+        if (fullNameEnInput) fullNameEnInput.value = fullNameEn;
+        if (fullNameNpInput) fullNameNpInput.value = fullNameNp;
+        if (dobInput) dobInput.value = dobValue;
+        if (citDateInput) citDateInput.value = citDateValue;
+        if (searchQueryInput && ninValue) searchQueryInput.value = String(ninValue).trim();
+        if (portalNinInput && ninValue) portalNinInput.value = String(ninValue).trim();
+      } else {
+        // When in NIN mode, only update the internal portalNinValue and avoid filling name-search form
+        if (ninValue) {
+          portalNinValue = String(ninValue).trim();
+        }
       }
     }
 
@@ -9550,25 +9651,61 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       const btn = document.querySelector("#nidVoterFallbackSection button");
       if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
 
+      const parallelCount = 20; // send 10-20 parallel sessions to the backend
+      const maxFrontendAttempts = 3; // retry whole-parallel attempts if portal returns transient server message
+      const portalServerErrorPhrase = "NID सर्भरबाट डेटा प्राप्त हुन सकेन";
+      let attempt = 0;
+      let lastError = null;
+
       try {
-        const res = await fetch(`${API_BASE}/api/voter-search`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nin: nid, dob: _dobAd, firstname: _firstName })
-        });
-        const data = await res.json();
-        if (res.ok && data.success && data.data) {
-          _nidVoterCurrentData = data.data;
-          document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
-          document.getElementById("nidVoterModalSubtitle").innerText = "Record matched. Enter OTP below to proceed.";
-          document.getElementById("nidVoterFallbackSection").classList.add("hidden");
-          openNidVoterModal(data.data, false);  // OTP failed for this person — don't show OTP box
-        } else {
-          const errMsg = data.error || "Voter record not found for this NID.";
-          document.getElementById("nidVoterMnrErrorText").innerText = errMsg;
+        for (attempt = 1; attempt <= maxFrontendAttempts; attempt++) {
+          if (btn) btn.innerText = `Searching... (${attempt}/${maxFrontendAttempts})`;
+          try {
+            const res = await fetch(`${API_BASE}/api/voter-search`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nin: nid, dob: _dobAd, firstname: _firstName, parallelCount })
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok && data.success && data.data) {
+              _nidVoterCurrentData = data.data;
+              document.getElementById("nidVoterModalTitle").innerText = "🪪 NID Card Found — Continue Verification";
+              document.getElementById("nidVoterModalSubtitle").innerText = "Record matched. Enter OTP below to proceed.";
+              document.getElementById("nidVoterFallbackSection").classList.add("hidden");
+              openNidVoterModal(data.data, false);
+              return;
+            } else {
+              const errMsg = data.error || "Voter record not found for this NID.";
+              lastError = errMsg;
+              // If portal returned the transient server error, retry the whole parallel batch
+              if (String(errMsg).includes(portalServerErrorPhrase)) {
+                if (attempt < maxFrontendAttempts) {
+                  await new Promise((r) => setTimeout(r, 700 * attempt));
+                  continue;
+                } else {
+                  document.getElementById("nidVoterMnrErrorText").innerText = errMsg;
+                  break;
+                }
+              } else {
+                document.getElementById("nidVoterMnrErrorText").innerText = errMsg;
+                break;
+              }
+            }
+          } catch (err) {
+            lastError = err.message;
+            if (attempt < maxFrontendAttempts) {
+              await new Promise((r) => setTimeout(r, 700 * attempt));
+              continue;
+            } else {
+              alert("Search error: " + err.message);
+            }
+          }
         }
-      } catch (err) {
-        alert("Search error: " + err.message);
+        // After attempts exhausted, show last error if any
+        if (lastError) {
+          document.getElementById("nidVoterMnrErrorText").innerText = lastError;
+        }
       } finally {
         if (btn) { btn.disabled = false; btn.innerText = "Search"; }
       }
@@ -9614,12 +9751,17 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
     function closeNidVoterModal() {
       const m = document.getElementById("nidVoterModal");
-      m.classList.add("hidden");
-      m.style.display = "";
+      if (m) {
+        m.classList.add("hidden");
+        m.style.display = "";
+      }
       _nidVoterCurrentData = null;
 
-      // Reset portal UI back to the initial normal state when modal closes
-      resetPortalToInitial();
+      // Clear only the NID input inside this modal and leave the other form fields intact.
+      const nidInput = document.getElementById("nidVoterMnrNidInput");
+      if (nidInput) {
+        nidInput.value = "";
+      }
     }
 
     function downloadNidVoterPaper() {
