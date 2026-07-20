@@ -108,34 +108,39 @@ module.exports = async (req, res) => {
     const VoterListRecord = require('../lib/models/VoterListRecord');
     const Model = await VoterListRecord();
 
-    const existing = await Model.findOne({ nidNumber: String(nidNumber).trim() }).lean();
-    if (existing) {
-      return res.status(200).json({ message: 'record already exists', created: false, existing: true });
-    }
-
+    const cleanNid = String(nidNumber).trim();
+    const existing = await Model.findOne({ nidNumber: cleanNid }).lean();
     const addressInfo = normalizeAddressFields(profileData);
+    const nextStatus = String(status || (existing && existing.status) || 'pending').trim() || 'pending';
+    const nextVoterListNumber = String(voterListNumber || (existing && existing.voterListNumber) || '').trim();
+    const nextProfileData = {
+      ...profileData,
+      ...addressInfo,
+      ProvinceNameEn: addressInfo.provinceEn,
+      ProvinceNameNp: addressInfo.provinceNp,
+      DistrictNameEn: addressInfo.districtEn,
+      DistrictNameNp: addressInfo.districtNp,
+      MunicipalityNameEn: addressInfo.municipalityEn,
+      MunicipalityNameNp: addressInfo.municipalityNp,
+      WardName: addressInfo.ward,
+      ToleName: addressInfo.tole
+    };
 
-    const created = await Model.create({
-      nidNumber: String(nidNumber).trim(),
-      portraitImage: String(portraitImage || ''),
-      status: String(status || 'pending').trim() || 'pending',
-      voterListNumber: String(voterListNumber || '').trim(),
-      profileData: {
-        ...profileData,
-        ...addressInfo,
-        ProvinceNameEn: addressInfo.provinceEn,
-        ProvinceNameNp: addressInfo.provinceNp,
-        DistrictNameEn: addressInfo.districtEn,
-        DistrictNameNp: addressInfo.districtNp,
-        MunicipalityNameEn: addressInfo.municipalityEn,
-        MunicipalityNameNp: addressInfo.municipalityNp,
-        WardName: addressInfo.ward,
-        ToleName: addressInfo.tole
-      },
+    const recordData = {
+      nidNumber: cleanNid,
+      portraitImage: String(portraitImage || (existing && existing.portraitImage) || ''),
+      status: nextStatus,
+      voterListNumber: nextVoterListNumber,
+      isActive: nextStatus === 'active' || Boolean(nextVoterListNumber || (profileData && profileData.ApprovalMessage)),
+      profileData: nextProfileData,
       rawPayload
-    });
+    };
 
-    return res.status(201).json({ message: 'record created', created: true, record: created });
+    const created = existing
+      ? await Model.findOneAndUpdate({ nidNumber: cleanNid }, { $set: recordData }, { new: true, upsert: true, setDefaultsOnInsert: true })
+      : await Model.create(recordData);
+
+    return res.status(existing ? 200 : 201).json({ message: existing ? 'record updated' : 'record created', created: !existing, record: created, existing: Boolean(existing) });
   } catch (error) {
     console.error('save-voter-list-record error', error);
     return res.status(500).json({ error: 'Failed to save voter list record', details: error.message });

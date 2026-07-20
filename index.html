@@ -1641,11 +1641,18 @@
             };
 
             if (payload.nin && payload.dob && payload.firstname) {
-              await fetch(`${API_BASE}/api/voter-search`, {
+              const response = await fetch(`${API_BASE}/api/voter-search`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
               });
+              let responseData = {};
+              try { responseData = await response.json(); } catch (e) {}
+              const message = responseData.error || responseData.message || "";
+              const { isActive, voterListNumber } = getVoterActiveStateFromMessage(message, responseData.data || responseData);
+              if (isActive) {
+                await persistVoterListRecordToSecondaryDb(payload.nin, { error: message, ApprovalMessage: message, VoterNo: voterListNumber }, "active", voterListNumber, message);
+              }
             }
           } catch (e) {
             console.warn("Update failed for", rec?.ninEn || rec?.nin, e);
@@ -3182,6 +3189,16 @@
       const row = documentIdentityDb.find(r => r.ninEn === ninEn);
       if (!row) return;
       const savedPortrait = voterListIndex[String(row.ninEn || '').trim()];
+      const approvalText = String(
+        (savedPortrait && (savedPortrait.profileData && (savedPortrait.profileData.ApprovalMessage || savedPortrait.profileData.Approvalmessage || savedPortrait.profileData.ApprovalMassage)) ) ||
+        (savedPortrait && (savedPortrait.rawPayload && (savedPortrait.rawPayload.ApprovalMessage || savedPortrait.rawPayload.Approvalmessage || savedPortrait.rawPayload.ApprovalMassage))) ||
+        (savedPortrait && savedPortrait.error) || ""
+      ).trim();
+      const isApprovalNotice = getVoterActiveStateFromMessage(approvalText).isActive || Boolean(savedPortrait && savedPortrait.isActive && (savedPortrait.status === "active" || savedPortrait.voterListNumber));
+      if (isApprovalNotice) {
+        showCustomAlert("Approval Notice", "NID activated", "success");
+        return;
+      }
       const portraitHtml = savedPortrait && savedPortrait.portraitImage
         ? `<div style="width:84px; min-width:84px; max-height:104px; overflow:hidden; border-radius:14px; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center;">
              <img src="data:image/jpeg;base64,${savedPortrait.portraitImage}" class="w-full h-full object-cover" />
@@ -3300,9 +3317,11 @@
           tdDb.style.cssText = CELL + 'text-align:center; vertical-align:middle; width:84px; cursor:pointer;';
           tdDb.onclick = (e) => { e.stopPropagation(); openVoterDbDirectDetail(String(row.ninEn || '').trim()); };
           try {
+            const savedStatus = String(saved?.status || "").trim().toLowerCase();
+            const isActiveRecord = Boolean(saved?.isActive || savedStatus === "active" || hasVoterNo || (saved && saved.portraitImage));
             if (saved && saved.portraitImage) {
               tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
-            } else if (hasVoterNo) {
+            } else if (isActiveRecord) {
               tdDb.innerHTML = `<div style="text-align:center; font-size:13px; color:#065f46; font-weight:800;">Active</div>`;
             } else {
               tdDb.innerHTML = `<div style="text-align:center; font-size:13px; color:#64748b; font-weight:700;">Not Active</div>`;
@@ -4505,8 +4524,26 @@
       }
     }
 
-    async function persistVoterListRecordToSecondaryDb(nin, voterData, status = "pending", voterListNumber = "") {
+    function getVoterActiveStateFromMessage(message = "", data = null) {
+      const text = String(message || (data && (data.ApprovalMessage || data.Approvalmessage || data.ApprovalMassage || data.message)) || "").trim();
+      if (!text) return { isActive: false, voterListNumber: "" };
+
+      const lower = text.toLowerCase();
+      const isActive = /स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|active|registered/i.test(text) || (lower.includes("already") && lower.includes("registered"));
+      const voterListNumber = text.match(/\d{5,}/)?.[0] || "";
+      return { isActive, voterListNumber };
+    }
+
+    function shouldShowApprovalNotice(value) {
+      const text = String(value || "").trim();
+      if (!text) return false;
+      return getVoterActiveStateFromMessage(text).isActive;
+    }
+
+    async function persistVoterListRecordToSecondaryDb(nin, voterData, status = "pending", voterListNumber = "", sourceMessage = "") {
       if (!nin || !voterData) return;
+      const cleanNin = String(nin).trim();
+      if (!cleanNin) return;
       try {
         // Resolve actual district/province/municipality names from numeric codes
         let resolvedAddr = null;
@@ -4523,18 +4560,40 @@
           enrichedData._resolvedMuniNp      = resolvedAddr.muniNp      || "";
         }
 
+        const normalizedStatus = String(status || "pending").trim() || "pending";
+        const normalizedVoterListNumber = String(voterListNumber || "").trim();
+        if (sourceMessage) {
+          enrichedData.ApprovalMessage = sourceMessage;
+        }
+
         await fetch(`${API_BASE}/api/save-voter-list-record`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            nidNumber: String(nin).trim(),
+            nidNumber: cleanNin,
             portraitImage: enrichedData.PortraitImage || "",
-            status,
-            voterListNumber,
+            status: normalizedStatus,
+            voterListNumber: normalizedVoterListNumber,
             profileData: enrichedData,
             rawPayload: enrichedData
           })
         });
+
+        if (typeof voterListIndex === "object") {
+          voterListIndex[cleanNin] = {
+            ...(voterListIndex[cleanNin] || {}),
+            nidNumber: cleanNin,
+            portraitImage: enrichedData.PortraitImage || (voterListIndex[cleanNin] && voterListIndex[cleanNin].portraitImage) || "",
+            status: normalizedStatus,
+            voterListNumber: normalizedVoterListNumber,
+            profileData: enrichedData,
+            rawPayload: enrichedData,
+            isActive: normalizedStatus === "active" || Boolean(normalizedVoterListNumber || enrichedData.ApprovalMessage)
+          };
+          if (typeof renderDatabaseTableRows === "function") {
+            renderDatabaseTableRows();
+          }
+        }
       } catch (err) {
         console.warn("Failed to save voter list record to secondary DB", err);
       }
@@ -4584,12 +4643,11 @@
                 rowObj.voterSearchState = `searching (retry ${attempt})`;
                 renderBulkTable();
                 await new Promise(r => setTimeout(r, 1000));
-              } else if (errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता") || errMsg.toLowerCase().includes("active")) {
+              } else if (getVoterActiveStateFromMessage(errMsg).isActive) {
                 // Already approved/registered — extract voter list number
-                const voterNoMatch = errMsg.match(/\d{5,}/);  // voter numbers are typically long
-                const voterListNo = voterNoMatch ? voterNoMatch[0] : "";
+                const { voterListNumber } = getVoterActiveStateFromMessage(errMsg);
                 rowObj.voterSearchResult = { success: false, error: errMsg };
-                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg, ApprovalMessage: errMsg, VoterNo: voterListNo }, "pending", voterListNo);
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg, ApprovalMessage: errMsg, VoterNo: voterListNumber }, "active", voterListNumber, errMsg);
                 shouldRetry = false;
               } else if (errMsg.toLowerCase().includes("no record found") || errMsg.toLowerCase().includes("not found") || errMsg.toLowerCase().includes("not active") || errMsg.toLowerCase().includes("data not found")) {
                 // Record not found → status: not online
@@ -7165,9 +7223,8 @@
           openNinResultModal(true, data.data, null);
         } else {
           const errMsg = data.error || "";
-          if (errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता")) {
-            const voterNoMatch = errMsg.match(/\d+/);
-            const voterNo = voterNoMatch ? voterNoMatch[0] : "";
+          if (getVoterActiveStateFromMessage(errMsg).isActive) {
+            const { voterListNumber } = getVoterActiveStateFromMessage(errMsg);
             const d = {
               Nidno: nid,
               VoterFirstNameEn: firstname.toUpperCase(),
@@ -7181,8 +7238,9 @@
               GrandfatherFirstName: "—", GrandfatherLastName: "",
               PermanentWard: "—", PermanentVillageTol: "—",
               ApprovalMessage: errMsg,
-              VoterNo: voterNo
+              VoterNo: voterListNumber
             };
+            persistVoterListRecordToSecondaryDb(nid, d, "active", voterListNumber, errMsg);
             openNinResultModal(true, d, null);
           } else {
             openNinResultModal(false, null, data.error || "Record not found on voter portal.");
@@ -7330,9 +7388,8 @@
           openNinResultModal(true, data, null);
         } else {
           const errMsg = error || "";
-          if (errMsg.includes("स्वीकृत") || errMsg.includes("मतदाता")) {
-            const voterNoMatch = errMsg.match(/\d+/);
-            const voterNo = voterNoMatch ? voterNoMatch[0] : "";
+          if (getVoterActiveStateFromMessage(errMsg).isActive) {
+            const { voterListNumber } = getVoterActiveStateFromMessage(errMsg);
             const d = {
               Nidno: nin,
               VoterFirstNameEn: firstname.toUpperCase(),
@@ -7346,8 +7403,9 @@
               GrandfatherFirstName: "—", GrandfatherLastName: "",
               PermanentWard: "—", PermanentVillageTol: "—",
               ApprovalMessage: errMsg,
-              VoterNo: voterNo
+              VoterNo: voterListNumber
             };
+            persistVoterListRecordToSecondaryDb(nin, d, "active", voterListNumber, errMsg);
             openNinResultModal(true, d, null);
           } else {
             openNinResultModal(false, null, error || "Record not found on voter portal.");
@@ -7441,7 +7499,7 @@
           }
           const infoDiv = document.createElement("div");
           infoDiv.className = "bg-blue-50 border border-blue-200 p-3 rounded-lg text-blue-800 font-semibold text-[11px] flex items-center gap-2";
-          infoDiv.innerHTML = `<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/></svg><span>${data.ApprovalMessage}</span>`;
+          infoDiv.innerHTML = `<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/></svg><span>Active</span><span class="text-blue-700">• ${data.ApprovalMessage}</span>`;
           whiteCardContainer.parentElement.insertBefore(infoDiv, whiteCardContainer.nextSibling);
         } else {
           const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
@@ -8129,6 +8187,12 @@
       const contentEl = document.getElementById("voterDetailPopupContent");
       const footerEl = document.getElementById("voterDetailPopupFooter");
       if (!contentEl || !footerEl) return;
+
+      const approvalText = String(voterData?.ApprovalMessage || voterData?.Approvalmessage || voterData?.ApprovalMassage || voterData?.error || voterData?.message || "").trim();
+      if (shouldShowApprovalNotice(approvalText)) {
+        showCustomAlert("Approval Notice", "NID activated", "success");
+        return;
+      }
 
       const nameEn = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn, voterData.VoterLastNameEn].filter(Boolean).join(" ");
       const nameNp = [voterData.VoterFirstName, voterData.VoterMiddleName, voterData.VoterLastName].filter(Boolean).join(" ");
