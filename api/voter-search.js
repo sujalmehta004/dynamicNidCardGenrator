@@ -24,6 +24,11 @@ function makeRequest(url, options, postData = null) {
     });
 
     req.on('error', reject);
+    // timeout in ms (default 10s) to avoid hanging requests
+    const timeoutMs = (options && options.timeout) || 10000;
+    req.setTimeout(timeoutMs, () => {
+      req.destroy(new Error('Request timed out'));
+    });
     if (postData) req.write(postData);
     req.end();
   });
@@ -132,18 +137,20 @@ module.exports = async (req, res) => {
   const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
 
   try {
-    // Step 1: Get session cookie
+    // Step 1: Get session cookie (use whole set-cookie string as cookie header)
     const step1 = await makeRequest('https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo', {
       method: 'GET',
-      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' }
+      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' },
+      timeout: 10000
     });
 
-    const setCookie = step1.headers['set-cookie'];
-    if (!setCookie) return res.status(500).json({ error: "Failed to obtain session from election portal" });
+    const setCookie = step1.headers && step1.headers['set-cookie'];
+    if (!setCookie || !Array.isArray(setCookie) || setCookie.length === 0) {
+      return res.status(500).json({ error: "Failed to obtain session from election portal" });
+    }
 
-    const sessionCookieMatch = setCookie.join('; ').match(/\.AdventureWorks\.Session=[^;]+/);
-    if (!sessionCookieMatch) return res.status(500).json({ error: "Failed to parse session cookie" });
-    const sessionCookie = sessionCookieMatch[0];
+    // Use the full cookie header (join all set-cookie values) to preserve needed cookies
+    const sessionCookie = setCookie.join('; ');
 
     const authHeaders = {
       'Cookie': sessionCookie,
@@ -151,18 +158,34 @@ module.exports = async (req, res) => {
       'X-Requested-With': 'XMLHttpRequest',
     };
 
-    // Step 2: POST GetFromNIN
-    const step2 = await makeRequest(
-      `https://applyvr.election.gov.np/Login/GetFromNIN?NIN=${encodeURIComponent(formattedNin)}&dob=${encodeURIComponent(formattedDob)}&firstname=${encodeURIComponent(formattedFirstname)}`,
-      {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Length': '0', 'Origin': 'https://applyvr.election.gov.np', 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' }
-      }
-    );
+    // Step 2: POST GetFromNIN — add retries/backoff to be more robust
+    const getFromNinUrl = `https://applyvr.election.gov.np/Login/GetFromNIN?NIN=${encodeURIComponent(formattedNin)}&dob=${encodeURIComponent(formattedDob)}&firstname=${encodeURIComponent(formattedFirstname)}`;
+    let step2 = null;
+    let step2Json = null;
+    let lastStep2Body = null;
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        step2 = await makeRequest(getFromNinUrl, {
+          method: 'POST',
+          headers: { ...authHeaders, 'Content-Length': '0', 'Origin': 'https://applyvr.election.gov.np', 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
+          timeout: 10000
+        });
+        lastStep2Body = step2.body;
+        try { step2Json = JSON.parse(step2.body); } catch (e) { step2Json = null; }
 
-    let step2Json;
-    try { step2Json = JSON.parse(step2.body); }
-    catch (e) { return res.status(500).json({ error: "Invalid response from GetFromNIN", details: step2.body }); }
+        // If we got a JSON with a success flag or a 200 status, break early
+        if (step2Json && (step2Json.data || step2Json.status !== undefined)) break;
+        if (step2.status === 200 && step2Json) break;
+      } catch (err) {
+        // network/timeout error — log and retry with backoff
+        console.error('[voter-search] GetFromNIN attempt', attempt, 'failed:', err.message);
+      }
+      // small exponential backoff
+      await new Promise(r => setTimeout(r, 300 * attempt));
+    }
+
+    if (!step2) return res.status(500).json({ error: "Failed to contact election portal for GetFromNIN" });
 
     // If the portal reports the record exists (already registered) the portal often returns data:false with
     // a Nepali message like "तपाईको निवेदन स्वीकृत भइसकेको छ ... मतदाता नं ...". In that case attempt two fallbacks:
@@ -172,7 +195,7 @@ module.exports = async (req, res) => {
 
     const alreadyRegisteredMsgRegex = /निवेदन स्वीकृत|मतदाता\s*न\.?/i;
 
-    if ((!step2Json.data || step2Json.status !== 1) && typeof step2Json.message === 'string' && alreadyRegisteredMsgRegex.test(step2Json.message)) {
+    if (( !step2Json || (!step2Json.data || step2Json.status !== 1) ) && typeof (step2Json && step2Json.message) === 'string' && alreadyRegisteredMsgRegex.test(step2Json.message)) {
       // The portal indicates the record is already registered (often with a Nepali message).
       // Try forcing the full payload by directly GETting the NewEnrollment dashboard first —
       // this is the most reliable way to obtain the prefilled JSON when the session already
@@ -205,17 +228,20 @@ module.exports = async (req, res) => {
       try {
         const refresh = await makeRequest('https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo', {
           method: 'GET',
-          headers: { 'User-Agent': UA, 'Accept': 'text/html' }
+          headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+          timeout: 10000
         });
         const setCookie2 = refresh.headers && refresh.headers['set-cookie'];
         if (setCookie2) {
           const sessionCookieMatch2 = setCookie2.join('; ').match(/\.AdventureWorks\.Session=[^;]+/);
+          // prefer AdventureWorks cookie if present, otherwise use full set-cookie
           if (sessionCookieMatch2) {
-            const sessionCookie2 = sessionCookieMatch2[0];
+            const sessionCookie2 = sessionCookieMatch2[0] || setCookie2.join('; ');
             try {
               const step3Refreshed = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
                 method: 'GET',
-                headers: { 'Cookie': sessionCookie2, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' }
+                headers: { 'Cookie': sessionCookie2, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
+                timeout: 10000
               });
               const parsedRefreshed = extractVoterJsonObject(step3Refreshed.body);
               if (parsedRefreshed) {
@@ -233,6 +259,32 @@ module.exports = async (req, res) => {
               }
             } catch (e) {
               console.error('Refreshed-session NewEnrollment fetch failed:', e.message);
+            }
+          } else {
+            // no AdventureWorks-specific cookie; attempt using full cookie string
+            const sessionCookie2 = setCookie2.join('; ');
+            try {
+              const step3Refreshed = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
+                method: 'GET',
+                headers: { 'Cookie': sessionCookie2, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
+                timeout: 10000
+              });
+              const parsedRefreshed = extractVoterJsonObject(step3Refreshed.body);
+              if (parsedRefreshed) {
+                parsedRefreshed._note = 'extracted_from_new_enrollment_after_session_refresh_using_full_cookie';
+                console.log('[voter-search] Success: extracted_from_new_enrollment_after_session_refresh_using_full_cookie for NIN=', formattedNin);
+                const provIdRef = String(parsedRefreshed.ProvinceId || parsedRefreshed.ProvinceCode || parsedRefreshed.PermanentState || "");
+                const provInfoRef = NEPAL_PROVINCES[provIdRef] || { en: `Province ${provIdRef}`, np: `प्रदेश ${provIdRef}` };
+                parsedRefreshed.PermanentStateNameEn = provInfoRef.en;
+                parsedRefreshed.PermanentStateNameNp = provInfoRef.np;
+                if (parsedRefreshed.WardNo !== undefined && parsedRefreshed.WardNo !== null) parsedRefreshed.PermanentWard = String(parsedRefreshed.WardNo || "");
+                parsedRefreshed.PermanentDistrict = parseInt(parsedRefreshed.DistrictId || parsedRefreshed.DistrictCode || parsedRefreshed.PermanentDistrict || 0, 10);
+                parsedRefreshed.PermanentVdcMunicipality = parseInt(parsedRefreshed.VdcMunicipalityId || parsedRefreshed.PermanentVdcMunicipality || 0, 10);
+                parsedRefreshed.PermanentState = provIdRef;
+                return res.status(200).json({ success: true, data: parsedRefreshed });
+              }
+            } catch (e) {
+              console.error('Refreshed-session NewEnrollment fetch using full cookie failed:', e.message);
             }
           }
         }
