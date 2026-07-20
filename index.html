@@ -6561,20 +6561,53 @@
       if (computerRows) {
         computerRows.innerHTML = "";
         if (allowedComputersDatabase.length === 0) {
-          computerRows.innerHTML = '<tr><td colspan="3" class="px-3 py-3 text-slate-500">No computer devices registered yet.</td></tr>';
+          computerRows.innerHTML = '<tr><td colspan="4" class="px-3 py-3 text-slate-500">No computer devices registered yet.</td></tr>';
         } else {
           allowedComputersDatabase.forEach((item) => {
             const tr = document.createElement("tr");
-            tr.className = "bg-white";
+            tr.className = "bg-white border-b border-slate-100";
             const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleString() : "—";
             const computerName = (item.computerName || "").trim();
-            tr.innerHTML = `
-              <td class="px-3 py-2 font-mono text-slate-800">${escapeHtml(computerName || "—")}</td>
-              <td class="px-3 py-2 text-slate-600">${escapeHtml(createdAt)}</td>
-              <td class="px-3 py-2 text-right">
-                <button onclick="deleteListedComputerName('${escapeHtml(computerName)}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-semibold">Delete</button>
-              </td>
-            `;
+            const nickname = (item.nickname || "").trim();
+
+            const tdComputerName = document.createElement("td");
+            tdComputerName.className = "px-3 py-2 font-mono text-slate-800";
+            tdComputerName.innerText = computerName || "—";
+
+            const tdNickname = document.createElement("td");
+            tdNickname.className = "px-3 py-2";
+            const nicknameInput = document.createElement("input");
+            nicknameInput.type = "text";
+            nicknameInput.value = nickname;
+            nicknameInput.placeholder = "Optional nickname";
+            nicknameInput.className = "w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] text-slate-700 focus:outline-none focus:border-blue-500";
+            tdNickname.appendChild(nicknameInput);
+
+            const tdCreatedAt = document.createElement("td");
+            tdCreatedAt.className = "px-3 py-2 text-slate-600";
+            tdCreatedAt.innerText = createdAt;
+
+            const tdAction = document.createElement("td");
+            tdAction.className = "px-3 py-2 text-right";
+            const saveBtn = document.createElement("button");
+            saveBtn.type = "button";
+            saveBtn.className = "bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded-md text-[10px] font-semibold mr-2";
+            saveBtn.innerText = "Save Nickname";
+            saveBtn.onclick = () => saveListedComputerNickname(computerName, nicknameInput.value);
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-semibold";
+            deleteBtn.innerText = "Delete";
+            deleteBtn.onclick = () => deleteListedComputerName(computerName);
+
+            tdAction.appendChild(saveBtn);
+            tdAction.appendChild(deleteBtn);
+
+            tr.appendChild(tdComputerName);
+            tr.appendChild(tdNickname);
+            tr.appendChild(tdCreatedAt);
+            tr.appendChild(tdAction);
             computerRows.appendChild(tr);
           });
         }
@@ -6678,9 +6711,44 @@
       }
     }
 
+    async function refreshListedDevicesTable() {
+      try {
+        await refreshWhitelistModalData();
+        renderListedDevicesModal();
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
+    async function saveListedComputerNickname(computerName, nickname) {
+      if (!computerName) return;
+
+      try {
+        await loadSecurityPasswords();
+        const res = await fetch(`${API_BASE}/api/allowed-ips`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ip: "", computerName, nickname: nickname || "", password: securityPasswords.deviceListPassword })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => null);
+          throw new Error((err && err.error) ? err.error : "Failed to save nickname");
+        }
+
+        await refreshWhitelistModalData();
+        renderListedDevicesModal();
+        alert("Nickname saved successfully.");
+      } catch (e) {
+        alert(`Error: ${e.message}`);
+      }
+    }
+
     async function submitListedDevicesManualEntry() {
       const computerNameInput = document.getElementById("listedDeviceComputerNameInput");
+      const nicknameInput = document.getElementById("listedDeviceNicknameInput");
       const computerName = computerNameInput ? computerNameInput.value.trim() : "";
+      const nickname = nicknameInput ? nicknameInput.value.trim() : "";
 
       if (!computerName) {
         alert("Please enter a computer name.");
@@ -6692,7 +6760,7 @@
         const res = await fetch(`${API_BASE}/api/allowed-ips`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ip: "", computerName, password: securityPasswords.deviceListPassword })
+          body: JSON.stringify({ ip: "", computerName, nickname, password: securityPasswords.deviceListPassword })
         });
         if (!res.ok) {
           const err = await res.json().catch(() => null);
@@ -6702,6 +6770,7 @@
         await refreshWhitelistModalData();
         renderListedDevicesModal();
         if (computerNameInput) computerNameInput.value = "";
+        if (nicknameInput) nicknameInput.value = "";
         alert("Computer name added successfully.");
       } catch (e) {
         alert(`Error: ${e.message}`);
@@ -9065,10 +9134,15 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
               </div>
               <div id="listedDevicesStatus" class="text-[10px] text-emerald-600 font-semibold">Unlocked</div>
             </div>
-            <div class="grid md:grid-cols-2 gap-3">
+            <div class="grid md:grid-cols-3 gap-3">
               <div>
                 <label class="block text-[11px] font-bold text-slate-600 mb-1">Computer Name</label>
                 <input type="text" id="listedDeviceComputerNameInput" placeholder="e.g. Sujals-MacBook-Air"
+                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Nickname (Optional)</label>
+                <input type="text" id="listedDeviceNicknameInput" placeholder="e.g. Office Mac"
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
               </div>
               <div>
@@ -9095,14 +9169,23 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           </div>
 
           <div class="rounded-xl border border-slate-200 overflow-hidden">
-            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+            <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
               <h4 class="text-[11px] font-bold text-slate-800">Registered Computer Devices</h4>
+              <button type="button" onclick="refreshListedDevicesTable()"
+                class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-semibold px-2.5 py-1.5 rounded-lg text-[10px] transition-all flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3" />
+                </svg>
+                Refresh
+              </button>
             </div>
             <div class="overflow-x-auto">
               <table class="min-w-full text-left text-[11px]">
                 <thead class="bg-slate-50 text-slate-600">
                   <tr>
                     <th class="px-3 py-2 font-semibold">Computer Name</th>
+                    <th class="px-3 py-2 font-semibold">Nickname</th>
                     <th class="px-3 py-2 font-semibold">Added</th>
                     <th class="px-3 py-2 font-semibold text-right">Action</th>
                   </tr>

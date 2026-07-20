@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
 
     case "POST":
       try {
-        const { ip, password, computerName, action, adminUnlockPassword, deviceListPassword } = req.body;
+        const { ip, password, computerName, nickname, action, adminUnlockPassword, deviceListPassword } = req.body;
         const securityPasswords = await getSecurityPasswords();
 
         if (action === "update-security-passwords") {
@@ -116,12 +116,17 @@ module.exports = async (req, res) => {
           }
 
           const trimmedName = computerName.trim();
+          const trimmedNickname = (typeof nickname === 'string') ? nickname.trim() : "";
           let existingComp = await AllowedComputer.findOne({ computerName: trimmedName });
           if (existingComp) {
+            if (typeof nickname === 'string') {
+              existingComp.nickname = trimmedNickname;
+              await existingComp.save();
+            }
             return res.status(200).json(existingComp);
           }
 
-          const newComp = new AllowedComputer({ computerName: trimmedName });
+          const newComp = new AllowedComputer({ computerName: trimmedName, nickname: trimmedNickname });
           await newComp.save();
           return res.status(201).json(newComp);
         }
