@@ -2880,9 +2880,9 @@
       }
     }
 
-    function startDatabasePolling(intervalMs = 8000) {
+    function startDatabasePolling(intervalMs = 0) {
       if (dbPollIntervalId) return;
-      // initialize snapshot
+      // Only refresh once on load unless a future caller explicitly enables polling.
       (async () => {
         try {
           const res = await fetch(`${API_BASE}/api/people`);
@@ -2895,7 +2895,9 @@
           }
         } catch (e) {}
       })();
-      dbPollIntervalId = setInterval(pollDatabaseChanges, intervalMs);
+      if (intervalMs > 0) {
+        dbPollIntervalId = setInterval(pollDatabaseChanges, intervalMs);
+      }
     }
 
     function stopDatabasePolling() {
@@ -10240,7 +10242,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         await runAddDeviceRegistration();
       };
 
-      window.addEventListener('load', () => { startDatabasePolling(8000); });
+      window.addEventListener('load', () => { startDatabasePolling(0); });
     })();
   </script>
 
