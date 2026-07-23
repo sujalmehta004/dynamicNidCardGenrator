@@ -83,6 +83,12 @@ module.exports = async function handler(req, res) {
       }
     });
 
+    const rawCookies = result.headers['set-cookie'];
+    if (rawCookies && Array.isArray(rawCookies) && rawCookies.length) {
+      const cookieValue = Buffer.from(rawCookies.join('; '), 'utf8').toString('base64');
+      res.setHeader('Set-Cookie', `captcha-session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax`);
+    }
+
     res.status(result.status);
     res.setHeader("Content-Type", "application/json");
     return res.send(result.body);

@@ -3891,6 +3891,41 @@
       return match ? match[1] : null;
     }
 
+    async function requestPortalOtpWithRetries({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc, captchaCode, onAttempt }) {
+      const maxAttempts = 20;
+      const payload = JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc });
+      const url = `${API_BASE}/api/request-otp`;
+      const headers = {
+        "Content-Type": "application/json",
+        "Captcha-Code": captchaCode
+      };
+
+      let lastError = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (typeof onAttempt === "function") {
+          onAttempt(attempt, maxAttempts);
+        }
+
+        try {
+          const res = await fetch(url, {
+            method: "POST",
+            headers,
+            body: payload
+          });
+          const responseBody = await parseResponseBody(res);
+          return { res, responseBody, attempt };
+        } catch (err) {
+          lastError = err;
+          if (attempt < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 250));
+            continue;
+          }
+          throw lastError;
+        }
+      }
+      throw lastError || new Error("Failed to request OTP");
+    }
+
     async function requestPortalOtp() {
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
       const fullNameLoc = cleanNepaliText(document.getElementById("portalFullNameNp").value);
@@ -3918,17 +3953,24 @@
       btn.disabled = true;
       btn.innerHTML = "Requesting...";
 
+      let res;
+      let responseBody;
+      let attempt;
       try {
-        const res = await fetch(`${API_BASE}/api/request-otp`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Captcha-Code": captchaCode
-          },
-          body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
-        });
+        ({ res, responseBody, attempt } = await requestPortalOtpWithRetries({
+          fullName,
+          fullNameLoc,
+          dobLoc,
+          ccnIssuingDateLoc,
+          captchaCode,
+          onAttempt: (current, max) => {
+            btn.innerHTML = `Requesting... (${current}/${max})`;
+          }
+        }));
 
-        const responseBody = await parseResponseBody(res);
+        if (attempt > 1) {
+          btn.innerHTML = `Requesting... (${attempt}/20)`;
+        }
 
         // Detect MOBILE_NOT_REGISTERED or DATA_NOT_FOUND specifically
         const _respCode = getOtpErrorCode(responseBody);
