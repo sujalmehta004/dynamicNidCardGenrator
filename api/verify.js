@@ -129,6 +129,19 @@ function renderVerifyPage(person, mode, nin) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Secure identity verification and NID card download portal for Nepal. Complete captcha, OTP, and document verification steps safely." />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Identity Verification — ${person.givenEn} ${person.surnameEn}" />
+  <meta property="og:description" content="Verify your identity record, complete the secure OTP flow, and download your official NID card document." />
+  <meta property="og:image" content="/og-image.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Identity Verification — ${person.givenEn} ${person.surnameEn}" />
+  <meta name="twitter:description" content="Secure identity verification and NID card download portal for Nepal." />
+  <meta name="twitter:image" content="/og-image.svg" />
+  <link rel="canonical" href="/verify/${encodeURIComponent(nin || person.ninEn || '')}" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/site.webmanifest" />
   <title>Identity Verification — ${person.givenEn} ${person.surnameEn}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>

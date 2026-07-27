@@ -1,0 +1,17 @@
+{
+  "name": "National Identity Card Management Hub",
+  "short_name": "NID Hub",
+  "description": "Secure identity record management, QR routing, and official verification workflows.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

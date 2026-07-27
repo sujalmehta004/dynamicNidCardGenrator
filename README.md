@@ -1,135 +1,217 @@
 # National Identity Card Management Hub & QR Routing Gateway
 
-A production-grade, full-stack application built with **HTML/JavaScript**, **Node.js Serverless Functions**, and **MongoDB** designed to manage, verify, and route citizen national identity cards. It includes a beautiful administration dashboard and a serverless backend proxy to communicate with third-party government services without CORS restrictions.
+A secure, modern, full-stack web platform for managing citizen identity records, generating QR-based verification routes, and handling official identity-card download workflows through a serverless backend.
+
+This project combines a polished administrative dashboard with Node.js serverless functions and MongoDB to support identity data entry, verification, routing, and secure government-service integrations.
 
 ---
 
-## Key Features
+## What This Project Does
 
-1. **Identity Studio & Form Design**:
-   - Auto-hyphen formatting for NIN/NID numbers (`XXX-XXX-XXX-X`).
-   - Dynamic transliteration of NIN digits from English to Nepali in real-time.
-   - Bidirectional AD-to-BS and BS-to-AD Date of Birth conversion.
-   - Dynamic administrative address generation (District, Municipality, Type, and Ward selectors).
-2. **Interactive Database Ledger**:
-   - **Custom Column Visibility**: Show/hide any database column dynamically (NID, Name, Token, DOB, Address, Dates, Status, etc.).
-   - **Click-to-Copy Tokens**: Truncated secure tokens copy instantly to your clipboard when clicked.
-   - **Server-Side Dynamic Sorting**: Click headers to sort by NID, Name, Dates, or Status (defaults to showing the newest entry at the top).
-   - **Inline Status Updates**: Change card execution status (Pending, Done, Mobile Number Update, Not Online) directly from the table.
+The application is designed to help an authorized operator manage identity-related records in a structured way. It allows users to:
 
-3. **QR Routing Verification Gateway (`/verify/:ninEn`)**:
-   - Generates unique QR codes for each record that point to `/verify/<NIN>`.
-   - If a **Secure Token** is configured in the database, the gateway does a `302 Redirect` to the official verification portal: `https://nin-support-api.donidcr.gov.np/api/v1/enid/verify?token=<TOKEN>`.
-   - If **no token** is found, the server renders a premium glassmorphic dark-theme profile card informing the user: _"Your NID number token is not configured or not online"_ alongside their registered details.
+- Create citizen identity records with formatted NID/NIN details.
+- Generate QR-based routing links for verification.
+- Redirect users to third-party verification portals when a secure token is available.
+- Display rich profile cards when verification is unavailable or token data is missing.
+- Search and populate official download forms automatically.
+- Control who can access the dashboard through IP allowlisting.
 
-4. **Government Download Gateway Proxy (`/api/download`)**:
-   - Instantly pre-fills details from the database using the new **Search & Populate** feature in the Download Card Portal tab.
-   - Proxies downloading requests directly from the server to bypass CORS issues, using low-level connection pooling and decompression (`zlib` for Brotli/gzip) to avoid timeouts.
+In short, it acts as a central workspace for identity record handling, verification routing, and secure document access.
 
-5. **IP Access Security Whitelisting**:
-   - Blocks dashboard access (Form, Download Portal, Database Ledger) if the client's public/local IP address is not whitelisted.
-   - An **Admin Setup** tab handles unlocking the whitelisting console using password authorization (default: `Ss9805344374@><`).
-   - Allows dynamically whitelisting/removing permitted IP addresses.
-   - Whitelist lookup is done dynamically by resolving the client computer's IP address directly.
+---
+
+## Main Features
+
+### 1. Identity Form Studio
+- Auto-format NID/NIN values in a readable pattern.
+- Support transliteration and real-time input formatting.
+- Convert dates between AD and BS formats.
+- Generate permanent addresses dynamically based on district, municipality, type, and ward selection.
+- Store secure tokens and related identity information.
+
+### 2. Database Ledger and Record Management
+- View saved citizen records in a dynamic table.
+- Show or hide columns based on the operator’s needs.
+- Sort records by important fields such as name, date, or status.
+- Update status values directly from the table.
+- Copy secure tokens with a single click.
+
+### 3. QR Verification Routing
+- Generate unique QR links for each record.
+- Route visitors to an official verification endpoint when a secure token is present.
+- Show a polished fallback profile card when verification data is unavailable.
+- Support a public verification flow through the /verify/:nin route.
+
+### 4. Government Download Gateway
+- Search for existing citizen records from the dashboard.
+- Populate official download forms automatically.
+- Proxy PDF/document download requests from the backend to avoid browser CORS issues.
+- Improve reliability for document retrieval through server-side request handling.
+
+### 5. Access Control and Security
+- Restrict dashboard access using IP allowlisting.
+- Provide administrator setup controls for managing allowed devices.
+- Protect sensitive operations with server-side validation and backend routes.
+
+### 6. Third-Party Verification Integration
+- Request and verify OTP flows.
+- Work with captcha-based verification steps.
+- Support voter-search and government portal interactions through serverless API endpoints.
+
+---
+
+## Tech Stack
+
+- Frontend: HTML, CSS, JavaScript, Tailwind CSS
+- Backend: Node.js serverless functions on Vercel
+- Database: MongoDB with Mongoose
+- Utilities: QR generation, PDF handling, and date conversion libraries
+- Deployment: Vercel
 
 ---
 
 ## Project Structure
 
-```
-├── api/
-│   ├── db.js             # Reusable MongoDB Mongoose connector (cached)
-│   ├── download.js       # Outbound HTTPS gateway proxy for citizen PDFs
-│   ├── people.js         # RESTful CRUD backend for database ledger
-│   ├── verify.js         # QR routing verification gateway (redirect / HTML card)
-│   └── models/
-│       └── Person.js     # Mongoose database model (unique ninEn index)
-├── .env                  # Local environment configuration secrets
-├── index.html            # Premium dashboard interface
-├── package.json          # Dependency and script manager
-└── vercel.json           # URL routing rewrite mapping
+```text
+api/
+  allowed-ips.js
+  captcha.js
+  check-token.js
+  config.js
+  download.js
+  hostname.js
+  people.js
+  request-otp.js
+  save-voter-list-record.js
+  verify-otp.js
+  verify.js
+  voter-search.js
+lib/
+  db.js
+  models/
+    AllowedComputer.js
+    AllowedIp.js
+    Config.js
+    Person.js
+    VoterListRecord.js
+index.html
+package.json
+README.md
+vercel.json
 ```
 
 ---
 
-## Configuration & Environment Variables
+## Installation
 
-Configure your database connection inside a `.env` file at the root of the project:
-
-```env
-MONGODB_URI=mongodb+srv://sujalmehta:admin123@cluster0.u8czprf.mongodb.net/qrcode?retryWrites=true&w=majority
-```
-
----
-
-## Quick Start & Running Locally
+### Prerequisites
+- Node.js 18 or newer
+- npm
+- A MongoDB connection string
+- A Vercel account for deployment
 
 ### 1. Install Dependencies
-
-Ensure you have Node.js (version 18+) installed. Run the command to install packages:
 
 ```bash
 npm install
 ```
 
-### 2. Install Vercel CLI (Globally)
+### 2. Set Environment Variables
 
-If you haven't installed Vercel's developer tools globally:
+Create a .env file in the project root:
 
-```bash
-npm i -g vercel
+```env
+MONGODB_URI=your_mongodb_connection_string
 ```
 
-### 3. Run Development Server
-
-Start the local Vercel dev server:
+### 3. Run Locally
 
 ```bash
 npx vercel dev
 ```
 
-Open **`http://localhost:3000`** in your browser.
+Then open:
+
+```text
+http://localhost:3000
+```
 
 ---
 
-## Deploying to Vercel (Production)
+## Typical Workflow
 
-To host your project in production on Vercel:
-
-1. **Deploy via CLI**: Run `vercel` in the project directory:
-   ```bash
-   vercel
-   ```
-2. **Configure Database Secrets**: Go to your project settings in the Vercel Dashboard under **Environment Variables**, and add:
-   - Key: `MONGODB_URI`
-   - Value: `mongodb+srv://sujalmehta:admin123@cluster0.u8czprf.mongodb.net/qrcode?retryWrites=true&w=majority`
-3. **Promote to Production**:
-   ```bash
-   vercel --prod
-   ```
+1. Open the dashboard and go to the Form Design Studio.
+2. Enter the citizen’s information and save the record.
+3. Review the record in the Database Index Table.
+4. Generate or share the QR verification link.
+5. Use the verification route to redirect or display citizen information.
+6. Use the Download Card Portal to search and fetch the document.
 
 ---
 
-## Verification & Manual Testing
+## API Routes
 
-1. **Card Setup**:
-   - Go to the **Form Design Studio** tab.
-   - Fill in a citizen's profile.
-   - Select a District/Municipality/Type/Ward to auto-generate the permanent addresses in the standard format (`Inaruwa Municipality-2, Sunsari`).
-   - Leave the "Secure Token" field blank if you want to test the profile preview page, or paste a token to test the redirection.
-   - Submit the record.
+The backend exposes several serverless API endpoints, including:
 
-2. **Verifying Database**:
-   - Go to the **Database Index Table** tab.
-   - Click the column toggles to show/hide columns.
-   - Click on the headers (e.g. NID Number, Name, Dates) to sort the rows.
-   - Click on any token to copy it instantly.
+- /api/captcha
+- /api/request-otp
+- /api/verify-otp
+- /api/check-token
+- /api/voter-search
+- /api/download
+- /verify/:nin
 
-3. **Verifying QR Routing**:
-   - Scan the QR code or navigate to: `http://localhost:3000/verify/<NIN_NUMBER>` (e.g. `http://localhost:3000/verify/615-385-908-6`).
-   - If a token is saved, it redirects. If not, it presents the premium detail status card.
+These endpoints power the verification and download workflow while keeping the frontend simple and secure.
 
-4. **Verifying PDF Download**:
-   - Go to the **Download Card Portal** tab.
-   - Use the **Search & Populate** bar to search by name/NIN to autofill the form.
-   - Click **Download PDF** to verify the PDF fetches successfully.
+---
+
+## Deployment on Vercel
+
+### Deploy the project
+
+```bash
+vercel
+```
+
+### Production deployment
+
+```bash
+vercel --prod
+```
+
+### Environment variables in Vercel
+
+Add the following environment variable inside the Vercel dashboard:
+
+- Name: MONGODB_URI
+- Value: your MongoDB connection string
+
+---
+
+## SEO and Search Visibility
+
+This project includes:
+
+- Updated page title and meta description
+- Open Graph tags for social sharing
+- Twitter Card tags
+- Canonical links
+- Structured data for better search understanding
+- A robots.txt file and sitemap for indexing support
+
+If the site is deployed on a custom domain or subdomain, the metadata will automatically reflect that domain when the page is served.
+
+---
+
+## Notes
+
+- This project is intended for authorized administrative use.
+- Some verification and download flows depend on remote government services and valid credentials.
+- Ensure your environment variables and IP allowlist are configured correctly before production use.
+
+---
+
+## License
+
+This project is intended for internal or organizational use. Please confirm licensing terms before distributing or reusing it in a public environment.
