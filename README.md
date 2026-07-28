@@ -189,21 +189,6 @@ Add the following environment variable inside the Vercel dashboard:
 
 ---
 
-## SEO and Search Visibility
-
-This project includes:
-
-- Updated page title and meta description
-- Open Graph tags for social sharing
-- Twitter Card tags
-- Canonical links
-- Structured data for better search understanding
-- A robots.txt file and sitemap for indexing support
-
-If the site is deployed on a custom domain or subdomain, the metadata will automatically reflect that domain when the page is served.
-
----
-
 ## Notes
 
 - This project is intended for authorized administrative use.
