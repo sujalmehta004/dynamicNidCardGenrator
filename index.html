@@ -398,15 +398,15 @@
       <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60" id="tabContainer">
         <button id="tabFormBtn" onclick="shiftWorkspace('form')"
           class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Form Design Studio
+          Form Design Studio <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘N</kbd>
         </button>
         <button id="tabPortalBtn" onclick="shiftWorkspace('portal')"
           class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Download Card Portal
+          Download Card Portal <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘S</kbd>
         </button>
         <button id="tabDbBtn" onclick="shiftWorkspace('database')"
           class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Database Index Table
+          Database Index Table <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘F</kbd>
         </button>
         <button id="tabAdminBtn" onclick="shiftWorkspace('admin')"
           class="px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150">
@@ -691,6 +691,7 @@
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <input type="text" id="portalSearchQuery"
                       placeholder="Search by English NIN or Name..."
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();searchPortalDbToPopulate();}"
                       class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
                     <input type="text" id="portalSearchNin" readonly
                       placeholder="NIN Number (optional)"
@@ -761,6 +762,7 @@
                   <label class="block text-slate-600 font-bold mb-1.5">Enter Captcha Code</label>
                   <div class="flex gap-2">
                     <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestOtpClick();}"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                     <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
                       class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Request
@@ -779,6 +781,7 @@
                     <label class="block text-slate-600 font-bold">Enter OTP Code</label>
                     <div class="flex gap-2">
                       <input type="text" id="portalOtpCode" placeholder="Enter OTP code"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();verifyPortalOtp();}"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
                       <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Verify
@@ -879,6 +882,7 @@
                   <label class="block text-blue-900 font-bold text-[9px] uppercase tracking-wider">🔍 Search Database to Populate Form</label>
                   <div class="flex gap-2">
                     <input type="text" id="voterQuickSearch" placeholder="Search by Name or NID (e.g. 615-385-908-6)..."
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleVoterQuickSearchPopup();}"
                       class="flex-1 bg-white border border-blue-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-[11px] font-medium shadow-sm" />
                     <button type="button" onclick="handleVoterQuickSearchPopup()"
                       class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
@@ -893,6 +897,7 @@
                     <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID / NIN
                       Number</label>
                     <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono text-[11px]" />
                   </div>
                   <div class="grid grid-cols-2 gap-2">
@@ -900,12 +905,14 @@
                       <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of
                         Birth (BS)</label>
                       <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                     </div>
                     <div>
                       <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of
                         Birth (AD)</label>
                       <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                         class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                     </div>
                   </div>
@@ -913,12 +920,17 @@
                     <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">First Name
                       Only</label>
                     <input type="text" id="voterNinFirstname" placeholder="SUJAL"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
                   </div>
                   <div class="flex gap-2">
-                    <button type="button" onclick="handleNinSearch()"
-                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">Single
-                      Search</button>
+                    <button type="button" id="btnSingleNinSearch" onclick="handleNinSearchClick()"
+                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      Single Search
+                    </button>
                     <button type="button" onclick="handleVoterBulkSearchWithCaptcha()"
                       class="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-1.5">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1435,6 +1447,14 @@
               class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
               🖨️ Print Records
             </button>
+
+            <!-- Full Screen Table Button -->
+            <button id="btnToggleDbFullscreen" onclick="toggleDatabaseFullscreen()"
+              title="Toggle Full Screen View (Cmd+F / Ctrl+F)"
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
+              <span>⛶ Full Screen</span>
+              <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>
+            </button>
           </div>
         </div>
 
@@ -1498,13 +1518,45 @@
         </div>
 
         <!-- Database Table Wrapper Card -->
-        <div class="flex-1 overflow-hidden border border-slate-250 rounded-xl bg-white shadow-sm flex flex-col mb-4"
+        <div id="dbTableContainerCard" class="flex-1 overflow-hidden border border-slate-250 rounded-xl bg-white shadow-sm flex flex-col mb-4 relative"
           style="scrollbar-width:none; -ms-overflow-style:none;">
           <style>
             .db-scroll-area::-webkit-scrollbar {
               display: none;
             }
+            .db-table-fullscreen {
+              position: fixed !important;
+              inset: 0 !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              max-width: 100vw !important;
+              max-height: 100vh !important;
+              margin: 0 !important;
+              border: none !important;
+              border-radius: 0 !important;
+              z-index: 50 !important;
+              background: #ffffff !important;
+              overflow: hidden !important;
+            }
+            .db-table-fullscreen .db-scroll-area {
+              height: 100vh !important;
+              max-height: 100vh !important;
+              overflow-y: auto !important;
+            }
           </style>
+
+          <!-- Floating Exit Fullscreen Button -->
+          <button id="btnFloatingExitDbFullscreen" onclick="toggleDatabaseFullscreen(false)"
+            title="Exit Full Screen Mode (Esc or ⌘F / Ctrl+F)"
+            class="hidden fixed top-3 right-5 z-[60] bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-xl backdrop-blur flex items-center gap-2 transition-all cursor-pointer border border-white/20">
+            <span>⤢ Exit Full Screen</span>
+            <kbd class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono border border-slate-700">Esc / ⌘F</kbd>
+          </button>
+
           <div class="db-scroll-area overflow-auto h-full">
             <table class="min-w-full text-left text-xs" style="border-collapse:collapse;">
               <thead class="sticky top-0 z-10" style="background:#f8fafc;">
@@ -1870,6 +1922,9 @@
     }
 
     function shouldRetryNinStatusRequest(message = "", data = null) {
+      if (data && data.success && data.data) {
+        return false;
+      }
       const text = String(message || (data && (data.error || data.message)) || "").trim();
       if (!text) return true;
       const lower = text.toLowerCase();
@@ -1938,7 +1993,7 @@
       // If data explicitly returned with extracted voter details
       if (data && data.success && data.data) {
         const vNo = data.data.VoterNo || data.data.voterNo || data.data.VoterNumber || "";
-        return { status: "active", voterListNumber: String(vNo).trim(), sourceMessage: text || "Active on voter list" };
+        return { status: "active", voterListNumber: String(vNo).trim(), sourceMessage: text || "Active on voter list", data: data.data };
       }
 
       // Check for explicit "not found" / negative indicators
@@ -2078,6 +2133,16 @@
             recordResult.lastMessage = lastResponseText;
             appendNinStatusLog(`Response #${attempts} for ${nin}: ${lastResponseText || rawText || "No body"}`, "response", recordResult);
 
+            if (responseData && responseData.success && responseData.data) {
+              finalOutcome = getNinStatusOutcome(message, responseData);
+              finalOutcome.data = responseData.data;
+              recordResult.status = "active";
+              recordResult.lastMessage = "Active on voter list";
+              recordResult.voterListNumber = finalOutcome.voterListNumber || "";
+              appendNinStatusLog(`Success for ${nin}: record found and active.`, "success", recordResult);
+              break;
+            }
+
             if (shouldRetryNinStatusRequest(message, responseData)) {
               if (attempts < maxAttempts) {
                 appendNinStatusLog(`Retrying because the response was not conclusive.`, "retry", recordResult);
@@ -2115,11 +2180,38 @@
         recordResult.voterListNumber = finalOutcome.voterListNumber || "";
 
         if (finalOutcome.status === "active") {
-          await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage, ApprovalMessage: finalOutcome.sourceMessage, VoterNo: finalOutcome.voterListNumber }, "active", finalOutcome.voterListNumber, finalOutcome.sourceMessage);
-          appendNinStatusLog(`Saved ${nin} as active.`, "success", recordResult);
+          const voterDataToSave = finalOutcome.data || {
+            error: finalOutcome.sourceMessage,
+            ApprovalMessage: finalOutcome.sourceMessage,
+            VoterNo: finalOutcome.voterListNumber
+          };
+          const cleanNin = String(nin).trim();
+          const existingSaved = voterListIndex[cleanNin];
+          const alreadySaved = Boolean(
+            existingSaved &&
+            existingSaved.portraitImage &&
+            existingSaved.profileData &&
+            (existingSaved.profileData.VoterFirstNameEn || existingSaved.profileData.FirstName)
+          );
+
+          if (!alreadySaved) {
+            await persistVoterListRecordToSecondaryDb(nin, voterDataToSave, "active", finalOutcome.voterListNumber, finalOutcome.sourceMessage);
+            appendNinStatusLog(`Saved ${nin} to voterlist database.`, "success", recordResult);
+          } else {
+            appendNinStatusLog(`${nin} is active (already exists in voterlist database).`, "info", recordResult);
+          }
         } else {
-          await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage }, "not online", "", finalOutcome.sourceMessage);
-          appendNinStatusLog(`Saved ${nin} as not online.`, "success", recordResult);
+          const cleanNin = String(nin).trim();
+          const existingSaved = voterListIndex[cleanNin];
+          const hasExistingActive = Boolean(
+            existingSaved && (existingSaved.status === "active" || existingSaved.portraitImage)
+          );
+          if (!hasExistingActive) {
+            await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage }, "not online", "", finalOutcome.sourceMessage);
+            appendNinStatusLog(`Saved ${nin} as not online.`, "info", recordResult);
+          } else {
+            appendNinStatusLog(`Preserved existing active record for ${nin}.`, "info", recordResult);
+          }
         }
 
         ninStatusScanState.processed += 1;
@@ -2457,6 +2549,11 @@
       const listedDevicesBtn = document.getElementById("listedDevicesButtonContainer");
       if (listedDevicesBtn) {
         listedDevicesBtn.classList.toggle("hidden", targetViewTab !== "admin");
+      }
+
+      // Exit database fullscreen if switching away from database tab
+      if (targetViewTab !== "database" && typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
+        toggleDatabaseFullscreen(false);
       }
     }
 
@@ -3547,6 +3644,104 @@
     function stopDatabasePolling() {
       if (dbPollIntervalId) { clearInterval(dbPollIntervalId); dbPollIntervalId = null; }
     }
+
+    let isDbTableFullscreen = false;
+
+    function isDatabaseFullscreenActive() {
+      return isDbTableFullscreen;
+    }
+
+    function toggleDatabaseFullscreen(forceState) {
+      const tableCard = document.getElementById("dbTableContainerCard");
+      const floatingExitBtn = document.getElementById("btnFloatingExitDbFullscreen");
+      const toolbarBtn = document.getElementById("btnToggleDbFullscreen");
+      if (!tableCard) return;
+
+      if (typeof forceState === "boolean") {
+        isDbTableFullscreen = forceState;
+      } else {
+        isDbTableFullscreen = !isDbTableFullscreen;
+      }
+
+      if (isDbTableFullscreen) {
+        tableCard.classList.add("db-table-fullscreen");
+        if (floatingExitBtn) floatingExitBtn.classList.remove("hidden");
+        if (toolbarBtn) {
+          toolbarBtn.innerHTML = `<span>⤢ Exit Full Screen</span> <kbd class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono border border-blue-200">⌘F</kbd>`;
+          toolbarBtn.classList.add("bg-blue-50", "text-blue-700", "border-blue-300");
+        }
+      } else {
+        tableCard.classList.remove("db-table-fullscreen");
+        if (floatingExitBtn) floatingExitBtn.classList.add("hidden");
+        if (toolbarBtn) {
+          toolbarBtn.innerHTML = `<span>⛶ Full Screen</span> <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>`;
+          toolbarBtn.classList.remove("bg-blue-50", "text-blue-700", "border-blue-300");
+        }
+      }
+    }
+
+    // Global Keyboard Shortcuts:
+    // Cmd+F / Ctrl+F -> From ANY page or tab, automatically redirect to database table & make full screen (or toggle if already full screen)
+    // Cmd+S / Ctrl+S -> From ANY page or tab, automatically redirect to download tab (portal)
+    // Escape -> Exit full screen
+    window.addEventListener("keydown", (e) => {
+      if (!e.key) return;
+      const key = e.key.toLowerCase();
+      const isCmdOrCtrl = Boolean(e.metaKey || e.ctrlKey);
+
+      // Cmd+F or Ctrl+F: from any page or tab, redirect to database table and make full screen
+      if (isCmdOrCtrl && key === "f") {
+        e.preventDefault();
+        const dbPane = document.getElementById("paneWorkspaceDb");
+        const isDbTabActive = dbPane && !dbPane.classList.contains("hidden");
+
+        if (!isDbTabActive) {
+          // If on any other tab, redirect to database tab and make full screen
+          shiftWorkspace("database");
+          toggleDatabaseFullscreen(true);
+        } else {
+          // If already on database tab, toggle full screen
+          toggleDatabaseFullscreen();
+        }
+        return;
+      }
+
+      // Cmd+S or Ctrl+S: automatically redirect to download tab (Download Card Portal)
+      if (isCmdOrCtrl && key === "s") {
+        e.preventDefault();
+        // Exit database fullscreen if active
+        if (typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
+          toggleDatabaseFullscreen(false);
+        }
+        shiftWorkspace("portal");
+        return;
+      }
+
+      // Cmd+N or Ctrl+N: automatically redirect to form design studio
+      if (isCmdOrCtrl && key === "n") {
+        e.preventDefault();
+        // Exit database fullscreen if active
+        if (typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
+          toggleDatabaseFullscreen(false);
+        }
+        shiftWorkspace("form");
+        return;
+      }
+
+      // Exit fullscreen with Escape if no popups/modals are currently open
+      if (e.key === "Escape" && isDatabaseFullscreenActive()) {
+        const rowModal = document.getElementById("rowDetailModal");
+        const printModal = document.getElementById("printRecordsModal");
+        const briefModal = document.getElementById("updateRecordBriefModal");
+        const isModalOpen = (rowModal && !rowModal.classList.contains("hidden")) ||
+                            (printModal && !printModal.classList.contains("hidden")) ||
+                            (briefModal && !briefModal.classList.contains("hidden"));
+        if (!isModalOpen) {
+          e.preventDefault();
+          toggleDatabaseFullscreen(false);
+        }
+      }
+    });
 
     function renderTableHeader() {
       const headerRow = document.getElementById("dbTableHeaderRow");
@@ -5079,17 +5274,9 @@
         const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim() || `${record.givenNp || ""} ${record.surnameNp || ""}`.trim() || "N/A";
         document.getElementById("confirmModalName").innerText = fullName;
 
-        // Populate previous update history and pending changes
+        // Populate pending changes
         const existingRecord = documentIdentityDb.find(r => r.ninEn === selectedRecordId);
-        const historyContainer = document.getElementById("confirmModalHistoryContainer");
-        const historyCount = document.getElementById("confirmModalHistoryCount");
         const pendingContainer = document.getElementById("confirmModalPendingChanges");
-        
-        if (historyContainer && existingRecord) {
-          const hist = existingRecord.updateHistory || [];
-          if (historyCount) historyCount.innerText = `${hist.length} update(s)`;
-          historyContainer.innerHTML = renderUpdateHistoryHtml(hist);
-        }
 
         if (pendingContainer && existingRecord) {
           const trackedFields = [
@@ -5137,9 +5324,10 @@
           }
         }
 
-        document.getElementById("confirmModalUpdateInput").value = "";
+        const updateInput = document.getElementById("confirmModalUpdateInput");
+        updateInput.value = "";
         document.getElementById("btnConfirmUpdateAction").onclick = async () => {
-          const typedVal = document.getElementById("confirmModalUpdateInput").value.trim();
+          const typedVal = updateInput.value.trim();
           if (typedVal !== "UPDATE") {
             alert("Verification mismatch! Please type 'UPDATE' exactly.");
             return;
@@ -5149,6 +5337,7 @@
         };
 
         document.getElementById("updateConfirmModal").classList.remove("hidden");
+        setTimeout(() => updateInput.focus(), 60);
       } else {
         await executeFormCreation(record);
       }
@@ -6486,49 +6675,39 @@
           if (res.ok) {
             const j = await res.json();
             saved = j.found || j.record || null;
+            // Cache for future use
+            if (saved && saved.nidNumber) voterListIndex[cleanNid] = saved;
           }
         } catch (e) {
           console.warn('Failed to load voter list record for direct details', e);
         }
       }
 
-      const approvalText = saved && ((saved.profileData && saved.profileData.ApprovalMessage) || (saved.rawPayload && saved.rawPayload.ApprovalMessage) || "");
-      const savedError = saved && (saved.error || "") || "";
-      const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) ? String(saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))).trim() : "";
-      const hasPortrait = saved && saved.portraitImage;
-      const isApproval = approvalText && /स्वीकृत|मतदाता/i.test(approvalText);
-      const isNotFound = saved && ((saved.status && String(saved.status).toLowerCase().includes('not')) || /(no record found|data not found|not found|please verify nin)/i.test(approvalText || savedError));
-
-      if (!saved || (!hasPortrait && !voterNo)) {
-          showCustomAlert('No record found', 'No record found', 'warning');
-          return;
-      }
-
-      if (saved && (isApproval || isNotFound)) {
-        if (isApproval) {
-          showCustomAlert('Approval Notice', 'NID activated', 'success');
-          return;
-        }
-
-        if (isNotFound) {
-          showCustomAlert('No record found', 'No record found', 'warning');
-          return;
-        }
-      }
-
       if (!saved) {
-        showCustomAlert('No record found', 'No record found', 'warning');
+        showCustomAlert('No record found', 'No saved voter list record found for this NIN.', 'warning');
         return;
       }
 
-      let profile = (saved && (saved.profileData || saved.rawPayload)) || {};
-      if (!profile || Object.keys(profile).length === 0) {
+      // Build profile from saved data (prefer profileData over rawPayload)
+      let profile = Object.assign({}, (saved.profileData && Object.keys(saved.profileData).length > 0 ? saved.profileData : (saved.rawPayload || {})));
+
+      // Check if we have any real identity info
+      const hasRealData = Boolean(
+        profile.VoterFirstNameEn || profile.VoterFirstName ||
+        profile.FirstName || profile.Nidno ||
+        profile.Dob || saved.portraitImage
+      );
+
+      if (!hasRealData) {
+        // Fall back to main DB row for basic identity info
         const row = documentIdentityDb.find(r => String(r.ninEn || '').trim() === cleanNid);
         if (row) {
           profile = {
             Nidno: cleanNid,
             VoterFirstNameEn: row.givenEn || '',
             VoterLastNameEn: row.surnameEn || '',
+            VoterFirstName: row.givenNp || '',
+            VoterLastName: row.surnameNp || '',
             Dob: row.dobEn || '',
             dobNp: row.dobNp || '',
             CitizenshipCertificateNumberLoc: row.citNo || '',
@@ -6541,17 +6720,45 @@
             PermanentWard: row.ward || '—',
             PermanentVillageTol: row.village || '—'
           };
+        } else {
+          showCustomAlert('No data', 'No voter list data found for this NIN.', 'warning');
+          return;
         }
       }
 
-      const voterData = Object.assign({}, profile || {});
+      const voterData = Object.assign({}, profile);
       voterData.Nidno = voterData.Nidno || cleanNid;
-      if (saved && saved.portraitImage) voterData.PortraitImage = saved.portraitImage;
-      if (saved && saved.portraitStatus) voterData.PortraitStatus = saved.portraitStatus;
+
+      // Always inject the saved portrait from DB (this bypasses live portal errors)
+      if (saved.portraitImage) {
+        voterData.PortraitImage = saved.portraitImage;
+        voterData.PortraitStatus = saved.portraitStatus || 'PRESENT';
+      }
+
+      // Fix missing English name fields from alternate keys
       if (!voterData.VoterFirstNameEn && voterData.FirstName) voterData.VoterFirstNameEn = voterData.FirstName;
       if (!voterData.VoterLastNameEn && voterData.LastName) voterData.VoterLastNameEn = voterData.LastName;
       if (!voterData.Dob && voterData.dob) voterData.Dob = voterData.dob;
-      if (!voterData.dobNp && voterData.dobNp) voterData.dobNp = voterData.dobNp;
+
+      // Enrich from main DB row if some fields are still missing
+      const mainRow = documentIdentityDb.find(r => String(r.ninEn || '').trim() === cleanNid);
+      if (mainRow) {
+        if (!voterData.VoterFirstNameEn) voterData.VoterFirstNameEn = mainRow.givenEn || '';
+        if (!voterData.VoterLastNameEn) voterData.VoterLastNameEn = mainRow.surnameEn || '';
+        if (!voterData.VoterFirstName) voterData.VoterFirstName = mainRow.givenNp || '';
+        if (!voterData.VoterLastName) voterData.VoterLastName = mainRow.surnameNp || '';
+        if (!voterData.Dob) voterData.Dob = mainRow.dobEn || '';
+        if (!voterData.dobNp) voterData.dobNp = mainRow.dobNp || '';
+        if (!voterData.CitizenshipCertificateNumberLoc) voterData.CitizenshipCertificateNumberLoc = mainRow.citNo || '';
+        if (!voterData.CitizenshipIssuingDateLoc) voterData.CitizenshipIssuingDateLoc = mainRow.citDate || '';
+        if (!voterData.FatherFirstName || voterData.FatherFirstName === '—') voterData.FatherFirstName = mainRow.fatherFirstName || '—';
+        if (!voterData.FatherLastName) voterData.FatherLastName = mainRow.fatherLastName || '';
+        if (!voterData.MotherFirstName || voterData.MotherFirstName === '—') voterData.MotherFirstName = mainRow.motherFirstName || '—';
+        if (!voterData.MotherLastName) voterData.MotherLastName = mainRow.motherLastName || '';
+        if (!voterData.GrandfatherFirstName || voterData.GrandfatherFirstName === '—') voterData.GrandfatherFirstName = mainRow.grandfatherFirstName || '—';
+        if (!voterData.PermanentWard || voterData.PermanentWard === '—') voterData.PermanentWard = mainRow.ward || '—';
+        if (!voterData.PermanentVillageTol || voterData.PermanentVillageTol === '—') voterData.PermanentVillageTol = mainRow.village || '—';
+      }
 
       openVoterDetailPopup(voterData);
     }
@@ -7470,18 +7677,22 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname }, maxAttempts = 8, delayMs = 1200) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, maxAttempts = 8, delayMs = 1200) {
       const normalizedNin = String(nin || "").trim();
       const dobValue = String(dob || "").trim();
       const firstnameValue = String(firstname || "").trim();
       let lastError = "Failed to query the official voter portal.";
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        if (signal && signal.aborted) {
+          return { aborted: true, error: "Search stopped by user." };
+        }
         try {
           const res = await fetch(`${API_BASE}/api/voter-search`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nin: normalizedNin, dob: dobValue, firstname: firstnameValue })
+            body: JSON.stringify({ nin: normalizedNin, dob: dobValue, firstname: firstnameValue }),
+            signal: signal
           });
           const json = await res.json();
           if (res.ok && json.success && json.data) {
@@ -7490,19 +7701,44 @@
 
           lastError = json.error || "No data found from official voter portal.";
           const retryable = /NID सर्भरबाट डेटा प्राप्त हुन सकेन|NID सर्भर/i.test(lastError);
-          if (!retryable) {
-            return { error: lastError };
+          if (!retryable || (signal && signal.aborted)) {
+            return { error: lastError, aborted: Boolean(signal && signal.aborted) };
           }
 
           if (attempt < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            await new Promise((resolve) => {
+              const timer = setTimeout(resolve, delayMs);
+              if (signal) {
+                signal.addEventListener("abort", () => {
+                  clearTimeout(timer);
+                  resolve();
+                }, { once: true });
+              }
+            });
+            if (signal && signal.aborted) {
+              return { aborted: true, error: "Search stopped by user." };
+            }
             continue;
           }
           return { error: lastError };
         } catch (err) {
+          if ((signal && signal.aborted) || err.name === "AbortError") {
+            return { aborted: true, error: "Search stopped by user." };
+          }
           lastError = err.message || "Failed to query the official voter portal.";
           if (attempt < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            await new Promise((resolve) => {
+              const timer = setTimeout(resolve, delayMs);
+              if (signal) {
+                signal.addEventListener("abort", () => {
+                  clearTimeout(timer);
+                  resolve();
+                }, { once: true });
+              }
+            });
+            if (signal && signal.aborted) {
+              return { aborted: true, error: "Search stopped by user." };
+            }
             continue;
           }
           return { error: lastError };
@@ -9259,31 +9495,86 @@
       }
     }
 
-    // Handle NIN Search
-    async function handleNinSearch() {
+    // Handle NIN Search & Stop Search
+    let isNinSearchRunning = false;
+    let ninSearchAbortController = null;
+
+    function resetNinSearchButton() {
+      const btn = document.getElementById("btnSingleNinSearch") ||
+                  document.querySelector("[onclick='handleNinSearchClick()']") ||
+                  document.querySelector("[onclick='handleNinSearch()']");
+      if (!btn) return;
+      btn.disabled = false;
+      btn.className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2";
+      btn.innerHTML = `
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        Single Search
+      `;
+    }
+
+    async function handleNinSearchClick() {
+      if (isNinSearchRunning) {
+        // Stop current active search
+        if (ninSearchAbortController) {
+          ninSearchAbortController.abort();
+        }
+        isNinSearchRunning = false;
+        resetNinSearchButton();
+        return;
+      }
+
       const nin = document.getElementById("voterNidNin").value.trim();
-      const dobAd = document.getElementById("voterNinDob").value.trim();
+      let dobAd = document.getElementById("voterNinDob").value.trim();
+      const dobBs = document.getElementById("voterNinDobBs") ? document.getElementById("voterNinDobBs").value.trim() : "";
       const firstname = document.getElementById("voterNinFirstname").value.trim();
 
-      const dob = dobAd;
+      // If user typed BS Date but AD Date isn't populated yet, convert it automatically
+      if (!dobAd && dobBs) {
+        const englishBsVal = translateDigits(dobBs, nepaliToEnglishDigits);
+        dobAd = convertBsToAd(englishBsVal) || "";
+        if (dobAd) {
+          document.getElementById("voterNinDob").value = dobAd;
+        }
+      }
 
-      if (!nin || !dob || !firstname) {
+      if (!nin || !dobAd || !firstname) {
         alert("Please fill all fields (NIN, DOB, and First Name).");
         return;
       }
 
-      if (!nin || !dob || !firstname) {
-        alert("Please fill all fields (NIN, DOB, and First Name).");
-        return;
-      }
+      const btn = document.getElementById("btnSingleNinSearch") ||
+                  document.querySelector("[onclick='handleNinSearchClick()']") ||
+                  document.querySelector("[onclick='handleNinSearch()']");
 
-      const btn = document.querySelector("[onclick='handleNinSearch()']");
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = "Searching...";
+      isNinSearchRunning = true;
+      ninSearchAbortController = new AbortController();
+
+      if (btn) {
+        btn.disabled = false; // keep clickable so user can click to STOP
+        btn.className = "flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-md flex items-center justify-center gap-2 ring-2 ring-rose-400/50 animate-pulse";
+        btn.innerHTML = `
+          <svg class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-xs"></span>
+          Stop Search
+        `;
+      }
 
       try {
-        const { data, error } = await queryVoterPortalWithRetry({ nin, dob: dobAd, firstname });
+        const { data, error, aborted } = await queryVoterPortalWithRetry({
+          nin,
+          dob: dobAd,
+          firstname,
+          signal: ninSearchAbortController.signal
+        });
+
+        if (aborted || !isNinSearchRunning) {
+          return;
+        }
 
         if (data) {
           openNinResultModal(true, data, null);
@@ -9295,7 +9586,7 @@
               Nidno: nin,
               VoterFirstNameEn: firstname.toUpperCase(),
               VoterLastNameEn: "",
-              Dob: dob,
+              Dob: dobAd,
               dobNp: "—",
               CitizenshipCertificateNumberLoc: "—",
               CitizenshipIssuingDateLoc: "—",
@@ -9313,12 +9604,17 @@
           }
         }
       } catch (err) {
+        if (err.name === "AbortError" || !isNinSearchRunning) {
+          return;
+        }
         openNinResultModal(false, null, err.message);
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        isNinSearchRunning = false;
+        ninSearchAbortController = null;
+        resetNinSearchButton();
       }
     }
+    const handleNinSearch = handleNinSearchClick;
 
     function populatePortalFieldsFromVoterData(voterData = currentNinVoterData) {
       if (!voterData) return;
@@ -9788,14 +10084,16 @@
     function downloadNidFlowPaper(event) {
       if (tokenVerificationInProgress) { alert("A download/verification is already in progress. Please wait."); return; }
       if (!currentNinVoterData) return;
-      const btn = event && event.currentTarget && event.currentTarget.tagName === 'BUTTON'
+      const btn = (event && event.currentTarget && event.currentTarget.tagName === 'BUTTON')
         ? event.currentTarget
-        : document.querySelector('button[onclick="downloadNidFlowPaper(event)"]');
-      setButtonLoading(btn, true, 'Downloading...');
+        : (event && event.target && event.target.closest('button'))
+          ? event.target.closest('button')
+          : document.getElementById('btnNidFlowDownloadPaper') || document.getElementById('btnNinResultDownloadPaper');
+      if (btn) setButtonLoading(btn, true, 'Downloading...');
       try {
         downloadVoterPaper(encodeURIComponent(JSON.stringify(currentNinVoterData)));
       } finally {
-        setButtonLoading(btn, false);
+        if (btn) setButtonLoading(btn, false);
       }
     }
 
@@ -10090,7 +10388,11 @@
       if (!contentEl || !footerEl) return;
 
       const approvalText = String(voterData?.ApprovalMessage || voterData?.Approvalmessage || voterData?.ApprovalMassage || voterData?.error || voterData?.message || "").trim();
-      if (shouldShowApprovalNotice(approvalText)) {
+      const hasRealData = Boolean(
+        voterData?.VoterFirstNameEn || voterData?.VoterFirstName || voterData?.PortraitImage || voterData?.Nidno
+      );
+      // Only show simple alert (no popup) if we have ONLY an approval text with no real profile data
+      if (shouldShowApprovalNotice(approvalText) && !hasRealData) {
         showCustomAlert("Approval Notice", "NID activated", "success");
         return;
       }
@@ -10713,12 +11015,236 @@
       if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
     }
 
-    function downloadVoterPaper(serializedData) {
+    let currentPaperDownloadSerialized = null;
+    let currentPaperDownloadData = null;
+
+    function openPaperDownloadOptionsModal(serializedData) {
+      currentPaperDownloadSerialized = serializedData;
+      try {
+        currentPaperDownloadData = JSON.parse(decodeURIComponent(serializedData));
+      } catch (e) {
+        currentPaperDownloadData = null;
+      }
+
+      const modal = document.getElementById("paperDownloadOptionsModal");
+      const banner = document.getElementById("paperDownloadStatusBanner");
+      if (banner) banner.classList.add("hidden");
+
+      const input = document.getElementById("paperDownloadCaptchaInput");
+      if (input) input.value = "";
+
+      const sub = document.getElementById("paperDownloadModalSub");
+      if (sub && currentPaperDownloadData) {
+        const name = [currentPaperDownloadData.VoterFirstNameEn, currentPaperDownloadData.VoterLastNameEn].filter(Boolean).join(" ");
+        const nid = currentPaperDownloadData.Nidno || currentPaperDownloadData.NinLoc || "";
+        sub.innerText = name ? `${name} (${nid || 'NID'})` : "Choose download format for NID paper";
+      }
+
+      resetPaperDownloadBtn();
+      loadPaperDownloadCaptcha();
+
+      if (modal) {
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+      }
+    }
+
+    function closePaperDownloadOptionsModal() {
+      const modal = document.getElementById("paperDownloadOptionsModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    function executePaperDownloadWithoutPhone() {
+      closePaperDownloadOptionsModal();
+      if (!currentPaperDownloadSerialized) return;
+      downloadVoterPaper(currentPaperDownloadSerialized, { direct: true, mobileNo: '' });
+    }
+
+    function executePaperDownloadWithWhiteCard() {
+      if (!currentPaperDownloadSerialized) return;
+      const D = currentPaperDownloadData || JSON.parse(decodeURIComponent(currentPaperDownloadSerialized));
+      const btn = (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON') ? event.currentTarget : null;
+      if (btn) setButtonLoading(btn, true, 'Generating...');
+      
+      renderVoterWhiteCardToDataUrl(D, (cardDataUrl) => {
+        if (btn) setButtonLoading(btn, false);
+        closePaperDownloadOptionsModal();
+        downloadVoterPaperWithWhiteCard(currentPaperDownloadSerialized, cardDataUrl, {
+          mobileNo: D.maskedMobile || D.MobileNo || ''
+        });
+      });
+    }
+
+    function resetPaperDownloadBtn() {
+      const btn = document.getElementById("btnPaperDownloadWithPhone");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Verify & Download</span>`;
+      }
+    }
+
+    function showPaperDownloadStatus(msg, type = "error") {
+      const banner = document.getElementById("paperDownloadStatusBanner");
+      if (!banner) return;
+      banner.classList.remove("hidden");
+      if (type === "success") {
+        banner.className = "text-xs rounded-xl p-2.5 font-medium border bg-emerald-50 border-emerald-200 text-emerald-700 flex items-center gap-1.5";
+        banner.innerHTML = `<svg class="w-4 h-4 shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>${msg}</span>`;
+      } else {
+        banner.className = "text-xs rounded-xl p-2.5 font-medium border bg-red-50 border-red-200 text-red-700 flex items-center gap-1.5";
+        banner.innerHTML = `<svg class="w-4 h-4 shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>${msg}</span>`;
+      }
+    }
+
+    async function loadPaperDownloadCaptcha() {
+      const img = document.getElementById("paperDownloadCaptchaImg");
+      const input = document.getElementById("paperDownloadCaptchaInput");
+      if (input) input.value = "";
+      if (img) img.src = "";
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha`);
+        if (!res.ok) throw new Error("Captcha fetch failed");
+        const data = await res.json();
+        if (data && data.image && img) {
+          img.src = "data:image/png;base64," + data.image;
+        }
+      } catch (err) {
+        console.warn("Failed to load paper download captcha", err);
+      }
+    }
+
+    function extractPaperOtpParams(D) {
+      if (!D) return {};
+      const cleanNid = String(D.Nidno || D.NinLoc || D.NIN || D.ninEn || D.nidNumber || '').trim();
+      const mainRow = (typeof documentIdentityDb !== 'undefined' && Array.isArray(documentIdentityDb))
+        ? (documentIdentityDb.find(r => String(r.ninEn || '').trim() === cleanNid) || {})
+        : {};
+
+      const firstEn = (D.VoterFirstNameEn || D.FirstName || mainRow.givenEn || '').trim().toUpperCase();
+      const midEn = (D.VoterMiddleNameEn || D.MiddleName || '').trim().toUpperCase();
+      const lastEn = (D.VoterLastNameEn || D.LastName || mainRow.surnameEn || '').trim().toUpperCase();
+      const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(' ');
+
+      const firstNp = (D.VoterFirstName || mainRow.givenNp || '').trim();
+      const midNp = (D.VoterMiddleName || '').trim();
+      const lastNp = (D.VoterLastName || mainRow.surnameNp || '').trim();
+      const fullNameLoc = cleanNepaliText([firstNp, midNp, lastNp].filter(Boolean).join(' '));
+
+      let dobNpRaw = D.dobNp || mainRow.dobNp || '';
+      if (!dobNpRaw && (D.Dob || D._dob || mainRow.dobEn)) {
+        const adDate = String(D.Dob || D._dob || mainRow.dobEn).replace(/\//g, '-');
+        dobNpRaw = typeof convertAdToBs === 'function' ? (convertAdToBs(adDate) || '') : '';
+      }
+      const dobLoc = translateDigits(dobNpRaw, englishToNepaliDigits);
+
+      const citDateRaw = D.CitizenshipIssuingDateLoc || D._citizenIssueDate || D.CitizenIssueDate || mainRow.citDate || '';
+      const ccnIssuingDateLoc = translateDigits(citDateRaw, englishToNepaliDigits);
+
+      return { fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc, cleanNid };
+    }
+
+    async function submitPaperDownloadWithPhone() {
+      const captchaInput = document.getElementById("paperDownloadCaptchaInput");
+      const captchaCode = captchaInput ? captchaInput.value.trim() : "";
+      if (!captchaCode) {
+        showPaperDownloadStatus("Please enter the captcha code.", "error");
+        return;
+      }
+
+      const btn = document.getElementById("btnPaperDownloadWithPhone");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Verifying...`;
+      }
+
+      try {
+        const D = currentPaperDownloadData || {};
+        const params = extractPaperOtpParams(D);
+
+        if (!params.fullName || !params.dobLoc) {
+          showPaperDownloadStatus("Missing required citizen name or date of birth.", "error");
+          resetPaperDownloadBtn();
+          return;
+        }
+
+        const res = await fetch(`${API_BASE}/api/request-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Captcha-Code": captchaCode
+          },
+          body: JSON.stringify({
+            fullName: params.fullName,
+            fullNameLoc: params.fullNameLoc,
+            dobLoc: params.dobLoc,
+            ccnIssuingDateLoc: params.ccnIssuingDateLoc
+          })
+        });
+
+        const responseBody = await parseResponseBody(res);
+        const respCode = getOtpErrorCode(responseBody);
+        const rawText = typeof responseBody === "string" ? responseBody : extractOtpResponseMessage(responseBody);
+        const parsedCode = parseOtpErrorCodeFromText(rawText);
+        const resolvedCode = respCode || parsedCode;
+
+        const isNotLinked = (resolvedCode === "MOBILE_NOT_REGISTERED") ||
+                            (rawText && /MOBILE_NOT_REGISTERED|not registered|not linked/i.test(rawText));
+
+        if (!res.ok || isNotLinked || (responseBody && responseBody.error)) {
+          const errMsg = isNotLinked ? "Mobile number not linked" : (extractOtpResponseMessage(responseBody) || "Mobile number not linked");
+          showCustomAlert("Notice", errMsg, "warning");
+          showPaperDownloadStatus(errMsg, "error");
+          loadPaperDownloadCaptcha();
+          resetPaperDownloadBtn();
+          return;
+        }
+
+        const maskedMobile = responseBody && (responseBody.maskedMobile || responseBody.MobileNo || responseBody.mobile);
+        if (maskedMobile) {
+          showPaperDownloadStatus(`Masked Mobile: ${maskedMobile} — Generating paper...`, "success");
+          if (currentPaperDownloadData) {
+            currentPaperDownloadData.maskedMobile = maskedMobile;
+            currentPaperDownloadData.MobileNo = maskedMobile;
+          }
+          if (params.cleanNid && typeof voterListIndex !== 'undefined' && voterListIndex[params.cleanNid]) {
+            voterListIndex[params.cleanNid].maskedMobile = maskedMobile;
+            if (voterListIndex[params.cleanNid].profileData) {
+              voterListIndex[params.cleanNid].profileData.maskedMobile = maskedMobile;
+              voterListIndex[params.cleanNid].profileData.MobileNo = maskedMobile;
+            }
+          }
+          setTimeout(() => {
+            closePaperDownloadOptionsModal();
+            downloadVoterPaper(currentPaperDownloadSerialized, { direct: true, mobileNo: maskedMobile });
+          }, 500);
+        } else {
+          showCustomAlert("Notice", "Mobile number not linked", "warning");
+          showPaperDownloadStatus("Mobile number not linked", "error");
+          loadPaperDownloadCaptcha();
+          resetPaperDownloadBtn();
+        }
+      } catch (err) {
+        showCustomAlert("Error", err.message || "Failed to verify phone number", "warning");
+        showPaperDownloadStatus(err.message || "Failed to verify phone number", "error");
+        loadPaperDownloadCaptcha();
+        resetPaperDownloadBtn();
+      }
+    }
+
+    function downloadVoterPaper(serializedData, options = {}) {
       if (tokenVerificationInProgress) {
         alert("A download/verification is already in progress. Please wait until the token is verified.");
         return;
       }
+      if (!options || !options.direct) {
+        openPaperDownloadOptionsModal(serializedData);
+        return;
+      }
       const D = JSON.parse(decodeURIComponent(serializedData));
+      const mobileNo = (options && options.mobileNo !== undefined) ? options.mobileNo : (D.maskedMobile || D.MobileNo || D.Mobile || '');
       const addr = getResolvedAddressNames(D);
 
       // Names
@@ -10730,6 +11256,9 @@
       const lastEn = (D.VoterLastNameEn || '').toUpperCase();
 
       // Family
+      const gfNp = [D.GrandfatherFirstNameLoc, D.GrandfatherMiddleNameLoc, D.GrandfatherLastNameLoc].filter(Boolean).join(' ')
+        || [D.GrandfatherFirstName, D.GrandfatherMiddleName, D.GrandfatherLastName].filter(Boolean).join(' ');
+      const gfEn = [D.GrandfatherFirstName, D.GrandfatherMiddleName, D.GrandfatherLastName].filter(Boolean).join(' ');
       const fNp = [D.FatherFirstNameLoc, D.FatherMiddleNameLoc, D.FatherLastNameLoc].filter(Boolean).join(' ');
       const fEn = [D.FatherFirstName, D.FatherMiddleName, D.FatherLastName].filter(Boolean).join(' ');
       const mNp = [D.MotherFirstNameLoc, D.MotherMiddleNameLoc, D.MotherLastNameLoc].filter(Boolean).join(' ');
@@ -10771,10 +11300,9 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 .page{width:210mm;min-height:297mm;padding:6mm 10mm;margin:0 auto;background:#fff}
 @media print{body{background:#fff}.page{padding:6mm 10mm;margin:0}@page{size:A4;margin:0}}
 
-/* Header - pure text centering, no logo */
-.hdr{text-align:center;line-height:1.35;font-size:11pt;margin-bottom:4px;font-weight:400}
-.hdr .dept{font-size:12.5pt;font-weight:700;margin:1px 0}
-.form-title{text-align:center;font-size:13.5pt;font-weight:700;border-bottom:1.5px solid #000;padding:3px 0;margin:4px 0 8px 0}
+/* Big Main Heading */
+.main-heading-container{text-align:center;margin-top:6px;margin-bottom:28px;padding-bottom:12px;border-bottom:2px solid #000}
+.main-heading-title{font-size:24pt;font-weight:800;letter-spacing:0.5px;color:#000;line-height:1.25}
 
 /* App info row */
 .app-info-table{width:100%;font-size:9.5pt;margin-bottom:8px}
@@ -10830,14 +11358,10 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 </head><body>
 <div class="page">
 
-<!-- Header - Pure Centered Text -->
-<div class="hdr">
-  नेपाल सरकार<br>
-  गृह मन्त्रालय<br>
-  <div class="dept">राष्ट्रिय परिचयपत्र तथा पञ्जीकरण विभाग</div>
-  सिंहदरबार, काठमाडौं
+<!-- Big Heading at the top -->
+<div class="main-heading-container">
+  <div class="main-heading-title">National Identity / राष्ट्रिय परिचयपत्र</div>
 </div>
-<div class="form-title">राष्ट्रिय परिचयपत्र सम्बन्धी आवेदन रुजु फाराम/भर्पाई</div>
 
 
 <!-- App info -->
@@ -10920,6 +11444,15 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     <div><span>नागरिकता नम्बर</span></div>
   </div>
   <div class="fam-row">
+    <div class="rl">हजुरबुवा</div>
+    <div>
+      <div class="name-np">: ${gfNp}</div>
+      <div class="name-en">&nbsp;&nbsp;${gfEn}</div>
+    </div>
+    <div></div>
+    <div></div>
+  </div>
+  <div class="fam-row">
     <div class="rl">बुवा</div>
     <div>
       <div class="name-np">: ${fNp}</div>
@@ -10949,47 +11482,294 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
   </div>` : ''}
 </div>
 
-<!-- Verification -->
-<div class="vtext">
-  माथि प्रविष्ट भएका उल्लेखित विवरणहरु रुजु गरी ठिक छन् भनि प्रमाणित गर्दछु ।
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &#9744; ठिक छ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &#9744; थप प्रमाणीकरण आवश्यक
-</div>
-
-<!-- Signature Block - both signatories side by side -->
-<div class="sig-block">
-  <div class="sig-col">
-    <div class="sig-lbl">आवेदनकर्ता</div>
-    <div class="sig-field"><span class="fl">नाम :</span><span class="fv"></span></div>
-    <div class="sig-field"><span class="fl">दस्तखत :</span><span class="fv"></span></div>
-    <div class="sig-field"><span class="fl">मिति :</span><span class="fv"></span></div>
-  </div>
-  <div class="sig-col">
-    <div class="sig-lbl">विवरण रुजु गर्ने अधिकारी</div>
-    <div class="sig-field"><span class="fl">नाम :</span><span class="fv"></span></div>
-    <div class="sig-field"><span class="fl">दस्तखत :</span><span class="fv"></span></div>
-    <div class="sig-field"><span class="fl">मिति :</span><span class="fv"></span></div>
+${mobileNo ? `
+<!-- Contact Details below Paribarik Bibaran -->
+<div style="margin-top: 14px;"><span class="sh">सम्पर्क विवरण</span></div>
+<div class="section-block" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+  <div style="display:flex; gap: 8px; font-size: 9.5pt; align-items: baseline; margin-top: 4px;">
+    <span style="font-weight: 700; min-width: 140px;">मोबाइल नम्बर (Mobile No.)</span>
+    <span style="margin: 0 4px; font-weight: 700;">:</span>
+    <span style="font-family: monospace; font-size: 11pt; font-weight: 700; letter-spacing: 1px;">${mobileNo}</span>
   </div>
 </div>
-
-<!-- Footer statement -->
-<div class="bottom-rule"></div>
-<div class="footer-stmt">
-  आवेदनकर्ताले रुजु गरी प्रमाणित गरेको माथि उल्लेखित विवरणहरु राष्ट्रिय परिचय व्यवस्थापन सूचना प्रणालीमा प्रविष्ट गरी यो भर्पाई जारी गरिएको छ ।।
-</div>
-<div class="operator-block">
-  <div class="operator-line"></div>
-  <div style="margin-top:4px; font-size:9pt; font-weight:700; text-align:right;">विवरण दर्ता अपरेटर</div>
-</div>
-<div class="bottom-rule"></div>
-<div class="sms-stmt">
-  राष्ट्रिय परिचयपत्र नम्बर थाहापाउन &lt;N&gt; &lt;Space&gt; आवेदन नम्बर र राष्ट्रिय परिचयपत्रमा दर्ता नम्बर पठाई थाहापाउन मा SMS पठाई जानकारी प्राप्त गर्न सक्नु हुनेछ ।
-</div>
+` : ''}
 
 </div>
 <script>window.onload=function(){setTimeout(function(){window.print();},950);}<\/script>
 </body></html>`;
 
       const w = window.open('', '_blank', 'width=960,height=800');
+      if (w) { w.document.write(html); w.document.close(); }
+    }
+
+    function downloadVoterPaperWithWhiteCard(serializedData, cardDataUrl, options = {}) {
+      const D = JSON.parse(decodeURIComponent(serializedData));
+      const mobileNo = (options && options.mobileNo !== undefined) ? options.mobileNo : (D.maskedMobile || D.MobileNo || D.Mobile || '');
+      const addr = getResolvedAddressNames(D);
+
+      // Names
+      const firstNp = D.VoterFirstName || '';
+      const midNp = D.VoterMiddleName || '';
+      const lastNp = D.VoterLastName || '';
+      const firstEn = (D.VoterFirstNameEn || '').toUpperCase();
+      const midEn = (D.VoterMiddleNameEn || '').toUpperCase();
+      const lastEn = (D.VoterLastNameEn || '').toUpperCase();
+
+      // Family
+      const gfNp = [D.GrandfatherFirstNameLoc, D.GrandfatherMiddleNameLoc, D.GrandfatherLastNameLoc].filter(Boolean).join(' ')
+        || [D.GrandfatherFirstName, D.GrandfatherMiddleName, D.GrandfatherLastName].filter(Boolean).join(' ');
+      const gfEn = [D.GrandfatherFirstName, D.GrandfatherMiddleName, D.GrandfatherLastName].filter(Boolean).join(' ');
+      const fNp = [D.FatherFirstNameLoc, D.FatherMiddleNameLoc, D.FatherLastNameLoc].filter(Boolean).join(' ');
+      const fEn = [D.FatherFirstName, D.FatherMiddleName, D.FatherLastName].filter(Boolean).join(' ');
+      const mNp = [D.MotherFirstNameLoc, D.MotherMiddleNameLoc, D.MotherLastNameLoc].filter(Boolean).join(' ');
+      const mEn = [D.MotherFirstName, D.MotherMiddleName, D.MotherLastName].filter(Boolean).join(' ');
+      const spNp = [D.SpouseFirstNameLoc, D.SpouseMiddleNameLoc, D.SpouseLastNameLoc].filter(Boolean).join(' ')
+        || [D.HusbandWifeFirstNameLoc, D.HusbandWifeMiddleNameLoc, D.HusbandWifeLastNameLoc].filter(Boolean).join(' ')
+        || D.HusbandWifeNameLoc || '';
+      const spEn = [D.SpouseFirstName, D.SpouseMiddleName, D.SpouseLastName].filter(Boolean).join(' ')
+        || [D.HusbandWifeFirstName, D.HusbandWifeMiddleName, D.HusbandWifeLastName].filter(Boolean).join(' ')
+        || D.HusbandWifeName || '';
+      const spLabel = D.GenderCode === 'F' ? 'पति/पत्नी' : 'पति/पत्नी';
+
+      // Address
+      const wardNp = D.PermanentWardLoc || D.PermanentWard || '';
+      const toleNp = D.PermanentVillageTolLoc || D.PermanentVillageTol || '';
+
+      // Personal
+      const dobAD = (D.Dob || D._dob || '').replace(/\//g, '-');
+      const dobBS = D.dobNp || '';
+      const genderNp = D.GenderCode === 'F' ? 'महिला' : 'पुरुष';
+      const maritalNp = (spNp || spEn) ? 'विवाहित' : 'अविवाहित';
+
+      // Citizenship
+      const citNo = D.CitizenshipCertificateNumberLoc || D.CitizenshipCertificateNumber || '';
+      const citDate = D.CitizenshipIssuingDateLoc || D._citizenIssueDate || D.CitizenIssueDate || '';
+      const citDistNp = addr.districtNp !== '—' ? addr.districtNp : '';
+      const nid = D.Nidno || D.NinLoc || '';
+
+      const photo = D.PortraitImage && D.PortraitStatus !== 'ABSENT'
+        ? `data:image/jpeg;base64,${D.PortraitImage}` : '';
+
+      const html = `<!DOCTYPE html>
+<html lang="ne"><head><meta charset="UTF-8">
+<title>NID Application with White Card - ${firstEn} ${lastEn}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:7pt;background:#fff;color:#000;line-height:1.25}
+.landscape-page{
+  width:297mm;
+  min-height:210mm;
+  height:210mm;
+  padding:5mm 8mm;
+  margin:0 auto;
+  background:#fff;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:stretch;
+  gap:8mm;
+  box-sizing:border-box;
+}
+@media print{
+  body{background:#fff}
+  .landscape-page{width:297mm;height:210mm;max-height:210mm;padding:5mm 8mm;margin:0;page-break-inside:avoid;page-break-after:avoid;}
+  @page{size: A4 landscape; margin: 0;}
+}
+
+/* Left side: Exactly equal 50% half, White card centered vertically & horizontally */
+.left-card-col{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  border-right:1.5px dashed #94a3b8;
+  padding-right:4mm;
+  box-sizing:border-box;
+  height:100%;
+}
+.white-card-img{
+  width:100%;
+  max-width:115mm;
+  height:auto;
+  border-radius:6px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.12);
+  border:1px solid #cbd5e1;
+}
+
+/* Right side: Exactly equal 50% half, Paper details */
+.right-paper-col{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  padding-left:4mm;
+  box-sizing:border-box;
+  overflow:hidden;
+  height:100%;
+}
+
+.main-heading-container{text-align:center;margin-top:0;margin-bottom:8px;padding-bottom:4px;border-bottom:1.5px solid #000}
+.main-heading-title{font-size:15pt;font-weight:800;letter-spacing:0.5px;color:#000;line-height:1.2}
+
+.app-info-table{width:100%;font-size:7pt;margin-bottom:3px}
+.app-info-table td{padding:1px 0}
+
+.sh{font-weight:700;font-size:8pt;text-decoration:underline;margin:3px 0 1px 0;display:inline-block}
+.section-block{border-bottom:1px solid #000;padding-bottom:3px;margin-bottom:3px}
+
+.with-photo{display:grid;grid-template-columns:1fr 22mm;gap:6px;margin-bottom:1px}
+.photo-box{border:1px solid #777;width:22mm;height:28mm;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.photo-box img{width:100%;height:100%;object-fit:cover}
+
+.grid2{display:grid;grid-template-columns:1.05fr 0.95fr;gap:1px 10px}
+.fr{display:flex;gap:2px;font-size:7pt;margin-bottom:1px;align-items:baseline}
+.fr .lbl{font-weight:400;white-space:nowrap;min-width:80px}
+.fr .sep{margin:0 2px}
+.fr .val{flex:1;font-weight:400}
+
+.addr-lbl-row{display:grid;grid-template-columns:55px 70px 80px 110px 45px 1fr;font-weight:700;font-size:6.5pt;margin-top:1px;padding-bottom:1px}
+.addr-lbl-row span{text-decoration:underline}
+.addr-val-row{display:grid;grid-template-columns:55px 70px 80px 110px 45px 1fr;font-size:6.5pt;padding:1px 0}
+
+.fam-hdr{display:grid;grid-template-columns:55px 130px 130px 1fr;font-weight:700;font-size:6.5pt;padding-bottom:1px;margin-top:2px}
+.fam-hdr span{text-decoration:underline}
+.fam-row{display:grid;grid-template-columns:55px 130px 130px 1fr;font-size:6.5pt;padding:3px 0;align-items:start}
+.fam-row .rl{font-weight:700}
+.name-np{font-size:6.5pt;font-weight:600}
+.name-en{font-size:5.5pt;color:#333}
+</style>
+</head><body>
+<div class="landscape-page">
+  <div class="left-card-col">
+    <img src="${cardDataUrl}" alt="White Card" class="white-card-img" />
+  </div>
+  <div class="right-paper-col">
+    <div class="main-heading-container">
+      <div class="main-heading-title">National Identity / राष्ट्रिय परिचयपत्र</div>
+    </div>
+    <table class="app-info-table">
+      <tr>
+        <td style="width: 50%"><b>आवेदन दर्ता मिति :</b></td>
+        <td><b>आवेदन स्थान :</b> ${citDistNp || addr.districtNp}</td>
+      </tr>
+      <tr>
+        <td colspan="2"><b>आवेदनको प्रकार :</b> First NID Card Request without NIN</td>
+      </tr>
+    </table>
+    <div><span class="sh">वैयक्तिक विवरणहरु</span></div>
+    <div class="section-block">
+      <div class="with-photo">
+        <div class="grid2">
+          <div class="fr"><span class="lbl">आवेदन नम्बर</span><span class="sep">:</span><span class="val">&nbsp;</span></div>
+          <div class="fr"><span class="lbl">राष्ट्रिय परिचय नम्बर</span><span class="sep">:</span><span class="val">${nid}</span></div>
+          <div class="fr"><span class="lbl">पहिलो नाम</span><span class="sep">:</span><span class="val">${firstNp}</span></div>
+          <div class="fr"><span class="lbl">First Name</span><span class="sep">:</span><span class="val">${firstEn}</span></div>
+          <div class="fr"><span class="lbl">बीचको नाम</span><span class="sep">:</span><span class="val">${midNp}</span></div>
+          <div class="fr"><span class="lbl">Middle Name</span><span class="sep">:</span><span class="val">${midEn}</span></div>
+          <div class="fr"><span class="lbl">थर</span><span class="sep">:</span><span class="val">${lastNp}</span></div>
+          <div class="fr"><span class="lbl">Last Name</span><span class="sep">:</span><span class="val">${lastEn}</span></div>
+          <div class="fr"><span class="lbl">जन्म मिति बि.सं.</span><span class="sep">:</span><span class="val">${dobBS}</span></div>
+          <div class="fr"><span class="lbl">ई.सं.</span><span class="sep">:</span><span class="val">${dobAD}</span></div>
+          <div class="fr"><span class="lbl">लिंग</span><span class="sep">:</span><span class="val">${genderNp}</span></div>
+          <div class="fr"><span class="lbl">वैवाहिक स्थिति</span><span class="sep">:</span><span class="val">${maritalNp}</span></div>
+        </div>
+        <div class="photo-box">${photo ? `<img src="${photo}" alt="photo"/>` : ''}</div>
+      </div>
+    </div>
+    <div><span class="sh">नागरिकताको विवरण</span></div>
+    <div class="section-block">
+      <div class="grid2" style="margin-bottom: 2px">
+        <div class="fr"><span class="lbl">नागरिकता नम्बर</span><span class="sep">:</span><span class="val">${citNo}</span></div>
+        <div class="fr"><span class="lbl">जारी मिति</span><span class="sep">:</span><span class="val">${citDate}</span></div>
+        <div class="fr"><span class="lbl">नागरिकता जारी जिल्ला</span><span class="sep">:</span><span class="val">${citDistNp}</span></div>
+        <div class="fr"><span class="lbl">नागरिकताको किसिम</span><span class="sep">:</span><span class="val">वंशज</span></div>
+      </div>
+      <div class="addr-lbl-row">
+        <div><span>ठेगाना</span></div>
+        <div><span>प्रदेश</span></div>
+        <div><span>जिल्ला</span></div>
+        <div><span>गा.पा./न.पा.</span></div>
+        <div><span>वडा नं.</span></div>
+        <div><span>गाउँ/टोल</span></div>
+      </div>
+      <div class="addr-val-row">
+        <div><b>स्थायी :</b></div>
+        <div>${addr.provinceNp}</div>
+        <div>${addr.districtNp}</div>
+        <div>${addr.muniNp}</div>
+        <div>${wardNp}</div>
+        <div>${toleNp}</div>
+      </div>
+      <div class="addr-val-row">
+        <div><b>अस्थायी :</b></div>
+        <div>${addr.provinceNp}</div>
+        <div>${addr.districtNp}</div>
+        <div>${addr.muniNp}</div>
+        <div>${wardNp}</div>
+        <div>${toleNp}</div>
+      </div>
+    </div>
+    <div><span class="sh">पारिवारिक विवरण</span></div>
+    <div class="section-block" style="${mobileNo ? '' : 'border-bottom:none;'}">
+      <div class="fam-hdr">
+        <div></div>
+        <div><span>नाम</span></div>
+        <div><span>स्थायी ठेगाना</span></div>
+        <div><span>नागरिकता नम्बर</span></div>
+      </div>
+      <div class="fam-row">
+        <div class="rl">हजुरबुवा</div>
+        <div>
+          <div class="name-np">: ${gfNp}</div>
+          <div class="name-en">&nbsp;&nbsp;${gfEn}</div>
+        </div>
+        <div></div>
+        <div></div>
+      </div>
+      <div class="fam-row">
+        <div class="rl">बुवा</div>
+        <div>
+          <div class="name-np">: ${fNp}</div>
+          <div class="name-en">&nbsp;&nbsp;${fEn}</div>
+        </div>
+        <div></div>
+        <div></div>
+      </div>
+      <div class="fam-row">
+        <div class="rl">आमा</div>
+        <div>
+          <div class="name-np">: ${mNp}</div>
+          <div class="name-en">&nbsp;&nbsp;${mEn}</div>
+        </div>
+        <div></div>
+        <div></div>
+      </div>
+      ${spNp || spEn ? `
+      <div class="fam-row">
+        <div class="rl">${spLabel}</div>
+        <div>
+          <div class="name-np">: ${spNp}</div>
+          <div class="name-en">&nbsp;&nbsp;${spEn}</div>
+        </div>
+        <div><div>${addr.muniNp}</div><div>वडा नं. ${wardNp} ${toleNp}</div></div>
+        <div></div>
+      </div>` : ''}
+    </div>
+    ${mobileNo ? `
+    <div style="margin-top: 4px;"><span class="sh">सम्पर्क विवरण</span></div>
+    <div class="section-block" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+      <div style="display:flex; gap: 6px; font-size: 7pt; align-items: baseline;">
+        <span style="font-weight: 700; min-width: 100px;">मोबाइल नम्बर (Mobile No.)</span>
+        <span style="margin: 0 2px; font-weight: 700;">:</span>
+        <span style="font-family: monospace; font-size: 8pt; font-weight: 700; letter-spacing: 0.5px;">${mobileNo}</span>
+      </div>
+    </div>
+    ` : ''}
+  </div>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},950);}<\/script>
+</body></html>`;
+
+      const w = window.open('', '_blank', 'width=1120,height=800');
       if (w) { w.document.write(html); w.document.close(); }
     }
 
@@ -11189,19 +11969,12 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           <label class="block text-slate-650 font-semibold mb-1">To confirm, type <span
               class="font-mono font-bold text-red-650 bg-red-50 px-1 py-0.5 rounded">UPDATE</span> below:</label>
           <input type="text" id="confirmModalUpdateInput" placeholder="Type UPDATE here"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnConfirmUpdateAction').click();}"
             class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
             autocomplete="off" />
         </div>
 
-        <div id="confirmModalPendingChanges" class="hidden max-h-32 overflow-y-auto pt-2 border-t border-slate-100"></div>
-
-        <div id="confirmModalHistorySection" class="pt-2 border-t border-slate-100">
-          <div class="text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
-            <span class="flex items-center gap-1">📜 Previous Updates:</span>
-            <span id="confirmModalHistoryCount" class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-mono text-slate-600">0</span>
-          </div>
-          <div id="confirmModalHistoryContainer" class="max-h-36 overflow-y-auto"></div>
-        </div>
+        <div id="confirmModalPendingChanges" class="hidden max-h-48 overflow-y-auto pt-2 border-t border-slate-100"></div>
       </div>
 
       <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
@@ -12573,11 +13346,19 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <img id="nidFlowWhiteCardImg" src="" alt="Voter White Card"
           class="w-full rounded-xl border border-slate-200 shadow-sm bg-white mb-3" />
         <div class="flex gap-2 justify-end mb-3">
-          <button onclick="downloadNidFlowPaper(eventevent)"
+          <button id="btnNidFlowSaveWhiteCard" onclick="saveNidFlowWhiteCard()"
             class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Save White Card
+          </button>
+          <button id="btnNidFlowDownloadPaper" onclick="downloadNidFlowPaper(event)"
+            class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Download Paper
           </button>
@@ -12642,6 +13423,112 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
       <div class="text-sm text-slate-700 token-verify-message">Verifying token, please wait...</div>
+    </div>
+  </div>
+
+  <!-- ===== DOWNLOAD PAPER OPTIONS MODAL ===== -->
+  <div id="paperDownloadOptionsModal"
+    onclick="if(event.target===this) closePaperDownloadOptionsModal()"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[10005] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-base">
+            📄
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Download Paper Options</h3>
+            <p id="paperDownloadModalSub" class="text-[11px] text-slate-500">Choose download format for NID paper</p>
+          </div>
+        </div>
+        <button onclick="closePaperDownloadOptionsModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body / Two Options -->
+      <div class="p-5 space-y-4">
+
+        <!-- Option 1: Without Phone Number -->
+        <div class="border border-slate-200 hover:border-amber-400 rounded-xl p-4 bg-white hover:bg-amber-50/30 transition-all flex items-center justify-between group">
+          <div class="space-y-0.5 pr-2">
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <span>📄</span>
+              <span>Download without Phone Number</span>
+            </div>
+            <p class="text-[11px] text-slate-500">Standard portrait paper (no captcha required)</p>
+          </div>
+          <button onclick="executePaperDownloadWithoutPhone()"
+            class="shrink-0 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3.5 py-2 rounded-lg text-xs transition-all shadow shadow-amber-500/20 active:scale-95">
+            Download
+          </button>
+        </div>
+
+        <!-- Option 2: Download with White Card (Landscape Mode) -->
+        <div class="border border-purple-200 hover:border-purple-400 rounded-xl p-4 bg-purple-50/20 hover:bg-purple-50/40 transition-all flex items-center justify-between group">
+          <div class="space-y-0.5 pr-2">
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <span>🪪</span>
+              <span>Download with White Card</span>
+              <span class="bg-purple-100 text-purple-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase">Landscape</span>
+            </div>
+            <p class="text-[11px] text-slate-500">A4 Landscape: White Card centered on left + Paper on right</p>
+          </div>
+          <button onclick="executePaperDownloadWithWhiteCard()"
+            class="shrink-0 bg-purple-600 hover:bg-purple-700 text-white font-bold px-3.5 py-2 rounded-lg text-xs transition-all shadow shadow-purple-600/20 active:scale-95">
+            Download
+          </button>
+        </div>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-3 text-slate-400 text-[10px] font-bold uppercase tracking-wider">or with mobile verification</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+
+        <!-- Option 2: With Phone Number (Requires Captcha) -->
+        <div class="border border-blue-200 bg-blue-50/20 rounded-xl p-4 space-y-3">
+          <div class="space-y-0.5">
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+              <span>📱</span>
+              <span>Download with Phone Number</span>
+              <span class="bg-blue-100 text-blue-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase">Captcha Required</span>
+            </div>
+            <p class="text-[11px] text-slate-500">Fetches linked masked phone number via portal OTP verification</p>
+          </div>
+
+          <!-- Captcha Box -->
+          <div class="bg-white border border-slate-200 rounded-xl p-3 space-y-2.5 shadow-sm">
+            <div class="flex items-center gap-2">
+              <div class="h-10 bg-slate-50 rounded border border-slate-200 px-2 flex items-center justify-center min-w-[120px] overflow-hidden">
+                <img id="paperDownloadCaptchaImg" src="" alt="Captcha" class="h-8 object-contain" />
+              </div>
+              <button type="button" onclick="loadPaperDownloadCaptcha()"
+                class="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2 py-1 rounded hover:bg-blue-50 transition-colors flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Refresh
+              </button>
+            </div>
+
+            <div class="flex gap-2">
+              <input id="paperDownloadCaptchaInput" type="text" placeholder="Enter captcha code"
+                class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-400"
+                onkeydown="if(event.key==='Enter') submitPaperDownloadWithPhone()" />
+              <button id="btnPaperDownloadWithPhone" onclick="submitPaperDownloadWithPhone()"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow shadow-blue-600/20 active:scale-95 shrink-0 flex items-center gap-1.5">
+                <span>Verify & Download</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Status / Error Banner -->
+          <div id="paperDownloadStatusBanner" class="hidden text-xs rounded-xl p-2.5 font-medium"></div>
+        </div>
+
+      </div>
     </div>
   </div>
 

@@ -106,7 +106,14 @@ module.exports = async (req, res) => {
       const nidNumber = urlObj.searchParams.get('nidNumber');
 
       if (nidNumber) {
-        const found = await Model.findOne({ nidNumber: String(nidNumber).trim() }).lean();
+        const trimmed = String(nidNumber).trim();
+        const digits = trimmed.replace(/[^0-9]/g, '');
+        const queryOr = [{ nidNumber: trimmed }];
+        if (digits) {
+          queryOr.push({ nidNumber: digits });
+          queryOr.push({ nidNumber: new RegExp(digits.split('').join('[- ]?'), 'i') });
+        }
+        const found = await Model.findOne({ $or: queryOr }).lean();
         if (!found) return res.status(404).json({ error: 'not found' });
         return res.status(200).json({ found });
       }
@@ -135,10 +142,25 @@ module.exports = async (req, res) => {
     const cleanNid = String(nidNumber).trim();
     const existing = await Model.findOne({ nidNumber: cleanNid }).lean();
     const addressInfo = normalizeAddressFields(profileData);
-    const nextStatus = String(status || (existing && existing.status) || 'pending').trim() || 'pending';
+
+    const existingHasDetails = Boolean(existing && (existing.portraitImage || (existing.profileData && (existing.profileData.VoterFirstNameEn || existing.profileData.FirstName || existing.profileData.Dob))));
+    const incomingHasDetails = Boolean(profileData && (profileData.VoterFirstNameEn || profileData.FirstName || profileData.PortraitImage || profileData.Dob));
+
+    let nextStatus = String(status || (existing && existing.status) || 'pending').trim() || 'pending';
+    // If existing record was active or has portrait/details, and incoming has no details and is not online, preserve active status!
+    if (existing && (existing.isActive || existing.status === 'active' || existingHasDetails) && nextStatus !== 'active' && !incomingHasDetails) {
+      nextStatus = 'active';
+    }
+
     const nextVoterListNumber = String(voterListNumber || (existing && existing.voterListNumber) || '').trim();
+
+    // Preserve existing real details if incoming is just an error message
+    const baseProfile = (existingHasDetails && !incomingHasDetails)
+      ? { ...(existing.profileData || {}) }
+      : { ...(existing?.profileData || {}), ...profileData };
+
     const nextProfileData = {
-      ...profileData,
+      ...baseProfile,
       ...addressInfo,
       ProvinceNameEn: addressInfo.provinceEn,
       ProvinceNameNp: addressInfo.provinceNp,
@@ -146,18 +168,20 @@ module.exports = async (req, res) => {
       DistrictNameNp: addressInfo.districtNp,
       MunicipalityNameEn: addressInfo.municipalityEn,
       MunicipalityNameNp: addressInfo.municipalityNp,
-      WardName: addressInfo.ward,
-      ToleName: addressInfo.tole
+      WardName: addressInfo.ward || (baseProfile.PermanentWard || baseProfile.PermanentWardLoc || ''),
+      ToleName: addressInfo.tole || (baseProfile.PermanentVillageTol || baseProfile.PermanentVillageTolLoc || '')
     };
+
+    const nextPortraitImage = String(portraitImage || (profileData && profileData.PortraitImage) || (existing && existing.portraitImage) || '');
 
     const recordData = {
       nidNumber: cleanNid,
-      portraitImage: String(portraitImage || (existing && existing.portraitImage) || ''),
+      portraitImage: nextPortraitImage,
       status: nextStatus,
       voterListNumber: nextVoterListNumber,
       isActive: shouldMarkRecordActive({ status: nextStatus, voterListNumber: nextVoterListNumber, profileData: nextProfileData, rawPayload }),
       profileData: nextProfileData,
-      rawPayload
+      rawPayload: Object.keys(rawPayload || {}).length > 0 ? rawPayload : (existing?.rawPayload || rawPayload)
     };
 
     const created = existing
