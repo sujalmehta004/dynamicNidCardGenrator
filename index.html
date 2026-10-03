@@ -1873,6 +1873,10 @@
       const text = String(message || (data && (data.error || data.message)) || "").trim();
       if (!text) return true;
       const lower = text.toLowerCase();
+      // If it's a definitive "not found" or negative response, DO NOT retry! It's conclusive!
+      if (/(no record found|record not found|data not found|not found|no data|unregistered|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन)/i.test(text)) {
+        return false;
+      }
       return isTransientNidServerError(text, data) || lower.includes("temporarily") || lower.includes("try again") || lower.includes("invalid response") || lower.includes("failed to fetch") || lower.includes("request timed out") || lower.includes("server") && lower.includes("data") && lower.includes("प्राप्त") && lower.includes("हुन");
     }
 
@@ -1890,14 +1894,20 @@
         savedRecord.rawPayload?.error ||
         savedRecord.error || ""
       ).trim();
-      const localLower = localText.toLowerCase();
+      const combinedText = `${localText} ${message}`.toLowerCase();
+      const isNegative = /(no record found|record not found|data not found|not found|no data|not active|unregistered|failed|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन|छैन)/i.test(combinedText);
+      if (isNegative) {
+        return {
+          status: "not online",
+          voterListNumber: "",
+          sourceMessage: message || localText || "Record not found on voter list"
+        };
+      }
+
       const hasPositiveLocalEvidence = Boolean(
-        savedRecord.isActive ||
-        savedRecord.status === "active" ||
-        savedRecord.voterListNumber ||
         savedRecord.portraitImage ||
-        getVoterActiveStateFromMessage(localText).isActive ||
-        /already registered|already exists|approved|verified|स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको/i.test(localText)
+        (savedRecord.voterListNumber && !isNegative) ||
+        getVoterActiveStateFromMessage(localText).isActive
       );
       if (!localText) return null;
       return {
@@ -1922,19 +1932,29 @@
     }
 
     function getNinStatusOutcome(message = "", data = null) {
-      const text = String(message || (data && (data.error || data.message)) || "").trim();
+      const text = String(message || (data && (data.error || data.message || data.ApprovalMessage)) || "").trim();
       const lower = text.toLowerCase();
-      const { isActive, voterListNumber } = getVoterActiveStateFromMessage(text, data);
 
+      // If data explicitly returned with extracted voter details
+      if (data && data.success && data.data) {
+        const vNo = data.data.VoterNo || data.data.voterNo || data.data.VoterNumber || "";
+        return { status: "active", voterListNumber: String(vNo).trim(), sourceMessage: text || "Active on voter list" };
+      }
+
+      // Check for explicit "not found" / negative indicators
+      const isNotFound = (
+        /(no record found|record not found|data not found|not found|no data|not active|unregistered|verification failed|failed|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन|छैन)/i.test(text)
+      );
+      if (isNotFound) {
+        return { status: "not online", voterListNumber: "", sourceMessage: text || "Record not found on voter list" };
+      }
+
+      const { isActive, voterListNumber } = getVoterActiveStateFromMessage(text, data);
       if (isActive) {
         return { status: "active", voterListNumber, sourceMessage: text || "Active on voter list" };
       }
 
-      if (!text) {
-        return { status: "not online", voterListNumber: "", sourceMessage: "No response" };
-      }
-
-      return { status: "not online", voterListNumber: "", sourceMessage: text };
+      return { status: "not online", voterListNumber: "", sourceMessage: text || "Not online" };
     }
 
     async function runNinStatusScan(mode = "all") {
@@ -4806,13 +4826,17 @@
           try {
             const savedStatus = String(saved?.status || "").trim().toLowerCase();
             const savedApprovalMsg = (saved?.profileData?.ApprovalMessage || saved?.rawPayload?.ApprovalMessage || saved?.profileData?.message || saved?.profileData?.error || "");
+            const isSavedMsgNotFound = /(no record found|record not found|data not found|not found|no data|not active|unregistered|failed|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन|छैन)/i.test(savedApprovalMsg);
+
             const isActiveRecord = saved && saved.portraitImage
               ? true
-              : savedStatus === "active"
-                ? true
-                : (savedStatus === "not online" || savedStatus === "pending" || !saved)
-                  ? false
-                  : (hasVoterNo || getVoterActiveStateFromMessage(savedApprovalMsg).isActive);
+              : isSavedMsgNotFound
+                ? false
+                : (savedStatus === "active" && (hasVoterNo || getVoterActiveStateFromMessage(savedApprovalMsg).isActive))
+                  ? true
+                  : (savedStatus === "not online" || savedStatus === "pending" || !saved)
+                    ? false
+                    : (hasVoterNo || getVoterActiveStateFromMessage(savedApprovalMsg).isActive);
             if (saved && saved.portraitImage) {
               tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
             } else if (isActiveRecord) {
@@ -6221,12 +6245,27 @@
     }
 
     function getVoterActiveStateFromMessage(message = "", data = null) {
-      const text = String(message || (data && (data.ApprovalMessage || data.Approvalmessage || data.ApprovalMassage || data.message)) || "").trim();
+      const text = String(message || (data && (data.ApprovalMessage || data.Approvalmessage || data.ApprovalMassage || data.message || data.error)) || "").trim();
       if (!text) return { isActive: false, voterListNumber: "" };
 
       const lower = text.toLowerCase();
-      const isActive = /स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|already registered|already exists|already\s+registered|approved|verified/i.test(text) || (lower.includes("active") && !lower.includes("not active"));
+
+      // 1. Negative / Not-found check: If the response indicates not found or not active, it's NOT active!
+      const isNegative = (
+        /(no record found|record not found|data not found|not found|no data|not active|unregistered|verification failed|failed|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन|छैन|प्राप्त\s*हुन\s*सकेन)/i.test(text)
+      );
+      if (isNegative) {
+        return { isActive: false, voterListNumber: "" };
+      }
+
+      // 2. Positive check: Must have explicit positive confirmation of approval/registration
+      // (Do NOT match on bare 'मतदाता' because 'मतदाता' just means 'voter' and appears in negative messages like 'मतदाता फेला परेन')
+      const isPositive = (
+        /निवेदन स्वीकृत|स्वीकृत भइसकेको|दर्ता भइसकेको|कायम भएको|already registered|already exists|already\s+registered|approved/i.test(text) ||
+        (lower.includes("active") && !lower.includes("not active") && !lower.includes("not") && !lower.includes("no "))
+      );
       const voterListNumber = text.match(/\d{5,}/)?.[0] || "";
+      const isActive = isPositive && Boolean(voterListNumber || /स्वीकृत|approved|already/i.test(text));
       return { isActive, voterListNumber };
     }
 
@@ -6350,16 +6389,16 @@
                 rowObj.voterSearchState = `searching (retry ${attempt})`;
                 renderBulkTable();
                 await new Promise(r => setTimeout(r, 1200));
+              } else if (/(no record found|record not found|data not found|not found|not active|unregistered|failed|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन|छैन)/i.test(errMsg)) {
+                // Record not found → not active
+                rowObj.voterSearchResult = { success: false, error: errMsg };
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "not online", "", errMsg);
+                shouldRetry = false;
               } else if (getVoterActiveStateFromMessage(errMsg).isActive) {
                 // Already approved/registered — extract voter list number
                 const { voterListNumber } = getVoterActiveStateFromMessage(errMsg);
                 rowObj.voterSearchResult = { success: false, error: errMsg };
                 await persistVoterListRecordToSecondaryDb(nin, { error: errMsg, ApprovalMessage: errMsg, VoterNo: voterListNumber }, "active", voterListNumber, errMsg);
-                shouldRetry = false;
-              } else if (/(no record found|data not found|not found|not active)/i.test(errMsg)) {
-                // Record not found → not active
-                rowObj.voterSearchResult = { success: false, error: errMsg };
-                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "not online", "", errMsg);
                 shouldRetry = false;
               } else {
                 // Other errors → not online (don't assume active)
