@@ -159,19 +159,6 @@ function renderVerifyPage(person, mode, nin) {
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.3s ease forwards; }
     .captcha-img { image-rendering: pixelated; }
-    /* Mobile responsive overrides */
-    @media (max-width: 480px) {
-      .verify-modal-inner { padding: 12px !important; }
-      .captcha-row { flex-direction: column !important; align-items: stretch !important; }
-      .captcha-row input { width: 100% !important; }
-      .captcha-row button { width: 100% !important; margin-top: 6px; }
-      .otp-row { flex-direction: column !important; align-items: stretch !important; }
-      .otp-row input { width: 100% !important; }
-      .otp-row button { width: 100% !important; margin-top: 6px; }
-      .captcha-box-wrap { flex-direction: column !important; align-items: center !important; gap: 8px !important; }
-      #captchaImg { width: 100% !important; max-width: 220px; }
-      .step-indicator { flex-wrap: wrap !important; gap: 4px !important; }
-    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 p-4 antialiased flex flex-col items-center justify-start pt-8 pb-8">
@@ -285,7 +272,7 @@ function renderVerifyPage(person, mode, nin) {
               </svg>
             </button>
           </div>
-          <div class="p-5 overflow-y-auto verify-modal-inner">
+          <div class="p-5 overflow-y-auto">
             <div id="otpFlowCard" class="space-y-4 fade-in">
               <h3 class="text-sm font-bold text-slate-900 mb-1">Identity Verification</h3>
               <p class="text-xs text-slate-500 mb-4">Complete the steps below to verify your identity and download your NID card.</p>
@@ -303,22 +290,22 @@ function renderVerifyPage(person, mode, nin) {
 
               <!-- Step 1: Captcha -->
               <div id="step1" class="step-card active space-y-4">
-                <div>
-                  <div class="text-xs font-bold text-slate-700 mb-0.5">Enter the captcha code shown</div>
-                  <div class="text-[11px] text-slate-500 mb-3">Can't read? Click the refresh icon.</div>
-                  <div class="captcha-box-wrap flex items-center justify-start gap-3 mb-3">
-                    <div class="flex items-center gap-2 border border-slate-200 rounded-xl p-2 bg-slate-50">
-                      <img id="captchaImg" src="" alt="Captcha" class="h-12 w-36 object-contain rounded captcha-img" />
-                      <button onclick="loadCaptcha()" title="Refresh Captcha" class="p-1.5 text-slate-500 hover:text-blue-600 transition-all" aria-label="Refresh captcha">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
-                        </svg>
-                      </button>
-                    </div>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-bold text-slate-700 mb-0.5">Enter the captcha code shown</div>
+                    <div class="text-[11px] text-slate-500">Can't read? Click the refresh icon.</div>
+                  </div>
+                  <div class="flex items-center gap-2 border border-slate-200 rounded-xl p-2 bg-slate-50">
+                    <img id="captchaImg" src="" alt="Captcha" class="h-12 w-36 object-contain rounded captcha-img" />
+                    <button onclick="loadCaptcha()" title="Refresh" class="p-1.5 text-slate-500 hover:text-blue-600 transition-all">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <div class="captcha-row flex gap-2">
-                  <input id="captchaInput" type="text" placeholder="Enter captcha code" autocomplete="off" autocorrect="off" spellcheck="false"
+                <div class="flex gap-2">
+                  <input id="captchaInput" type="text" placeholder="Enter captcha code"
                     class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                   <button onclick="requestOtp()" id="btnRequestOtp"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
@@ -334,8 +321,8 @@ function renderVerifyPage(person, mode, nin) {
                   <div class="text-xs text-blue-700 font-medium">OTP sent to: <span id="maskedMobileDisplay" class="font-bold"></span></div>
                   <div class="text-[11px] text-blue-600 mt-0.5">NIN: <span id="ninDisplay" class="font-mono font-bold"></span></div>
                 </div>
-                <div class="otp-row flex gap-2">
-                  <input id="otpInput" type="tel" inputmode="numeric" pattern="[0-9]*" placeholder="Enter OTP code" maxlength="6"
+                <div class="flex gap-2">
+                  <input id="otpInput" type="text" placeholder="Enter OTP code" maxlength="6"
                     class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono tracking-widest text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                   <button onclick="verifyOtp()" id="btnVerifyOtp"
                     class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
@@ -987,15 +974,15 @@ function renderVerifyPage(person, mode, nin) {
 
     function getNidPasswordCandidates(fullName, dobNp, dobEn) {
       const candidates = [];
-      const fullNameClean = String(fullName || '').trim().replace(/\s+/g, '');
-      const firstNameClean = String(fullName || '').trim().split(/\s+/)[0] || '';
+      const fullNameClean = String(fullName || '').trim().replace(/\\s+/g, '');
+      const firstNameClean = String(fullName || '').trim().split(/\\s+/)[0] || '';
 
       function extractYear(str) {
         if (!str) return '';
         const s = translateDigits(String(str).trim(), nepToEn);
-        const m = s.match(/\b(?:19|20)\d{2}\b/) || s.match(/\b\d{4}\b/);
+        const m = s.match(/\\b(?:19|20)\\d{2}\\b/) || s.match(/\\b\\d{4}\\b/);
         if (m) return m[0];
-        const parts = s.replace(/\//g, '-').split('-');
+        const parts = s.replace(/\\//g, '-').split('-');
         for (const p of parts) {
           const t = p.trim();
           if (t.length === 4) return t;
@@ -1036,7 +1023,7 @@ function renderVerifyPage(person, mode, nin) {
       }
       // Try standard URL parsing
       try {
-        const urlToParse = str.includes('://') ? str : ('https://' + str.replace(/^\/+/, ''));
+        const urlToParse = str.includes('://') ? str : ('https://' + str.replace(/^\\/+/, ''));
         const urlObj = new URL(urlToParse);
         const tParam = urlObj.searchParams.get('token') ||
                        urlObj.searchParams.get('downloadToken') ||
@@ -1045,19 +1032,9 @@ function renderVerifyPage(person, mode, nin) {
                        urlObj.searchParams.get('code');
         if (tParam) return String(tParam).trim();
 
-        // Nepal NID: token may be the last path segment e.g. /en/verify/TOKEN
-        const pathParts = urlObj.pathname.split('/').filter(Boolean);
-        if (pathParts.length >= 2) {
-          const lastSeg = pathParts[pathParts.length - 1];
-          // Looks like a token if it contains letters + digits + special chars and is at least 20 chars
-          if (lastSeg.length >= 20 && /[a-zA-Z0-9]/.test(lastSeg)) {
-            return decodeURIComponent(lastSeg).trim();
-          }
-        }
-
         // Check hash query params if any: e.g. #token=... or #/?token=...
         if (urlObj.hash) {
-          const hashStr = urlObj.hash.replace(/^#\/?\??/, '');
+          const hashStr = urlObj.hash.replace(/^#\\/?\\??/, '');
           const hashParams = new URLSearchParams(hashStr);
           const ht = hashParams.get('token') || hashParams.get('downloadToken') || hashParams.get('t');
           if (ht) return String(ht).trim();
@@ -1065,7 +1042,7 @@ function renderVerifyPage(person, mode, nin) {
       } catch (e) {}
 
       // Regex match token=, downloadToken=, or t= parameter
-      const match = str.match(/(?:token|downloadToken|t|id)\s*[:=]\s*([^&?\s"'#<>{}()]+)/i);
+      const match = str.match(/(?:token|downloadToken|t|id)\\s*[:=]\\s*([^&?\\s"'#<>{}()]+)/i);
       if (match && match[1]) {
         let val = match[1].trim();
         try { val = decodeURIComponent(val); } catch (e) {}
@@ -1073,7 +1050,7 @@ function renderVerifyPage(person, mode, nin) {
       }
 
       // Regex for URL-encoded parameter: token%3D...
-      const encMatch = str.match(/(?:token|downloadToken)%3D([^&?\s"'#<>{}()]+)/i);
+      const encMatch = str.match(/(?:token|downloadToken)%3D([^&?\\s"'#<>{}()]+)/i);
       if (encMatch && encMatch[1]) {
         let val = encMatch[1].trim();
         try { val = decodeURIComponent(val); } catch (e) {}
@@ -1173,32 +1150,6 @@ function renderVerifyPage(person, mode, nin) {
       return null;
     }
 
-    async function extractTokenFromPdfAnnotations(pdfDoc) {
-      // Nepal NID PDFs often have clickable hyperlink annotations with the token URL
-      if (!pdfDoc) return null;
-      try {
-        const numPages = Math.min(pdfDoc.numPages, 3);
-        for (let p = 1; p <= numPages; p++) {
-          const page = await pdfDoc.getPage(p);
-          const annotations = await page.getAnnotations();
-          for (const ann of annotations) {
-            // PDF link annotations carry 'url' or 'unsafeUrl'
-            const url = ann.url || ann.unsafeUrl || (ann.action && ann.action.url) || '';
-            if (url && url.length > 8) {
-              const tok = extractToken(url);
-              if (tok && tok.length >= 10) {
-                console.log('[annotationExtract] Found token from annotation URL:', url);
-                return tok;
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[annotationExtract] Error reading annotations:', e);
-      }
-      return null;
-    }
-
     async function scanDocPagesForQr(pdfDoc) {
       if (!pdfDoc) return null;
 
@@ -1214,8 +1165,8 @@ function renderVerifyPage(person, mode, nin) {
 
       const numPages = Math.min(pdfDoc.numPages, 2);
 
-      // Multi-scale scan — 4.0x first for tiny QR codes, then fallback to lower
-      for (const scale of [4.0, 2.4, 1.8, 3.0]) {
+      // Multi-scale scan
+      for (const scale of [2.4, 1.8, 3.0]) {
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
           let page;
           try {
@@ -1229,9 +1180,6 @@ function renderVerifyPage(person, mode, nin) {
           pageCanvas.width = viewport.width;
           pageCanvas.height = viewport.height;
           const pageCtx = pageCanvas.getContext('2d');
-          // White background before rendering
-          pageCtx.fillStyle = '#ffffff';
-          pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
 
           try {
             await page.render({ canvasContext: pageCtx, viewport }).promise;
@@ -1244,7 +1192,6 @@ function renderVerifyPage(person, mode, nin) {
             const ry = Math.floor(pageCanvas.height * reg.y);
             const rw = Math.floor(pageCanvas.width * reg.w);
             const rh = Math.floor(pageCanvas.height * reg.h);
-            if (rw < 20 || rh < 20) continue;
 
             const cropCanvas = document.createElement('canvas');
             cropCanvas.width = rw;
@@ -1270,37 +1217,19 @@ function renderVerifyPage(person, mode, nin) {
       try {
         const buffer = await blob.arrayBuffer();
         let doc = null;
-        let usedPass = '';
         for (const pass of passwordCandidates) {
           try {
             const task = pdfjsLib.getDocument({ data: buffer.slice(0), password: pass });
             doc = await task.promise;
-            if (doc) { usedPass = pass; break; }
+            if (doc) break;
           } catch (e) {
             if (e.name !== 'PasswordException' && e.code !== 1) break;
           }
         }
-        // Also try with empty password (some NID PDFs are not encrypted)
-        if (!doc) {
-          try {
-            const task = pdfjsLib.getDocument({ data: buffer.slice(0) });
-            doc = await task.promise;
-          } catch (e) { /* ignore */ }
-        }
         if (!doc) return null;
-        console.log('[autoExtract] PDF opened with password:', usedPass || '(none)');
 
-        // Strategy 1: Extract from PDF link annotations (most reliable)
-        const annotToken = await extractTokenFromPdfAnnotations(doc);
-        if (annotToken) {
-          console.log('[autoExtract] Got token from annotation:', annotToken);
-          return annotToken;
-        }
-
-        // Strategy 2: Scan QR code from rendered pages
         const qrResult = await scanDocPagesForQr(doc);
         if (qrResult && qrResult.data) {
-          console.log('[autoExtract] Got token from QR scan:', qrResult.data);
           return extractToken(qrResult.data);
         }
       } catch (err) {
@@ -1387,7 +1316,7 @@ function renderVerifyPage(person, mode, nin) {
         }
 
         // Fallback: Open embedded PDF viewer modal on the same page
-        const filename = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\s+/g,'_') + '.pdf';
+        const filename = 'NID_Card_' + PERSON_FULL_NAME.trim().replace(/\\s+/g,'_') + '.pdf';
         openEmbeddedPdfModal(encryptedBlob, filename, primaryPassword);
 
         if (!verifyFlowActive || sessionId !== currentVerifyFlowSession) return;
@@ -1512,24 +1441,9 @@ function renderVerifyPage(person, mode, nin) {
       if (btn) { btn.disabled = true; btn.innerHTML = 'Scanning QR...'; }
 
       try {
-        // Strategy 1: Try PDF annotations (most reliable for Nepal NID)
-        let tokenFromAnnot = null;
-        if (embeddedPdfDoc) {
-          tokenFromAnnot = await extractTokenFromPdfAnnotations(embeddedPdfDoc);
-        }
-        if (tokenFromAnnot) {
-          console.log('Got token from PDF annotation:', tokenFromAnnot);
-          const inp = document.getElementById('pastedTokenInput');
-          if (inp) { inp.value = tokenFromAnnot; }
-          closeEmbeddedPdfModal();
-          await verifyAndSaveScannedToken();
-          return;
-        }
-
-        // Strategy 2: Multi-scale QR scan from PDF pages
         let detectedCode = await scanDocPagesForQr(embeddedPdfDoc);
 
-        // Strategy 3: Fallback to currently rendered canvas
+        // Fallback to currently rendered canvas
         if (!detectedCode) {
           const mainCanvas = document.getElementById('embeddedPdfCanvas');
           if (mainCanvas && mainCanvas.width > 0) {
@@ -1546,7 +1460,7 @@ function renderVerifyPage(person, mode, nin) {
           // Auto-trigger verify and save
           await verifyAndSaveScannedToken();
         } else {
-          alert('\u274C Could not detect a valid QR code on this PDF automatically.\n\nPlease scan the QR code using your mobile phone camera or scanner app, then paste the URL or token in the box below to save.');
+          alert('❌ Could not detect a valid QR code on this PDF automatically.\\n\\nPlease scan the QR code using your mobile phone camera or scanner app, then paste the URL or token in the box below to save.');
         }
       } catch (err) {
         console.error(err);
@@ -1600,14 +1514,14 @@ function renderVerifyPage(person, mode, nin) {
         const checkData = await checkRes.json();
         if (!checkData.valid) {
           if (checkData.serverUnavailable) {
-            const proceed = confirm('⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?');
+            const proceed = confirm('⚠️ Government verification server timed out or is temporarily slow.\\n\\nDo you want to proceed and save this token to the database anyway?');
             if (!proceed) {
               btn.disabled = false;
               btn.textContent = 'Verify & Save Token';
               return;
             }
           } else {
-            const proceed = confirm('⚠️ Government verification response: ' + (checkData.reason || 'Verification check failed') + '.\n\nDo you want to proceed and save this token to the database anyway?');
+            const proceed = confirm('⚠️ Government verification response: ' + (checkData.reason || 'Verification check failed') + '.\\n\\nDo you want to proceed and save this token to the database anyway?');
             if (!proceed) {
               throw new Error(checkData.reason || 'This token could not be verified by the government server. Please make sure you scanned the correct QR code from the downloaded PDF.');
             }

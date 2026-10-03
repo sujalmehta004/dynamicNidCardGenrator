@@ -599,6 +599,16 @@
               </div>
             </div>
 
+            <div id="formWorkspaceHistorySection" class="mt-4 pt-3 border-t border-slate-200 hidden">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  📜 Previous Updates History
+                  <span id="formWorkspaceHistoryCount" class="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+                </span>
+              </div>
+              <div id="formWorkspaceHistoryList"></div>
+            </div>
+
             <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
               <button type="button" onclick="clearFormCanvas()"
                 class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition-all">
@@ -1567,18 +1577,6 @@
       const countLabel = document.getElementById("ninStatusSelectionSummary");
       const scanBtn = document.getElementById("btnUpdateNinStatus");
 
-      openNinStatusModal();
-      if (selectionPanel) selectionPanel.classList.remove("hidden");
-      if (logPanel) logPanel.classList.add("hidden");
-      if (progressLabel) progressLabel.textContent = "Choose a scan scope to begin.";
-      if (countLabel) {
-        const total = Array.isArray(allCachedRecords) ? allCachedRecords.length : 0;
-        countLabel.textContent = `${total} record(s) available in the database.`;
-      }
-      if (scanBtn) {
-        scanBtn.disabled = false;
-        scanBtn.textContent = "🔄 Update NIN Status";
-      }
       ninStatusScanState.isRunning = false;
       ninStatusScanState.mode = null;
       ninStatusScanState.total = 0;
@@ -1588,10 +1586,31 @@
       ninStatusScanState.activeRecord = null;
       ninStatusScanState.selectedNins = [];
       ninStatusScanState.pendingRecords = [];
+
+      if (selectionPanel) selectionPanel.classList.remove("hidden");
+      if (logPanel) logPanel.classList.add("hidden");
+      if (progressLabel) progressLabel.textContent = "Choose a scan scope to begin.";
+      if (countLabel) {
+        const total = Array.isArray(allCachedRecords) ? allCachedRecords.length : 0;
+        const nonActive = Array.isArray(allCachedRecords) ? allCachedRecords.filter(row => {
+          const nin = String(row?.ninEn || row?.nin || "").trim();
+          const saved = voterListIndex[nin];
+          if (!saved) return true;
+          const st = String(saved.status || "").trim().toLowerCase();
+          return st !== "active" && !saved.portraitImage && !saved.voterListNumber;
+        }).length : 0;
+        countLabel.textContent = `${total} record(s) in database — ${nonActive} not yet active on voter list.`;
+      }
+      if (scanBtn) {
+        scanBtn.disabled = false;
+        scanBtn.textContent = "🔄 Update NIN Status";
+      }
+
       closeNinStatusDetailModal();
       renderNinStatusScanTable();
       renderNinStatusPendingPanel();
       renderNinStatusSelectionList();
+      openNinStatusModal();
     }
 
     function openNinStatusModal() {
@@ -1600,7 +1619,7 @@
       const logPanel = document.getElementById("ninStatusLiveLogPanel");
       if (!modal) return;
 
-      modal.classList.remove("hidden");
+      modal.style.display = "flex";
       if (ninStatusScanState.isRunning) {
         if (selectionPanel) selectionPanel.classList.add("hidden");
         if (logPanel) logPanel.classList.remove("hidden");
@@ -1617,7 +1636,7 @@
 
     function closeNinStatusModal() {
       const modal = document.getElementById("ninStatusActionModal");
-      if (modal) modal.classList.add("hidden");
+      if (modal) modal.style.display = "none";
       closeNinStatusDetailModal();
     }
 
@@ -1638,13 +1657,40 @@
       return "bg-slate-50 text-slate-700 border-slate-200";
     }
 
+    function updateNinStatusSelectedCount() {
+      const selectedCount = (ninStatusScanState.selectedNins || []).length;
+      const countBadge = document.getElementById("ninStatusSelectedCount");
+      if (countBadge) {
+        countBadge.textContent = `${selectedCount} selected`;
+      }
+      const scopeBadge = document.getElementById("ninStatusSelectedBadge");
+      const scopeHint = document.getElementById("ninStatusSelectedHint");
+      if (scopeBadge) {
+        if (selectedCount > 0) {
+          scopeBadge.textContent = `${selectedCount} selected`;
+          scopeBadge.classList.remove("hidden");
+        } else {
+          scopeBadge.classList.add("hidden");
+        }
+      }
+      if (scopeHint) {
+        scopeHint.textContent = selectedCount > 0
+          ? `Ready to scan ${selectedCount} selected record(s).`
+          : "Only scan the records you have checked below.";
+      }
+    }
+
     function renderNinStatusSelectionList() {
       const container = document.getElementById("ninStatusSelectionList");
       if (!container) return;
 
-      const rows = Array.isArray(allCachedRecords) ? allCachedRecords : [];
+      const rows = (Array.isArray(allCachedRecords) ? allCachedRecords : []).filter((row) => {
+        return Boolean(String(row?.ninEn || row?.nin || "").trim());
+      });
+
       if (!rows.length) {
-        container.innerHTML = '<div class="text-[10px] text-slate-400">No records available.</div>';
+        container.innerHTML = '<div class="text-[10px] text-slate-400 p-2">No records available.</div>';
+        updateNinStatusSelectedCount();
         return;
       }
 
@@ -1653,37 +1699,58 @@
         const nin = String(row?.ninEn || row?.nin || "").trim();
         const name = `${row?.givenEn || ""} ${row?.surnameEn || ""}`.trim() || nin || "Unknown";
         const checked = selectedSet.has(nin) ? "checked" : "";
-        return `<label class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[10px] text-slate-700">
+        return `<label class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[10px] text-slate-700 cursor-pointer hover:bg-slate-50 transition-colors">
           <span class="flex items-center gap-2 min-w-0">
-            <input type="checkbox" class="accent-blue-600" ${checked} onchange="toggleNinStatusSelection('${escapeHtml(nin)}')" />
-            <span class="truncate font-semibold">${escapeHtml(name)}</span>
+            <input type="checkbox" class="nin-select-checkbox accent-blue-600 rounded cursor-pointer" data-nin="${escapeHtml(nin)}" ${checked} onchange="toggleNinStatusSelection(this.getAttribute('data-nin'), this.checked)" />
+            <span class="truncate font-semibold select-none">${escapeHtml(name)}</span>
           </span>
-          <span class="font-mono text-[9px] text-slate-400">${escapeHtml(nin || "—")}</span>
+          <span class="font-mono text-[9px] text-slate-400 select-none">${escapeHtml(nin || "—")}</span>
         </label>`;
       }).join("");
+
+      updateNinStatusSelectedCount();
     }
 
-    function toggleNinStatusSelection(nin) {
+    function toggleNinStatusSelection(nin, isChecked) {
       const cleanNin = String(nin || "").trim();
       if (!cleanNin) return;
       const selectedSet = new Set(ninStatusScanState.selectedNins || []);
-      if (selectedSet.has(cleanNin)) {
-        selectedSet.delete(cleanNin);
+      if (typeof isChecked === "boolean") {
+        if (isChecked) {
+          selectedSet.add(cleanNin);
+        } else {
+          selectedSet.delete(cleanNin);
+        }
       } else {
-        selectedSet.add(cleanNin);
+        if (selectedSet.has(cleanNin)) {
+          selectedSet.delete(cleanNin);
+        } else {
+          selectedSet.add(cleanNin);
+        }
       }
       ninStatusScanState.selectedNins = Array.from(selectedSet);
-      renderNinStatusSelectionList();
+      // Synchronize checkbox state in DOM without rebuilding innerHTML
+      const checkboxes = document.querySelectorAll(`#ninStatusSelectionList input.nin-select-checkbox[data-nin="${cleanNin.replace(/"/g, '\\"')}"]`);
+      const shouldBeChecked = selectedSet.has(cleanNin);
+      checkboxes.forEach((cb) => { cb.checked = shouldBeChecked; });
+      updateNinStatusSelectedCount();
     }
 
     function selectAllNinStatusSelections() {
-      ninStatusScanState.selectedNins = (Array.isArray(allCachedRecords) ? allCachedRecords : []).map((row) => String(row?.ninEn || row?.nin || "").trim()).filter(Boolean);
-      renderNinStatusSelectionList();
+      const allNins = (Array.isArray(allCachedRecords) ? allCachedRecords : [])
+        .map((row) => String(row?.ninEn || row?.nin || "").trim())
+        .filter(Boolean);
+      ninStatusScanState.selectedNins = Array.from(new Set(allNins));
+      const checkboxes = document.querySelectorAll("#ninStatusSelectionList input.nin-select-checkbox");
+      checkboxes.forEach((cb) => { cb.checked = true; });
+      updateNinStatusSelectedCount();
     }
 
     function clearNinStatusSelections() {
       ninStatusScanState.selectedNins = [];
-      renderNinStatusSelectionList();
+      const checkboxes = document.querySelectorAll("#ninStatusSelectionList input.nin-select-checkbox");
+      checkboxes.forEach((cb) => { cb.checked = false; });
+      updateNinStatusSelectedCount();
     }
 
     function renderNinStatusPendingPanel() {
@@ -1852,29 +1919,14 @@
     function getNinStatusOutcome(message = "", data = null) {
       const text = String(message || (data && (data.error || data.message)) || "").trim();
       const lower = text.toLowerCase();
-      const payloadHasProfileData = Boolean(data && data.data && typeof data.data === "object" && Object.keys(data.data).length > 0);
       const { isActive, voterListNumber } = getVoterActiveStateFromMessage(text, data);
 
-      if (isActive || payloadHasProfileData) {
-        return { status: "active", voterListNumber, sourceMessage: text || "Profile data received" };
+      if (isActive) {
+        return { status: "active", voterListNumber, sourceMessage: text || "Active on voter list" };
       }
 
-      const negativePatterns = [
-        "no record found",
-        "data not found",
-        "not found",
-        "please verify nin",
-        "not active",
-        "request timed out",
-        "failed to fetch",
-        "temporarily",
-        "try again",
-        "server",
-        "network error"
-      ];
-
-      if (negativePatterns.some((pattern) => lower.includes(pattern))) {
-        return { status: "not online", voterListNumber: "", sourceMessage: text };
+      if (!text) {
+        return { status: "not online", voterListNumber: "", sourceMessage: "No response" };
       }
 
       return { status: "not online", voterListNumber: "", sourceMessage: text };
@@ -1903,7 +1955,18 @@
         const selectedSet = new Set(ninStatusScanState.selectedNins || []);
         candidateRecords = records.filter((row) => selectedSet.has(String(row?.ninEn || row?.nin || "").trim()));
       } else if (mode === "pending") {
-        candidateRecords = ninStatusScanState.pendingRecords || [];
+        // Non-active: records whose voter list status is NOT active
+        candidateRecords = records.filter((row) => {
+          const nin = String(row?.ninEn || row?.nin || "").trim();
+          const saved = voterListIndex[nin];
+          if (!saved) return true; // not yet checked
+          const savedStatus = String(saved.status || "").trim().toLowerCase();
+          if (savedStatus === "active") return false;
+          if (saved.portraitImage) return false; // has portrait = active
+          const voterNo = saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo));
+          if (voterNo) return false;
+          return true;
+        });
       } else {
         candidateRecords = records;
       }
@@ -1914,8 +1977,7 @@
           btn.textContent = "🔄 Update NIN Status";
         }
         ninStatusScanState.isRunning = false;
-        showCustomAlert("No records selected", "Please choose at least one record to search.", "info");
-        openNinStatusModal();
+        showCustomAlert("No records found", "No records matched the selected scope.", "info");
         return;
       }
 
@@ -2076,21 +2138,23 @@
 
     window.startNinStatusScan = function (mode) {
       if (ninStatusScanState.isRunning) return;
-      openNinStatusModal();
+      // For 'selected' mode, validate BEFORE any state changes or re-renders
+      if (mode === "selected") {
+        const selected = ninStatusScanState.selectedNins || [];
+        if (!selected.length) {
+          showCustomAlert("No records selected", "Please check at least one record from the list below before clicking Search Selected.", "info");
+          return;
+        }
+      }
+      // Modal is already open — don't call openNinStatusModal() here as it
+      // triggers renderNinStatusSelectionList() which rebuilds checkboxes
+      // and can cause selectedNins to appear empty to runNinStatusScan
       runNinStatusScan(mode);
     };
 
-    window.toggleNinStatusSelection = function (nin) {
-      toggleNinStatusSelection(nin);
-    };
-
-    window.selectAllNinStatusSelections = function () {
-      selectAllNinStatusSelections();
-    };
-
-    window.clearNinStatusSelections = function () {
-      clearNinStatusSelections();
-    };
+    window.toggleNinStatusSelection = toggleNinStatusSelection;
+    window.selectAllNinStatusSelections = selectAllNinStatusSelections;
+    window.clearNinStatusSelections = clearNinStatusSelections;
 
     window.addEventListener("DOMContentLoaded", () => {
       // Listen for scanned token from the secure PDF viewer page
@@ -3593,95 +3657,995 @@
       return { left: "#e2e8f0", badge_bg: "#f8fafc", badge_text: "#64748b", badge_border: "#e2e8f0" };
     }
 
-    function openRowDetailPopup(ninEn) {
-      const row = documentIdentityDb.find(r => r.ninEn === ninEn);
-      if (!row) return;
-      const savedPortrait = voterListIndex[String(row.ninEn || '').trim()];
-      const approvalText = String(
-        (savedPortrait && (savedPortrait.profileData && (savedPortrait.profileData.ApprovalMessage || savedPortrait.profileData.Approvalmessage || savedPortrait.profileData.ApprovalMassage)) ) ||
-        (savedPortrait && (savedPortrait.rawPayload && (savedPortrait.rawPayload.ApprovalMessage || savedPortrait.rawPayload.Approvalmessage || savedPortrait.rawPayload.ApprovalMassage))) ||
-        (savedPortrait && savedPortrait.error) || ""
-      ).trim();
-      const isApprovalNotice = getVoterActiveStateFromMessage(approvalText).isActive || getSavedRecordActiveState(savedPortrait);
-      if (isApprovalNotice) {
-        showCustomAlert("Approval Notice", "NID activated", "success");
-        return;
+    // ── Shared QR code scanner helper using jsQR ─────────────────────────────
+    function scanCanvasForQr(ctx, width, height) {
+      if (!ctx || width <= 0 || height <= 0 || typeof jsQR === 'undefined') return null;
+      try {
+        const imgData = ctx.getImageData(0, 0, width, height);
+        // Pass 1: standard detection
+        let code = jsQR(imgData.data, width, height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) return code;
+
+        // Pass 2: high contrast thresholding
+        const d = new Uint8ClampedArray(imgData.data);
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
+          const v = lum < 130 ? 0 : 255;
+          d[i] = v; d[i + 1] = v; d[i + 2] = v;
+        }
+        code = jsQR(d, width, height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) return code;
+
+        // Pass 3: lighter thresholding for faded scans
+        for (let i = 0; i < d.length; i += 4) {
+          const lum = (imgData.data[i] * 0.299 + imgData.data[i + 1] * 0.587 + imgData.data[i + 2] * 0.114);
+          const v = lum < 90 ? 0 : 255;
+          d[i] = v; d[i + 1] = v; d[i + 2] = v;
+        }
+        code = jsQR(d, width, height, { inversionAttempts: "attemptBoth" });
+        if (code && code.data) return code;
+      } catch (e) {
+        console.warn("scanCanvasForQr warning:", e);
       }
-      const portraitHtml = savedPortrait && savedPortrait.portraitImage
-        ? `<div style="width:84px; min-width:84px; max-height:104px; overflow:hidden; border-radius:14px; border:1px solid #e2e8f0; background:#f8fafc; display:flex; align-items:center; justify-content:center;">
-             <img src="data:image/jpeg;base64,${savedPortrait.portraitImage}" class="w-full h-full object-cover" />
-           </div>`
-        : "";
-      const sc = getStatusAccentColor(row.status);
-      const statusLabel = row.status === "inprogress" ? "Mobile Not Registered" :
-        row.status === "not online" ? "Not Online" :
-          row.status === "pending" ? "Pending" :
-            row.status === "done" ? "Done" : row.status;
-      const modal = document.getElementById("rowDetailModal");
-      document.getElementById("rowDetailContent").innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-          ${portraitHtml}
-          <div style="flex:1; min-width:0;">
-            <div style="font-weight:800; font-size:14px; color:#1e293b;">${row.givenEn || ""} ${row.surnameEn || ""}</div>
-            <div style="font-size:11px; color:#64748b; font-family:inherit;" class="nepali-font">${row.givenNp || ""} ${row.surnameNp || ""}</div>
+      return null;
+    }
+
+    // ── DOB Year & Password Helper ──────────────────────────────────────────
+    function extractNidDobYear(dobLoc, dobEn) {
+      function findYear(str) {
+        if (!str) return '';
+        const s = translateDigits(String(str).trim(), nepaliToEnglishDigits);
+        const m = s.match(/\b(?:19|20)\d{2}\b/) || s.match(/\b\d{4}\b/);
+        if (m) return m[0];
+        const parts = s.replace(/\//g, '-').split('-');
+        for (const p of parts) {
+          const t = p.trim();
+          if (t.length === 4) return t;
+        }
+        return '';
+      }
+      return findYear(dobLoc) || findYear(dobEn) || '2000';
+    }
+
+    // ── Smart Update Action Title Resolver ──────────────────────────────────
+    function getDisplayActionTitle(item) {
+      if (!item) return 'Record Updated';
+      const changes = item.changes || {};
+      const changeKeys = Object.keys(changes);
+      const fields = (Array.isArray(item.changedFields) && item.changedFields.length > 0)
+        ? item.changedFields
+        : changeKeys;
+
+      const rawAction = String(item.action || '').trim();
+      const isTokenAction = rawAction.toLowerCase().includes('token');
+      const hasTokenInFields = fields.includes('token');
+
+      // If action is NOT claiming token update, and is specific, return it
+      if (rawAction && !isTokenAction && rawAction !== 'Manual Edit' && rawAction !== 'Record Updated') {
+        return rawAction;
+      }
+
+      // If action claimed token update, but token was NOT actually changed:
+      // compute true title from the actual fields changed!
+      const FIELD_LABELS = {
+        mobile: 'Mobile Number',
+        addressEn: 'Address (EN)',
+        addressNp: 'Address (NP)',
+        givenEn: 'Given Name (EN)',
+        surnameEn: 'Surname (EN)',
+        givenNp: 'Given Name (NP)',
+        surnameNp: 'Surname (NP)',
+        dobEn: 'DOB (EN)',
+        dobNp: 'DOB (NP)',
+        nationality: 'Nationality',
+        citDate: 'Citizenship Date',
+        status: 'Status',
+        cardDesign: 'Card Design',
+        ninEn: 'NIN (EN)',
+        ninNp: 'NIN (NP)',
+        token: 'e-NID Token',
+        baseUrl: 'Base URL',
+      };
+
+      if (fields.length === 1) {
+        const f = fields[0];
+        if (f === 'mobile') return 'Mobile Number Updated';
+        if (f === 'addressEn' || f === 'addressNp') return 'Address Updated';
+        if (f === 'status') {
+          const toVal = changes.status?.to;
+          return toVal ? `Status Changed: ${toVal}` : 'Status Updated';
+        }
+        if (f === 'cardDesign') {
+          const toVal = changes.cardDesign?.to;
+          return toVal ? `Card Design: ${toVal}` : 'Card Design Updated';
+        }
+        if (f === 'token') return 'Token Verified & Saved';
+        if (f === 'givenEn' || f === 'surnameEn') return 'English Name Updated';
+        if (f === 'givenNp' || f === 'surnameNp') return 'Nepali Name Updated';
+        if (f === 'dobEn' || f === 'dobNp') return 'Date of Birth Updated';
+        if (f === 'citDate') return 'Citizenship Date Updated';
+        if (f === 'ninEn' || f === 'ninNp') return 'NIN Updated';
+        return `${FIELD_LABELS[f] || f} Updated`;
+      }
+
+      if (fields.length === 2) {
+        const s = new Set(fields);
+        if (s.has('givenEn') && s.has('surnameEn')) return 'English Name Updated';
+        if (s.has('givenNp') && s.has('surnameNp')) return 'Nepali Name Updated';
+        if (s.has('addressEn') && s.has('addressNp')) return 'Address (EN & NP) Updated';
+        if (s.has('dobEn') && s.has('dobNp')) return 'Date of Birth Updated';
+        if (s.has('token') && s.has('status')) return 'Token Verified & Saved';
+        if (s.has('token') && s.has('mobile')) return 'Token & Mobile Number Updated';
+      }
+
+      if (hasTokenInFields) {
+        const others = fields.filter(f => f !== 'token').map(f => FIELD_LABELS[f] || f);
+        if (others.length === 0) return 'Token Verified & Saved';
+        if (others.length <= 2) return `Token & ${others.join(', ')} Updated`;
+        return `Token & Profile Updated (${others.length} fields)`;
+      }
+
+      if (fields.length > 0) {
+        const names = fields.map(f => FIELD_LABELS[f] || f);
+        if (names.length <= 3) return `${names.join(', ')} Updated`;
+        return `Profile Updated (${names.length} fields: ${names.slice(0, 3).join(', ')}...)`;
+      }
+
+      return rawAction || 'Record Updated';
+    }
+
+    // ── Update Record Brief Modal ───────────────────────────────────────────
+    function openUpdateRecordBrief(ninEn, historyIndex) {
+      const row = documentIdentityDb.find(r => r.ninEn === ninEn);
+      if (!row || !Array.isArray(row.updateHistory)) return;
+      const item = row.updateHistory[historyIndex];
+      if (!item) return;
+
+      const modal = document.getElementById("updateRecordBriefModal");
+      if (!modal) return;
+
+      const timeStr = item.updatedAt
+        ? new Date(item.updatedAt).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        : (item.updateDate || 'Unknown date');
+
+      const action = getDisplayActionTitle(item);
+
+      document.getElementById("updateBriefTitle").innerText = action;
+      document.getElementById("updateBriefTime").innerText = timeStr;
+      document.getElementById("updateBriefNin").innerText = row.ninEn;
+      document.getElementById("updateBriefName").innerText = `${row.givenEn || ''} ${row.surnameEn || ''}`.trim() || '—';
+
+      const noteEl = document.getElementById("updateBriefNote");
+      const noteWrap = document.getElementById("updateBriefNoteWrapper");
+      if (item.note) {
+        noteEl.innerText = item.note;
+        if (noteWrap) noteWrap.style.display = 'block';
+      } else {
+        if (noteWrap) noteWrap.style.display = 'none';
+      }
+
+      const container = document.getElementById("updateBriefChangesContainer");
+      container.innerHTML = "";
+
+      const changes = item.changes || {};
+      const entries = Object.entries(changes);
+
+      if (entries.length > 0) {
+        let tableHtml = `
+          <div class="overflow-x-auto border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200">
+                  <th class="p-3 w-1/4">Field</th>
+                  <th class="p-3 w-3/8">Previous Value (Before)</th>
+                  <th class="p-3 w-3/8">Updated Value (After)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white">
+        `;
+
+        entries.forEach(([field, val]) => {
+          const oldVal = (val && val.from !== undefined && val.from !== '')
+            ? escapeHtml(String(val.from))
+            : '<span class="text-slate-400 italic">None / Empty</span>';
+          const newVal = (val && val.to !== undefined && val.to !== '')
+            ? escapeHtml(String(val.to))
+            : '<span class="text-slate-400 italic">None / Cleared</span>';
+
+          const isTokenField = field.toLowerCase().includes('token');
+
+          tableHtml += `
+            <tr class="hover:bg-slate-50/70 transition-colors">
+              <td class="p-3 font-bold text-slate-700 font-mono text-[11px] bg-slate-50/40">${escapeHtml(field)}</td>
+              <td class="p-3 text-red-600 line-through bg-red-50/20 font-mono text-[11px] break-all">${oldVal}</td>
+              <td class="p-3 text-emerald-700 font-semibold bg-emerald-50/20 font-mono text-[11px] break-all">
+                ${newVal}
+                ${isTokenField && val?.to ? `<button onclick="navigator.clipboard.writeText('${escapeHtml(String(val.to))}'); alert('Token copied to clipboard!');" class="ml-2 px-1.5 py-0.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[9px] rounded font-sans font-bold transition-colors">Copy</button>` : ''}
+              </td>
+            </tr>
+          `;
+        });
+
+        tableHtml += `
+              </tbody>
+            </table>
           </div>
-          <span style="margin-left:auto; font-size:9px; font-weight:700; padding:3px 10px; border-radius:20px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; text-transform:uppercase; letter-spacing:.06em;">${statusLabel}</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:11px;">
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">NID Number</div>
-            <div style="font-family:monospace; font-weight:700; color:#2563eb; font-size:12px;">${row.ninEn}</div>
-            <div style="font-size:10px; color:#94a3b8; margin-top:2px;">${row.ninNp || "—"}</div>
+        `;
+        container.innerHTML = tableHtml;
+      } else if (item.changedFields && item.changedFields.length > 0) {
+        container.innerHTML = `
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+            <p class="font-bold text-slate-700 mb-2">Changed Fields Summary:</p>
+            <div class="flex flex-wrap gap-1.5">
+              ${item.changedFields.map(f => `<span class="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 font-mono text-[11px] font-bold shadow-sm">${escapeHtml(f)}</span>`).join('')}
+            </div>
           </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Date of Birth</div>
-            <div style="font-weight:600; color:#1e293b;">${row.dobEn || "—"}</div>
-            <div style="font-size:10px; color:#94a3b8; margin-top:2px;">${row.dobNp || "—"}</div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+            No specific field differences recorded for this entry.
           </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Citizenship Date</div>
-            <div style="font-weight:600; color:#1e293b;">${row.citDate || "—"}</div>
-          </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Mobile</div>
-            <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.mobile || "—"}</div>
-          </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px; grid-column:span 2;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Address</div>
-            <div style="font-weight:600; color:#1e293b;">${row.addressEn || "—"}</div>
-            <div style="font-size:10px; color:#94a3b8; margin-top:2px;" class="nepali-font">${row.addressNp || "—"}</div>
-          </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Registered</div>
-            <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.regDate || "—"}</div>
-          </div>
-          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
-            <div style="color:#94a3b8; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Updated</div>
-            <div style="font-weight:600; color:#1e293b; font-family:monospace;">${row.updateDate || "—"}</div>
-          </div>
-          ${row.token ? `
-          <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:10px; grid-column:span 2;">
-            <div style="color:#0284c7; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px;">Verification Token</div>
-            <div style="font-family:monospace; font-size:10px; color:#0369a1; word-break:break-all;">${row.token}</div>
-          </div>` : ""}
-        </div>
-        <div style="display:flex; gap:8px; margin-top:16px; padding-top:12px; border-top:1px solid #f1f5f9;">
-          <button onclick="pullRowIntoWorkspace('${row.ninEn}'); closeRowDetailModal();" style="flex:1; background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; font-weight:700; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer; transition:background .15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">✏️ Modify Record</button>
-          <select onchange="updateRowStatusInline('${row.ninEn}', this.value); closeRowDetailModal();" style="background:#f8fafc; border:1px solid #e2e8f0; color:#475569; font-weight:600; padding:8px 12px; border-radius:10px; font-size:11px; cursor:pointer;">
-            <option value="">Change Status…</option>
-            <option value="pending" ${row.status === "pending" ? "selected" : ""}>Pending</option>
-            <option value="done" ${row.status === "done" ? "selected" : ""}>Done</option>
-            <option value="inprogress" ${row.status === "inprogress" ? "selected" : ""}>Mobile Not Registered</option>
-            <option value="not online" ${row.status === "not online" ? "selected" : ""}>Not Online</option>
-          </select>
-        </div>
-      `;
+        `;
+      }
+
       modal.classList.remove("hidden");
       setTimeout(() => modal.firstElementChild.classList.add("scale-100"), 10);
     }
 
+    function closeUpdateRecordBriefModal() {
+      const modal = document.getElementById("updateRecordBriefModal");
+      if (!modal) return;
+      modal.firstElementChild.classList.remove("scale-100");
+      setTimeout(() => modal.classList.add("hidden"), 150);
+    }
+
+    // ── Row Detail Modal — update history renderer ───────────────────────────
+    function renderUpdateHistoryHtml(historyList, prefix, ninEn) {
+      if (!historyList || !Array.isArray(historyList) || historyList.length === 0) {
+        return `<div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:14px; text-align:center; color:#94a3b8; font-size:11px;">
+          No update history recorded for this record yet.
+        </div>`;
+      }
+      const pfx = prefix || 'rdh';
+      const resolvedNin = ninEn || (typeof rdModal_nin !== 'undefined' ? rdModal_nin : '');
+      const sorted = [...historyList].sort((a, b) => new Date(b.updatedAt || b.updateDate || 0) - new Date(a.updatedAt || a.updateDate || 0));
+
+      return `<div style="display:flex; flex-direction:column; gap:8px;">
+        ${sorted.map((item, idx) => {
+          const timeStr = item.updatedAt
+            ? new Date(item.updatedAt).toLocaleString('en-US', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+            : (item.updateDate || 'Unknown date');
+          const action = getDisplayActionTitle(item);
+          const changes = item.changes || {};
+          const hasChanges = typeof changes === 'object' && Object.keys(changes).length > 0;
+          const isToken = action.toLowerCase().includes('token');
+          const isStatus = action.toLowerCase().includes('status');
+          const isMobile = action.toLowerCase().includes('mobile');
+          const isAddress = action.toLowerCase().includes('address');
+          const badgeBg = isToken ? '#ecfdf5' : isStatus ? '#fef3c7' : isMobile ? '#eff6ff' : isAddress ? '#f0fdf4' : '#f8fafc';
+          const badgeBorder = isToken ? '#6ee7b7' : isStatus ? '#fcd34d' : isMobile ? '#93c5fd' : isAddress ? '#86efac' : '#cbd5e1';
+          const badgeColor = isToken ? '#047857' : isStatus ? '#b45309' : isMobile ? '#1d4ed8' : isAddress ? '#15803d' : '#334155';
+
+          let briefPreview = '';
+          if (hasChanges) {
+            const changeKeys = Object.keys(changes);
+            briefPreview = changeKeys.slice(0, 3).map(k => {
+              const v = changes[k];
+              const oldV = (v && v.from !== undefined && v.from !== '') ? escapeHtml(String(v.from)) : 'empty';
+              const newV = (v && v.to !== undefined && v.to !== '') ? escapeHtml(String(v.to)) : 'empty';
+              return `<div style="display:flex;align-items:center;gap:6px;font-size:10px;padding:1px 0;">
+                <span style="font-weight:700;color:#475569;min-width:65px;">${escapeHtml(k)}:</span>
+                <span style="text-decoration:line-through;color:#ef4444;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${oldV}</span>
+                <span style="color:#94a3b8;">→</span>
+                <span style="color:#10b981;font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${newV}</span>
+              </div>`;
+            }).join('') + (changeKeys.length > 3 ? `<div style="font-size:9px;color:#94a3b8;font-style:italic;">+ ${changeKeys.length - 3} more fields...</div>` : '');
+          } else if (item.note) {
+            briefPreview = `<div style="font-size:10px;color:#64748b;padding:2px 0;">${escapeHtml(item.note)}</div>`;
+          }
+
+          const escapedNin = escapeHtml(resolvedNin);
+
+          return `<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;transition:all .15s;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 3px 10px rgba(59,130,246,0.1)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'" onclick="openUpdateRecordBrief('${escapedNin}', ${idx})">
+            <div style="padding:9px 12px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;">
+                <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid ${badgeBorder};background:${badgeBg};color:${badgeColor};white-space:nowrap;">${escapeHtml(action)}</span>
+                ${item.changedFields && item.changedFields.length ? `<span style="font-size:9px;color:#64748b;background:#f1f5f9;padding:1px 6px;border-radius:6px;font-weight:600;">${item.changedFields.slice(0,3).join(', ')}${item.changedFields.length > 3 ? '…' : ''}</span>` : ''}
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <span style="font-size:9px;color:#94a3b8;font-family:monospace;">${escapeHtml(timeStr)}</span>
+                <span style="font-size:10px;color:#2563eb;font-weight:700;background:#eff6ff;padding:2px 6px;border-radius:6px;border:1px solid #bfdbfe;" title="Click to view brief">Brief ↗</span>
+              </div>
+            </div>
+            ${briefPreview ? `
+            <div style="padding:8px 12px;background:#fff;border-top:1px solid #f1f5f9;">
+              ${briefPreview}
+            </div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    // ── Row Detail Modal State ───────────────────────────────────────────────
+    let rdModal_nin = '';
+    let rdModal_row = null;
+    let rdModal_txId = '';
+    let rdModal_dlToken = '';
+    let rdModal_lastPdfBlob = null;
+    let rdModal_lastPdfPassword = '';
+
+    function openRowDetailPopup(ninEn) {
+      const row = documentIdentityDb.find(r => r.ninEn === ninEn);
+      if (!row) return;
+      rdModal_nin = ninEn;
+      rdModal_row = row;
+      rdModal_txId = '';
+      rdModal_dlToken = '';
+      rdModal_lastPdfBlob = null;
+      rdModal_lastPdfPassword = '';
+
+      const savedPortrait = voterListIndex[String(row.ninEn || '').trim()];
+      const sc = getStatusAccentColor(row.status);
+      const statusLabel = row.status === 'inprogress' ? 'Mobile Not Registered' :
+        row.status === 'not online' ? 'Not Online' :
+          row.status === 'pending' ? 'Pending' :
+            row.status === 'done' ? 'Done' : row.status;
+
+      const portraitHtml = savedPortrait && savedPortrait.portraitImage
+        ? `<div style="width:76px;min-width:76px;height:92px;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;background:#f8fafc;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+             <img src="data:image/jpeg;base64,${savedPortrait.portraitImage}" style="width:100%;height:100%;object-fit:cover;" />
+           </div>`
+        : `<div style="width:76px;min-width:76px;height:92px;border-radius:12px;border:1px dashed #cbd5e1;background:#f8fafc;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:24px;">👤</div>`;
+
+      const historyList = Array.isArray(row.updateHistory) ? row.updateHistory : [];
+      const histCount = historyList.length;
+
+      // Citizen field values
+      const fullNameEn = `${row.givenEn || ''} ${row.surnameEn || ''}`.trim();
+      const fullNameNp = `${row.givenNp || ''} ${row.surnameNp || ''}`.trim();
+      const dobNp = row.dobNp || '';
+      const citDate = row.citDate || '';
+      const dobNpNepali = translateDigits(dobNp, englishToNepaliDigits);
+      const citDateNepali = translateDigits(citDate, englishToNepaliDigits);
+
+      document.getElementById('rowDetailContent').innerHTML = `
+        <!-- WIDE TWO-COLUMN LAYOUT -->
+        <div style="display:grid;grid-template-columns:minmax(0, 1.25fr) minmax(390px, 460px);gap:28px;min-height:0;">
+
+          <!-- ═══ LEFT COLUMN: Identity Info + Update Records ═══ -->
+          <div style="display:flex;flex-direction:column;gap:14px;min-width:0;">
+
+            <!-- Header row: portrait + name + status -->
+            <div style="display:flex;align-items:flex-start;gap:14px;">
+              ${portraitHtml}
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:800;font-size:16px;color:#0f172a;line-height:1.2;">${escapeHtml((row.givenEn||'') + ' ' + (row.surnameEn||''))}</div>
+                <div style="font-size:13px;color:#64748b;margin-top:2px;" class="nepali-font">${escapeHtml((row.givenNp||'') + ' ' + (row.surnameNp||''))}</div>
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                  <span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:16px;border:1px solid ${sc.badge_border};background:${sc.badge_bg};color:${sc.badge_text};text-transform:uppercase;letter-spacing:.05em;">${escapeHtml(statusLabel)}</span>
+                  <span id="rdModalTokenBadge">
+                    ${row.token ? `<span style="font-size:9px;padding:3px 8px;border-radius:12px;background:#ecfdf5;border:1px solid #6ee7b7;color:#047857;font-weight:700;">✓ Token Saved</span>` : `<span style="font-size:9px;padding:3px 8px;border-radius:12px;background:#fef9c3;border:1px solid #fde047;color:#854d0e;font-weight:700;">⚠️ No Token</span>`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Identity Grid -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px;">
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">NID Number</div>
+                <div style="font-family:monospace;font-weight:700;color:#2563eb;font-size:13px;">${escapeHtml(row.ninEn||'')}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${escapeHtml(row.ninNp||'—')}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Date of Birth</div>
+                <div style="font-weight:600;color:#1e293b;font-size:12px;">${escapeHtml(row.dobEn||'—')}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${escapeHtml(row.dobNp||'—')}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Citizenship Date</div>
+                <div style="font-weight:600;color:#1e293b;font-size:12px;">${escapeHtml(row.citDate||'—')}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Mobile Number</div>
+                <div style="font-weight:600;color:#1e293b;font-family:monospace;font-size:12px;">${escapeHtml(row.mobile||'—')}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;grid-column:span 2;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Address</div>
+                <div style="font-weight:600;color:#1e293b;">${escapeHtml(row.addressEn||'—')}</div>
+                <div style="font-size:10px;color:#94a3b8;margin-top:2px;" class="nepali-font">${escapeHtml(row.addressNp||'')}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Registered Date</div>
+                <div style="font-weight:600;color:#1e293b;font-family:monospace;">${escapeHtml(row.regDate||'—')}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Last Updated</div>
+                <div style="font-weight:600;color:#1e293b;font-family:monospace;">${escapeHtml(row.updateDate||'—')}</div>
+              </div>
+
+              <!-- Token Display -->
+              <div id="rdModalTokenDisplay" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;grid-column:span 2;${row.token ? '' : 'display:none;'}">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                  <span style="color:#166534;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Verified Token</span>
+                  <button onclick="navigator.clipboard.writeText('${escapeHtml(row.token || '')}'); alert('Token copied!');" style="font-size:9px;background:#dcfce7;border:1px solid #86efac;color:#15803d;font-weight:700;padding:2px 6px;border-radius:6px;cursor:pointer;">Copy Token</button>
+                </div>
+                <div id="rdModalTokenValue" style="font-family:monospace;font-size:10px;color:#15803d;word-break:break-all;">${escapeHtml(row.token || '')}</div>
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display:flex;gap:8px;padding-top:2px;">
+              <button onclick="pullRowIntoWorkspace('${escapeHtml(row.ninEn)}'); closeRowDetailModal();" style="flex:1;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-weight:700;padding:8px 10px;border-radius:10px;font-size:11px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">✏️ Modify Record</button>
+              <select onchange="updateRowStatusInline('${escapeHtml(row.ninEn)}', this.value); closeRowDetailModal();" style="background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-weight:600;padding:8px 10px;border-radius:10px;font-size:11px;cursor:pointer;">
+                <option value="">Change Status…</option>
+                <option value="pending" ${row.status==='pending'?'selected':''}>Pending</option>
+                <option value="done" ${row.status==='done'?'selected':''}>Done</option>
+                <option value="inprogress" ${row.status==='inprogress'?'selected':''}>Mobile Not Registered</option>
+                <option value="not online" ${row.status==='not online'?'selected':''}>Not Online</option>
+              </select>
+            </div>
+
+            <!-- ═══ UPDATE RECORDS SECTION ═══ -->
+            <div style="padding-top:14px;border-top:1px solid #e2e8f0;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="font-weight:700;font-size:11px;color:#334155;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:6px;">
+                  <span>📜 Update Records &amp; History</span>
+                  <span id="rdModalHistoryCount" style="font-size:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-weight:800;padding:1px 6px;border-radius:10px;">${histCount}</span>
+                </div>
+                <span style="font-size:10px;color:#94a3b8;">Click record to show in brief ↗</span>
+              </div>
+              <div id="rdModalHistoryList" style="max-height:280px;overflow-y:auto;padding-right:4px;">
+                ${renderUpdateHistoryHtml(historyList, 'rdh_' + ninEn.replace(/[^a-z0-9]/gi,'_'), ninEn)}
+              </div>
+            </div>
+
+          </div><!-- /LEFT COLUMN -->
+
+          <!-- ═══ RIGHT COLUMN: Check & Token Extraction Section ═══ -->
+          <div style="border-left:1px solid #e2e8f0;padding-left:24px;display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <div style="font-weight:700;font-size:12px;color:#0f172a;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-size:12px;box-shadow:0 2px 4px rgba(59,130,246,0.25);">⚡</span>
+                NID Check &amp; Token Sync
+              </div>
+              <div style="font-size:11px;color:#64748b;margin-top:3px;line-height:1.4;">Verify this citizen on the government portal, solve captcha, send OTP, and extract &amp; save the token directly to the database.</div>
+            </div>
+
+            <!-- Initial State: Check Card -->
+            <div id="rdStartBtnArea" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+              <div style="font-size:11px;color:#475569;line-height:1.5;">
+                <div style="font-weight:700;color:#1e293b;margin-bottom:4px;">Ready to run online verification?</div>
+                <div>NID: <strong style="color:#2563eb;font-family:monospace;">${escapeHtml(row.ninEn)}</strong></div>
+                <div>Name: <strong>${escapeHtml(fullNameEn)}</strong></div>
+                <div style="margin-top:6px;">
+                  ${row.token 
+                    ? `<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:#ecfdf5;border:1px solid #6ee7b7;color:#047857;font-weight:700;font-size:10px;">✓ Token already exists in database</span>` 
+                    : `<span style="display:inline-block;padding:2px 8px;border-radius:10px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-weight:700;font-size:10px;">⚠️ Missing token — Verification needed</span>`}
+                </div>
+              </div>
+              <button onclick="rdModalLoadCaptcha()" id="rdBtnStart" style="width:100%;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-weight:700;padding:11px;border-radius:10px;font-size:12px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(37,99,235,0.25);transition:opacity .15s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+                <svg style="width:16px;height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                ${row.token ? 'Check &amp; Re-verify Token' : 'Check — Start Verification'}
+              </button>
+            </div>
+
+            <!-- Step Indicators -->
+            <div id="rdStepIndicators" style="display:none;gap:4px;margin-top:2px;">
+              ${['1. Captcha','2. OTP','3. Token','4. Saved'].map((s,i)=>`<div id="rdStep_ind_${i+1}" style="flex:1;text-align:center;font-size:9px;font-weight:700;padding:5px 2px;border-radius:6px;background:${i===0?'#3b82f6':'#f1f5f9'};color:${i===0?'#fff':'#94a3b8'};transition:all .2s;">${s}</div>`).join('')}
+            </div>
+
+            <!-- Hidden pre-filled values -->
+            <input type="hidden" id="rdModal_fullNameEn" value="${escapeHtml(fullNameEn)}">
+            <input type="hidden" id="rdModal_fullNameNp" value="${escapeHtml(fullNameNp)}">
+            <input type="hidden" id="rdModal_dobNpLoc" value="${escapeHtml(dobNpNepali)}">
+            <input type="hidden" id="rdModal_citDateLoc" value="${escapeHtml(citDateNepali)}">
+
+            <!-- Step 1: Captcha -->
+            <div id="rdStep_1" style="display:none;flex-direction:column;gap:10px;">
+              <div style="font-size:11px;font-weight:700;color:#1e293b;">Step 1 — Solve Captcha</div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;background:#f8fafc;padding:4px;flex-shrink:0;">
+                  <img id="rdCaptchaImg" src="" alt="Captcha" style="height:48px;width:150px;object-fit:contain;image-rendering:pixelated;display:block;" />
+                </div>
+                <button onclick="rdModalLoadCaptcha()" title="Refresh Captcha" style="padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#475569;display:flex;align-items:center;gap:4px;font-size:11px;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#f8fafc'">
+                  <svg style="width:14px;height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/></svg>
+                  Refresh
+                </button>
+              </div>
+
+              <div>
+                <label style="display:block;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Enter Captcha Code</label>
+                <input id="rdCaptchaCode" type="text" placeholder="Type letters/numbers from image" style="width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;font-size:13px;font-family:monospace;letter-spacing:1px;color:#1e293b;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter') rdModalRequestOtp()" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#cbd5e1'">
+              </div>
+
+              <div id="rdStep1Err" style="display:none;font-size:11px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;"></div>
+
+              <button onclick="rdModalRequestOtp()" id="rdBtnSendOtp" style="width:100%;background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#fff;font-weight:700;padding:10px;border-radius:8px;font-size:12px;border:none;cursor:pointer;box-shadow:0 2px 6px rgba(59,130,246,0.25);transition:opacity .15s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Validate Captcha &amp; Send OTP →</button>
+            </div>
+
+            <!-- Step 2: OTP -->
+            <div id="rdStep_2" style="display:none;flex-direction:column;gap:10px;">
+              <div style="font-size:11px;font-weight:700;color:#1e293b;">Step 2 — Verify OTP</div>
+              <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:11px;color:#1d4ed8;line-height:1.4;">
+                OTP has been dispatched to the citizen's registered mobile number. Enter the 6-digit code below:
+              </div>
+
+              <div>
+                <label style="display:block;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px;">6-Digit OTP Code</label>
+                <input id="rdOtpCode" type="text" placeholder="••••••" maxlength="6" style="width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;font-size:16px;font-family:monospace;letter-spacing:6px;color:#1e293b;box-sizing:border-box;outline:none;text-align:center;" onkeydown="if(event.key==='Enter') rdModalVerifyOtp()" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#cbd5e1'">
+              </div>
+
+              <div id="rdStep2Err" style="display:none;font-size:11px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;"></div>
+
+              <button onclick="rdModalVerifyOtp()" id="rdBtnVerifyOtp" style="width:100%;background:#059669;color:#fff;font-weight:700;padding:10px;border-radius:8px;font-size:12px;border:none;cursor:pointer;box-shadow:0 2px 6px rgba(5,150,105,0.25);transition:opacity .15s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Verify OTP &amp; Extract Token →</button>
+              <button onclick="rdModalLoadCaptcha()" style="font-size:11px;color:#64748b;background:none;border:none;cursor:pointer;text-decoration:underline;padding:2px;text-align:center;">↩ Resend OTP / Reload Captcha</button>
+            </div>
+
+            <!-- Step 3: Downloading & Auto-Extracting Token -->
+            <div id="rdStep_3" style="display:none;flex-direction:column;gap:12px;align-items:center;text-align:center;padding:16px 8px;">
+              <div style="width:40px;height:40px;border:3px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite;"></div>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:#1e293b;">Extracting Verification Token</div>
+                <div id="rdDownloadStatusText" style="font-size:11px;color:#64748b;margin-top:4px;">Connecting to government server...</div>
+              </div>
+              <div id="rdStep3Err" style="display:none;font-size:11px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;text-align:left;width:100%;"></div>
+            </div>
+
+            <!-- Step 4: Manual Token Fallback -->
+            <div id="rdStep_4" style="display:none;flex-direction:column;gap:10px;">
+              <div style="font-size:11px;font-weight:700;color:#1e293b;">Step 4 — Confirm Scanned Token</div>
+              <div id="rdStep4AutoFailMsg" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 10px;font-size:11px;color:#92400e;">
+                Could not read QR automatically from PDF. Scan the QR with your scanner or phone camera, and paste the URL/token below:
+              </div>
+              <textarea id="rdTokenInput" placeholder="Paste scanned QR URL or token here…" rows="3" style="width:100%;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:8px 10px;font-size:11px;font-family:monospace;color:#1e293b;box-sizing:border-box;resize:vertical;outline:none;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#cbd5e1'"></textarea>
+              <div id="rdStep4Err" style="display:none;font-size:11px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;"></div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="rdModalSaveToken()" id="rdBtnSaveToken" style="flex:1;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:700;padding:9px;border-radius:8px;font-size:11px;border:none;cursor:pointer;">✓ Verify &amp; Save Token</button>
+                <button onclick="if(rdModal_lastPdfBlob) openEmbeddedPdfModal(rdModal_lastPdfBlob, 'NID_Card.pdf', rdModal_lastPdfPassword);" style="background:#f1f5f9;border:1px solid #cbd5e1;color:#475569;font-weight:700;padding:9px 12px;border-radius:8px;font-size:11px;cursor:pointer;">📂 Viewer</button>
+              </div>
+            </div>
+
+            <!-- Step 5: Success -->
+            <div id="rdStep_5" style="display:none;flex-direction:column;gap:12px;align-items:center;padding:16px 0;text-align:center;">
+              <div style="width:52px;height:52px;border-radius:50%;background:#ecfdf5;border:2px solid #6ee7b7;display:flex;align-items:center;justify-content:center;font-size:24px;color:#059669;">✓</div>
+              <div>
+                <div style="font-weight:800;font-size:14px;color:#065f46;">Token Verified &amp; Saved!</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px;">The verification token has been registered to this record in the database.</div>
+              </div>
+              <div style="width:100%;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;text-align:left;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                  <span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Extracted Token</span>
+                  <button onclick="navigator.clipboard.writeText(document.getElementById('rdSuccessTokenVal').innerText); alert('Token copied!');" style="font-size:9px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-weight:700;padding:1px 6px;border-radius:4px;cursor:pointer;">Copy</button>
+                </div>
+                <div id="rdSuccessTokenVal" style="font-family:monospace;font-size:10px;color:#0369a1;word-break:break-all;"></div>
+              </div>
+              <div style="display:flex;gap:8px;width:100%;margin-top:4px;">
+                <button onclick="rdModalDownloadDecryptedPdf()" style="flex:1;background:#f1f5f9;border:1px solid #cbd5e1;color:#334155;font-weight:700;padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;">📥 Download PDF</button>
+                <button onclick="closeRowDetailModal()" style="flex:1;background:#2563eb;color:#fff;font-weight:700;padding:8px 12px;border-radius:8px;font-size:11px;border:none;cursor:pointer;">Done</button>
+              </div>
+            </div>
+
+          </div><!-- /RIGHT COLUMN -->
+        </div>
+      `;
+
+      // Reset step indicators
+      [1,2,3,4].forEach(i => rdModalSetStep(i, false));
+      rdModalSetStep(1, true);
+
+      // Show/hide initial vs flow UI
+      ['rdStep_1','rdStep_2','rdStep_3','rdStep_4','rdStep_5'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const startArea = document.getElementById('rdStartBtnArea');
+      if (startArea) startArea.style.display = 'flex';
+      const stepInd = document.getElementById('rdStepIndicators');
+      if (stepInd) stepInd.style.display = 'none';
+
+      const modal = document.getElementById('rowDetailModal');
+      modal.classList.remove('hidden');
+      setTimeout(() => modal.firstElementChild.classList.add('scale-100'), 10);
+    }
+
+    // ── Row Detail Verification Flow Helpers ─────────────────────────────────
+    function rdModalSetStep(stepNum, active) {
+      const el = document.getElementById('rdStep_ind_' + stepNum);
+      if (!el) return;
+      el.style.background = active ? '#2563eb' : '#f1f5f9';
+      el.style.color = active ? '#fff' : '#94a3b8';
+    }
+
+    function rdModalGotoStep(n) {
+      ['rdStep_1','rdStep_2','rdStep_3','rdStep_4','rdStep_5'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (i + 1 === n) ? 'flex' : 'none';
+      });
+      const startArea = document.getElementById('rdStartBtnArea');
+      if (startArea) startArea.style.display = 'none';
+      const stepInd = document.getElementById('rdStepIndicators');
+      if (stepInd) stepInd.style.display = 'flex';
+
+      const activeIdx = n <= 3 ? n : (n === 4 ? 3 : 4);
+      [1,2,3,4].forEach(i => rdModalSetStep(i, i === activeIdx));
+    }
+
+    function rdModalShowErr(step, msg) {
+      const el = document.getElementById('rdStep' + step + 'Err');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function rdModalHideErr(step) {
+      const el = document.getElementById('rdStep' + step + 'Err');
+      if (el) el.style.display = 'none';
+    }
+
+    async function rdModalLoadCaptcha() {
+      rdModal_txId = '';
+      rdModal_dlToken = '';
+      rdModal_lastPdfBlob = null;
+      rdModalHideErr(1);
+      const captchaCode = document.getElementById('rdCaptchaCode');
+      if (captchaCode) captchaCode.value = '';
+      const otpCode = document.getElementById('rdOtpCode');
+      if (otpCode) otpCode.value = '';
+      const tokenInput = document.getElementById('rdTokenInput');
+      if (tokenInput) tokenInput.value = '';
+
+      rdModalGotoStep(1);
+      const img = document.getElementById('rdCaptchaImg');
+      if (img) img.src = '';
+      const btn = document.getElementById('rdBtnStart');
+      if (btn) { btn.disabled = true; btn.textContent = 'Loading Captcha...'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha`);
+        if (!res.ok) throw new Error('Captcha load failed: ' + res.statusText);
+        const data = await res.json();
+        if (!data.image) throw new Error('Invalid captcha response from server.');
+        if (img) img.src = 'data:image/png;base64,' + data.image;
+        setTimeout(() => document.getElementById('rdCaptchaCode')?.focus(), 50);
+      } catch (err) {
+        rdModalShowErr(1, 'Failed to load captcha: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Check — Start Verification'; }
+      }
+    }
+
+    async function rdModalRequestOtp() {
+      rdModalHideErr(1);
+      const captchaCode = (document.getElementById('rdCaptchaCode')?.value || '').trim();
+      if (!captchaCode) { rdModalShowErr(1, 'Please enter the captcha code.'); return; }
+
+      const fullName    = (document.getElementById('rdModal_fullNameEn')?.value || '').trim().toUpperCase();
+      const fullNameLoc = (document.getElementById('rdModal_fullNameNp')?.value || '').trim();
+      const dobLoc      = (document.getElementById('rdModal_dobNpLoc')?.value || '').trim();
+      const citLoc      = (document.getElementById('rdModal_citDateLoc')?.value || '').trim();
+
+      if (!fullName || !dobLoc || !citLoc) {
+        rdModalShowErr(1, 'Record is missing required citizen fields (Name, Date of Birth, or Citizenship Date).');
+        return;
+      }
+
+      const btn = document.getElementById('rdBtnSendOtp');
+      if (btn) { btn.disabled = true; btn.textContent = 'Validating & Sending OTP…'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/request-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode },
+          body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc: citLoc })
+        });
+        let body = {};
+        try { body = await res.json(); } catch(e) {}
+
+        if (!res.ok) {
+          const errMsg = body.error || body.message || body.code || res.statusText;
+          rdModalShowErr(1, 'OTP request failed: ' + errMsg);
+          return;
+        }
+
+        if (body.code && body.code !== 'OTP_SENT' && body.code !== 'SUCCESS') {
+          rdModalShowErr(1, 'OTP request failed: ' + (body.message || body.code));
+          return;
+        }
+
+        rdModal_txId = body.transactionId || '';
+        rdModalGotoStep(2);
+        setTimeout(() => document.getElementById('rdOtpCode')?.focus(), 50);
+      } catch (err) {
+        rdModalShowErr(1, 'Network error: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Validate Captcha & Send OTP →'; }
+      }
+    }
+
+    async function rdModalVerifyOtp() {
+      rdModalHideErr(2);
+      const otp = (document.getElementById('rdOtpCode')?.value || '').trim();
+      if (!otp) { rdModalShowErr(2, 'Please enter the 6-digit OTP code.'); return; }
+
+      const btn = document.getElementById('rdBtnVerifyOtp');
+      if (btn) { btn.disabled = true; btn.textContent = 'Verifying OTP…'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transactionId: rdModal_txId, nin: rdModal_nin, otp })
+        });
+        let body = {};
+        try { body = await res.json(); } catch(e) {}
+
+        if (!res.ok) {
+          rdModalShowErr(2, 'OTP verification failed: ' + (body.error || body.message || res.statusText));
+          return;
+        }
+
+        rdModal_dlToken = body.downloadToken || '';
+        if (!rdModal_dlToken) {
+          rdModalShowErr(2, 'No download token received from server.');
+          return;
+        }
+
+        // OTP verified successfully! Trigger automatic PDF download and token extraction
+        rdModalGotoStep(3);
+        await rdModalDownload();
+      } catch (err) {
+        rdModalShowErr(2, 'Network error: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Verify OTP & Extract Token →'; }
+      }
+    }
+
+    async function rdModalAutoExtractTokenFromPdf(blob, password) {
+      if (!blob || typeof pdfjsLib === 'undefined') return null;
+      try {
+        const arrayBuffer = await blob.arrayBuffer();
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const loadingTask = pdfjsLib.getDocument({
+          data: arrayBuffer,
+          password: password || ''
+        });
+
+        const doc = await loadingTask.promise;
+        let detectedCode = null;
+
+        // Scan page 1 first (scale 2.2 for sharp QR pixel resolution)
+        if (doc.numPages >= 1) {
+          try {
+            const page1 = await doc.getPage(1);
+            const vp1 = page1.getViewport({ scale: 2.2 });
+            const offCanvas1 = document.createElement("canvas");
+            offCanvas1.width = vp1.width;
+            offCanvas1.height = vp1.height;
+            const offCtx1 = offCanvas1.getContext("2d");
+            await page1.render({ canvasContext: offCtx1, viewport: vp1 }).promise;
+            detectedCode = scanCanvasForQr(offCtx1, offCanvas1.width, offCanvas1.height);
+          } catch (e) {
+            console.warn("Auto-scan page 1 warning:", e);
+          }
+        }
+
+        // If not found, scan page 2
+        if (!detectedCode && doc.numPages >= 2) {
+          try {
+            const page2 = await doc.getPage(2);
+            const vp2 = page2.getViewport({ scale: 2.0 });
+            const offCanvas2 = document.createElement("canvas");
+            offCanvas2.width = vp2.width;
+            offCanvas2.height = vp2.height;
+            const offCtx2 = offCanvas2.getContext("2d");
+            await page2.render({ canvasContext: offCtx2, viewport: vp2 }).promise;
+            detectedCode = scanCanvasForQr(offCtx2, offCanvas2.width, offCanvas2.height);
+          } catch (e) {
+            console.warn("Auto-scan page 2 warning:", e);
+          }
+        }
+
+        if (detectedCode && detectedCode.data) {
+          return extractPortalToken(detectedCode.data);
+        }
+      } catch (err) {
+        console.warn("Auto-extract error:", err);
+      }
+      return null;
+    }
+
+    async function rdModalDownload() {
+      rdModalHideErr(3);
+      const statusText = document.getElementById('rdDownloadStatusText');
+      if (statusText) statusText.textContent = 'Requesting encrypted PDF from government portal...';
+
+      try {
+        const row = rdModal_row;
+        const fullNameEn = (document.getElementById('rdModal_fullNameEn')?.value || `${row.givenEn||''} ${row.surnameEn||''}`).trim().toUpperCase();
+        const fullNameNp = (document.getElementById('rdModal_fullNameNp')?.value || `${row.givenNp||''} ${row.surnameNp||''}`).trim();
+        const dobLocNep  = document.getElementById('rdModal_dobNpLoc')?.value || translateDigits(row.dobNp || '', englishToNepaliDigits);
+        const citLocNep  = document.getElementById('rdModal_citDateLoc')?.value || translateDigits(row.citDate || '', englishToNepaliDigits);
+
+        const res = await fetch(`${API_BASE}/api/download`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Download-Token': rdModal_dlToken },
+          body: JSON.stringify({ full_name: fullNameEn, full_name_loc: fullNameNp, dob_loc: dobLocNep, ccn_issuing_date_loc: citLocNep })
+        });
+
+        if (!res.ok) {
+          let errMsg = res.statusText;
+          try { const d = await res.json(); errMsg = d.error || d.message || errMsg; } catch(e) {}
+          rdModalShowErr(3, 'Download failed: ' + errMsg);
+          return;
+        }
+
+        const encryptedBlob = await res.blob();
+        rdModal_lastPdfBlob = encryptedBlob;
+
+        // Calculate PDF password
+        const nameOnly = fullNameEn.replace(/\s+/g, '');
+        const namePart = nameOnly.substring(0, 4).toUpperCase();
+        const yearPart = extractNidDobYear(row.dobNp, row.dobEn);
+        const pdfPassword = namePart + yearPart;
+        rdModal_lastPdfPassword = pdfPassword;
+
+        try { await navigator.clipboard.writeText(pdfPassword); } catch(e) {}
+
+        if (statusText) statusText.textContent = 'Decrypting and scanning PDF for QR verification token...';
+
+        // Attempt automatic QR scanning and token extraction
+        const extracted = await rdModalAutoExtractTokenFromPdf(encryptedBlob, pdfPassword);
+
+        if (extracted) {
+          if (statusText) statusText.textContent = 'Token extracted! Verifying and saving to database...';
+          await rdModalVerifyAndSaveToken(extracted);
+          return;
+        }
+
+        // If automatic scan did not find QR, fallback to Step 4 (manual paste or viewer)
+        rdModalGotoStep(4);
+      } catch (err) {
+        rdModalShowErr(3, 'Error during download or extraction: ' + err.message);
+      }
+    }
+
+    async function rdModalVerifyAndSaveToken(extractedToken) {
+      if (!extractedToken) throw new Error("No token provided");
+
+      // Verify token with government check endpoint
+      const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extractedToken)}`);
+      const checkData = await checkRes.json();
+      if (!checkData.valid && !checkData.serverUnavailable) {
+        throw new Error('Token verification failed with government server.');
+      }
+      if (!checkData.valid && checkData.serverUnavailable) {
+        const proceed = confirm('⚠️ Government verification server is temporarily slow.\nSave token to database anyway?');
+        if (!proceed) return;
+      }
+
+      // Save token-only update via PUT /api/people?originalNin=...
+      const oldToken = String(rdModal_row.token || '');
+      const oldStatus = String(rdModal_row.status || '');
+
+      const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(rdModal_nin)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: extractedToken,
+          status: 'done',
+          updateDate: new Date().toISOString().split('T')[0],
+          updateAction: 'Token Verified & Saved',
+          updateNote: 'Extracted and verified via Modal Check'
+        })
+      });
+
+      if (!saveRes.ok) {
+        const errData = await saveRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to save token to database.');
+      }
+
+      // Update in-memory row
+      rdModal_row.token = extractedToken;
+      rdModal_row.status = 'done';
+      if (!Array.isArray(rdModal_row.updateHistory)) rdModal_row.updateHistory = [];
+      rdModal_row.updateHistory.unshift({
+        action: 'Token Verified & Saved',
+        updateDate: new Date().toISOString().split('T')[0],
+        updatedAt: new Date().toISOString(),
+        note: 'Extracted and verified via Modal Check',
+        changedFields: ['token', 'status'],
+        changes: {
+          token: { from: oldToken, to: extractedToken },
+          status: { from: oldStatus, to: 'done' }
+        }
+      });
+
+      // Update Left Column UI elements immediately
+      const tokenBadgeContainer = document.getElementById('rdModalTokenBadge');
+      if (tokenBadgeContainer) {
+        tokenBadgeContainer.innerHTML = `<span style="font-size:9px;padding:3px 8px;border-radius:12px;background:#ecfdf5;border:1px solid #6ee7b7;color:#047857;font-weight:700;">✓ Token Saved</span>`;
+      }
+      const tokenValueDisplay = document.getElementById('rdModalTokenDisplay');
+      if (tokenValueDisplay) {
+        tokenValueDisplay.style.display = 'block';
+        const valEl = document.getElementById('rdModalTokenValue');
+        if (valEl) valEl.textContent = extractedToken;
+      }
+      const histContainer = document.getElementById('rdModalHistoryList');
+      if (histContainer) {
+        histContainer.innerHTML = renderUpdateHistoryHtml(rdModal_row.updateHistory, 'rdh_' + rdModal_nin.replace(/[^a-z0-9]/gi,'_'), rdModal_nin);
+      }
+      const histCountEl = document.getElementById('rdModalHistoryCount');
+      if (histCountEl) {
+        histCountEl.textContent = rdModal_row.updateHistory.length;
+      }
+
+      // Populate success view (Step 5)
+      const successTokenEl = document.getElementById('rdSuccessTokenVal');
+      if (successTokenEl) successTokenEl.textContent = extractedToken;
+
+      rdModalGotoStep(5);
+      fetchDatabase(true); // background refresh database table
+    }
+
+    async function rdModalSaveToken() {
+      rdModalHideErr(4);
+      const rawInput = (document.getElementById('rdTokenInput')?.value || '').trim();
+      if (!rawInput) { rdModalShowErr(4, 'Please paste the scanned QR URL or token.'); return; }
+
+      const extracted = extractPortalToken(rawInput);
+      if (!extracted) { rdModalShowErr(4, 'Could not extract a valid token from input.'); return; }
+
+      const btn = document.getElementById('rdBtnSaveToken');
+      if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+
+      try {
+        await rdModalVerifyAndSaveToken(extracted);
+      } catch (err) {
+        rdModalShowErr(4, 'Error: ' + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '✓ Verify & Save Token'; }
+      }
+    }
+
+    async function rdModalDownloadDecryptedPdf() {
+      if (!rdModal_lastPdfBlob) {
+        alert('No PDF available to download.');
+        return;
+      }
+      try {
+        const buf = await rdModal_lastPdfBlob.arrayBuffer();
+        let downloadBlob = rdModal_lastPdfBlob;
+        let filename = `NID_Card_${rdModal_nin}.pdf`;
+        if (typeof PDFLib !== 'undefined' && rdModal_lastPdfPassword) {
+          try {
+            const pdfDoc = await PDFLib.PDFDocument.load(buf, { password: rdModal_lastPdfPassword });
+            const savedBytes = await pdfDoc.save();
+            downloadBlob = new Blob([savedBytes], { type: 'application/pdf' });
+            filename = `NID_Card_${rdModal_nin}_unlocked.pdf`;
+          } catch(e) {
+            console.warn('PDF unlock failed, downloading original:', e);
+          }
+        }
+        const url = URL.createObjectURL(downloadBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert('Download error: ' + err.message);
+      }
+    }
+
     function closeRowDetailModal() {
       const modal = document.getElementById("rowDetailModal");
+      if (!modal) return;
       modal.firstElementChild.classList.remove("scale-100");
       setTimeout(() => modal.classList.add("hidden"), 150);
     }
@@ -3725,7 +4689,14 @@
           tdDb.onclick = (e) => { e.stopPropagation(); openVoterDbDirectDetail(String(row.ninEn || '').trim()); };
           try {
             const savedStatus = String(saved?.status || "").trim().toLowerCase();
-            const isActiveRecord = Boolean(saved && (getSavedRecordActiveState(saved) || saved?.isActive || savedStatus === "active" || hasVoterNo));
+            const savedApprovalMsg = (saved?.profileData?.ApprovalMessage || saved?.rawPayload?.ApprovalMessage || saved?.profileData?.message || saved?.profileData?.error || "");
+            const isActiveRecord = saved && saved.portraitImage
+              ? true
+              : savedStatus === "active"
+                ? true
+                : (savedStatus === "not online" || savedStatus === "pending" || !saved)
+                  ? false
+                  : (hasVoterNo || getVoterActiveStateFromMessage(savedApprovalMsg).isActive);
             if (saved && saved.portraitImage) {
               tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
             } else if (isActiveRecord) {
@@ -3853,6 +4824,8 @@
             body: JSON.stringify({
               status: newStatus,
               updateDate: new Date().toISOString().split("T")[0],
+              updateAction: `Status Changed: ${newStatus}`,
+              updateNote: `Status updated to ${newStatus} from database table`,
             }),
           },
         );
@@ -3878,6 +4851,8 @@
             body: JSON.stringify({
               cardDesign: newCardDesign,
               updateDate: new Date().toISOString().split("T")[0],
+              updateAction: `Card Design: ${newCardDesign}`,
+              updateNote: `Card design set to ${newCardDesign} from database table`,
             }),
           },
         );
@@ -3938,6 +4913,64 @@
         const fullName = `${record.givenEn || ""} ${record.surnameEn || ""}`.trim() || `${record.givenNp || ""} ${record.surnameNp || ""}`.trim() || "N/A";
         document.getElementById("confirmModalName").innerText = fullName;
 
+        // Populate previous update history and pending changes
+        const existingRecord = documentIdentityDb.find(r => r.ninEn === selectedRecordId);
+        const historyContainer = document.getElementById("confirmModalHistoryContainer");
+        const historyCount = document.getElementById("confirmModalHistoryCount");
+        const pendingContainer = document.getElementById("confirmModalPendingChanges");
+        
+        if (historyContainer && existingRecord) {
+          const hist = existingRecord.updateHistory || [];
+          if (historyCount) historyCount.innerText = `${hist.length} update(s)`;
+          historyContainer.innerHTML = renderUpdateHistoryHtml(hist);
+        }
+
+        if (pendingContainer && existingRecord) {
+          const trackedFields = [
+            { key: 'givenEn', label: 'Given Name (EN)' },
+            { key: 'surnameEn', label: 'Surname (EN)' },
+            { key: 'givenNp', label: 'Given Name (NP)' },
+            { key: 'surnameNp', label: 'Surname (NP)' },
+            { key: 'dobEn', label: 'DOB (EN)' },
+            { key: 'dobNp', label: 'DOB (NP)' },
+            { key: 'citDate', label: 'Citizenship Date' },
+            { key: 'status', label: 'Status' },
+            { key: 'cardDesign', label: 'Card Design' },
+            { key: 'addressEn', label: 'Address (EN)' },
+            { key: 'addressNp', label: 'Address (NP)' },
+            { key: 'mobile', label: 'Mobile' },
+            { key: 'token', label: 'Token' },
+          ];
+          const diffs = [];
+          trackedFields.forEach(f => {
+            const oldV = String(existingRecord[f.key] || '').trim();
+            const newV = String(record[f.key] || '').trim();
+            if (oldV !== newV) {
+              diffs.push({ label: f.label, from: oldV, to: newV });
+            }
+          });
+
+          if (diffs.length > 0) {
+            pendingContainer.innerHTML = `
+              <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">Changes Being Applied:</div>
+              <div class="space-y-1">
+                ${diffs.map(d => `
+                  <div class="text-[10px] bg-amber-50/70 border border-amber-200/80 rounded px-2 py-1">
+                    <span class="font-bold text-slate-700">${escapeHtml(d.label)}:</span>
+                    <span class="line-through text-red-500">${escapeHtml(d.from || "empty")}</span>
+                    <span class="text-slate-400"> &rarr; </span>
+                    <span class="text-emerald-700 font-bold">${escapeHtml(d.to || "empty")}</span>
+                  </div>
+                `).join("")}
+              </div>
+            `;
+            pendingContainer.classList.remove("hidden");
+          } else {
+            pendingContainer.innerHTML = `<div class="text-[10px] text-slate-400 italic">No field differences detected.</div>`;
+            pendingContainer.classList.remove("hidden");
+          }
+        }
+
         document.getElementById("confirmModalUpdateInput").value = "";
         document.getElementById("btnConfirmUpdateAction").onclick = async () => {
           const typedVal = document.getElementById("confirmModalUpdateInput").value.trim();
@@ -3962,6 +4995,39 @@
 
     async function executeFormUpdate(record) {
       try {
+        const existingRecord = documentIdentityDb.find(r => r.ninEn === selectedRecordId) || {};
+        const changedLabels = [];
+        const trackedKeys = [
+          { k: 'mobile', l: 'Mobile Number' },
+          { k: 'addressEn', l: 'Address (EN)' },
+          { k: 'addressNp', l: 'Address (NP)' },
+          { k: 'givenEn', l: 'Given Name' },
+          { k: 'surnameEn', l: 'Surname' },
+          { k: 'givenNp', l: 'Given Name (NP)' },
+          { k: 'surnameNp', l: 'Surname (NP)' },
+          { k: 'dobEn', l: 'DOB (EN)' },
+          { k: 'dobNp', l: 'DOB (NP)' },
+          { k: 'citDate', l: 'Citizenship Date' },
+          { k: 'status', l: 'Status' },
+          { k: 'cardDesign', l: 'Card Design' },
+          { k: 'token', l: 'e-NID Token' },
+        ];
+        trackedKeys.forEach(item => {
+          const oldV = String(existingRecord[item.k] || '').trim();
+          const newV = String(record[item.k] || '').trim();
+          if (newV !== '' && newV !== oldV) {
+            changedLabels.push(item.l);
+          }
+        });
+
+        if (changedLabels.length === 1) {
+          record.updateAction = `${changedLabels[0]} Updated`;
+          record.updateNote = `Updated ${changedLabels[0]} via Admin Form`;
+        } else if (changedLabels.length > 1) {
+          record.updateAction = `${changedLabels.slice(0, 3).join(', ')} Updated`;
+          record.updateNote = `Updated fields: ${changedLabels.join(', ')}`;
+        }
+
         const res = await fetch(
           `${API_BASE}/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`,
           {
@@ -3990,6 +5056,9 @@
           formPane.style.backgroundColor = "";
           formPane.classList.add("bg-white");
         }
+
+        const histSection = document.getElementById("formWorkspaceHistorySection");
+        if (histSection) histSection.classList.add("hidden");
 
         document.getElementById("clientForm").reset();
         initializeDateFieldsDefaults();
@@ -4061,6 +5130,17 @@
         record.baseUrl || "https://nidqr.sujalmehta.com.np/verify";
       document.getElementById("formToken").value = record.token || "";
       document.getElementById("formMobile").value = record.mobile || "";
+
+      // Show history in form workspace
+      const histSection = document.getElementById("formWorkspaceHistorySection");
+      const histList = document.getElementById("formWorkspaceHistoryList");
+      const histCount = document.getElementById("formWorkspaceHistoryCount");
+      if (histSection && histList) {
+        histSection.classList.remove("hidden");
+        const hist = record.updateHistory || [];
+        if (histCount) histCount.innerText = String(hist.length);
+        histList.innerHTML = renderUpdateHistoryHtml(hist);
+      }
 
       // Reset selection fields
       document.getElementById("formDistrictSelect").value = "";
@@ -4938,8 +6018,7 @@
         // 4. Calculate Password
         const nameOnly = fullName.replace(/\s+/g, "");
         const namePart = nameOnly.substring(0, 4).toUpperCase();
-        const dobEnglish = translateDigits(row.record.dobNp.trim(), nepaliToEnglishDigits);
-        const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
+        const yearPart = extractNidDobYear(row.record.dobNp, row.record.dobEn);
         const passwordCode = namePart + yearPart;
 
         // Copy password to clipboard
@@ -4989,44 +6068,6 @@
       return getVoterActiveStateFromMessage(text).isActive;
     }
 
-    function getSavedRecordActiveState(savedRecord) {
-      if (!savedRecord) return false;
-      const status = String(savedRecord.status || savedRecord.Status || "pending").trim().toLowerCase();
-      const voterListNumber = String(savedRecord.voterListNumber || "").trim();
-      const sourceMessage = String(
-        savedRecord.profileData?.ApprovalMessage ||
-        savedRecord.profileData?.Approvalmessage ||
-        savedRecord.profileData?.ApprovalMassage ||
-        savedRecord.profileData?.message ||
-        savedRecord.profileData?.error ||
-        savedRecord.rawPayload?.ApprovalMessage ||
-        savedRecord.rawPayload?.message ||
-        savedRecord.rawPayload?.error ||
-        savedRecord.error || ""
-      ).trim();
-      return shouldMarkVoterListRecordActive(status, voterListNumber, sourceMessage, savedRecord.profileData || savedRecord.rawPayload || null);
-    }
-
-    function shouldMarkVoterListRecordActive(status = "pending", voterListNumber = "", sourceMessage = "", profileData = null) {
-      const normalizedStatus = String(status || "").trim().toLowerCase();
-      const normalizedVoterListNumber = String(voterListNumber || "").trim();
-      const text = String(sourceMessage || (profileData && (profileData.ApprovalMessage || profileData.Approvalmessage || profileData.ApprovalMassage || profileData.message || profileData.error)) || "").trim();
-      const lower = text.toLowerCase();
-
-      if (normalizedStatus === "active" || normalizedVoterListNumber) return true;
-      if (!text) return false;
-
-      if (/(not found|data not found|not active|request timed out|failed to fetch|temporarily|try again|server|network error)/i.test(text)) {
-        return false;
-      }
-
-      if (/(स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|already registered|already exists|approved|verified|active)/i.test(text) && !/not active/i.test(text)) {
-        return true;
-      }
-
-      const hasProfileData = Boolean(profileData && typeof profileData === "object" && Object.keys(profileData).length > 0);
-      return Boolean(hasProfileData && !/(not found|data not found|not active|request timed out|failed to fetch|temporarily|try again|server|network error)/i.test(lower));
-    }
 
     async function persistVoterListRecordToSecondaryDb(nin, voterData, status = "pending", voterListNumber = "", sourceMessage = "") {
       if (!nin || !voterData) return;
@@ -5067,8 +6108,6 @@
           })
         });
 
-        const isActiveRecord = shouldMarkVoterListRecordActive(normalizedStatus, normalizedVoterListNumber, sourceMessage, enrichedData);
-
         if (typeof voterListIndex === "object") {
           voterListIndex[cleanNin] = {
             ...(voterListIndex[cleanNin] || {}),
@@ -5078,7 +6117,11 @@
             voterListNumber: normalizedVoterListNumber,
             profileData: enrichedData,
             rawPayload: enrichedData,
-            isActive: isActiveRecord
+            isActive: normalizedStatus === "active"
+              ? true
+              : (normalizedStatus === "not online" || normalizedStatus === "pending")
+                ? false
+                : getVoterActiveStateFromMessage(enrichedData.ApprovalMessage || sourceMessage).isActive
           };
           if (typeof renderDatabaseTableRows === "function") {
             renderDatabaseTableRows();
@@ -5091,13 +6134,18 @@
 
     async function triggerBulkVoterSearch() {
       const btn = document.getElementById("btnBulkVoterRetry");
+      const subtitle = document.getElementById("bulkModalSubtitle");
       if (btn) {
         btn.disabled = true;
         btn.innerHTML = `
           <span class="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          Checking...
+          Checking voter list...
         `;
       }
+      if (subtitle) subtitle.textContent = "Checking voter list registration for all records...";
+
+      let completed = 0;
+      const total = bulkResults.length;
 
       const promises = bulkResults.map(async (rowObj) => {
         const rec = rowObj.record;
@@ -5110,8 +6158,9 @@
 
         let shouldRetry = true;
         let attempt = 0;
+        const maxAttempts = 5;
 
-        while (shouldRetry) {
+        while (shouldRetry && attempt < maxAttempts) {
           try {
             const res = await fetch(`${API_BASE}/api/voter-search`, {
               method: "POST",
@@ -5121,33 +6170,33 @@
             const data = await res.json();
 
             if (res.ok && data.success && data.data) {
-              // Portrait + full data retrieved → status: pending
+              // Portrait + full data retrieved → active on voter list
               rowObj.voterSearchResult = { success: true, data: data.data };
-              await persistVoterListRecordToSecondaryDb(nin, data.data, "pending", "");
+              await persistVoterListRecordToSecondaryDb(nin, data.data, "active", "", "");
               shouldRetry = false;
             } else {
               const errMsg = data.error || "Not found";
               if (errMsg.includes("NID सर्भरबाट डेटा प्राप्त हुन सकेन") || errMsg.includes("NID सर्भर")) {
-                // Server-side transient error — keep retrying
+                // Server-side transient error — retry
                 attempt++;
                 rowObj.voterSearchState = `searching (retry ${attempt})`;
                 renderBulkTable();
-                await new Promise(r => setTimeout(r, 1000));
+                await new Promise(r => setTimeout(r, 1200));
               } else if (getVoterActiveStateFromMessage(errMsg).isActive) {
                 // Already approved/registered — extract voter list number
                 const { voterListNumber } = getVoterActiveStateFromMessage(errMsg);
                 rowObj.voterSearchResult = { success: false, error: errMsg };
                 await persistVoterListRecordToSecondaryDb(nin, { error: errMsg, ApprovalMessage: errMsg, VoterNo: voterListNumber }, "active", voterListNumber, errMsg);
                 shouldRetry = false;
-              } else if (errMsg.toLowerCase().includes("no record found") || errMsg.toLowerCase().includes("not found") || errMsg.toLowerCase().includes("not active") || errMsg.toLowerCase().includes("data not found")) {
-                // Record not found → status: not online
+              } else if (/(no record found|data not found|not found|not active)/i.test(errMsg)) {
+                // Record not found → not active
                 rowObj.voterSearchResult = { success: false, error: errMsg };
-                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "not online", "");
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "not online", "", errMsg);
                 shouldRetry = false;
               } else {
-                // Other errors → pending
+                // Other errors → not online (don't assume active)
                 rowObj.voterSearchResult = { success: false, error: errMsg };
-                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "pending", "");
+                await persistVoterListRecordToSecondaryDb(nin, { error: errMsg }, "not online", "", errMsg);
                 shouldRetry = false;
               }
             }
@@ -5156,14 +6205,31 @@
             rowObj.voterSearchState = `searching (retry ${attempt})`;
             renderBulkTable();
             await new Promise(r => setTimeout(r, 1500));
+            if (attempt >= maxAttempts) {
+              rowObj.voterSearchResult = { success: false, error: err.message };
+              await persistVoterListRecordToSecondaryDb(nin, { error: err.message }, "not online", "", err.message);
+              shouldRetry = false;
+            }
           }
         }
 
         rowObj.voterSearchState = "done";
+        completed++;
+        if (subtitle) subtitle.textContent = `Voter list check: ${completed}/${total} done`;
         renderBulkTable();
       });
 
       await Promise.allSettled(promises);
+
+      // Refresh voterListIndex and re-render DB table VL column
+      try {
+        await loadSavedVoterListRecords();
+        if (typeof renderDatabaseTableRows === "function") renderDatabaseTableRows();
+      } catch (e) {
+        console.warn("Failed to refresh voter list index after bulk search", e);
+      }
+
+      if (subtitle) subtitle.textContent = `Voter list check complete — ${total} record(s) processed.`;
 
       if (btn) {
         btn.disabled = false;
@@ -5405,8 +6471,8 @@
         // Await all parallel requests
         await Promise.allSettled(requests);
 
-        // Automatically trigger bulk voter list check for retrieved records
-        triggerBulkVoterSearch();
+        // Await bulk voter list check so VL column updates before DB refresh
+        await triggerBulkVoterSearch();
 
         // Auto-update workflow status based on OTP response
         const statusMappings = { success: "pending", MOBILE_NOT_REGISTERED: "inprogress", DATA_NOT_FOUND: "not online" };
@@ -5610,8 +6676,7 @@
         // Calculate Password
         const nameOnly = fullName.replace(/\s+/g, "");
         const namePart = nameOnly.substring(0, 4).toUpperCase();
-        const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-        const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
+        const yearPart = extractNidDobYear(dobLocRaw);
         const clipboardCode = namePart + yearPart;
 
         // Auto copy password to clipboard
@@ -5643,15 +6708,53 @@
       }
     }
 
-    function extractPortalToken(str) {
-      str = str.trim();
-      // Find all token= occurrences and take the last one (handles nested URLs)
-      const matches = str.match(/token=([^&\s]+)/g);
-      if (matches && matches.length > 0) {
-        const lastMatch = matches[matches.length - 1];
-        return decodeURIComponent(lastMatch.substring(6));
+    function extractPortalToken(input) {
+      if (!input || typeof input !== "string") return "";
+      let str = input.trim();
+
+      // Strip surrounding quotes
+      if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+        str = str.slice(1, -1).trim();
       }
-      return str;
+
+      // Try JSON parse if it looks like JSON
+      if (str.startsWith("{") && str.endsWith("}")) {
+        try {
+          const parsed = JSON.parse(str);
+          if (parsed.token) return String(parsed.token).trim();
+          if (parsed.data) return extractPortalToken(String(parsed.data));
+        } catch (e) {}
+      }
+
+      // Try standard URL parsing if it has a scheme
+      try {
+        if (str.includes("://")) {
+          const urlObj = new URL(str);
+          const tParam = urlObj.searchParams.get("token") || urlObj.searchParams.get("downloadToken");
+          if (tParam) return String(tParam).trim();
+        }
+      } catch (e) {}
+
+      // Regex match token= or downloadToken= parameter (stopping at &, ?, #, whitespace, quotes, brackets)
+      const match = str.match(/(?:token|downloadToken)\s*[:=]\s*([^&?\s"'#<>{}()]+)/i);
+      if (match && match[1]) {
+        let val = match[1].trim();
+        try { val = decodeURIComponent(val); } catch (e) {}
+        return val.trim();
+      }
+
+      // Regex for URL-encoded parameter: token%3D...
+      const encMatch = str.match(/token%3D([^&?\s"'#<>{}()]+)/i);
+      if (encMatch && encMatch[1]) {
+        let val = encMatch[1].trim();
+        try { val = decodeURIComponent(val); } catch (e) {}
+        return val.trim();
+      }
+
+      // If the string itself is a clean token (UUID or alphanumeric token)
+      str = str.replace(/[#?].*$/, "").trim();
+      try { str = decodeURIComponent(str); } catch (e) {}
+      return str.trim();
     }
 
     function buildPortalPersonPayload(extra = {}) {
@@ -5662,8 +6765,8 @@
 
       const namesEn = fullNameEn.split(/\s+/).filter(Boolean);
       const namesNp = fullNameNp.split(/\s+/).filter(Boolean);
-      const givenEn = (extra.givenEn || namesEn[0] || "UNKNOWN").toUpperCase();
-      const surnameEn = (extra.surnameEn || namesEn.slice(1).join(" ") || "UNKNOWN").toUpperCase();
+      const givenEn = (extra.givenEn || namesEn[0] || "").toUpperCase();
+      const surnameEn = (extra.surnameEn || namesEn.slice(1).join(" ") || "").toUpperCase();
       const givenNp = extra.givenNp || namesNp[0] || "";
       const surnameNp = extra.surnameNp || namesNp.slice(1).join(" ") || "";
 
@@ -5676,8 +6779,8 @@
       return {
         ninEn: ninValue || "",
         ninNp: extra.ninNp || "",
-        givenEn: (extra.givenEn || givenEn || "UNKNOWN").toUpperCase(),
-        surnameEn: (extra.surnameEn || surnameEn || "UNKNOWN").toUpperCase(),
+        givenEn: (extra.givenEn || givenEn || "").toUpperCase(),
+        surnameEn: (extra.surnameEn || surnameEn || "").toUpperCase(),
         givenNp: extra.givenNp || givenNp || "",
         surnameNp: extra.surnameNp || surnameNp || "",
         dobEn: dobEnValue || "",
@@ -5694,102 +6797,91 @@
 
     async function persistVerifiedTokenToDatabase({ token, status = "done", payload = null } = {}) {
       if (!token) throw new Error("Missing verified token.");
-      const fallbackNinFromInputs = String((document.getElementById("portalSearchQuery")?.value || document.getElementById("formNinEn")?.value || document.getElementById("voterNidNin")?.value || document.getElementById("nidVoterScannedToken")?.value) || "").trim();
-      const normalizedNin = String(payload?.ninEn || portalNinValue || (currentNinVoterData && (currentNinVoterData.Nidno || currentNinVoterData.NIN || currentNinVoterData.ninEn || currentNinVoterData.nin || currentNinVoterData.nidNumber || currentNinVoterData.idNumber)) || fallbackNinFromInputs || "").trim();
-      console.debug('[persistVerifiedTokenToDatabase] initial NIN candidates', { payloadNin: payload?.ninEn, portalNinValue, currentNinVoterData, fallbackNinFromInputs, normalizedNin });
 
-      // Try resolving via existing helper which checks portal inputs and current voter data
-      let finalNin = normalizedNin;
+      // Helper to check if a string looks like a valid NID number (digits and hyphens)
+      const isValidNinFormat = (s) => typeof s === "string" && /^\d[\d\- ]{4,}$/.test(s.trim());
+
+      // 1. Resolve candidate NIN
+      let finalNin = "";
+      if (payload && isValidNinFormat(payload.ninEn)) {
+        finalNin = payload.ninEn.trim();
+      } else if (isValidNinFormat(portalNinValue)) {
+        finalNin = portalNinValue.trim();
+      } else if (currentNinVoterData) {
+        const vNin = currentNinVoterData.Nidno || currentNinVoterData.NIN || currentNinVoterData.ninEn || currentNinVoterData.nin || currentNinVoterData.nidNumber || currentNinVoterData.idNumber;
+        if (isValidNinFormat(String(vNin || ''))) {
+          finalNin = String(vNin).trim();
+        }
+      }
+
+      if (!finalNin) {
+        const portalSearchNin = String(document.getElementById('portalSearchNin')?.value || '').trim();
+        if (isValidNinFormat(portalSearchNin)) {
+          finalNin = portalSearchNin;
+          portalNinValue = finalNin;
+        }
+      }
+
       if (!finalNin && typeof resolvePortalNinValue === 'function') {
         try {
           const resolved = await resolvePortalNinValue();
-          if (resolved) finalNin = String(resolved).trim();
+          if (isValidNinFormat(resolved)) finalNin = String(resolved).trim();
         } catch (e) {}
       }
 
-      // If still missing, prompt the user with a small app modal to enter the NIN manually
+      // If still missing, check if the person can be matched to an existing record in the database
       if (!finalNin) {
-        // If the portal search form already includes a NIN field, use it first.
-        const portalSearchNin = String(document.getElementById('portalSearchNin')?.value || '').trim();
-        if (portalSearchNin) {
-          finalNin = portalSearchNin;
-          portalNinValue = finalNin;
-          console.debug('[persistVerifiedTokenToDatabase] using portalSearchNin', finalNin);
-        }
-      }
-
-      if (!finalNin) {
-        const searchCandidates = [];
-        try {
-          const q1 = String(document.getElementById('portalSearchQuery')?.value || '').trim();
-          const q2 = String(document.getElementById('portalSearchNin')?.value || '').trim();
-          const q3 = String(document.getElementById('portalFullNameEn')?.value || '').trim();
-          if (q1) searchCandidates.push(q1);
-          if (q2) searchCandidates.push(q2);
-          if (q3) searchCandidates.push(q3);
-          const payloadName = (payload && (payload.givenEn || payload.surnameEn)) ? `${payload.givenEn || ''} ${payload.surnameEn || ''}`.trim() : '';
-          if (payloadName) searchCandidates.push(payloadName);
-        } catch (e) {}
-
-        const portalFullName = String(document.getElementById('portalFullNameEn')?.value || '').trim().toUpperCase();
+        const portalFullName = String(document.getElementById('portalFullNameEn')?.value || document.getElementById('portalSearchQuery')?.value || '').trim().toUpperCase();
         const portalDobLoc = String(document.getElementById('portalDobLoc')?.value || '').trim();
         const portalCitLoc = String(document.getElementById('portalCcnIssuingDateLoc')?.value || '').trim();
-        const normalizedPortalName = portalFullName.replace(/\s+/g, ' ');
-        const dobEnCandidate = portalDobLoc ? translateDigits(portalDobLoc, nepaliToEnglishDigits).replace(/[^0-9]/g, '') : '';
-        const citCandidate = portalCitLoc ? portalCitLoc.replace(/[^0-9]/g, '') : '';
+        const dobClean = portalDobLoc ? translateDigits(portalDobLoc, nepaliToEnglishDigits).replace(/[^0-9]/g, '') : '';
+        const citClean = portalCitLoc ? portalCitLoc.replace(/[^0-9]/g, '') : '';
 
-        for (const q of searchCandidates) {
-          if (!q) continue;
-          try {
-            const r = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(q)}`);
-            if (!r.ok) continue;
-            const list = await r.json();
-            if (!Array.isArray(list) || list.length === 0) continue;
+        if (portalFullName) {
+          // Look in existing local DB records
+          const matchingPerson = documentIdentityDb.find(p => {
+            const pName = `${p.givenEn || ""} ${p.surnameEn || ""}`.trim().toUpperCase();
+            const pDob = String(p.dobEn || p.dobNp || "").replace(/[^0-9]/g, "");
+            const pCit = String(p.citDate || "").replace(/[^0-9]/g, "");
 
-            let matched = null;
-            for (const person of list) {
-              try {
-                const personName = `${String(person.givenEn || '').trim()} ${String(person.surnameEn || '').trim()}`.toUpperCase().replace(/\s+/g, ' ');
-                const personDob = String(person.dobEn || person.Dob || person.dob || '').replace(/[^0-9]/g, '');
-                const personCit = String(person.citDate || person.CitizenshipIssuingDateLoc || person.CitizenIssueDate || '').replace(/[^0-9]/g, '');
-                const nameMatch = normalizedPortalName && personName.includes(normalizedPortalName);
-                const dobMatch = dobEnCandidate && personDob && personDob.endsWith(dobEnCandidate);
-                const citMatch = citCandidate && personCit && personCit.endsWith(citCandidate);
-                const ninMatch = q && person.ninEn && person.ninEn.replace(/\s+/g, '') === q.replace(/\s+/g, '');
+            const nameMatches = pName === portalFullName || (p.givenEn && portalFullName.startsWith(p.givenEn.toUpperCase()));
+            if (nameMatches && dobClean && pDob && pDob.includes(dobClean)) return true;
+            if (nameMatches && citClean && pCit && pCit.includes(citClean)) return true;
+            if (nameMatches && !dobClean && !citClean) return true;
+            return false;
+          });
 
-                if (ninMatch) { matched = person; break; }
-                if (dobMatch && citMatch) { matched = person; break; }
-                if (dobMatch && nameMatch) { matched = person; break; }
-                if (!matched && nameMatch) { matched = person; }
-              } catch (e) {}
-            }
-
-            const person = matched || list[0];
-            if (person && person.ninEn) {
-              finalNin = String(person.ninEn).trim();
-              portalNinValue = finalNin;
-              currentNinVoterData = person;
-              console.debug('[persistVerifiedTokenToDatabase] resolved NIN via people record', { q, finalNin });
-              break;
-            }
-          } catch (e) { }
+          if (matchingPerson && matchingPerson.ninEn) {
+            finalNin = matchingPerson.ninEn;
+            portalNinValue = finalNin;
+            currentNinVoterData = matchingPerson;
+          }
         }
       }
 
+      // RULE: If NIN is not found or not in database, DO NOT register or edit in the database!
       if (!finalNin) {
-        console.debug('[persistVerifiedTokenToDatabase] could not find matching people record');
-        throw new Error('Record not found in local database. PDF downloaded successfully and password copied, but token save cannot proceed because the record is missing.');
+        console.warn('[persistVerifiedTokenToDatabase] No matching NIN found in database. Skipping DB update.');
+        return {
+          ok: true,
+          notInDatabase: true,
+          nin: "",
+          token: token,
+          message: "No NID number was matched for this token. As per system rules, no record was registered or edited."
+        };
       }
-      console.debug('[persistVerifiedTokenToDatabase] finalNin', finalNin);
 
-      // First try to update only the token (and minimal metadata) to avoid overwriting other fields
+      console.debug('[persistVerifiedTokenToDatabase] resolved NIN:', finalNin);
+
+      // Attempt to update only the token and status on the existing record
       const minimalUpdate = {
         token,
-        status,
-        updateDate: new Date().toISOString().split("T")[0]
+        status: status || "done",
+        updateDate: new Date().toISOString().split("T")[0],
+        updateAction: "Token Verified & Saved",
+        updateNote: "Token updated from scanned/extracted PDF QR code"
       };
 
-      console.debug('[persistVerifiedTokenToDatabase] attempting minimal update', { finalNin, minimalUpdate });
       const updateRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(finalNin)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -5797,48 +6889,38 @@
       });
 
       if (updateRes.ok) {
-        return { ok: true, created: false };
+        return { ok: true, updated: true, created: false, nin: finalNin, token: token };
       }
 
-      // If record not found (404), create full payload using existing helpers
+      // If record not found (404), DO NOT register or edit in database!
       if (updateRes.status === 404) {
-        const basePayload = payload || buildPortalPersonPayload({ token, status });
-        const savePayload = {
-          ...basePayload,
-          ninEn: String(basePayload.ninEn || finalNin).trim(),
-          token,
-          status,
-          updateDate: basePayload.updateDate || new Date().toISOString().split("T")[0],
-          downloadDate: basePayload.downloadDate || new Date().toISOString().split("T")[0],
+        console.warn(`[persistVerifiedTokenToDatabase] NIN '${finalNin}' does not exist in database. Skipping DB registration.`);
+        return {
+          ok: true,
+          notInDatabase: true,
+          nin: finalNin,
+          token: token,
+          message: `NID number '${finalNin}' is not in the database. Token was verified, but record was NOT registered or modified because it does not exist in the database.`
         };
-
-        const createRes = await fetch(`${API_BASE}/api/people`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(savePayload)
-        });
-
-        if (createRes.ok) {
-          return { ok: true, created: true };
-        }
-
-        let createErr = null;
-        try { createErr = await createRes.json(); } catch (e) { }
-        throw new Error(createErr?.error || createRes.statusText || "Failed to create database record.");
       }
 
       let updateErr = null;
-      try { updateErr = await updateRes.json(); } catch (e) { }
-      throw new Error(updateErr?.error || updateRes.statusText || "Failed to save verified token to database.");
+      try { updateErr = await updateRes.json(); } catch (e) {}
+      throw new Error(updateErr?.error || updateRes.statusText || "Failed to update verified token in database.");
     }
 
     async function verifyAndSavePortalScannedToken() {
-      const inputVal = document.getElementById("portalScannedTokenVal").value.trim();
+      const inputVal = (document.getElementById("portalScannedTokenVal")?.value || "").trim();
       if (!inputVal) {
         alert("Please paste the scanned QR URL or token first.");
         return;
       }
       const extracted = extractPortalToken(inputVal);
+      if (!extracted) {
+        alert("Could not extract a valid token from the pasted input. Please verify the URL or token.");
+        return;
+      }
+
       const btn = document.getElementById("btnPortalScannedTokenSubmit");
       const originalText = btn ? btn.innerHTML : "Verify & Save";
       if (btn) { btn.disabled = true; btn.innerHTML = "Verifying..."; }
@@ -5851,13 +6933,27 @@
         const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extracted)}`);
         if (!checkRes.ok) throw new Error("Token verification request failed.");
         const checkData = await checkRes.json();
+        
         if (!checkData.valid) {
-          throw new Error("This token could not be verified by the government server. Please make sure you scanned the correct QR code from the downloaded PDF.");
+          if (checkData.serverUnavailable) {
+            const proceed = confirm(`⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?`);
+            if (!proceed) {
+              return;
+            }
+          } else {
+            throw new Error(checkData.reason || "This token could not be verified by the government server. Please make sure you scanned the correct QR code from the downloaded PDF.");
+          }
         }
 
-        // Save verified token + status=done in DB, updating only the token for existing records
-        await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
-        console.log("Verified token saved for NIN:", portalNinValue);
+        // Save verified token + status=done in DB, ONLY updating existing records
+        const saveResult = await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
+        console.log("Verified token result:", saveResult);
+
+        if (saveResult && saveResult.notInDatabase) {
+          alert(`ℹ️ Token verified successfully: ${extracted.substring(0, 16)}...\n\nHowever, NID '${saveResult.nin || "provided"}' was NOT found in the database.\nAs configured, no record is registered or edited in the database if the NID is not already present.`);
+          resetPortalToInitial();
+          return;
+        }
 
         // Immediately refresh local DB view so UI shows updated token without full page reload
         if (typeof fetchDatabase === 'function') fetchDatabase(true);
@@ -5870,7 +6966,7 @@
         document.getElementById("portalManualTokenRow").classList.add("hidden");
         document.getElementById("portalSuccessRow").classList.remove("hidden");
 
-        // ── Also show success in the nidVoterModal if it is open ──
+        // Also show success in the nidVoterModal if it is open
         const _nidVoterMod = document.getElementById("nidVoterModal");
         if (_nidVoterMod && !_nidVoterMod.classList.contains("hidden")) {
           document.getElementById("nidVoterTokenSection").classList.add("hidden");
@@ -5966,8 +7062,8 @@
         document.getElementById("btnEmbeddedScanQR").disabled = false;
         document.getElementById("btnEmbeddedDownloadUnlocked").disabled = false;
 
-        // Auto-trigger scan for convenience
-        scanEmbeddedPdfQR();
+        // Auto-trigger scan quietly
+        scanEmbeddedPdfQR(true);
       } catch (err) {
         if (err.name === "PasswordException" || err.code === 1) {
           document.getElementById("embeddedPdfLoadingText").classList.add("hidden");
@@ -6003,30 +7099,114 @@
       }).promise;
     }
 
-    async function scanEmbeddedPdfQR() {
-      try {
-        const canvas = document.getElementById("embeddedPdfCanvas");
-        const ctx = canvas.getContext("2d");
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert"
-        });
+    async function scanEmbeddedPdfQR(isAuto = false) {
+      if (!embeddedPdfDoc) {
+        if (!isAuto) alert("PDF is not loaded yet.");
+        return;
+      }
+      const btn = document.getElementById("btnEmbeddedScanQR");
+      const origText = btn ? btn.innerHTML : "Scan QR Code";
+      if (btn) { btn.disabled = true; btn.innerHTML = "Scanning..."; }
 
-        if (code && code.data) {
-          console.log("Scanned QR Code successfully:", code.data);
-          const input = document.getElementById("portalScannedTokenVal");
-          if (input) {
-            input.value = code.data;
-            verifyAndSavePortalScannedToken();
+      try {
+        let detectedCode = null;
+
+        // Helper to scan a canvas context with jsQR using multi-pass detection
+        function scanCanvasForQr(ctx, width, height) {
+          const imgData = ctx.getImageData(0, 0, width, height);
+          // Pass 1: standard with attemptBoth
+          let code = jsQR(imgData.data, width, height, { inversionAttempts: "attemptBoth" });
+          if (code && code.data) return code;
+
+          // Pass 2: high contrast thresholding
+          const d = new Uint8ClampedArray(imgData.data);
+          for (let i = 0; i < d.length; i += 4) {
+            const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
+            const v = lum < 130 ? 0 : 255;
+            d[i] = v; d[i + 1] = v; d[i + 2] = v;
           }
+          code = jsQR(d, width, height, { inversionAttempts: "attemptBoth" });
+          if (code && code.data) return code;
+
+          // Pass 3: lighter thresholding for faint/faded scans
+          for (let i = 0; i < d.length; i += 4) {
+            const lum = (imgData.data[i] * 0.299 + imgData.data[i + 1] * 0.587 + imgData.data[i + 2] * 0.114);
+            const v = lum < 90 ? 0 : 255;
+            d[i] = v; d[i + 1] = v; d[i + 2] = v;
+          }
+          code = jsQR(d, width, height, { inversionAttempts: "attemptBoth" });
+          if (code && code.data) return code;
+
+          return null;
+        }
+
+        // Try scanning rendered page 1 canvas first
+        const mainCanvas = document.getElementById("embeddedPdfCanvas");
+        if (mainCanvas && mainCanvas.width > 0) {
+          detectedCode = scanCanvasForQr(mainCanvas.getContext("2d"), mainCanvas.width, mainCanvas.height);
+        }
+
+        // If not found, try higher resolution offscreen render (scale 2.2) on page 1
+        if (!detectedCode) {
+          try {
+            const page1 = await embeddedPdfDoc.getPage(1);
+            const offViewport = page1.getViewport({ scale: 2.2 });
+            const offCanvas = document.createElement("canvas");
+            offCanvas.width = offViewport.width;
+            offCanvas.height = offViewport.height;
+            const offCtx = offCanvas.getContext("2d");
+            await page1.render({ canvasContext: offCtx, viewport: offViewport }).promise;
+            detectedCode = scanCanvasForQr(offCtx, offCanvas.width, offCanvas.height);
+          } catch (e) {
+            console.warn("High-res page 1 scan error:", e);
+          }
+        }
+
+        // If still not found and PDF has multiple pages, try page 2
+        if (!detectedCode && embeddedPdfDoc.numPages > 1) {
+          try {
+            const page2 = await embeddedPdfDoc.getPage(2);
+            const offViewport2 = page2.getViewport({ scale: 2.0 });
+            const offCanvas2 = document.createElement("canvas");
+            offCanvas2.width = offViewport2.width;
+            offCanvas2.height = offViewport2.height;
+            const offCtx2 = offCanvas2.getContext("2d");
+            await page2.render({ canvasContext: offCtx2, viewport: offViewport2 }).promise;
+            detectedCode = scanCanvasForQr(offCtx2, offCanvas2.width, offCanvas2.height);
+          } catch (e) {
+            console.warn("Page 2 scan error:", e);
+          }
+        }
+
+        if (detectedCode && detectedCode.data) {
+          const rawScanned = detectedCode.data;
+          console.log("Scanned QR Code successfully:", rawScanned);
+          const cleanToken = extractPortalToken(rawScanned);
+
+          const portalInput = document.getElementById("portalScannedTokenVal");
+          if (portalInput) portalInput.value = rawScanned;
+
+          const voterInput = document.getElementById("nidVoterScannedToken");
+          if (voterInput) voterInput.value = rawScanned;
+
           closeEmbeddedPdfModal();
-          alert(`✅ QR Code Scanned & Synced Automatically!\n\nToken extracted:\n"${code.data}"`);
+          alert(`✅ QR Code Scanned & Synced Automatically!\n\nToken extracted:\n"${cleanToken}"`);
+
+          // Automatically trigger verify and save
+          verifyAndSavePortalScannedToken();
         } else {
-          alert("❌ Could not scan QR code automatically from this view. Make sure the QR code is fully visible and not blocked.");
+          if (!isAuto) {
+            alert("❌ Could not detect a valid QR code on this PDF automatically.\n\nPlease scan the QR code using your mobile phone camera or scanner app, then paste the URL or token in the box below to save.");
+          }
         }
       } catch (err) {
         console.error(err);
-        alert("Scan failed: " + err.message);
+        if (!isAuto) alert("Scan failed: " + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
       }
     }
 
@@ -8322,8 +9502,7 @@
           // Calculate password: first 4 chars of name + birth year
           const nameOnly = fullName.replace(/\s+/g, "");
           const namePart = nameOnly.substring(0, 4).toUpperCase();
-          const dobEnglish = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-          const yearPart = dobEnglish.replace(/\//g, "-").split("-")[0].substring(0, 4);
+          const yearPart = extractNidDobYear(dobLocRaw);
           const clipCode = namePart + yearPart;
 
           try { await navigator.clipboard.writeText(clipCode); } catch (e) { }
@@ -9779,6 +10958,16 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
             class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono text-xs text-slate-900 focus:outline-none focus:border-blue-500 transition-all"
             autocomplete="off" />
         </div>
+
+        <div id="confirmModalPendingChanges" class="hidden max-h-32 overflow-y-auto pt-2 border-t border-slate-100"></div>
+
+        <div id="confirmModalHistorySection" class="pt-2 border-t border-slate-100">
+          <div class="text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+            <span class="flex items-center gap-1">📜 Previous Updates:</span>
+            <span id="confirmModalHistoryCount" class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-mono text-slate-600">0</span>
+          </div>
+          <div id="confirmModalHistoryContainer" class="max-h-36 overflow-y-auto"></div>
+        </div>
       </div>
 
       <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
@@ -9796,14 +10985,16 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
   <!-- Row Detail Popup Modal -->
   <div id="rowDetailModal"
-    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[99990] flex items-center justify-center hidden"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99990] flex items-center justify-center hidden"
     onclick="if(event.target===this) closeRowDetailModal()">
     <div
-      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-[96vw] max-w-[1450px] mx-auto p-6 md:p-8 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[94vh]">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Record Details</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+          <span>📋</span> Record Details &amp; Government Portal Action
+        </h3>
         <button onclick="closeRowDetailModal()"
-          class="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100">
+          class="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100" title="Close Modal">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -9811,6 +11002,58 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       </div>
       <div id="rowDetailContent">
         <!-- Populated dynamically by openRowDetailPopup() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Record Brief Modal (Opens when an updated record item is clicked) -->
+  <div id="updateRecordBriefModal"
+    class="fixed inset-0 bg-slate-950/65 backdrop-blur-sm z-[99998] flex items-center justify-center hidden"
+    onclick="if(event.target===this) closeUpdateRecordBriefModal()">
+    <div
+      class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl mx-4 p-6 transform scale-95 transition-all duration-200 overflow-y-auto max-h-[90vh]">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <span>📜</span> <span id="updateBriefTitle">Update Record Brief</span>
+          </h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">
+            Record: <span id="updateBriefNin" class="font-mono font-bold text-blue-600"></span> • <span id="updateBriefName" class="font-semibold text-slate-700"></span>
+          </p>
+        </div>
+        <button onclick="closeUpdateRecordBriefModal()"
+          class="text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-lg hover:bg-slate-100" title="Close Brief">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick meta cards -->
+      <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Timestamp</span>
+          <span id="updateBriefTime" class="font-mono text-slate-800 font-semibold text-[11px]"></span>
+        </div>
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3" id="updateBriefNoteWrapper">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Context / Reason</span>
+          <span id="updateBriefNote" class="text-slate-700 text-[11px] leading-relaxed"></span>
+        </div>
+      </div>
+
+      <!-- Changes breakdown -->
+      <div class="mb-4">
+        <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Changed Details in Brief</h4>
+        <div id="updateBriefChangesContainer">
+          <!-- Populated dynamically by openUpdateRecordBrief() -->
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-3 border-t border-slate-100">
+        <button onclick="closeUpdateRecordBriefModal()"
+          class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition-colors">
+          Close Brief
+        </button>
       </div>
     </div>
   </div>
@@ -9921,57 +11164,112 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
 
   <!-- NIN Status Scan Modal -->
   <div id="ninStatusActionModal"
-    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"  style="display:none;">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl flex flex-col" style="max-height:90vh;">
+
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-slate-100 px-5 py-4 shrink-0">
         <div>
-          <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">🔄 Update NIN Status</h3>
-          <p class="text-[10px] text-slate-400 font-medium mt-0.5">Choose the scope and watch each live request and response.</p>
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">🔄 Update NIN Status</h3>
+          <p class="text-[10px] text-slate-400 font-medium mt-0.5">Check voter list registration status for all NID records.</p>
         </div>
-        <button onclick="closeNinStatusModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="closeNinStatusModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg hover:bg-slate-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <div id="ninStatusModeSelection" class="space-y-3">
-        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] text-slate-600" id="ninStatusSelectionSummary">
-          Loading database records...
+      <!-- Scrollable Body -->
+      <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+
+        <!-- Mode Selection Panel -->
+        <div id="ninStatusModeSelection" class="space-y-4">
+          <!-- Summary bar -->
+          <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[11px] text-slate-600 font-medium" id="ninStatusSelectionSummary">
+            Loading database records...
+          </div>
+
+          <!-- Scope buttons -->
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="startNinStatusScan('all')"
+              class="rounded-xl border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold px-4 py-4 text-left transition-all shadow-sm hover:shadow">
+              <div class="text-sm">🔍 Search All Records</div>
+              <div class="text-[10px] font-medium text-blue-600 mt-1">Run the voter-list check across every NID in the database.</div>
+            </button>
+            <button onclick="startNinStatusScan('undone')"
+              class="rounded-xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold px-4 py-4 text-left transition-all shadow-sm hover:shadow">
+              <div class="text-sm">⏳ Undone Records Only</div>
+              <div class="text-[10px] font-medium text-amber-600 mt-1">Only scan records not yet marked as done.</div>
+            </button>
+            <button onclick="startNinStatusScan('pending')"
+              class="rounded-xl border-2 border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold px-4 py-4 text-left transition-all shadow-sm hover:shadow">
+              <div class="text-sm">🔴 Non-Active Records</div>
+              <div class="text-[10px] font-medium text-rose-600 mt-1">Re-scan records currently showing as Not Active.</div>
+            </button>
+            <button type="button" id="btnNinStatusScopeSelected" onclick="startNinStatusScan('selected')"
+              class="rounded-xl border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-4 py-4 text-left transition-all shadow-sm hover:shadow">
+              <div class="text-sm flex items-center justify-between">
+                <span>✅ Selected Records</span>
+                <span id="ninStatusSelectedBadge" class="hidden text-[10px] font-semibold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full">0 selected</span>
+              </div>
+              <div id="ninStatusSelectedHint" class="text-[10px] font-medium text-emerald-600 mt-1">Only scan the records you have checked below.</div>
+            </button>
+          </div>
+
+          <!-- Pending / Non-Active panel -->
+          <div id="ninStatusPendingPanel" class="hidden">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider" id="ninStatusPendingSummary">Non-active records</span>
+            </div>
+            <div id="ninStatusPendingList" class="space-y-1 max-h-32 overflow-y-auto"></div>
+          </div>
+
+          <!-- Record selection list -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select Records</span>
+                <span id="ninStatusSelectedCount" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">0 selected</span>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" onclick="selectAllNinStatusSelections()" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors">Select All</button>
+                <span class="text-slate-300">|</span>
+                <button type="button" onclick="clearNinStatusSelections()" class="text-[10px] font-bold text-slate-500 hover:text-slate-700 transition-colors">Clear</button>
+              </div>
+            </div>
+            <div id="ninStatusSelectionList" class="space-y-1 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-2 bg-slate-50"></div>
+          </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button onclick="startNinStatusScan('all')"
-            class="rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-4 py-3 text-[11px] text-left transition-all">
-            <div class="font-bold">Search All NID Records</div>
-            <div class="text-[10px] font-medium text-blue-600 mt-0.5">Run the update across every record in the database.</div>
-          </button>
-          <button onclick="startNinStatusScan('undone')"
-            class="rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-4 py-3 text-[11px] text-left transition-all">
-            <div class="font-bold">Search Undone NID Status</div>
-            <div class="text-[10px] font-medium text-amber-600 mt-0.5">Only scan records that are not yet marked as done.</div>
-          </button>
+
+        <!-- Live Log / Results Panel -->
+        <div id="ninStatusLiveLogPanel" class="hidden space-y-3">
+          <div class="flex items-center justify-between">
+            <span id="ninStatusProgressLabel" class="text-[11px] font-bold text-slate-600">Waiting for scan to start...</span>
+            <span class="text-[10px] text-slate-400">Click a row for details</span>
+          </div>
+          <div class="overflow-auto rounded-xl border border-slate-200" style="max-height:50vh;">
+            <table class="min-w-full text-left text-[10px]">
+              <thead class="bg-slate-50 text-slate-500 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 font-semibold">NID</th>
+                  <th class="px-3 py-2 font-semibold">Name</th>
+                  <th class="px-3 py-2 font-semibold">VL Status</th>
+                  <th class="px-3 py-2 font-semibold">Attempts</th>
+                  <th class="px-3 py-2 font-semibold">Response</th>
+                </tr>
+              </thead>
+              <tbody id="ninStatusResultsTableBody"></tbody>
+            </table>
+          </div>
         </div>
+
       </div>
 
-      <div id="ninStatusLiveLogPanel" class="hidden space-y-3">
-        <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500">
-          <span id="ninStatusProgressLabel">Waiting for scan to start...</span>
-          <span class="text-slate-400">Click a row for details</span>
-        </div>
-        <div class="overflow-auto rounded-xl border border-slate-200">
-          <table class="min-w-full text-left text-[10px]">
-            <thead class="bg-slate-50 text-slate-500">
-              <tr>
-                <th class="px-3 py-2 font-semibold">NID</th>
-                <th class="px-3 py-2 font-semibold">Name</th>
-                <th class="px-3 py-2 font-semibold">Outcome</th>
-                <th class="px-3 py-2 font-semibold">Attempts</th>
-                <th class="px-3 py-2 font-semibold">Last Response</th>
-              </tr>
-            </thead>
-            <tbody id="ninStatusResultsTableBody"></tbody>
-          </table>
-        </div>
+      <!-- Footer -->
+      <div class="flex justify-between items-center border-t border-slate-100 px-5 py-3 shrink-0 bg-slate-50 rounded-b-2xl">
+        <span class="text-[10px] text-slate-400">Results are saved to the voter list database automatically.</span>
+        <button onclick="closeNinStatusModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-[11px] transition-all">Close</button>
       </div>
     </div>
   </div>
@@ -10635,8 +11933,7 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         // Calculate password
         const nameOnly = fullName.replace(/\s+/g, "");
         const namePart = nameOnly.substring(0, 4).toUpperCase();
-        const dobEn = translateDigits(dobLocRaw.trim(), nepaliToEnglishDigits);
-        const yearPart = dobEn.replace(/\//g, "-").split("-")[0].substring(0, 4);
+        const yearPart = extractNidDobYear(dobLocRaw);
         const clipCode = namePart + yearPart;
 
         try { await navigator.clipboard.writeText(clipCode); } catch (e) { }
@@ -10675,28 +11972,44 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
     }
 
     async function verifyNidVoterToken() {
-      const inputVal = document.getElementById("nidVoterScannedToken").value.trim();
+      const inputVal = (document.getElementById("nidVoterScannedToken")?.value || "").trim();
       if (!inputVal) { alert("Please paste the scanned QR URL or token first."); return; }
 
-      // Sync to main portal token field so verifyAndSavePortalScannedToken() works
-      document.getElementById("portalScannedTokenVal").value = inputVal;
+      // Sync to main portal token field
+      const portalInput = document.getElementById("portalScannedTokenVal");
+      if (portalInput) portalInput.value = inputVal;
 
       const btn = document.getElementById("btnNidVoterVerifyToken");
-      const origText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = "Verifying...";
+      const origText = btn ? btn.innerHTML : "Verify & Save";
+      if (btn) { btn.disabled = true; btn.innerHTML = "Verifying..."; }
+
+      tokenVerificationInProgress = true;
+      showTokenVerifyingModal("Verifying token and updating database...");
 
       try {
         const extracted = extractPortalToken(inputVal);
+        if (!extracted) {
+          throw new Error("Could not extract a valid token from the pasted input.");
+        }
 
         const checkRes = await fetch(`${API_BASE}/api/check-token?token=${encodeURIComponent(extracted)}`);
         if (!checkRes.ok) throw new Error("Token verification request failed.");
         const checkData = await checkRes.json();
-        if (!checkData.valid) throw new Error("Token could not be verified. Please scan the correct QR code.");
+        if (!checkData.valid) {
+          if (checkData.serverUnavailable) {
+            const proceed = confirm(`⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?`);
+            if (!proceed) return;
+          } else {
+            throw new Error(checkData.reason || "Token could not be verified by the government server. Please scan the correct QR code.");
+          }
+        }
 
-        tokenVerificationInProgress = true;
-        showTokenVerifyingModal("Verifying token and updating database...");
-        await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
+        const saveResult = await persistVerifiedTokenToDatabase({ token: extracted, status: "done" });
+        if (saveResult && saveResult.notInDatabase) {
+          alert(`ℹ️ Token verified successfully: ${extracted.substring(0, 16)}...\n\nHowever, NID '${saveResult.nin || "provided"}' was NOT found in the database.\nAs configured, no record is registered or edited in the database if the NID is not already present.`);
+          closeNidVoterModal();
+          return;
+        }
 
         // Show success in modal
         document.getElementById("nidVoterTokenSection").classList.add("hidden");
@@ -10714,8 +12027,10 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
         tokenVerificationInProgress = false;
         hideTokenVerifyingModal();
         setAllDownloadButtonsDisabled(false);
-        btn.disabled = false;
-        btn.innerHTML = origText;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
       }
     }
   </script>

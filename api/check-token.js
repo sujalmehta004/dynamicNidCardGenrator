@@ -34,6 +34,10 @@ function makeHttpsRequest(url, options) {
       });
     });
 
+    req.setTimeout(12000, () => {
+      req.destroy(new Error("Request timeout to government server (12s)"));
+    });
+
     req.on("error", reject);
     req.end();
   });
@@ -47,8 +51,14 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
-  const { token } = req.query;
+  let { token } = req.query;
   if (!token) return res.status(400).json({ error: "token parameter required" });
+
+  token = String(token).trim();
+  // Strip any wrapping quotes
+  if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+    token = token.slice(1, -1).trim();
+  }
 
   try {
     const result = await makeHttpsRequest(
@@ -73,14 +83,14 @@ module.exports = async function handler(req, res) {
       }
     );
 
-    // Check if the response body indicates an invalid/expired token
-    let bodyStr = result.body;
-    let isInvalid = false;
-    try {
-      const parsed = JSON.parse(bodyStr);
-      if (parsed && parsed.error) isInvalid = true;
-    } catch (e) {
-      // If not JSON, it's likely an HTML page = valid token returning a page
+    // If government server returned 403 (Cloudflare block), 429 (rate limit), or 5xx (server error)
+    if (result.status === 403 || result.status === 429 || result.status >= 500) {
+      return res.status(200).json({
+        valid: false,
+        serverUnavailable: true,
+        httpStatus: result.status,
+        reason: `Government verification server returned HTTP ${result.status} (service busy or protected).`
+      });
     }
 
     if (result.status >= 400 || isInvalid) {
@@ -90,6 +100,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ valid: true });
   } catch (err) {
     console.error("check-token error:", err);
-    return res.status(500).json({ error: err.message });
+    // If the government server is down or timed out, report serverUnavailable so client can handle
+    return res.status(200).json({ valid: false, serverUnavailable: true, error: err.message, reason: "Government verification service timed out or is temporarily unavailable." });
   }
 };
