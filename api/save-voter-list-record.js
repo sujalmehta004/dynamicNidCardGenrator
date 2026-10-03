@@ -52,6 +52,30 @@ function normalizeAddressFields(profileData = {}) {
   };
 }
 
+function shouldMarkRecordActive({ status = 'pending', voterListNumber = '', profileData = {}, rawPayload = {} } = {}) {
+  const normalizedStatus = String(status || '').trim().toLowerCase();
+  const normalizedVoterListNumber = String(voterListNumber || '').trim();
+  const sourceMessage = String(
+    profileData?.ApprovalMessage || profileData?.Approvalmessage || profileData?.ApprovalMassage || profileData?.message || profileData?.error ||
+    rawPayload?.ApprovalMessage || rawPayload?.message || rawPayload?.error || ''
+  ).trim();
+  const lower = sourceMessage.toLowerCase();
+
+  if (normalizedStatus === 'active' || normalizedVoterListNumber) return true;
+  if (!sourceMessage) return false;
+
+  if (/(not found|data not found|not active|request timed out|failed to fetch|temporarily|try again|server|network error)/i.test(sourceMessage)) {
+    return false;
+  }
+
+  if (/(स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|already registered|already exists|approved|verified|active)/i.test(sourceMessage) && !/not active/i.test(sourceMessage)) {
+    return true;
+  }
+
+  const hasProfileData = Boolean(profileData && typeof profileData === 'object' && Object.keys(profileData).length > 0);
+  return Boolean(hasProfileData && !/(not found|data not found|not active|request timed out|failed to fetch|temporarily|try again|server|network error)/i.test(lower));
+}
+
 module.exports = async (req, res) => {
   if (typeof res.status !== 'function') {
     res.status = function (statusCode) { this.statusCode = statusCode; return this; };
@@ -131,7 +155,7 @@ module.exports = async (req, res) => {
       portraitImage: String(portraitImage || (existing && existing.portraitImage) || ''),
       status: nextStatus,
       voterListNumber: nextVoterListNumber,
-      isActive: nextStatus === 'active' || Boolean(nextVoterListNumber || (profileData && profileData.ApprovalMessage)),
+      isActive: shouldMarkRecordActive({ status: nextStatus, voterListNumber: nextVoterListNumber, profileData: nextProfileData, rawPayload }),
       profileData: nextProfileData,
       rawPayload
     };

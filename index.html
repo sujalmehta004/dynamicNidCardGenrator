@@ -1516,6 +1516,17 @@
     // Cached voter-list records saved in secondary DB keyed by nidNumber
     let voterListIndex = {};
     let nepalAdminData = { districts: [], local_levels: [] };
+    let ninStatusScanState = {
+      isRunning: false,
+      mode: null,
+      total: 0,
+      processed: 0,
+      logs: [],
+      results: [],
+      activeRecord: null,
+      selectedNins: [],
+      pendingRecords: []
+    };
 
     const englishToNepaliDigits = {
       0: "०",
@@ -1549,79 +1560,536 @@
       4: { en: "Rural Municipality", ne: "गाउँपालिका" },
     };
 
-    window.updateNinStatusAll = async function () {
-      const confirmed = await showConfirmModal(
-        "Update NIN Status",
-        "This will re-query the voterlist for every record and update statuses. Continue?"
-      );
-      if (!confirmed) return;
+    function resetNinStatusModalUi() {
+      const selectionPanel = document.getElementById("ninStatusModeSelection");
+      const logPanel = document.getElementById("ninStatusLiveLogPanel");
+      const progressLabel = document.getElementById("ninStatusProgressLabel");
+      const countLabel = document.getElementById("ninStatusSelectionSummary");
+      const scanBtn = document.getElementById("btnUpdateNinStatus");
 
-      const btn = document.getElementById("btnUpdateNinStatus");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "⏳ Updating...";
+      openNinStatusModal();
+      if (selectionPanel) selectionPanel.classList.remove("hidden");
+      if (logPanel) logPanel.classList.add("hidden");
+      if (progressLabel) progressLabel.textContent = "Choose a scan scope to begin.";
+      if (countLabel) {
+        const total = Array.isArray(allCachedRecords) ? allCachedRecords.length : 0;
+        countLabel.textContent = `${total} record(s) available in the database.`;
       }
+      if (scanBtn) {
+        scanBtn.disabled = false;
+        scanBtn.textContent = "🔄 Update NIN Status";
+      }
+      ninStatusScanState.isRunning = false;
+      ninStatusScanState.mode = null;
+      ninStatusScanState.total = 0;
+      ninStatusScanState.processed = 0;
+      ninStatusScanState.logs = [];
+      ninStatusScanState.results = [];
+      ninStatusScanState.activeRecord = null;
+      ninStatusScanState.selectedNins = [];
+      ninStatusScanState.pendingRecords = [];
+      closeNinStatusDetailModal();
+      renderNinStatusScanTable();
+      renderNinStatusPendingPanel();
+      renderNinStatusSelectionList();
+    }
+
+    function openNinStatusModal() {
+      const modal = document.getElementById("ninStatusActionModal");
+      const selectionPanel = document.getElementById("ninStatusModeSelection");
+      const logPanel = document.getElementById("ninStatusLiveLogPanel");
+      if (!modal) return;
+
+      modal.classList.remove("hidden");
+      if (ninStatusScanState.isRunning) {
+        if (selectionPanel) selectionPanel.classList.add("hidden");
+        if (logPanel) logPanel.classList.remove("hidden");
+        updateNinStatusProgressLabel();
+        renderNinStatusScanTable();
+        renderNinStatusPendingPanel();
+      } else {
+        if (selectionPanel) selectionPanel.classList.remove("hidden");
+        if (logPanel) logPanel.classList.add("hidden");
+        renderNinStatusSelectionList();
+        renderNinStatusPendingPanel();
+      }
+    }
+
+    function closeNinStatusModal() {
+      const modal = document.getElementById("ninStatusActionModal");
+      if (modal) modal.classList.add("hidden");
+      closeNinStatusDetailModal();
+    }
+
+    function escapeHtml(value) {
+      const str = value == null ? "" : typeof value === "string" ? value : String(value);
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;");
+    }
+
+    function getNinStatusBadgeClass(status) {
+      if (status === "active") return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      if (status === "not online") return "bg-slate-100 text-slate-700 border-slate-200";
+      if (status === "pending") return "bg-amber-50 text-amber-700 border-amber-200";
+      if (status === "scanning") return "bg-blue-50 text-blue-700 border-blue-200";
+      return "bg-slate-50 text-slate-700 border-slate-200";
+    }
+
+    function renderNinStatusSelectionList() {
+      const container = document.getElementById("ninStatusSelectionList");
+      if (!container) return;
+
+      const rows = Array.isArray(allCachedRecords) ? allCachedRecords : [];
+      if (!rows.length) {
+        container.innerHTML = '<div class="text-[10px] text-slate-400">No records available.</div>';
+        return;
+      }
+
+      const selectedSet = new Set(ninStatusScanState.selectedNins || []);
+      container.innerHTML = rows.map((row) => {
+        const nin = String(row?.ninEn || row?.nin || "").trim();
+        const name = `${row?.givenEn || ""} ${row?.surnameEn || ""}`.trim() || nin || "Unknown";
+        const checked = selectedSet.has(nin) ? "checked" : "";
+        return `<label class="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-[10px] text-slate-700">
+          <span class="flex items-center gap-2 min-w-0">
+            <input type="checkbox" class="accent-blue-600" ${checked} onchange="toggleNinStatusSelection('${escapeHtml(nin)}')" />
+            <span class="truncate font-semibold">${escapeHtml(name)}</span>
+          </span>
+          <span class="font-mono text-[9px] text-slate-400">${escapeHtml(nin || "—")}</span>
+        </label>`;
+      }).join("");
+    }
+
+    function toggleNinStatusSelection(nin) {
+      const cleanNin = String(nin || "").trim();
+      if (!cleanNin) return;
+      const selectedSet = new Set(ninStatusScanState.selectedNins || []);
+      if (selectedSet.has(cleanNin)) {
+        selectedSet.delete(cleanNin);
+      } else {
+        selectedSet.add(cleanNin);
+      }
+      ninStatusScanState.selectedNins = Array.from(selectedSet);
+      renderNinStatusSelectionList();
+    }
+
+    function selectAllNinStatusSelections() {
+      ninStatusScanState.selectedNins = (Array.isArray(allCachedRecords) ? allCachedRecords : []).map((row) => String(row?.ninEn || row?.nin || "").trim()).filter(Boolean);
+      renderNinStatusSelectionList();
+    }
+
+    function clearNinStatusSelections() {
+      ninStatusScanState.selectedNins = [];
+      renderNinStatusSelectionList();
+    }
+
+    function renderNinStatusPendingPanel() {
+      const panel = document.getElementById("ninStatusPendingPanel");
+      const list = document.getElementById("ninStatusPendingList");
+      const summary = document.getElementById("ninStatusPendingSummary");
+      if (!panel || !list || !summary) return;
+
+      const pendingRecords = (ninStatusScanState.pendingRecords || []).filter((record) => String(record?.status || "").trim().toLowerCase() !== "active");
+      if (!pendingRecords.length) {
+        panel.classList.add("hidden");
+        summary.textContent = "No pending records.";
+        list.innerHTML = "";
+        return;
+      }
+
+      panel.classList.remove("hidden");
+      summary.textContent = `${pendingRecords.length} pending record(s) ready to retry.`;
+      list.innerHTML = pendingRecords.slice(0, 12).map((record) => `
+        <div class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-700">
+          <span class="truncate font-semibold">${escapeHtml(record.name || record.nin || "Unknown")}</span>
+          <span class="font-mono text-[9px] text-amber-600">${escapeHtml(record.nin || "—")}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderNinStatusScanTable() {
+      const tbody = document.getElementById("ninStatusResultsTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      if (!ninStatusScanState.results.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-3 py-4 text-center text-[10px] text-slate-400">No records scanned yet.</td></tr>`;
+        return;
+      }
+
+      ninStatusScanState.results.forEach((record) => {
+        const tr = document.createElement("tr");
+        tr.className = "cursor-pointer hover:bg-slate-50 transition-colors";
+        tr.onclick = () => openNinStatusDetailModal(record);
+        tr.innerHTML = `
+          <td class="px-3 py-2 border-b border-slate-200 font-mono text-[10px] text-slate-700">${escapeHtml(record.nin || "—")}</td>
+          <td class="px-3 py-2 border-b border-slate-200 text-[10px] text-slate-700">${escapeHtml(record.name || "—")}</td>
+          <td class="px-3 py-2 border-b border-slate-200">
+            <span class="inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] ${getNinStatusBadgeClass(record.status)}">${escapeHtml(record.status || "pending")}</span>
+          </td>
+          <td class="px-3 py-2 border-b border-slate-200 text-[10px] text-slate-500">${escapeHtml(record.attempts || 0)}</td>
+          <td class="px-3 py-2 border-b border-slate-200 text-[10px] text-slate-600 max-w-[260px] truncate" title="${escapeHtml(record.lastMessage || "")}">${escapeHtml(record.lastMessage || "—")}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openNinStatusDetailModal(record) {
+      const modal = document.getElementById("ninStatusDetailModal");
+      const title = document.getElementById("ninStatusDetailTitle");
+      const body = document.getElementById("ninStatusDetailBody");
+      if (!modal || !title || !body || !record) return;
+      ninStatusScanState.activeRecord = record;
+      title.textContent = `${record.nin || "Record"} • ${record.name || ""}`.trim();
+
+      const eventMarkup = (record.events || []).length
+        ? (record.events || []).map((event) => {
+            const label = event.variant === "request" ? "REQ" : event.variant === "response" ? "RES" : event.variant === "retry" ? "RETRY" : event.variant === "success" ? "OK" : event.variant === "error" ? "ERR" : "INFO";
+            const badgeClass = event.variant === "request" ? "bg-blue-50 text-blue-700 border-blue-200" : event.variant === "response" ? "bg-slate-100 text-slate-700 border-slate-200" : event.variant === "retry" ? "bg-amber-50 text-amber-700 border-amber-200" : event.variant === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : event.variant === "error" ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-slate-50 text-slate-700 border-slate-200";
+            return `<div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] ${badgeClass}">${escapeHtml(label)}</span>
+                <span class="text-[9px] text-slate-400">${escapeHtml(event.timestamp || "")}</span>
+              </div>
+              <div class="text-[10px] text-slate-700 whitespace-pre-wrap">${escapeHtml(event.message || "")}</div>
+            </div>`;
+          }).join("")
+        : `<div class="text-[10px] text-slate-400">No activity recorded yet.</div>`;
+
+      body.innerHTML = `
+        <div class="space-y-2 text-[10px] text-slate-700">
+          <div class="grid grid-cols-2 gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div><div class="text-[9px] uppercase tracking-[0.2em] text-slate-400">Outcome</div><div class="font-bold text-slate-800">${escapeHtml(record.status || "pending")}</div></div>
+            <div><div class="text-[9px] uppercase tracking-[0.2em] text-slate-400">Attempts</div><div class="font-bold text-slate-800">${escapeHtml(record.attempts || 0)}</div></div>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+            ${eventMarkup}
+          </div>
+        </div>
+      `;
+      modal.classList.remove("hidden");
+    }
+
+    function closeNinStatusDetailModal() {
+      const modal = document.getElementById("ninStatusDetailModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function appendNinStatusLog(message, variant = "info", record = null) {
+      const entry = { variant, message, timestamp: new Date().toLocaleTimeString() };
+      if (record) {
+        record.events.push(entry);
+      }
+      ninStatusScanState.logs.push(entry);
+      if (record) {
+        renderNinStatusScanTable();
+      }
+    }
+
+    function updateNinStatusProgressLabel() {
+      const progressLabel = document.getElementById("ninStatusProgressLabel");
+      if (!progressLabel) return;
+      const total = ninStatusScanState.total || 0;
+      const processed = ninStatusScanState.processed || 0;
+      progressLabel.textContent = total > 0 ? `Processed ${processed}/${total}` : "Waiting for scan to start...";
+    }
+
+    function shouldRetryNinStatusRequest(message = "", data = null) {
+      const text = String(message || (data && (data.error || data.message)) || "").trim();
+      if (!text) return true;
+      const lower = text.toLowerCase();
+      return isTransientNidServerError(text, data) || lower.includes("temporarily") || lower.includes("try again") || lower.includes("invalid response") || lower.includes("failed to fetch") || lower.includes("request timed out") || lower.includes("server") && lower.includes("data") && lower.includes("प्राप्त") && lower.includes("हुन");
+    }
+
+    function getLocalFallbackOutcome(nin, message = "", data = null) {
+      const savedRecord = voterListIndex[String(nin || "").trim()];
+      if (!savedRecord) return null;
+      const localText = String(
+        savedRecord.profileData?.ApprovalMessage ||
+        savedRecord.profileData?.Approvalmessage ||
+        savedRecord.profileData?.ApprovalMassage ||
+        savedRecord.profileData?.message ||
+        savedRecord.profileData?.error ||
+        savedRecord.rawPayload?.ApprovalMessage ||
+        savedRecord.rawPayload?.message ||
+        savedRecord.rawPayload?.error ||
+        savedRecord.error || ""
+      ).trim();
+      const localLower = localText.toLowerCase();
+      const hasPositiveLocalEvidence = Boolean(
+        savedRecord.isActive ||
+        savedRecord.status === "active" ||
+        savedRecord.voterListNumber ||
+        savedRecord.portraitImage ||
+        getVoterActiveStateFromMessage(localText).isActive ||
+        /already registered|already exists|approved|verified|स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको/i.test(localText)
+      );
+      if (!localText) return null;
+      return {
+        status: hasPositiveLocalEvidence ? "active" : "not online",
+        voterListNumber: String(savedRecord.voterListNumber || "").trim(),
+        sourceMessage: localText || message || (data && (data.error || data.message)) || ""
+      };
+    }
+
+    function isTransientNidServerError(message = "", data = null) {
+      const text = String(message || (data && (data.error || data.message)) || "").trim();
+      if (!text) return false;
+      const lower = text.toLowerCase();
+      return (
+        /निद\s*सर्भरबाट\s*डेटा\s*प्राप्त\s*हुन\s*सकेन/i.test(text) ||
+        /सर्भरबाट\s*डेटा\s*प्राप्त/i.test(text) ||
+        lower.includes("request timed out") ||
+        lower.includes("failed to fetch") ||
+        lower.includes("temporarily") ||
+        lower.includes("try again")
+      );
+    }
+
+    function getNinStatusOutcome(message = "", data = null) {
+      const text = String(message || (data && (data.error || data.message)) || "").trim();
+      const lower = text.toLowerCase();
+      const payloadHasProfileData = Boolean(data && data.data && typeof data.data === "object" && Object.keys(data.data).length > 0);
+      const { isActive, voterListNumber } = getVoterActiveStateFromMessage(text, data);
+
+      if (isActive || payloadHasProfileData) {
+        return { status: "active", voterListNumber, sourceMessage: text || "Profile data received" };
+      }
+
+      const negativePatterns = [
+        "no record found",
+        "data not found",
+        "not found",
+        "please verify nin",
+        "not active",
+        "request timed out",
+        "failed to fetch",
+        "temporarily",
+        "try again",
+        "server",
+        "network error"
+      ];
+
+      if (negativePatterns.some((pattern) => lower.includes(pattern))) {
+        return { status: "not online", voterListNumber: "", sourceMessage: text };
+      }
+
+      return { status: "not online", voterListNumber: "", sourceMessage: text };
+    }
+
+    async function runNinStatusScan(mode = "all") {
+      const btn = document.getElementById("btnUpdateNinStatus");
+      const selectionPanel = document.getElementById("ninStatusModeSelection");
+      const logPanel = document.getElementById("ninStatusLiveLogPanel");
+      const summaryLabel = document.getElementById("ninStatusSelectionSummary");
+      const scopeLabel = mode === "undone" ? "undone records" : mode === "selected" ? "selected records" : mode === "pending" ? "pending records" : "all database records";
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "⏳ Scanning...";
+      }
+      if (selectionPanel) selectionPanel.classList.add("hidden");
+      if (logPanel) logPanel.classList.remove("hidden");
+      if (summaryLabel) summaryLabel.textContent = `Scanning ${scopeLabel}...`;
 
       const records = Array.isArray(allCachedRecords) ? allCachedRecords.slice() : [];
-      const concurrency = 3;
-      let idx = 0;
-
-      async function worker() {
-        while (idx < records.length) {
-          const i = idx++;
-          const rec = records[i];
-
-          try {
-            const payload = {
-              nin: rec?.ninEn || rec?.nin || "",
-              dob: rec?.dobEn || rec?.dob || "",
-              firstname: String(rec?.givenEn || rec?.given || "").trim().split(/\s+/)[0].toLowerCase(),
-            };
-
-            if (payload.nin && payload.dob && payload.firstname) {
-              const response = await fetch(`${API_BASE}/api/voter-search`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-              });
-              let responseData = {};
-              try { responseData = await response.json(); } catch (e) {}
-              const message = responseData.error || responseData.message || "";
-              const { isActive, voterListNumber } = getVoterActiveStateFromMessage(message, responseData.data || responseData);
-              if (isActive) {
-                await persistVoterListRecordToSecondaryDb(payload.nin, { error: message, ApprovalMessage: message, VoterNo: voterListNumber }, "active", voterListNumber, message);
-              }
-            }
-          } catch (e) {
-            console.warn("Update failed for", rec?.ninEn || rec?.nin, e);
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 350));
-        }
+      let candidateRecords = [];
+      if (mode === "undone") {
+        candidateRecords = records.filter((row) => String(row?.status || "").trim().toLowerCase() !== "done");
+      } else if (mode === "selected") {
+        const selectedSet = new Set(ninStatusScanState.selectedNins || []);
+        candidateRecords = records.filter((row) => selectedSet.has(String(row?.ninEn || row?.nin || "").trim()));
+      } else if (mode === "pending") {
+        candidateRecords = ninStatusScanState.pendingRecords || [];
+      } else {
+        candidateRecords = records;
       }
 
-      const workers = [];
-      for (let w = 0; w < concurrency; w++) {
-        workers.push(worker());
-      }
-
-      try {
-        await Promise.all(workers);
-      } finally {
+      if (!candidateRecords.length) {
         if (btn) {
           btn.disabled = false;
           btn.textContent = "🔄 Update NIN Status";
         }
+        ninStatusScanState.isRunning = false;
+        showCustomAlert("No records selected", "Please choose at least one record to search.", "info");
+        openNinStatusModal();
+        return;
       }
+
+      ninStatusScanState.isRunning = true;
+      ninStatusScanState.mode = mode;
+      ninStatusScanState.total = candidateRecords.length;
+      ninStatusScanState.processed = 0;
+      ninStatusScanState.logs = [];
+      ninStatusScanState.results = [];
+      ninStatusScanState.activeRecord = null;
+      ninStatusScanState.pendingRecords = [];
+      renderNinStatusScanTable();
+      renderNinStatusPendingPanel();
+
+      appendNinStatusLog(`Starting NIN status scan for ${scopeLabel}.`, "info");
+      updateNinStatusProgressLabel();
+
+      const processRecord = async (rec, index) => {
+        const nin = String(rec?.ninEn || rec?.nin || "").trim();
+        const dob = String(rec?.dobEn || rec?.dob || "").trim();
+        const firstname = String(rec?.givenEn || rec?.given || "").trim().split(/\s+/)[0].toLowerCase();
+        const name = `${rec?.givenEn || ""} ${rec?.surnameEn || ""}`.trim() || rec?.ninEn || rec?.nin || "";
+        const recordResult = {
+          nin,
+          name,
+          status: "scanning",
+          attempts: 0,
+          lastMessage: "",
+          events: []
+        };
+        ninStatusScanState.results[index] = recordResult;
+        renderNinStatusScanTable();
+
+        if (!nin || !dob || !firstname) {
+          recordResult.status = "pending";
+          recordResult.lastMessage = "Missing identity details";
+          appendNinStatusLog(`Skipping record without complete identity data: ${nin || "unknown"}`, "error", recordResult);
+          ninStatusScanState.processed += 1;
+          updateNinStatusProgressLabel();
+          renderNinStatusPendingPanel();
+          return recordResult;
+        }
+
+        let attempts = 0;
+        const maxAttempts = 6;
+        let finalOutcome = null;
+        let lastResponseText = "";
+        let lastMessage = "";
+
+        while (attempts < maxAttempts) {
+          attempts += 1;
+          recordResult.attempts = attempts;
+          const payload = { nin, dob, firstname };
+          appendNinStatusLog(`Request #${attempts} for ${nin}: ${JSON.stringify(payload)}`, "request", recordResult);
+
+          try {
+            const response = await fetch(`${API_BASE}/api/voter-search`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            let responseData = {};
+            let rawText = "";
+            try {
+              rawText = await response.text();
+              responseData = rawText ? JSON.parse(rawText) : {};
+            } catch (e) {
+              responseData = { error: rawText || "Invalid response" };
+            }
+            const message = String(responseData.error || responseData.message || responseData.ApprovalMessage || "").trim();
+            lastResponseText = message || rawText || "";
+            lastMessage = lastResponseText;
+            recordResult.lastMessage = lastResponseText;
+            appendNinStatusLog(`Response #${attempts} for ${nin}: ${lastResponseText || rawText || "No body"}`, "response", recordResult);
+
+            if (shouldRetryNinStatusRequest(message, responseData)) {
+              if (attempts < maxAttempts) {
+                appendNinStatusLog(`Retrying because the response was not conclusive.`, "retry", recordResult);
+                await new Promise((resolve) => setTimeout(resolve, 1200));
+                continue;
+              }
+              const fallbackOutcome = getLocalFallbackOutcome(nin, lastResponseText, responseData);
+              finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastResponseText || rawText };
+            } else {
+              finalOutcome = getNinStatusOutcome(message, responseData);
+            }
+          } catch (e) {
+            lastResponseText = e?.message || "Network error";
+            lastMessage = lastResponseText;
+            recordResult.lastMessage = lastResponseText;
+            appendNinStatusLog(`Network error for ${nin}: ${lastResponseText}`, "error", recordResult);
+            if (attempts < maxAttempts) {
+              appendNinStatusLog(`Retrying in 1.2 seconds...`, "retry", recordResult);
+              await new Promise((resolve) => setTimeout(resolve, 1200));
+              continue;
+            }
+            const fallbackOutcome = getLocalFallbackOutcome(nin, lastResponseText, null);
+            finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastResponseText };
+          }
+          break;
+        }
+
+        if (!finalOutcome) {
+          const fallbackOutcome = getLocalFallbackOutcome(nin, lastMessage, null);
+          finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastMessage || lastResponseText };
+        }
+
+        recordResult.status = finalOutcome.status;
+        recordResult.lastMessage = finalOutcome.sourceMessage || lastResponseText;
+        recordResult.voterListNumber = finalOutcome.voterListNumber || "";
+
+        if (finalOutcome.status === "active") {
+          await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage, ApprovalMessage: finalOutcome.sourceMessage, VoterNo: finalOutcome.voterListNumber }, "active", finalOutcome.voterListNumber, finalOutcome.sourceMessage);
+          appendNinStatusLog(`Saved ${nin} as active.`, "success", recordResult);
+        } else {
+          await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage }, "not online", "", finalOutcome.sourceMessage);
+          appendNinStatusLog(`Saved ${nin} as not online.`, "success", recordResult);
+        }
+
+        ninStatusScanState.processed += 1;
+        updateNinStatusProgressLabel();
+        renderNinStatusScanTable();
+        ninStatusScanState.pendingRecords = ninStatusScanState.results.filter((result) => String(result?.status || "").trim().toLowerCase() !== "active");
+        renderNinStatusPendingPanel();
+        return recordResult;
+      };
+
+      const completedResults = await Promise.all(candidateRecords.map((rec, index) => processRecord(rec, index)));
+      ninStatusScanState.results = completedResults.map((result, index) => ({ ...result, ...(ninStatusScanState.results[index] || {}) }));
+      ninStatusScanState.pendingRecords = ninStatusScanState.results.filter((result) => String(result?.status || "").trim().toLowerCase() !== "active");
+      renderNinStatusScanTable();
+      renderNinStatusPendingPanel();
 
       try {
         await loadSavedVoterListRecords();
-        renderDatabaseTableRows();
+        await fetchDatabase(true);
       } catch (e) {
-        console.warn("Failed to refresh table after NIN status update", e);
+        console.warn("Failed to refresh after NIN status scan", e);
       }
 
-      showCustomAlert("Update Complete", "Update complete (background).", "success");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "🔄 Update NIN Status";
+      }
+      ninStatusScanState.isRunning = false;
+      appendNinStatusLog("NIN status scan complete.", "success");
+      openNinStatusModal();
+      showCustomAlert("NIN scan complete", `Finished scanning ${ninStatusScanState.total} record(s).`, "success");
+    }
+
+    window.updateNinStatusAll = function () {
+      if (ninStatusScanState.isRunning) {
+        openNinStatusModal();
+        return;
+      }
+      resetNinStatusModalUi();
+    };
+
+    window.startNinStatusScan = function (mode) {
+      if (ninStatusScanState.isRunning) return;
+      openNinStatusModal();
+      runNinStatusScan(mode);
+    };
+
+    window.toggleNinStatusSelection = function (nin) {
+      toggleNinStatusSelection(nin);
+    };
+
+    window.selectAllNinStatusSelections = function () {
+      selectAllNinStatusSelections();
+    };
+
+    window.clearNinStatusSelections = function () {
+      clearNinStatusSelections();
     };
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -3134,7 +3602,7 @@
         (savedPortrait && (savedPortrait.rawPayload && (savedPortrait.rawPayload.ApprovalMessage || savedPortrait.rawPayload.Approvalmessage || savedPortrait.rawPayload.ApprovalMassage))) ||
         (savedPortrait && savedPortrait.error) || ""
       ).trim();
-      const isApprovalNotice = getVoterActiveStateFromMessage(approvalText).isActive || Boolean(savedPortrait && savedPortrait.isActive && (savedPortrait.status === "active" || savedPortrait.voterListNumber));
+      const isApprovalNotice = getVoterActiveStateFromMessage(approvalText).isActive || getSavedRecordActiveState(savedPortrait);
       if (isApprovalNotice) {
         showCustomAlert("Approval Notice", "NID activated", "success");
         return;
@@ -3241,7 +3709,6 @@
 
         const saved = voterListIndex[String(row.ninEn || '').trim()];
         const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) ? String(saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))).trim() : "";
-        const hasPortrait = saved && saved.portraitImage;
         const hasVoterNo = Boolean(voterNo);
 
         tr.onclick = (e) => {
@@ -3258,7 +3725,7 @@
           tdDb.onclick = (e) => { e.stopPropagation(); openVoterDbDirectDetail(String(row.ninEn || '').trim()); };
           try {
             const savedStatus = String(saved?.status || "").trim().toLowerCase();
-            const isActiveRecord = Boolean(saved?.isActive || savedStatus === "active" || hasVoterNo || (saved && saved.portraitImage));
+            const isActiveRecord = Boolean(saved && (getSavedRecordActiveState(saved) || saved?.isActive || savedStatus === "active" || hasVoterNo));
             if (saved && saved.portraitImage) {
               tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
             } else if (isActiveRecord) {
@@ -4511,7 +4978,7 @@
       if (!text) return { isActive: false, voterListNumber: "" };
 
       const lower = text.toLowerCase();
-      const isActive = /स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|active|registered/i.test(text) || (lower.includes("already") && lower.includes("registered"));
+      const isActive = /स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|already registered|already exists|already\s+registered|approved|verified/i.test(text) || (lower.includes("active") && !lower.includes("not active"));
       const voterListNumber = text.match(/\d{5,}/)?.[0] || "";
       return { isActive, voterListNumber };
     }
@@ -4520,6 +4987,45 @@
       const text = String(value || "").trim();
       if (!text) return false;
       return getVoterActiveStateFromMessage(text).isActive;
+    }
+
+    function getSavedRecordActiveState(savedRecord) {
+      if (!savedRecord) return false;
+      const status = String(savedRecord.status || savedRecord.Status || "pending").trim().toLowerCase();
+      const voterListNumber = String(savedRecord.voterListNumber || "").trim();
+      const sourceMessage = String(
+        savedRecord.profileData?.ApprovalMessage ||
+        savedRecord.profileData?.Approvalmessage ||
+        savedRecord.profileData?.ApprovalMassage ||
+        savedRecord.profileData?.message ||
+        savedRecord.profileData?.error ||
+        savedRecord.rawPayload?.ApprovalMessage ||
+        savedRecord.rawPayload?.message ||
+        savedRecord.rawPayload?.error ||
+        savedRecord.error || ""
+      ).trim();
+      return shouldMarkVoterListRecordActive(status, voterListNumber, sourceMessage, savedRecord.profileData || savedRecord.rawPayload || null);
+    }
+
+    function shouldMarkVoterListRecordActive(status = "pending", voterListNumber = "", sourceMessage = "", profileData = null) {
+      const normalizedStatus = String(status || "").trim().toLowerCase();
+      const normalizedVoterListNumber = String(voterListNumber || "").trim();
+      const text = String(sourceMessage || (profileData && (profileData.ApprovalMessage || profileData.Approvalmessage || profileData.ApprovalMassage || profileData.message || profileData.error)) || "").trim();
+      const lower = text.toLowerCase();
+
+      if (normalizedStatus === "active" || normalizedVoterListNumber) return true;
+      if (!text) return false;
+
+      if (/(not found|data not found|not active|request timed out|failed to fetch|temporarily|try again|server|network error)/i.test(text)) {
+        return false;
+      }
+
+      if (/(स्वीकृत|मतदाता|नामावलीमा दर्ता|दर्ता भइसकेको|already registered|already exists|approved|verified|active)/i.test(text) && !/not active/i.test(text)) {
+        return true;
+      }
+
+      const hasProfileData = Boolean(profileData && typeof profileData === "object" && Object.keys(profileData).length > 0);
+      return Boolean(hasProfileData && !/(not found|data not found|not active|request timed out|failed to fetch|temporarily|try again|server|network error)/i.test(lower));
     }
 
     async function persistVoterListRecordToSecondaryDb(nin, voterData, status = "pending", voterListNumber = "", sourceMessage = "") {
@@ -4561,6 +5067,8 @@
           })
         });
 
+        const isActiveRecord = shouldMarkVoterListRecordActive(normalizedStatus, normalizedVoterListNumber, sourceMessage, enrichedData);
+
         if (typeof voterListIndex === "object") {
           voterListIndex[cleanNin] = {
             ...(voterListIndex[cleanNin] || {}),
@@ -4570,7 +5078,7 @@
             voterListNumber: normalizedVoterListNumber,
             profileData: enrichedData,
             rawPayload: enrichedData,
-            isActive: normalizedStatus === "active" || Boolean(normalizedVoterListNumber || enrichedData.ApprovalMessage)
+            isActive: isActiveRecord
           };
           if (typeof renderDatabaseTableRows === "function") {
             renderDatabaseTableRows();
@@ -6490,8 +6998,8 @@
     }
 
     function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>'"/]/g, function (s) {
+      const value = str == null ? '' : typeof str === 'string' ? str : String(str);
+      return value.replace(/[&<>'"/]/g, function (s) {
         return ({
           '&': '&amp;',
           '<': '&lt;',
@@ -9407,6 +9915,80 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
           class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all">
           Confirm
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NIN Status Scan Modal -->
+  <div id="ninStatusActionModal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <div>
+          <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">🔄 Update NIN Status</h3>
+          <p class="text-[10px] text-slate-400 font-medium mt-0.5">Choose the scope and watch each live request and response.</p>
+        </div>
+        <button onclick="closeNinStatusModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div id="ninStatusModeSelection" class="space-y-3">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] text-slate-600" id="ninStatusSelectionSummary">
+          Loading database records...
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <button onclick="startNinStatusScan('all')"
+            class="rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold px-4 py-3 text-[11px] text-left transition-all">
+            <div class="font-bold">Search All NID Records</div>
+            <div class="text-[10px] font-medium text-blue-600 mt-0.5">Run the update across every record in the database.</div>
+          </button>
+          <button onclick="startNinStatusScan('undone')"
+            class="rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-4 py-3 text-[11px] text-left transition-all">
+            <div class="font-bold">Search Undone NID Status</div>
+            <div class="text-[10px] font-medium text-amber-600 mt-0.5">Only scan records that are not yet marked as done.</div>
+          </button>
+        </div>
+      </div>
+
+      <div id="ninStatusLiveLogPanel" class="hidden space-y-3">
+        <div class="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+          <span id="ninStatusProgressLabel">Waiting for scan to start...</span>
+          <span class="text-slate-400">Click a row for details</span>
+        </div>
+        <div class="overflow-auto rounded-xl border border-slate-200">
+          <table class="min-w-full text-left text-[10px]">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-3 py-2 font-semibold">NID</th>
+                <th class="px-3 py-2 font-semibold">Name</th>
+                <th class="px-3 py-2 font-semibold">Outcome</th>
+                <th class="px-3 py-2 font-semibold">Attempts</th>
+                <th class="px-3 py-2 font-semibold">Last Response</th>
+              </tr>
+            </thead>
+            <tbody id="ninStatusResultsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ninStatusDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-3xl w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <h3 id="ninStatusDetailTitle" class="text-xs font-bold text-slate-900">Record Details</h3>
+        <button onclick="closeNinStatusDetailModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="ninStatusDetailBody" class="max-h-[420px] overflow-auto"></div>
+      <div class="flex justify-end border-t border-slate-100 pt-3">
+        <button onclick="closeNinStatusDetailModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-[11px] transition-all">Close</button>
       </div>
     </div>
   </div>
