@@ -1,5 +1,46 @@
+const os = require('os');
 const connectToDatabase = require('../lib/db');
 const Person = require('../lib/models/Person');
+const AllowedComputer = require('../lib/models/AllowedComputer');
+
+async function resolveDeviceInfo(req, data = {}) {
+  let compName = String(
+    data.computerName ||
+    req.headers['x-client-computer-name'] ||
+    req.headers['x-computer-name'] ||
+    req.headers['x-device-name'] ||
+    ''
+  ).trim();
+
+  let nick = String(
+    data.nickname ||
+    req.headers['x-client-nickname'] ||
+    req.headers['x-device-nickname'] ||
+    req.headers['x-nickname'] ||
+    ''
+  ).trim();
+
+  // If computerName is not provided in data or headers, try OS hostname
+  if (!compName) {
+    try {
+      compName = (os.hostname() || '').trim();
+    } catch (e) {}
+  }
+
+  // If nickname is not provided, look it up from AllowedComputer collection
+  if (compName && !nick) {
+    try {
+      const match = await AllowedComputer.findOne({
+        computerName: { $regex: new RegExp(`^${compName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+      });
+      if (match && match.nickname) {
+        nick = String(match.nickname).trim();
+      }
+    } catch (e) {}
+  }
+
+  return { computerName: compName, nickname: nick };
+}
 
 // ─── UPDATE MODE CONSTANTS ──────────────────────────────────────────────────
 //
@@ -271,6 +312,35 @@ module.exports = async (req, res) => {
         if (existing) {
           return res.status(409).json({ error: `A record with NIN '${data.ninEn}' already exists in the database.` });
         }
+
+        const deviceInfo = await resolveDeviceInfo(req, data);
+        data.computerName = deviceInfo.computerName;
+        data.nickname = deviceInfo.nickname;
+        data.updatedComputerName = deviceInfo.computerName;
+        data.updatedNickname = deviceInfo.nickname;
+
+        if (!Array.isArray(data.updateHistory) || data.updateHistory.length === 0) {
+          const deviceLabel = deviceInfo.nickname
+            ? `${deviceInfo.nickname} (${deviceInfo.computerName})`
+            : (deviceInfo.computerName || 'Device');
+          data.updateHistory = [{
+            updatedAt: new Date(),
+            updateDate: data.regDate || new Date().toISOString().split('T')[0],
+            action: 'Record Created',
+            note: `New record created on ${deviceLabel}`,
+            computerName: deviceInfo.computerName,
+            nickname: deviceInfo.nickname,
+            changedFields: Object.keys(data).filter(k => !['_id', 'updateHistory'].includes(k)),
+            changes: {},
+            snapshot: {
+              ninEn: data.ninEn,
+              givenEn: data.givenEn,
+              surnameEn: data.surnameEn,
+              status: data.status || 'done'
+            }
+          }];
+        }
+
         const newPerson = new Person(data);
         await newPerson.save();
         return res.status(201).json(newPerson);
@@ -292,6 +362,14 @@ module.exports = async (req, res) => {
         const existingPerson = await Person.findOne({ ninEn: originalNin });
         if (!existingPerson) {
           return res.status(404).json({ error: 'Record not found to update' });
+        }
+
+        const deviceInfo = await resolveDeviceInfo(req, data);
+        existingPerson.updatedComputerName = deviceInfo.computerName;
+        existingPerson.updatedNickname = deviceInfo.nickname;
+        if (!existingPerson.computerName) {
+          existingPerson.computerName = deviceInfo.computerName;
+          existingPerson.nickname = deviceInfo.nickname;
         }
 
         const tokenOnly = detectTokenOnly(data);
@@ -318,6 +396,8 @@ module.exports = async (req, res) => {
               updateDate: data.updateDate || new Date().toISOString().split('T')[0],
               action: 'Token Verified & Saved',
               note: data.updateNote || 'Token updated from scanned/extracted PDF QR code',
+              computerName: deviceInfo.computerName,
+              nickname: deviceInfo.nickname,
               changedFields: ['token'],
               changes: { token: { from: oldToken, to: newToken } },
               snapshot: {
@@ -371,6 +451,8 @@ module.exports = async (req, res) => {
             updateDate: data.updateDate || new Date().toISOString().split('T')[0],
             action: buildActionLabel(data, changedFields),
             note: data.updateNote || `Updated ${changedFields.length} field(s): ${changedFields.join(', ')}`,
+            computerName: deviceInfo.computerName,
+            nickname: deviceInfo.nickname,
             changedFields,
             changes: fieldChanges,
             snapshot: previousSnapshot,

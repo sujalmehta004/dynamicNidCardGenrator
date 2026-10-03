@@ -93,6 +93,19 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const bodyStr = result.body ? result.body.toString("utf8") : "";
+    let isInvalid = false;
+    try {
+      const parsed = JSON.parse(bodyStr);
+      if (parsed && (parsed.error || parsed.message === "Invalid token" || parsed.valid === false)) {
+        isInvalid = true;
+      }
+    } catch (e) {
+      if (bodyStr.includes("Token is invalid") || bodyStr.includes("Invalid token")) {
+        isInvalid = true;
+      }
+    }
+
     if (result.status >= 400 || isInvalid) {
       return res.status(200).json({ valid: false, reason: "Invalid or expired token" });
     }

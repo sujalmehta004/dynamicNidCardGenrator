@@ -1350,64 +1350,69 @@
                 </p>
                 <div class="flex flex-col gap-2 text-xs">
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-nin" checked onclick="toggleColumn('nin')"
+                    <input type="checkbox" id="colCheckbox-nin" checked onchange="toggleColumn('nin', this.checked)"
                       class="accent-blue-600" />
                     NID Number
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-voterDb" checked onclick="toggleColumn('voterDb')"
+                    <input type="checkbox" id="colCheckbox-voterDb" checked onchange="toggleColumn('voterDb', this.checked)"
                       class="accent-blue-600" />
                     NIN Status VL
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-name" checked onclick="toggleColumn('name')"
+                    <input type="checkbox" id="colCheckbox-name" checked onchange="toggleColumn('name', this.checked)"
                       class="accent-blue-600" />
                     Full Name
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-token" checked onclick="toggleColumn('token')"
+                    <input type="checkbox" id="colCheckbox-token" checked onchange="toggleColumn('token', this.checked)"
                       class="accent-blue-600" />
                     Secure Token
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-dob" checked onclick="toggleColumn('dob')"
+                    <input type="checkbox" id="colCheckbox-dob" checked onchange="toggleColumn('dob', this.checked)"
                       class="accent-blue-600" />
                     DOB
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-citDate" checked onclick="toggleColumn('citDate')"
+                    <input type="checkbox" id="colCheckbox-citDate" checked onchange="toggleColumn('citDate', this.checked)"
                       class="accent-blue-600" />
                     Cit Date
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-address" checked onclick="toggleColumn('address')"
+                    <input type="checkbox" id="colCheckbox-address" checked onchange="toggleColumn('address', this.checked)"
                       class="accent-blue-600" />
                     Address
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-regDate" checked onclick="toggleColumn('regDate')"
+                    <input type="checkbox" id="colCheckbox-regDate" checked onchange="toggleColumn('regDate', this.checked)"
                       class="accent-blue-600" />
                     Reg Date
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-updateDate" checked onclick="toggleColumn('updateDate')"
+                    <input type="checkbox" id="colCheckbox-updateDate" checked onchange="toggleColumn('updateDate', this.checked)"
                       class="accent-blue-600" />
                     Update Date
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-status" checked onclick="toggleColumn('status')"
+                    <input type="checkbox" id="colCheckbox-status" checked onchange="toggleColumn('status', this.checked)"
                       class="accent-blue-600" />
                     Status
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-cardDesign" checked onclick="toggleColumn('cardDesign')"
+                    <input type="checkbox" id="colCheckbox-cardDesign" checked onchange="toggleColumn('cardDesign', this.checked)"
                       class="accent-blue-600" />
                     Card Design
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-mobile" checked onclick="toggleColumn('mobile')"
+                    <input type="checkbox" id="colCheckbox-mobile" checked onchange="toggleColumn('mobile', this.checked)"
                       class="accent-blue-600" />
                     Mobile Number
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                    <input type="checkbox" id="colCheckbox-device" onchange="toggleColumn('device', this.checked)"
+                      class="accent-blue-600" />
+                    Device / Nickname
                   </label>
                 </div>
               </div>
@@ -2209,11 +2214,11 @@
         }
       });
 
+      loadSavedColumnVisibility();
       loadNepalAdministrativeData();
       loadSavedVoterListRecords().then(() => fetchDatabase()).catch(() => fetchDatabase());
       checkIpAccessControl();
       loadSavedBordersAndBackgrounds();
-      loadSavedColumnVisibility();
       generateVoterCaptcha();
     });
 
@@ -2226,13 +2231,10 @@
 
     function cleanNepaliText(text) {
       if (!text) return "";
-      // Remove unwanted hidden spaces/tabs
-      let clean = text.trim().replace(/\s+/g, ' ');
-      // Fix "गुप्ता" -> "गुप्ता" (Inserts ZWJ \u200D after the halant under Pa)
-      clean = clean.replace(/प्ता/g, 'प्\u200Dता');
-      // Fix "तामाङ्ग" -> Ensures the Halant stays visible on the Nga (\u0919 + \u094D) 
-      // and doesn't blend into a bottom loop with Ga (\u0917)
-      clean = clean.replace(/ङ्ग/g, 'ङ्\u200Dग');
+      let clean = String(text).trim().replace(/\s+/g, ' ');
+      // Remove any artificially injected zero-width characters (ZWJ \u200D, ZWNJ \u200C, etc.)
+      // so exact font ligatures (such as 'ga' under 'anga' in तामाङ्ग) and exact Unicode match the official database
+      clean = clean.replace(/[\u200B-\u200D\uFEFF]/g, '');
       return clean;
     }
 
@@ -3318,15 +3320,58 @@
       status: true,
       cardDesign: true,
       mobile: true,
+      device: false,
       actions: true,
     };
 
-    function toggleColumn(col) {
-      columnVisibility[col] = !columnVisibility[col];
-      localStorage.setItem(
-        "nid_column_visibility",
-        JSON.stringify(columnVisibility),
-      );
+    function getCurrentClientDeviceInfo() {
+      let cName = "";
+      try {
+        if (typeof clientComputerName !== "undefined" && clientComputerName) {
+          cName = String(clientComputerName).trim();
+        }
+      } catch (e) {}
+      if (!cName) {
+        try {
+          cName = (localStorage.getItem('nid_client_computer_name') || localStorage.getItem('nid_client_device_name') || '').trim();
+        } catch (e) {}
+      }
+      let nick = "";
+      try {
+        nick = (localStorage.getItem('nid_client_nickname') || '').trim();
+      } catch (e) {}
+      if (!nick && cName) {
+        try {
+          if (typeof allowedComputersDatabase !== "undefined" && Array.isArray(allowedComputersDatabase)) {
+            const found = allowedComputersDatabase.find(item => (item.computerName || '').trim().toLowerCase() === cName.toLowerCase());
+            if (found && found.nickname) {
+              nick = String(found.nickname).trim();
+            }
+          }
+        } catch (e) {}
+      }
+      return { computerName: cName, nickname: nick };
+    }
+
+    function toggleColumn(col, forceVal) {
+      if (typeof forceVal === "boolean") {
+        columnVisibility[col] = forceVal;
+      } else {
+        const checkbox = document.getElementById(`colCheckbox-${col}`);
+        if (checkbox) {
+          columnVisibility[col] = checkbox.checked;
+        } else {
+          columnVisibility[col] = !columnVisibility[col];
+        }
+      }
+      try {
+        localStorage.setItem(
+          "nid_column_visibility",
+          JSON.stringify(columnVisibility),
+        );
+      } catch (err) {
+        console.error("Failed to save column visibility to localStorage:", err);
+      }
       updateColumnVisibilityButtons();
       renderTableHeader();
       renderDatabaseTableRows();
@@ -3336,7 +3381,7 @@
       Object.keys(columnVisibility).forEach((col) => {
         const checkbox = document.getElementById(`colCheckbox-${col}`);
         if (checkbox) {
-          checkbox.checked = columnVisibility[col];
+          checkbox.checked = !!columnVisibility[col];
         }
         const btn = document.getElementById(`colBtn-${col}`);
         if (btn) {
@@ -3365,7 +3410,21 @@
           console.error("Error loading column visibility:", e);
         }
       }
+
+      // One-time migration: default 'device' column to hidden (false) unless user has already migrated
+      if (!localStorage.getItem("nid_col_vis_device_hidden_v1")) {
+        columnVisibility.device = false;
+        try {
+          localStorage.setItem("nid_col_vis_device_hidden_v1", "true");
+          localStorage.setItem("nid_column_visibility", JSON.stringify(columnVisibility));
+        } catch (e) {}
+      }
+
       updateColumnVisibilityButtons();
+      if (document.getElementById("dbTableHeaderRow") && document.getElementById("dbTableHeaderRow").children.length > 0) {
+        renderTableHeader();
+        renderDatabaseTableRows();
+      }
     }
 
     function loadSavedVoterListRecords() {
@@ -3492,6 +3551,7 @@
         { key: "status", label: "Execution Status", sortKey: "status" },
         { key: "cardDesign", label: "Card Design", sortKey: "cardDesign" },
         { key: "mobile", label: "Mobile Number", sortKey: "mobile" },
+        { key: "device", label: "Device / Nickname", sortKey: "nickname" },
         { key: "actions", label: "Actions", sortKey: "" },
       ];
 
@@ -3824,6 +3884,18 @@
         if (noteWrap) noteWrap.style.display = 'none';
       }
 
+      const deviceEl = document.getElementById("updateBriefDevice");
+      const deviceWrap = document.getElementById("updateBriefDeviceWrapper");
+      const devText = (item.nickname && item.computerName)
+        ? `${item.nickname} (${item.computerName})`
+        : (item.nickname || item.computerName || '');
+      if (devText) {
+        if (deviceEl) deviceEl.innerText = devText;
+        if (deviceWrap) deviceWrap.style.display = 'block';
+      } else {
+        if (deviceWrap) deviceWrap.style.display = 'none';
+      }
+
       const container = document.getElementById("updateBriefChangesContainer");
       container.innerHTML = "";
 
@@ -3913,6 +3985,9 @@
 
       return `<div style="display:flex; flex-direction:column; gap:8px;">
         ${sorted.map((item, idx) => {
+          // IMPORTANT: we need the ORIGINAL unsorted index so openUpdateRecordBrief
+          // looks up the right item in row.updateHistory (which is not sorted).
+          const originalIdx = historyList.indexOf(item);
           const timeStr = item.updatedAt
             ? new Date(item.updatedAt).toLocaleString('en-US', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
             : (item.updateDate || 'Unknown date');
@@ -3947,10 +4022,11 @@
 
           const escapedNin = escapeHtml(resolvedNin);
 
-          return `<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;transition:all .15s;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 3px 10px rgba(59,130,246,0.1)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'" onclick="openUpdateRecordBrief('${escapedNin}', ${idx})">
+          return `<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;transition:all .15s;cursor:pointer;" onmouseover="this.style.borderColor='#3b82f6';this.style.boxShadow='0 3px 10px rgba(59,130,246,0.1)'" onmouseout="this.style.borderColor='#e2e8f0';this.style.boxShadow='none'" onclick="openUpdateRecordBrief('${escapedNin}', ${originalIdx})">
             <div style="padding:9px 12px;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <div style="display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;">
                 <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid ${badgeBorder};background:${badgeBg};color:${badgeColor};white-space:nowrap;">${escapeHtml(action)}</span>
+                ${(item.nickname || item.computerName) ? `<span style="font-size:9px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;padding:1px 6px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:3px;" title="Action taken from: ${escapeHtml(item.computerName||'')}">💻 ${escapeHtml(item.nickname ? (item.nickname + (item.computerName ? ' (' + item.computerName + ')' : '')) : (item.computerName||''))}</span>` : ''}
                 ${item.changedFields && item.changedFields.length ? `<span style="font-size:9px;color:#64748b;background:#f1f5f9;padding:1px 6px;border-radius:6px;font-weight:600;">${item.changedFields.slice(0,3).join(', ')}${item.changedFields.length > 3 ? '…' : ''}</span>` : ''}
               </div>
               <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -4064,6 +4140,14 @@
                 <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Last Updated</div>
                 <div style="font-weight:600;color:#1e293b;font-family:monospace;">${escapeHtml(row.updateDate||'—')}</div>
               </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Created On Device</div>
+                <div style="font-weight:600;color:#1e293b;font-size:11px;">${escapeHtml(row.nickname ? (row.nickname + (row.computerName ? ' (' + row.computerName + ')' : '')) : (row.computerName || '—'))}</div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">
+                <div style="color:#94a3b8;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Last Updated Device</div>
+                <div style="font-weight:600;color:#1e293b;font-size:11px;">${escapeHtml(row.updatedNickname ? (row.updatedNickname + (row.updatedComputerName ? ' (' + row.updatedComputerName + ')' : '')) : (row.updatedComputerName || row.nickname || row.computerName || '—'))}</div>
+              </div>
 
               <!-- Token Display -->
               <div id="rdModalTokenDisplay" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;grid-column:span 2;${row.token ? '' : 'display:none;'}">
@@ -4169,7 +4253,14 @@
             <div id="rdStep_2" style="display:none;flex-direction:column;gap:10px;">
               <div style="font-size:11px;font-weight:700;color:#1e293b;">Step 2 — Verify OTP</div>
               <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:9px 12px;font-size:11px;color:#1d4ed8;line-height:1.4;">
-                OTP has been dispatched to the citizen's registered mobile number. Enter the 6-digit code below:
+                OTP has been dispatched to the citizen's registered mobile number <strong id="rdMaskedMobileInline" style="font-family:monospace;color:#1e3a8a;"></strong>. Enter the 6-digit code below:
+              </div>
+              <div id="rdMaskedMobileCard" style="display:none;align-items:center;justify-content:space-between;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:11px;color:#166534;">
+                <span style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:13px;">📱</span>
+                  <span>Registered Mobile:</span>
+                </span>
+                <strong id="rdMaskedMobileVal" style="font-family:monospace;letter-spacing:1px;font-size:12px;color:#15803d;"></strong>
               </div>
 
               <div>
@@ -4355,6 +4446,20 @@
         }
 
         rdModal_txId = body.transactionId || '';
+
+        const maskedMobile = body.maskedMobile || body.mobile || body.mobileNumber || (rdModal_row && rdModal_row.mobile) || '';
+        const inlineEl = document.getElementById('rdMaskedMobileInline');
+        const cardEl = document.getElementById('rdMaskedMobileCard');
+        const valEl = document.getElementById('rdMaskedMobileVal');
+        if (maskedMobile) {
+          if (inlineEl) inlineEl.textContent = `(${maskedMobile})`;
+          if (valEl) valEl.textContent = maskedMobile;
+          if (cardEl) cardEl.style.display = 'flex';
+        } else {
+          if (inlineEl) inlineEl.textContent = '';
+          if (cardEl) cardEl.style.display = 'none';
+        }
+
         rdModalGotoStep(2);
         setTimeout(() => document.getElementById('rdOtpCode')?.focus(), 50);
       } catch (err) {
@@ -4529,16 +4634,23 @@
       // Save token-only update via PUT /api/people?originalNin=...
       const oldToken = String(rdModal_row.token || '');
       const oldStatus = String(rdModal_row.status || '');
+      const devInfo = getCurrentClientDeviceInfo();
 
       const saveRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(rdModal_nin)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-computer-name': devInfo.computerName || '',
+          'x-client-nickname': devInfo.nickname || '',
+        },
         body: JSON.stringify({
           token: extractedToken,
           status: 'done',
           updateDate: new Date().toISOString().split('T')[0],
           updateAction: 'Token Verified & Saved',
-          updateNote: 'Extracted and verified via Modal Check'
+          updateNote: 'Extracted and verified via Modal Check',
+          computerName: devInfo.computerName,
+          nickname: devInfo.nickname,
         })
       });
 
@@ -4550,12 +4662,16 @@
       // Update in-memory row
       rdModal_row.token = extractedToken;
       rdModal_row.status = 'done';
+      rdModal_row.updatedComputerName = devInfo.computerName;
+      rdModal_row.updatedNickname = devInfo.nickname;
       if (!Array.isArray(rdModal_row.updateHistory)) rdModal_row.updateHistory = [];
       rdModal_row.updateHistory.unshift({
         action: 'Token Verified & Saved',
         updateDate: new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString(),
         note: 'Extracted and verified via Modal Check',
+        computerName: devInfo.computerName,
+        nickname: devInfo.nickname,
         changedFields: ['token', 'status'],
         changes: {
           token: { from: oldToken, to: extractedToken },
@@ -4800,6 +4916,22 @@
           tr.appendChild(td);
         }
 
+        // Col 9.8: Device / Nickname
+        if (columnVisibility.device) {
+          const td = document.createElement("td");
+          td.style.cssText = CELL + "white-space:nowrap; font-size:11px; color:#475569;";
+          const devNick = (row.updatedNickname || row.nickname || "").trim();
+          const devComp = (row.updatedComputerName || row.computerName || "").trim();
+          if (devNick && devComp) {
+            td.innerHTML = `<span class="font-bold text-slate-700">${escapeHtml(devNick)}</span> <span class="text-[10px] text-slate-400 font-mono">(${escapeHtml(devComp)})</span>`;
+          } else if (devNick || devComp) {
+            td.innerHTML = `<span class="font-bold text-slate-700">${escapeHtml(devNick || devComp)}</span>`;
+          } else {
+            td.innerText = "—";
+          }
+          tr.appendChild(td);
+        }
+
         // Col 10: Actions
         if (columnVisibility.actions) {
           const td = document.createElement("td");
@@ -4814,18 +4946,23 @@
 
     async function updateRowStatusInline(ninEn, newStatus) {
       try {
+        const devInfo = getCurrentClientDeviceInfo();
         const res = await fetch(
           `${API_BASE}/api/people?originalNin=${encodeURIComponent(ninEn)}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
+              "x-client-computer-name": devInfo.computerName || "",
+              "x-client-nickname": devInfo.nickname || "",
             },
             body: JSON.stringify({
               status: newStatus,
               updateDate: new Date().toISOString().split("T")[0],
               updateAction: `Status Changed: ${newStatus}`,
               updateNote: `Status updated to ${newStatus} from database table`,
+              computerName: devInfo.computerName,
+              nickname: devInfo.nickname,
             }),
           },
         );
@@ -4841,18 +4978,23 @@
     }
     async function updateRowCardDesignInline(ninEn, newCardDesign) {
       try {
+        const devInfo = getCurrentClientDeviceInfo();
         const res = await fetch(
           `${API_BASE}/api/people?originalNin=${encodeURIComponent(ninEn)}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
+              "x-client-computer-name": devInfo.computerName || "",
+              "x-client-nickname": devInfo.nickname || "",
             },
             body: JSON.stringify({
               cardDesign: newCardDesign,
               updateDate: new Date().toISOString().split("T")[0],
               updateAction: `Card Design: ${newCardDesign}`,
               updateNote: `Card design set to ${newCardDesign} from database table`,
+              computerName: devInfo.computerName,
+              nickname: devInfo.nickname,
             }),
           },
         );
@@ -5028,12 +5170,20 @@
           record.updateNote = `Updated fields: ${changedLabels.join(', ')}`;
         }
 
+        const devInfo = getCurrentClientDeviceInfo();
+        if (devInfo.computerName) record.computerName = devInfo.computerName;
+        if (devInfo.nickname) record.nickname = devInfo.nickname;
+        record.updatedComputerName = devInfo.computerName || "";
+        record.updatedNickname = devInfo.nickname || "";
+
         const res = await fetch(
           `${API_BASE}/api/people?originalNin=${encodeURIComponent(selectedRecordId)}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
+              "x-client-computer-name": devInfo.computerName || "",
+              "x-client-nickname": devInfo.nickname || "",
             },
             body: JSON.stringify(record),
           },
@@ -5043,12 +5193,17 @@
           alert(`Error: ${result.error}`);
           return;
         }
+
+        // Update the in-memory DB so the row detail modal and table reflect the change
+        if (result && result.ninEn) {
+          const idx = documentIdentityDb.findIndex(r => r.ninEn === result.ninEn);
+          if (idx !== -1) documentIdentityDb[idx] = result;
+        }
+
         alert("Database record updated successfully!");
         selectedRecordId = null;
-        document.getElementById("formBadgeMode").innerText =
-          "MODE: NEW ENTRY";
-        document.getElementById("btnDynamicSubmit").innerText =
-          "Submit Record";
+        document.getElementById("formBadgeMode").innerText = "MODE: NEW ENTRY";
+        document.getElementById("btnDynamicSubmit").innerText = "Submit Record";
 
         const formPane = document.getElementById("paneWorkspaceForm");
         if (formPane) {
@@ -5057,8 +5212,13 @@
           formPane.classList.add("bg-white");
         }
 
+        // Hide and clear the history panel after a successful update
         const histSection = document.getElementById("formWorkspaceHistorySection");
+        const histList = document.getElementById("formWorkspaceHistoryList");
+        const histCount = document.getElementById("formWorkspaceHistoryCount");
         if (histSection) histSection.classList.add("hidden");
+        if (histList) histList.innerHTML = "";
+        if (histCount) histCount.innerText = "0";
 
         document.getElementById("clientForm").reset();
         initializeDateFieldsDefaults();
@@ -5071,10 +5231,18 @@
 
     async function executeFormCreation(record) {
       try {
+        const devInfo = getCurrentClientDeviceInfo();
+        if (devInfo.computerName) record.computerName = devInfo.computerName;
+        if (devInfo.nickname) record.nickname = devInfo.nickname;
+        record.updatedComputerName = devInfo.computerName || "";
+        record.updatedNickname = devInfo.nickname || "";
+
         const res = await fetch(`${API_BASE}/api/people`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "x-client-computer-name": devInfo.computerName || "",
+            "x-client-nickname": devInfo.nickname || "",
           },
           body: JSON.stringify(record),
         });
@@ -5131,7 +5299,7 @@
       document.getElementById("formToken").value = record.token || "";
       document.getElementById("formMobile").value = record.mobile || "";
 
-      // Show history in form workspace
+      // Show history in form workspace - pass ninEn so brief modal can find the record
       const histSection = document.getElementById("formWorkspaceHistorySection");
       const histList = document.getElementById("formWorkspaceHistoryList");
       const histCount = document.getElementById("formWorkspaceHistoryCount");
@@ -5139,7 +5307,7 @@
         histSection.classList.remove("hidden");
         const hist = record.updateHistory || [];
         if (histCount) histCount.innerText = String(hist.length);
-        histList.innerHTML = renderUpdateHistoryHtml(hist);
+        histList.innerHTML = renderUpdateHistoryHtml(hist, 'fwh_' + (record.ninEn || '').replace(/[^a-z0-9]/gi,'_'), record.ninEn);
       }
 
       // Reset selection fields
@@ -6487,10 +6655,22 @@
             // Only update if there's a mapping and current status differs
             if (targetStatus && rec.status !== targetStatus) {
               try {
+                const devInfo = getCurrentClientDeviceInfo();
                 await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(rec.ninEn)}`, {
                   method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: targetStatus, updateDate: new Date().toISOString().split("T")[0] })
+                  headers: {
+                    "Content-Type": "application/json",
+                    "x-client-computer-name": devInfo.computerName || "",
+                    "x-client-nickname": devInfo.nickname || "",
+                  },
+                  body: JSON.stringify({
+                    status: targetStatus,
+                    updateDate: new Date().toISOString().split("T")[0],
+                    updateAction: `Status Changed: ${targetStatus}`,
+                    updateNote: `Auto status update from Bulk OTP verification`,
+                    computerName: devInfo.computerName,
+                    nickname: devInfo.nickname,
+                  })
                 });
               } catch (e) {
                 console.warn("Auto-status update failed for", rec.ninEn, e);
@@ -6874,17 +7054,24 @@
       console.debug('[persistVerifiedTokenToDatabase] resolved NIN:', finalNin);
 
       // Attempt to update only the token and status on the existing record
+      const devInfo = getCurrentClientDeviceInfo();
       const minimalUpdate = {
         token,
         status: status || "done",
         updateDate: new Date().toISOString().split("T")[0],
         updateAction: "Token Verified & Saved",
-        updateNote: "Token updated from scanned/extracted PDF QR code"
+        updateNote: "Token updated from scanned/extracted PDF QR code",
+        computerName: devInfo.computerName,
+        nickname: devInfo.nickname,
       };
 
       const updateRes = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(finalNin)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-client-computer-name": devInfo.computerName || "",
+          "x-client-nickname": devInfo.nickname || "",
+        },
         body: JSON.stringify(minimalUpdate)
       });
 
@@ -7437,6 +7624,14 @@
         formPane.style.backgroundColor = "";
         formPane.classList.add("bg-white");
       }
+
+      // Hide and clear the update history panel
+      const histSection = document.getElementById("formWorkspaceHistorySection");
+      const histList = document.getElementById("formWorkspaceHistoryList");
+      const histCount = document.getElementById("formWorkspaceHistoryCount");
+      if (histSection) histSection.classList.add("hidden");
+      if (histList) histList.innerHTML = "";
+      if (histCount) histCount.innerText = "0";
 
       initializeDateFieldsDefaults();
       processFormMetricsSync();
@@ -11030,10 +11225,14 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:10pt;backgrou
       </div>
 
       <!-- Quick meta cards -->
-      <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 text-xs">
         <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Timestamp</span>
           <span id="updateBriefTime" class="font-mono text-slate-800 font-semibold text-[11px]"></span>
+        </div>
+        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3" id="updateBriefDeviceWrapper">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Device / Registered User</span>
+          <span id="updateBriefDevice" class="font-mono text-slate-800 font-semibold text-[11px]"></span>
         </div>
         <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3" id="updateBriefNoteWrapper">
           <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Context / Reason</span>
