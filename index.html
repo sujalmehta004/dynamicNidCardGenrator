@@ -2269,6 +2269,43 @@
       runNinStatusScan(mode);
     };
 
+    window.retryNinStatusPendingRecords = function () {
+      if (ninStatusScanState.isRunning) {
+        showCustomAlert("Scan in progress", "Please wait for the current scan to finish before retrying.", "info");
+        return;
+      }
+
+      // Collect NINs from previously-scanned pending/failed records
+      const pendingNins = (ninStatusScanState.pendingRecords || [])
+        .map((r) => String(r?.nin || "").trim())
+        .filter(Boolean);
+
+      if (!pendingNins.length) {
+        showCustomAlert("Nothing to retry", "No pending or failed records found from the last scan.", "info");
+        return;
+      }
+
+      // Inject them into selectedNins so 'selected' mode picks them up
+      ninStatusScanState.selectedNins = Array.from(new Set(pendingNins));
+
+      // Update the badge/count in the UI so the user can see the selection
+      updateNinStatusSelectedCount();
+
+      // Update the live-log retry count badges
+      const retryBadge = document.getElementById("ninStatusRetryCountBadge");
+      const liveCount  = document.getElementById("liveRetryCount");
+      if (retryBadge) retryBadge.textContent = pendingNins.length;
+      if (liveCount)  liveCount.textContent   = pendingNins.length;
+
+      appendNinStatusLog(
+        `Retrying ${pendingNins.length} pending/failed record(s): ${pendingNins.slice(0, 5).join(", ")}${pendingNins.length > 5 ? " …" : ""}`,
+        "info"
+      );
+
+      // Kick off a fresh scan scoped to only those records
+      runNinStatusScan("selected");
+    };
+
     window.toggleNinStatusSelection = toggleNinStatusSelection;
     window.selectAllNinStatusSelections = selectAllNinStatusSelections;
     window.clearNinStatusSelections = clearNinStatusSelections;
@@ -12262,8 +12299,11 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:7pt;backgroun
         <!-- Mode Selection Panel -->
         <div id="ninStatusModeSelection" class="space-y-4">
           <!-- Summary bar -->
-          <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[11px] text-slate-600 font-medium" id="ninStatusSelectionSummary">
-            Loading database records...
+          <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-[11px] text-slate-600 font-medium">
+            <span id="ninStatusSelectionSummary">Loading database records...</span>
+            <button type="button" id="btnViewScanResults" onclick="showNinStatusLogPanel()" class="hidden text-[10px] font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer">
+              📊 View Scan Results (<span id="viewScannedCount">0</span>)
+            </button>
           </div>
 
           <!-- Scope buttons -->
@@ -12294,11 +12334,20 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:7pt;backgroun
           </div>
 
           <!-- Pending / Non-Active panel -->
-          <div id="ninStatusPendingPanel" class="hidden">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-[10px] font-bold text-rose-700 uppercase tracking-wider" id="ninStatusPendingSummary">Non-active records</span>
+          <div id="ninStatusPendingPanel" class="hidden rounded-xl border border-rose-200 bg-rose-50/70 p-3 space-y-2">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-1.5">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-bold">⚠️</span>
+                <span class="text-[11px] font-bold text-rose-800 uppercase tracking-wider" id="ninStatusPendingSummary">0 pending record(s) ready to retry.</span>
+              </div>
+              <button type="button" id="btnRetryPendingRecords" onclick="retryNinStatusPendingRecords()"
+                class="bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm hover:shadow transition-all active:scale-95 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Retry Pending / Failed Only</span>
+                <span id="ninStatusRetryCountBadge" class="bg-rose-900/60 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono">0</span>
+              </button>
             </div>
-            <div id="ninStatusPendingList" class="space-y-1 max-h-32 overflow-y-auto"></div>
+            <div id="ninStatusPendingList" class="space-y-1 max-h-36 overflow-y-auto pr-1"></div>
           </div>
 
           <!-- Record selection list -->
@@ -12320,9 +12369,21 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:7pt;backgroun
 
         <!-- Live Log / Results Panel -->
         <div id="ninStatusLiveLogPanel" class="hidden space-y-3">
-          <div class="flex items-center justify-between">
-            <span id="ninStatusProgressLabel" class="text-[11px] font-bold text-slate-600">Waiting for scan to start...</span>
-            <span class="text-[10px] text-slate-400">Click a row for details</span>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="showNinStatusSelectionMode()" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-1 rounded-md transition-colors cursor-pointer">
+                ← Back to Options
+              </button>
+              <span id="ninStatusProgressLabel" class="text-[11px] font-bold text-slate-700">Waiting for scan to start...</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" id="btnLiveRetryPending" onclick="retryNinStatusPendingRecords()"
+                class="hidden bg-rose-600 hover:bg-rose-700 text-white font-bold px-3 py-1 rounded-lg text-[10px] items-center gap-1 shadow-sm transition-all active:scale-95 cursor-pointer">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Retry Pending Only (<span id="liveRetryCount">0</span>)</span>
+              </button>
+              <span class="text-[10px] text-slate-400">Click a row for details</span>
+            </div>
           </div>
           <div class="overflow-auto rounded-xl border border-slate-200" style="max-height:50vh;">
             <table class="min-w-full text-left text-[10px]">
