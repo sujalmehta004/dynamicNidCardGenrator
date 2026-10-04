@@ -398,7 +398,7 @@
       <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60" id="tabContainer">
         <button id="tabFormBtn" onclick="shiftWorkspace('form')"
           class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Form Design Studio <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘N</kbd>
+          Form Design Studio <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘K</kbd>
         </button>
         <button id="tabPortalBtn" onclick="shiftWorkspace('portal')"
           class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
@@ -3544,6 +3544,13 @@
       }
     }
 
+    function getSavedVoterRecord(nid) {
+      if (!nid) return null;
+      const str = String(nid).trim();
+      const digits = str.replace(/[^0-9]/g, '');
+      return voterListIndex[str] || (digits ? voterListIndex[digits] : null) || null;
+    }
+
     function loadSavedVoterListRecords() {
       return fetch(`${API_BASE}/api/save-voter-list-record`)
         .then(r => r.json())
@@ -3551,7 +3558,12 @@
           const recs = data.records || [];
           voterListIndex = {};
           recs.forEach(r => {
-            if (r && r.nidNumber) voterListIndex[String(r.nidNumber).trim()] = r;
+            if (r && r.nidNumber) {
+              const fullKey = String(r.nidNumber).trim();
+              const digitsKey = fullKey.replace(/[^0-9]/g, '');
+              voterListIndex[fullKey] = r;
+              if (digitsKey) voterListIndex[digitsKey] = r;
+            }
           });
         }).catch(err => { console.warn('Failed to load saved voter list records', err); });
     }
@@ -3683,6 +3695,7 @@
     // Global Keyboard Shortcuts:
     // Cmd+F / Ctrl+F -> From ANY page or tab, automatically redirect to database table & make full screen (or toggle if already full screen)
     // Cmd+S / Ctrl+S -> From ANY page or tab, automatically redirect to download tab (portal)
+    // Cmd+K / Ctrl+K -> From ANY page or tab, automatically redirect to form design studio
     // Escape -> Exit full screen
     window.addEventListener("keydown", (e) => {
       if (!e.key) return;
@@ -3717,8 +3730,8 @@
         return;
       }
 
-      // Cmd+N or Ctrl+N: automatically redirect to form design studio
-      if (isCmdOrCtrl && key === "n") {
+      // Cmd+K or Ctrl+K: automatically redirect to form design studio
+      if (isCmdOrCtrl && key === "k") {
         e.preventDefault();
         // Exit database fullscreen if active
         if (typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
@@ -4276,18 +4289,20 @@
       rdModal_lastPdfBlob = null;
       rdModal_lastPdfPassword = '';
 
-      const savedPortrait = voterListIndex[String(row.ninEn || '').trim()];
+      const savedPortrait = getSavedVoterRecord(row.ninEn);
       const sc = getStatusAccentColor(row.status);
       const statusLabel = row.status === 'inprogress' ? 'Mobile Not Registered' :
         row.status === 'not online' ? 'Not Online' :
           row.status === 'pending' ? 'Pending' :
             row.status === 'done' ? 'Done' : row.status;
 
-      const portraitHtml = savedPortrait && savedPortrait.portraitImage
-        ? `<div style="width:76px;min-width:76px;height:92px;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;background:#f8fafc;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-             <img src="data:image/jpeg;base64,${savedPortrait.portraitImage}" style="width:100%;height:100%;object-fit:cover;" />
+      const portraitRaw = savedPortrait && savedPortrait.portraitImage;
+      const portraitSrc = portraitRaw ? (portraitRaw.startsWith('data:') || portraitRaw.startsWith('http') ? portraitRaw : 'data:image/jpeg;base64,' + portraitRaw) : '';
+      const portraitHtml = portraitSrc
+        ? `<div onclick="openVoterDbDirectDetail('${escapeHtml(row.ninEn)}')" title="Click to view official voter record modal" style="width:76px;min-width:76px;height:92px;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;background:#f8fafc;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+             <img src="${portraitSrc}" style="width:100%;height:100%;object-fit:cover;" />
            </div>`
-        : `<div style="width:76px;min-width:76px;height:92px;border-radius:12px;border:1px dashed #cbd5e1;background:#f8fafc;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:24px;">👤</div>`;
+        : `<div onclick="openVoterDbDirectDetail('${escapeHtml(row.ninEn)}')" title="Click to check official voter record" style="width:76px;min-width:76px;height:92px;border-radius:12px;border:1px dashed #cbd5e1;background:#f8fafc;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:24px;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">👤</div>`;
 
       const historyList = Array.isArray(row.updateHistory) ? row.updateHistory : [];
       const histCount = historyList.length;
@@ -4375,8 +4390,9 @@
             </div>
 
             <!-- Action buttons -->
-            <div style="display:flex;gap:8px;padding-top:2px;">
-              <button onclick="pullRowIntoWorkspace('${escapeHtml(row.ninEn)}'); closeRowDetailModal();" style="flex:1;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-weight:700;padding:8px 10px;border-radius:10px;font-size:11px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">✏️ Modify Record</button>
+            <div style="display:flex;gap:8px;padding-top:2px;flex-wrap:wrap;">
+              <button onclick="pullRowIntoWorkspace('${escapeHtml(row.ninEn)}'); closeRowDetailModal();" style="flex:1;min-width:110px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-weight:700;padding:8px 10px;border-radius:10px;font-size:11px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">✏️ Modify Record</button>
+              <button onclick="openVoterDbDirectDetail('${escapeHtml(row.ninEn)}')" style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-weight:700;padding:8px 10px;border-radius:10px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s;" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'" title="View official voter list record modal">🪪 Voter Details</button>
               <select onchange="updateRowStatusInline('${escapeHtml(row.ninEn)}', this.value); closeRowDetailModal();" style="background:#f8fafc;border:1px solid #e2e8f0;color:#475569;font-weight:600;padding:8px 10px;border-radius:10px;font-size:11px;cursor:pointer;">
                 <option value="">Change Status…</option>
                 <option value="pending" ${row.status==='pending'?'selected':''}>Pending</option>
@@ -5002,7 +5018,7 @@
         tr.className = `${statusRowClass} db-row-clickable`;
         tr.style.cssText = `border-left: 3px solid ${sc.left};`;
 
-        const saved = voterListIndex[String(row.ninEn || '').trim()];
+        const saved = getSavedVoterRecord(row.ninEn);
         const voterNo = saved && (saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))) ? String(saved.voterListNumber || (saved.profileData && (saved.profileData.VoterNo || saved.profileData.voterNo))).trim() : "";
         const hasVoterNo = Boolean(voterNo);
 
@@ -5033,7 +5049,8 @@
                     ? false
                     : (hasVoterNo || getVoterActiveStateFromMessage(savedApprovalMsg).isActive);
             if (saved && saved.portraitImage) {
-              tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="data:image/jpeg;base64,${saved.portraitImage}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
+              const pSrc = (saved.portraitImage.startsWith('data:') || saved.portraitImage.startsWith('http')) ? saved.portraitImage : `data:image/jpeg;base64,${saved.portraitImage}`;
+              tdDb.innerHTML = `<div style="width:64px; margin:0 auto;"><img src="${pSrc}" class="w-16 h-20 object-cover rounded border border-slate-200"/></div>`;
             } else if (isActiveRecord) {
               tdDb.innerHTML = `<div style="text-align:center; font-size:13px; color:#065f46; font-weight:800;">Active</div>`;
             } else {
@@ -6667,8 +6684,9 @@
     async function openVoterDbDirectDetail(nid) {
       const cleanNid = String(nid || '').trim();
       if (!cleanNid) return;
+      const digitsNid = cleanNid.replace(/[^0-9]/g, '');
 
-      let saved = voterListIndex[cleanNid];
+      let saved = getSavedVoterRecord(cleanNid);
       if (!saved) {
         try {
           const res = await fetch(`${API_BASE}/api/save-voter-list-record?nidNumber=${encodeURIComponent(cleanNid)}`);
@@ -6676,89 +6694,94 @@
             const j = await res.json();
             saved = j.found || j.record || null;
             // Cache for future use
-            if (saved && saved.nidNumber) voterListIndex[cleanNid] = saved;
+            if (saved && saved.nidNumber) {
+              const fullKey = String(saved.nidNumber).trim();
+              const digKey = fullKey.replace(/[^0-9]/g, '');
+              voterListIndex[fullKey] = saved;
+              voterListIndex[cleanNid] = saved;
+              if (digKey) voterListIndex[digKey] = saved;
+              if (digitsNid) voterListIndex[digitsNid] = saved;
+            }
           }
         } catch (e) {
           console.warn('Failed to load voter list record for direct details', e);
         }
       }
 
-      if (!saved) {
-        showCustomAlert('No record found', 'No saved voter list record found for this NIN.', 'warning');
+      // Check corresponding main database row if available
+      const mainRow = documentIdentityDb.find(r => {
+        const rNin = String(r.ninEn || '').trim();
+        return rNin === cleanNid || (digitsNid && rNin.replace(/[^0-9]/g, '') === digitsNid);
+      });
+
+      if (!saved && !mainRow) {
+        showCustomAlert('No record found', 'No saved voter list record or local DB entry found for this NIN.', 'warning');
         return;
       }
 
       // Build profile from saved data (prefer profileData over rawPayload)
-      let profile = Object.assign({}, (saved.profileData && Object.keys(saved.profileData).length > 0 ? saved.profileData : (saved.rawPayload || {})));
-
-      // Check if we have any real identity info
-      const hasRealData = Boolean(
-        profile.VoterFirstNameEn || profile.VoterFirstName ||
-        profile.FirstName || profile.Nidno ||
-        profile.Dob || saved.portraitImage
-      );
-
-      if (!hasRealData) {
-        // Fall back to main DB row for basic identity info
-        const row = documentIdentityDb.find(r => String(r.ninEn || '').trim() === cleanNid);
-        if (row) {
-          profile = {
-            Nidno: cleanNid,
-            VoterFirstNameEn: row.givenEn || '',
-            VoterLastNameEn: row.surnameEn || '',
-            VoterFirstName: row.givenNp || '',
-            VoterLastName: row.surnameNp || '',
-            Dob: row.dobEn || '',
-            dobNp: row.dobNp || '',
-            CitizenshipCertificateNumberLoc: row.citNo || '',
-            CitizenshipIssuingDateLoc: row.citDate || '',
-            FatherFirstName: row.fatherFirstName || '—',
-            FatherLastName: row.fatherLastName || '',
-            MotherFirstName: row.motherFirstName || '—',
-            MotherLastName: row.motherLastName || '',
-            GrandfatherFirstName: row.grandfatherFirstName || '—',
-            PermanentWard: row.ward || '—',
-            PermanentVillageTol: row.village || '—'
-          };
-        } else {
-          showCustomAlert('No data', 'No voter list data found for this NIN.', 'warning');
-          return;
+      let profile = {};
+      if (saved) {
+        profile = Object.assign({}, (saved.profileData && Object.keys(saved.profileData).length > 0 ? saved.profileData : (saved.rawPayload || {})));
+        if (profile.data && typeof profile.data === 'object') {
+          profile = Object.assign({}, profile.data, profile);
         }
       }
 
-      const voterData = Object.assign({}, profile);
-      voterData.Nidno = voterData.Nidno || cleanNid;
-
-      // Always inject the saved portrait from DB (this bypasses live portal errors)
-      if (saved.portraitImage) {
-        voterData.PortraitImage = saved.portraitImage;
-        voterData.PortraitStatus = saved.portraitStatus || 'PRESENT';
+      // Fall back / merge with main DB row
+      if (mainRow) {
+        if (!profile.Nidno) profile.Nidno = mainRow.ninEn || cleanNid;
+        if (!profile.VoterFirstNameEn && !profile.FirstName) profile.VoterFirstNameEn = mainRow.givenEn || '';
+        if (!profile.VoterLastNameEn && !profile.LastName) profile.VoterLastNameEn = mainRow.surnameEn || '';
+        if (!profile.VoterFirstName) profile.VoterFirstName = mainRow.givenNp || '';
+        if (!profile.VoterLastName) profile.VoterLastName = mainRow.surnameNp || '';
+        if (!profile.Dob && !profile._dob) profile.Dob = mainRow.dobEn || '';
+        if (!profile.dobNp) profile.dobNp = mainRow.dobNp || '';
+        if (!profile.CitizenshipCertificateNumberLoc && !profile.CitizenshipCertificateNumber) {
+          profile.CitizenshipCertificateNumberLoc = mainRow.citNo || '';
+        }
+        if (!profile.CitizenshipIssuingDateLoc && !profile.CitizenIssueDate) {
+          profile.CitizenshipIssuingDateLoc = mainRow.citDate || '';
+        }
+        if (!profile.FatherFirstName || profile.FatherFirstName === '—') profile.FatherFirstName = mainRow.fatherFirstName || '—';
+        if (!profile.FatherLastName) profile.FatherLastName = mainRow.fatherLastName || '';
+        if (!profile.MotherFirstName || profile.MotherFirstName === '—') profile.MotherFirstName = mainRow.motherFirstName || '—';
+        if (!profile.MotherLastName) profile.MotherLastName = mainRow.motherLastName || '';
+        if (!profile.GrandfatherFirstName || profile.GrandfatherFirstName === '—') profile.GrandfatherFirstName = mainRow.grandfatherFirstName || '—';
+        if (!profile.PermanentWard || profile.PermanentWard === '—') profile.PermanentWard = mainRow.ward || '—';
+        if (!profile.PermanentVillageTol || profile.PermanentVillageTol === '—') profile.PermanentVillageTol = mainRow.village || '—';
+        if (!profile.maskedMobile && !profile.MobileNo) profile.maskedMobile = mainRow.mobile || '';
+        if (!profile.district && !profile.PermanentDistrictNameEn) profile.district = mainRow.district || '';
+        if (!profile.municipality && !profile.PermanentVdcMunicipalityNameEn) profile.municipality = mainRow.municipality || '';
+        if (!profile.province && !profile.PermanentState) profile.province = mainRow.province || '';
       }
 
-      // Fix missing English name fields from alternate keys
+      const voterData = Object.assign({}, profile);
+      voterData.Nidno = voterData.Nidno || (mainRow ? mainRow.ninEn : cleanNid);
+
+      if (saved) {
+        if (saved.portraitImage) {
+          voterData.PortraitImage = saved.portraitImage;
+          voterData.PortraitStatus = saved.portraitStatus || 'PRESENT';
+        }
+        if (saved.voterListNumber && !voterData.voterListNumber && !voterData.VoterNo) {
+          voterData.voterListNumber = saved.voterListNumber;
+          voterData.VoterNo = saved.voterListNumber;
+        }
+        if (saved.maskedMobile && !voterData.maskedMobile && !voterData.MobileNo) {
+          voterData.maskedMobile = saved.maskedMobile;
+          voterData.MobileNo = saved.maskedMobile;
+        }
+        if (saved.status && !voterData.status) {
+          voterData.status = saved.status;
+        }
+      }
+
+      // Also ensure alternate name fields map smoothly
       if (!voterData.VoterFirstNameEn && voterData.FirstName) voterData.VoterFirstNameEn = voterData.FirstName;
       if (!voterData.VoterLastNameEn && voterData.LastName) voterData.VoterLastNameEn = voterData.LastName;
       if (!voterData.Dob && voterData.dob) voterData.Dob = voterData.dob;
-
-      // Enrich from main DB row if some fields are still missing
-      const mainRow = documentIdentityDb.find(r => String(r.ninEn || '').trim() === cleanNid);
-      if (mainRow) {
-        if (!voterData.VoterFirstNameEn) voterData.VoterFirstNameEn = mainRow.givenEn || '';
-        if (!voterData.VoterLastNameEn) voterData.VoterLastNameEn = mainRow.surnameEn || '';
-        if (!voterData.VoterFirstName) voterData.VoterFirstName = mainRow.givenNp || '';
-        if (!voterData.VoterLastName) voterData.VoterLastName = mainRow.surnameNp || '';
-        if (!voterData.Dob) voterData.Dob = mainRow.dobEn || '';
-        if (!voterData.dobNp) voterData.dobNp = mainRow.dobNp || '';
-        if (!voterData.CitizenshipCertificateNumberLoc) voterData.CitizenshipCertificateNumberLoc = mainRow.citNo || '';
-        if (!voterData.CitizenshipIssuingDateLoc) voterData.CitizenshipIssuingDateLoc = mainRow.citDate || '';
-        if (!voterData.FatherFirstName || voterData.FatherFirstName === '—') voterData.FatherFirstName = mainRow.fatherFirstName || '—';
-        if (!voterData.FatherLastName) voterData.FatherLastName = mainRow.fatherLastName || '';
-        if (!voterData.MotherFirstName || voterData.MotherFirstName === '—') voterData.MotherFirstName = mainRow.motherFirstName || '—';
-        if (!voterData.MotherLastName) voterData.MotherLastName = mainRow.motherLastName || '';
-        if (!voterData.GrandfatherFirstName || voterData.GrandfatherFirstName === '—') voterData.GrandfatherFirstName = mainRow.grandfatherFirstName || '—';
-        if (!voterData.PermanentWard || voterData.PermanentWard === '—') voterData.PermanentWard = mainRow.ward || '—';
-        if (!voterData.PermanentVillageTol || voterData.PermanentVillageTol === '—') voterData.PermanentVillageTol = mainRow.village || '—';
-      }
+      if (!voterData.dobNp && voterData.DobNp) voterData.dobNp = voterData.DobNp;
 
       openVoterDetailPopup(voterData);
     }
@@ -10389,7 +10412,8 @@
 
       const approvalText = String(voterData?.ApprovalMessage || voterData?.Approvalmessage || voterData?.ApprovalMassage || voterData?.error || voterData?.message || "").trim();
       const hasRealData = Boolean(
-        voterData?.VoterFirstNameEn || voterData?.VoterFirstName || voterData?.PortraitImage || voterData?.Nidno
+        voterData?.VoterFirstNameEn || voterData?.VoterFirstName || voterData?.FirstName || voterData?.givenEn ||
+        voterData?.PortraitImage || voterData?.Nidno || voterData?.Dob || voterData?.dob || voterData?.voterListNumber
       );
       // Only show simple alert (no popup) if we have ONLY an approval text with no real profile data
       if (shouldShowApprovalNotice(approvalText) && !hasRealData) {
@@ -10397,8 +10421,26 @@
         return;
       }
 
-      const nameEn = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn, voterData.VoterLastNameEn].filter(Boolean).join(" ");
-      const nameNp = [voterData.VoterFirstName, voterData.VoterMiddleName, voterData.VoterLastName].filter(Boolean).join(" ");
+      const nameEn = [
+        voterData.VoterFirstNameEn || voterData.FirstName || voterData.FirstNameEn || voterData.givenEn,
+        voterData.VoterMiddleNameEn || voterData.MiddleName || voterData.MiddleNameEn,
+        voterData.VoterLastNameEn || voterData.LastName || voterData.LastNameEn || voterData.surnameEn
+      ].filter(Boolean).join(" ");
+      const nameNp = [
+        voterData.VoterFirstName || voterData.FirstNameNp || voterData.givenNp,
+        voterData.VoterMiddleName || voterData.MiddleNameNp,
+        voterData.VoterLastName || voterData.LastNameNp || voterData.surnameNp
+      ].filter(Boolean).join(" ");
+
+      const portraitRaw = voterData.PortraitImage || "";
+      const hasPortrait = Boolean(portraitRaw && voterData.PortraitStatus !== "ABSENT");
+      const portraitSrc = hasPortrait
+        ? (portraitRaw.startsWith("data:") || portraitRaw.startsWith("http") ? portraitRaw : `data:image/jpeg;base64,${portraitRaw}`)
+        : "";
+
+      const genderDisplay = voterData.GenderCode === 'F' ? 'FEMALE' : (voterData.GenderCode === 'M' ? 'MALE' : (voterData.gender || voterData.Gender || 'MALE'));
+      const voterNoVal = voterData.voterListNumber || voterData.VoterNo || voterData.voterNo || voterData.VoterCardNo || "";
+      const mobileVal = voterData.maskedMobile || voterData.MobileNo || voterData.mobile || voterData.TelephoneNo || "";
 
       contentEl.innerHTML = `
         ${voterData.ApprovalMessage ? `
@@ -10411,13 +10453,13 @@
           <!-- Portrait -->
           <div class="sm:col-span-1 flex flex-col items-center gap-2 border-r border-slate-200 pr-4">
             <div class="w-32 h-44 rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-50 flex items-center justify-center">
-              ${voterData.PortraitImage && voterData.PortraitStatus !== "ABSENT"
-          ? `<img src="data:image/jpeg;base64,${voterData.PortraitImage}" class="w-full h-full object-cover" />`
-          : `<svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`
-        }
+              ${hasPortrait
+                ? `<img src="${portraitSrc}" class="w-full h-full object-cover" />`
+                : `<svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`
+              }
             </div>
-            <span class="font-bold text-[9px] uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">GENDER: ${voterData.GenderCode === 'F' ? 'FEMALE' : 'MALE'}</span>
-            <span class="font-mono text-[10px] font-bold text-slate-650">${voterData.Nidno || "—"}</span>
+            <span class="font-bold text-[9px] uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">GENDER: ${genderDisplay}</span>
+            <span class="font-mono text-[10px] font-bold text-slate-650">${voterData.Nidno || voterData.NIN || voterData.ninEn || "—"}</span>
           </div>
 
           <!-- Main Info -->
@@ -10433,19 +10475,27 @@
               </div>
               <div>
                 <span class="text-slate-400 block text-[9px] font-bold uppercase">Date of Birth (AD)</span>
-                <span class="font-semibold text-slate-800">${voterData.Dob || voterData._dob || "—"}</span>
+                <span class="font-semibold text-slate-800">${voterData.Dob || voterData._dob || voterData.dob || voterData.dobEn || "—"}</span>
               </div>
               <div>
                 <span class="text-slate-400 block text-[9px] font-bold uppercase">जन्म मिति (BS)</span>
-                <span class="font-semibold text-slate-800 nepali-font">${voterData.dobNp || "—"}</span>
+                <span class="font-semibold text-slate-800 nepali-font">${voterData.dobNp || voterData.DobNp || voterData.dobBs || voterData.DobBs || "—"}</span>
               </div>
               <div>
                 <span class="text-slate-400 block text-[9px] font-bold uppercase">Citizenship Number</span>
-                <span class="font-semibold text-slate-800 font-mono">${voterData.CitizenshipCertificateNumberLoc || voterData.CitizenshipCertificateNumber || "—"}</span>
+                <span class="font-semibold text-slate-800 font-mono">${voterData.CitizenshipCertificateNumberLoc || voterData.CitizenshipCertificateNumber || voterData.citNo || "—"}</span>
               </div>
               <div>
                 <span class="text-slate-400 block text-[9px] font-bold uppercase">Citizenship Issued</span>
-                <span class="font-semibold text-slate-800 nepali-font">${voterData.CitizenshipIssuingDateLoc || voterData.CitizenIssueDate || "—"}</span>
+                <span class="font-semibold text-slate-800 nepali-font">${voterData.CitizenshipIssuingDateLoc || voterData.CitizenIssueDate || voterData._citizenIssueDate || voterData.citDate || "—"}</span>
+              </div>
+              <div class="bg-indigo-50/70 border border-indigo-100 p-2 rounded-lg">
+                <span class="text-indigo-500 block text-[8px] font-bold uppercase">Voter List No. (मतदाता नं)</span>
+                <span class="font-bold text-indigo-700 font-mono text-xs">${voterNoVal || "—"}</span>
+              </div>
+              <div class="bg-slate-50 border border-slate-200/60 p-2 rounded-lg">
+                <span class="text-slate-400 block text-[8px] font-bold uppercase">Linked Mobile (सम्पर्क नं)</span>
+                <span class="font-semibold text-slate-800 font-mono text-xs">${mobileVal || "—"}</span>
               </div>
             </div>
 
@@ -10455,18 +10505,18 @@
               <div class="grid grid-cols-2 gap-2">
                 <div class="bg-slate-50 p-2 rounded">
                   <span class="text-slate-400 block text-[8px] font-bold uppercase">Father</span>
-                  <span class="font-semibold text-slate-800 block text-[10px]">${[voterData.FatherFirstName, voterData.FatherMiddleName, voterData.FatherLastName].filter(Boolean).join(" ") || "—"}</span>
-                  <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.FatherFirstNameLoc, voterData.FatherMiddleNameLoc, voterData.FatherLastNameLoc].filter(Boolean).join(" ") || "—"}</span>
+                  <span class="font-semibold text-slate-800 block text-[10px]">${[voterData.FatherFirstName, voterData.FatherMiddleName, voterData.FatherLastName].filter(Boolean).join(" ") || voterData.FatherName || voterData.fatherFirstName || "—"}</span>
+                  <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.FatherFirstNameLoc, voterData.FatherMiddleNameLoc, voterData.FatherLastNameLoc].filter(Boolean).join(" ") || voterData.FatherNameLoc || voterData.fatherNameNp || "—"}</span>
                 </div>
                 <div class="bg-slate-50 p-2 rounded">
                   <span class="text-slate-400 block text-[8px] font-bold uppercase">Mother</span>
-                  <span class="font-semibold text-slate-800 block text-[10px]">${[voterData.MotherFirstName, voterData.MotherMiddleName, voterData.MotherLastName].filter(Boolean).join(" ") || "—"}</span>
-                  <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.MotherFirstNameLoc, voterData.MotherMiddleNameLoc, voterData.MotherLastNameLoc].filter(Boolean).join(" ") || "—"}</span>
+                  <span class="font-semibold text-slate-800 block text-[10px]">${[voterData.MotherFirstName, voterData.MotherMiddleName, voterData.MotherLastName].filter(Boolean).join(" ") || voterData.MotherName || voterData.motherFirstName || "—"}</span>
+                  <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.MotherFirstNameLoc, voterData.MotherMiddleNameLoc, voterData.MotherLastNameLoc].filter(Boolean).join(" ") || voterData.MotherNameLoc || voterData.motherNameNp || "—"}</span>
                 </div>
                 <div class="bg-slate-50 p-2 rounded">
                   <span class="text-slate-400 block text-[8px] font-bold uppercase">Grandfather</span>
-                  <span class="font-semibold text-slate-800 block text-[10px]">${[voterData.GrandfatherFirstName, voterData.GrandfatherMiddleName, voterData.GrandfatherLastName].filter(Boolean).join(" ") || "—"}</span>
-                  <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.GrandfatherFirstNameLoc, voterData.GrandfatherMiddleNameLoc, voterData.GrandfatherLastNameLoc].filter(Boolean).join(" ") || "—"}</span>
+                  <span class="font-semibold text-slate-800 block text-[10px]">${[voterData.GrandfatherFirstName, voterData.GrandfatherMiddleName, voterData.GrandfatherLastName].filter(Boolean).join(" ") || voterData.GrandfatherName || voterData.grandfatherFirstName || "—"}</span>
+                  <span class="text-slate-500 block nepali-font text-[10px]">${[voterData.GrandfatherFirstNameLoc, voterData.GrandfatherMiddleNameLoc, voterData.GrandfatherLastNameLoc].filter(Boolean).join(" ") || voterData.GrandfatherNameLoc || voterData.grandfatherNameNp || "—"}</span>
                 </div>
                  ${(() => {
           const spouseEn = [voterData.SpouseFirstName, voterData.SpouseMiddleName, voterData.SpouseLastName].filter(Boolean).join(" ")
@@ -10492,9 +10542,8 @@
           const _wardNp = voterData.PermanentWardLoc || (voterData.PermanentWard ? String(voterData.PermanentWard) : '') || '—';
           // Convert Nepali digits → Arabic for the English side
           const _ward = _wardNp !== '—' ? _wardNp.replace(/[०-९]/g, d => '०१२३४५६७८९'.indexOf(d)) : (voterData.PermanentWard || '—');
-          const _tole = voterData.PermanentVillageTol || '—';
+          const _tole = voterData.PermanentVillageTol || voterData.village || voterData.tole || '—';
           const _toleNp = voterData.PermanentVillageTolLoc || _tole;
-          const _muniCode = voterData._muniCode || '';
           return `
             <div>
               <span class="text-slate-400 block text-[9px] font-bold uppercase mb-1">Permanent Address</span>
@@ -10534,10 +10583,11 @@
       modalPopup.classList.remove("hidden");
       modalPopup.classList.add("flex");
 
+      window._activeVoterDetailData = voterData;
       const serialized = encodeURIComponent(JSON.stringify(voterData));
 
       try {
-        const cleanNid = voterData.Nidno.replace(/[^0-9]/g, "");
+        const cleanNid = String(voterData.Nidno || voterData.NIN || voterData.ninEn || "").replace(/[^0-9]/g, "");
         const checkRes = await fetch(`${API_BASE}/api/people?query=${encodeURIComponent(cleanNid)}`);
         if (checkRes.ok) {
           const list = await checkRes.json();
@@ -10548,29 +10598,29 @@
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
                 Already Registered in NID Card
               </div>
-              <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">📄 Download Paper</button>
-              <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
+              <button onclick="downloadVoterPaper(window._activeVoterDetailData || '${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm">📄 Download Paper</button>
+              <button onclick="saveVoterWhiteCard(window._activeVoterDetailData || '${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm">💾 Save White Card</button>
               <button onclick="closeVoterDetailPopup()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
             `;
           } else {
             footerEl.innerHTML = `
-              <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1">📄 Download Paper</button>
-              <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
+              <button onclick="downloadVoterPaper(window._activeVoterDetailData || '${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1 shadow-sm">📄 Download Paper</button>
+              <button onclick="saveVoterWhiteCard(window._activeVoterDetailData || '${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm">💾 Save White Card</button>
               <button onclick="closeVoterDetailPopup()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
             `;
           }
         } else {
           footerEl.innerHTML = `
-            <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1">📄 Download Paper</button>
-            <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
+            <button onclick="downloadVoterPaper(window._activeVoterDetailData || '${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1 shadow-sm">📄 Download Paper</button>
+            <button onclick="saveVoterWhiteCard(window._activeVoterDetailData || '${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm">💾 Save White Card</button>
             <span class="text-rose-500 text-[10px] mr-2 font-bold uppercase">DB Query Failed</span>
             <button onclick="closeVoterDetailPopup()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
           `;
         }
       } catch (err) {
         footerEl.innerHTML = `
-          <button onclick="downloadVoterPaper('${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1">📄 Download Paper</button>
-          <button onclick="saveVoterWhiteCard('${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1">💾 Save White Card</button>
+          <button onclick="downloadVoterPaper(window._activeVoterDetailData || '${serialized}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all mr-auto flex items-center gap-1 shadow-sm">📄 Download Paper</button>
+          <button onclick="saveVoterWhiteCard(window._activeVoterDetailData || '${serialized}')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all flex items-center gap-1 shadow-sm">💾 Save White Card</button>
           <span class="text-rose-500 text-[10px] mr-2 font-bold uppercase">DB Connect Error</span>
           <button onclick="closeVoterDetailPopup()" class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
         `;
@@ -10614,8 +10664,8 @@
 
       // Province — use hardcoded map always
       const provInfo = PROVINCES[provId] || { en: `Province ${provId}`, np: `प्रदेश ${provId}` };
-      const provinceEn = provInfo.en;
-      const provinceNp = provInfo.np;
+      let provinceEn = provInfo.en;
+      let provinceNp = provInfo.np;
 
       // District — use API-resolved value first, then hardcoded map
       let districtEn = voterData.PermanentDistrictNameEn || "";
@@ -10628,6 +10678,8 @@
         const found = nepalAdminData.districts.find(d => d.id == distId);
         if (found) districtNp = found.name_ne || "";
       }
+      if (!districtEn) districtEn = voterData.district || voterData.districtEn || "";
+      if (!districtNp) districtNp = voterData.districtNp || "";
 
       // Municipality — use API-resolved value first, then nepalAdminData local_levels
       let muniEn = voterData.PermanentVdcMunicipalityNameEn || "";
@@ -10646,6 +10698,10 @@
           if (!muniNp) muniNp = (found.name_ne || "") + suf.np;
         }
       }
+      if (!muniEn) muniEn = voterData.municipality || voterData.muniEn || voterData.muni || "";
+      if (!muniNp) muniNp = voterData.municipalityNp || voterData.muniNp || "";
+      if (!provinceEn || provinceEn.startsWith("Province ")) provinceEn = voterData.province || voterData.provinceEn || provinceEn;
+      if (!provinceNp || provinceNp.startsWith("प्रदेश ")) provinceNp = voterData.provinceNp || provinceNp;
 
       return {
         provinceEn: provinceEn || "—",
@@ -10794,7 +10850,9 @@
     }
 
     function saveVoterWhiteCard(serializedData) {
-      const voterData = JSON.parse(decodeURIComponent(serializedData));
+      const voterData = (typeof serializedData === 'object' && serializedData !== null)
+        ? serializedData
+        : JSON.parse(decodeURIComponent(serializedData));
 
       const givenEn = [voterData.VoterFirstNameEn, voterData.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
       const surnameEn = (voterData.VoterLastNameEn || "").toUpperCase();
@@ -11019,11 +11077,16 @@
     let currentPaperDownloadData = null;
 
     function openPaperDownloadOptionsModal(serializedData) {
-      currentPaperDownloadSerialized = serializedData;
-      try {
-        currentPaperDownloadData = JSON.parse(decodeURIComponent(serializedData));
-      } catch (e) {
-        currentPaperDownloadData = null;
+      if (typeof serializedData === 'object' && serializedData !== null) {
+        currentPaperDownloadData = serializedData;
+        currentPaperDownloadSerialized = encodeURIComponent(JSON.stringify(serializedData));
+      } else {
+        currentPaperDownloadSerialized = serializedData;
+        try {
+          currentPaperDownloadData = JSON.parse(decodeURIComponent(serializedData));
+        } catch (e) {
+          currentPaperDownloadData = null;
+        }
       }
 
       const modal = document.getElementById("paperDownloadOptionsModal");
@@ -11243,7 +11306,9 @@
         openPaperDownloadOptionsModal(serializedData);
         return;
       }
-      const D = JSON.parse(decodeURIComponent(serializedData));
+      const D = (typeof serializedData === 'object' && serializedData !== null)
+        ? serializedData
+        : JSON.parse(decodeURIComponent(serializedData));
       const mobileNo = (options && options.mobileNo !== undefined) ? options.mobileNo : (D.maskedMobile || D.MobileNo || D.Mobile || '');
       const addr = getResolvedAddressNames(D);
 

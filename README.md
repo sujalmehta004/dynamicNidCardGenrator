@@ -119,13 +119,45 @@ npm install
 
 ### 2. Set Environment Variables
 
-Create a .env file in the project root:
+Create a `.env` file in the project root (you can also copy `.env.example`):
 
-```env
-MONGODB_URI=your_mongodb_connection_string
+```bash
+cp .env.example .env
 ```
 
-### 3. Run Locally
+Configure the following required environment variables:
+
+```env
+# Primary MongoDB Database (Required)
+# Used for storing citizen identity profiles, allowed IPs, allowed devices, and system configs.
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database-name>?retryWrites=true&w=majority
+
+# Secondary MongoDB Database (Required for Voter List Storage)
+# Dedicated database used for caching and persisting election voterlist records, portraits, and statuses.
+MONGODB_URI_SECOND=mongodb+srv://<username>:<password>@<secondary-cluster-url>/<database-name>?retryWrites=true&w=majority
+```
+
+| Variable | Required | Description |
+|---|---|---|
+| `MONGODB_URI` | **Yes** | Primary database connection string for citizen identity records (`Person`), IP allowlist (`AllowedIp`), approved computers (`AllowedComputer`), and system settings (`Config`). |
+| `MONGODB_URI_SECOND` | **Yes** | Secondary database connection string dedicated to saving and retrieving election portal voter list records and base64 portraits (`VoterListRecord`). |
+
+---
+
+### 3. Keyboard Shortcuts
+
+Work faster with built-in global shortcuts accessible from any tab or modal:
+
+| Shortcut (Mac) | Shortcut (Windows/Linux) | Action |
+|---|---|---|
+| `Cmd + K` | `Ctrl + K` | Switch to **Form Design Studio** (new entry / editor) |
+| `Cmd + S` | `Ctrl + S` | Switch to **Download Card Portal** (search & PDF download) |
+| `Cmd + F` | `Ctrl + F` | Switch to **Database Index Table** & toggle Full Screen |
+| `Escape` | `Escape` | Exit Full Screen view |
+
+---
+
+### 4. Run Locally
 
 ```bash
 npx vercel dev
@@ -141,12 +173,13 @@ http://localhost:3000
 
 ## Typical Workflow
 
-1. Open the dashboard and go to the Form Design Studio.
+1. Open the dashboard and go to the Form Design Studio (`Cmd+K` / `Ctrl+K`).
 2. Enter the citizen’s information and save the record.
-3. Review the record in the Database Index Table.
-4. Generate or share the QR verification link.
-5. Use the verification route to redirect or display citizen information.
-6. Use the Download Card Portal to search and fetch the document.
+3. Review the record in the Database Index Table (`Cmd+F` / `Ctrl+F`).
+4. View official voter list records, portraits, and details directly in the modal popup.
+5. Generate or share the QR verification link.
+6. Use the verification route to redirect or display citizen information.
+7. Use the Download Card Portal (`Cmd+S` / `Ctrl+S`) to search and fetch the document or download paper formats (Standard Portrait, Landscape with White Card, or Phone Verified).
 
 ---
 
@@ -154,15 +187,16 @@ http://localhost:3000
 
 The backend exposes several serverless API endpoints, including:
 
-- /api/captcha
-- /api/request-otp
-- /api/verify-otp
-- /api/check-token
-- /api/voter-search
-- /api/download
-- /verify/:nin
-
-These endpoints power the verification and download workflow while keeping the frontend simple and secure.
+- `/api/captcha` — Captcha generation and verification proxy
+- `/api/request-otp` — Request OTP verification
+- `/api/verify-otp` — Verify OTP and fetch official document tokens
+- `/api/check-token` — Validate and sync active session tokens
+- `/api/people` — CRUD operations for citizen identity records
+- `/api/save-voter-list-record` — Save and retrieve cached voter list records & portraits
+- `/api/voter-search` — Election portal citizen lookup
+- `/api/download` — Secure server-side document proxy
+- `/api/allowed-ips` — IP allowlisting and security access control
+- `/verify/:nin` — Public verification gateway with fallback profile card
 
 ---
 
@@ -182,10 +216,12 @@ vercel --prod
 
 ### Environment variables in Vercel
 
-Add the following environment variable inside the Vercel dashboard:
+Add the following environment variables inside your Vercel Project Settings (**Settings > Environment Variables**):
 
-- Name: MONGODB_URI
-- Value: your MongoDB connection string
+1. **`MONGODB_URI`**
+   - Value: Your primary MongoDB connection string.
+2. **`MONGODB_URI_SECOND`**
+   - Value: Your secondary MongoDB connection string for voter list storage.
 
 ---
 
