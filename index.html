@@ -633,17 +633,25 @@
                 Extract individual identity data sets from sandbox repositories.
               </p>
             </div>
-            <!-- Captcha display container -->
-            <div id="portalCaptchaContainer" class="flex flex-col items-end gap-1.5 hidden">
-              <div class="flex items-center gap-2 border border-slate-200 rounded-lg p-1 bg-slate-50">
-                <img id="portalCaptchaImg" src="" alt="Captcha" class="h-10 w-28 object-contain rounded" />
-                <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha"
-                  class="bg-slate-200 hover:bg-slate-350 text-slate-700 p-1.5 rounded-lg transition-all">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
-                  </svg>
-                </button>
+            <div class="flex items-center gap-2">
+              <!-- Nepali Character Map Info Button -->
+              <button type="button" onclick="openNepaliCharInfo()"
+                title="View collected Nepali characters from voterlist"
+                class="w-7 h-7 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 font-bold text-xs flex items-center justify-center transition-all shadow-sm">
+                i
+              </button>
+              <!-- Captcha display container -->
+              <div id="portalCaptchaContainer" class="flex flex-col items-end gap-1.5 hidden">
+                <div class="flex items-center gap-2 border border-slate-200 rounded-lg p-1 bg-slate-50">
+                  <img id="portalCaptchaImg" src="" alt="Captcha" class="h-10 w-28 object-contain rounded" />
+                  <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha"
+                    class="bg-slate-200 hover:bg-slate-350 text-slate-700 p-1.5 rounded-lg transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2583,6 +2591,179 @@
         pfne.addEventListener('blur', () => setTimeout(() => pfneDd.classList.add('hidden'), 150));
         pfne.addEventListener('focus', () => { if (pfne.value.trim()) pfne.dispatchEvent(new Event('input')); });
       }
+      // ── Name tab: portalFullNameNp (Nepali word-level autocomplete) ─────────
+      const pfnp   = document.getElementById('portalFullNameNp');
+      const pfnpDd = (() => {
+        let dd = document.getElementById('portalNameNpAutocomplete');
+        if (!dd && pfnp) {
+          dd = document.createElement('div');
+          dd.id = 'portalNameNpAutocomplete';
+          dd.className = 'hidden absolute z-50 bg-white border border-blue-200 rounded-lg shadow-xl max-h-52 overflow-y-auto w-full';
+          const parent = pfnp.parentElement;
+          parent.style.position = 'relative';
+          parent.appendChild(dd);
+        }
+        return dd;
+      })();
+      if (pfnp && pfnpDd) {
+        const onSelectNpWord = (word) => {
+          // Replace current word being typed with selected suggestion
+          const val = pfnp.value;
+          const cursorPos = pfnp.selectionStart || val.length;
+          const beforeCursor = val.substring(0, cursorPos);
+          const afterCursor = val.substring(cursorPos);
+          // Find start of current word
+          const lastSpaceIdx = beforeCursor.lastIndexOf(' ');
+          const wordStart = lastSpaceIdx === -1 ? 0 : lastSpaceIdx + 1;
+          const newBefore = beforeCursor.substring(0, wordStart) + word;
+          const newAfter = afterCursor.startsWith(' ') ? afterCursor : (afterCursor ? ' ' + afterCursor : ' ');
+          pfnp.value = newBefore + newAfter;
+          const newPos = newBefore.length + 1;
+          pfnp.setSelectionRange(newPos, newPos);
+          pfnpDd.classList.add('hidden');
+          pfnpDd._activeIndex = -1;
+        };
+
+        // Custom keynav for word suggestions
+        if (!pfnp._npWordKeynavAttached) {
+          pfnp._npWordKeynavAttached = true;
+          pfnp.addEventListener('keydown', (e) => {
+            const isOpen = pfnpDd && !pfnpDd.classList.contains('hidden');
+            const words = (pfnpDd && pfnpDd._words) || [];
+            if (e.key === 'ArrowDown') {
+              if (isOpen && words.length > 0) {
+                e.preventDefault();
+                const cur = typeof pfnpDd._activeIndex === 'number' ? pfnpDd._activeIndex : -1;
+                _highlightNpWordItem(pfnpDd, cur + 1);
+              }
+            } else if (e.key === 'ArrowUp') {
+              if (isOpen && words.length > 0) {
+                e.preventDefault();
+                const cur = typeof pfnpDd._activeIndex === 'number' ? pfnpDd._activeIndex : 0;
+                _highlightNpWordItem(pfnpDd, cur - 1);
+              }
+            } else if (e.key === 'Enter') {
+              if (isOpen && words.length > 0) {
+                const activeIdx = pfnpDd._activeIndex;
+                if (activeIdx >= 0 && words[activeIdx]) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.stopImmediatePropagation();
+                  onSelectNpWord(words[activeIdx]);
+                  return false;
+                }
+              }
+            } else if (e.key === 'Escape') {
+              if (isOpen) {
+                pfnpDd.classList.add('hidden');
+                pfnpDd._activeIndex = -1;
+                e.preventDefault();
+              }
+            }
+          }, true);
+        }
+
+        pfnp.addEventListener('input', () => {
+          const val = pfnp.value;
+          const cursorPos = pfnp.selectionStart || val.length;
+          const beforeCursor = val.substring(0, cursorPos);
+          const lastSpaceIdx = beforeCursor.lastIndexOf(' ');
+          const currentWord = beforeCursor.substring(lastSpaceIdx + 1);
+          if (!currentWord.trim()) { pfnpDd.classList.add('hidden'); return; }
+          const matchedWords = _nepaliWordAcFilter(currentWord);
+          _showNpWordDropdown(pfnpDd, matchedWords, onSelectNpWord);
+        });
+        pfnp.addEventListener('blur', () => setTimeout(() => pfnpDd.classList.add('hidden'), 150));
+        pfnp.addEventListener('focus', () => {
+          const val = pfnp.value;
+          const cursorPos = pfnp.selectionStart || val.length;
+          const beforeCursor = val.substring(0, cursorPos);
+          const lastSpaceIdx = beforeCursor.lastIndexOf(' ');
+          const currentWord = beforeCursor.substring(lastSpaceIdx + 1);
+          if (currentWord.trim()) pfnp.dispatchEvent(new Event('input'));
+        });
+      }
+    }
+
+    // ─── Nepali word autocomplete helpers ────────────────────────────────────────
+    function _getNepaliWordTokens() {
+      const recs = Array.isArray(allCachedRecords) ? allCachedRecords : [];
+      const wordSet = new Set();
+      for (const r of recs) {
+        const parts = [
+          ...(r.givenNp || '').split(/\s+/),
+          ...(r.surnameNp || '').split(/\s+/)
+        ];
+        for (const w of parts) {
+          const clean = w.replace(/[^\S\r\n]+/g, '').trim();
+          if (clean.length > 1) wordSet.add(clean);
+        }
+      }
+      return Array.from(wordSet);
+    }
+
+    function _nepaliWordAcFilter(query) {
+      if (!query || !query.trim()) return [];
+      const q = query.trim();
+      const tokens = _getNepaliWordTokens();
+      const results = [];
+      for (const word of tokens) {
+        if (word.startsWith(q) && word !== q) {
+          results.push(word);
+          if (results.length >= 10) break;
+        }
+      }
+      // Also try contains if startsWith gave fewer than 5
+      if (results.length < 5) {
+        for (const word of tokens) {
+          if (!word.startsWith(q) && word.includes(q) && !results.includes(word)) {
+            results.push(word);
+            if (results.length >= 10) break;
+          }
+        }
+      }
+      return results;
+    }
+
+    function _highlightNpWordItem(dropdownEl, newIndex) {
+      const items = dropdownEl.querySelectorAll('.np-word-ac-item');
+      if (!items.length) return;
+      if (newIndex < 0) newIndex = items.length - 1;
+      if (newIndex >= items.length) newIndex = 0;
+      dropdownEl._activeIndex = newIndex;
+      items.forEach((item, idx) => {
+        if (idx === newIndex) {
+          item.classList.add('bg-blue-100', 'ring-1', 'ring-blue-400');
+          item.classList.remove('hover:bg-blue-50');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('bg-blue-100', 'ring-1', 'ring-blue-400');
+          item.classList.add('hover:bg-blue-50');
+        }
+      });
+    }
+
+    function _showNpWordDropdown(dropdownEl, words, onSelect) {
+      dropdownEl._words = words || [];
+      dropdownEl._activeIndex = -1;
+      if (!words || !words.length) {
+        dropdownEl.classList.add('hidden');
+        return;
+      }
+      dropdownEl.innerHTML = words.map((w, i) =>
+        `<div class="np-word-ac-item px-3 py-2 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors text-xs font-semibold text-slate-800 select-none" data-idx="${i}">${w}</div>`
+      ).join('');
+      dropdownEl.classList.remove('hidden');
+      dropdownEl.querySelectorAll('[data-idx]').forEach(el => {
+        const idx = parseInt(el.dataset.idx, 10);
+        el.addEventListener('mouseenter', () => _highlightNpWordItem(dropdownEl, idx));
+        el.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          if (words[idx]) onSelect(words[idx]);
+          dropdownEl.classList.add('hidden');
+          dropdownEl._activeIndex = -1;
+        });
+      });
     }
 
     // Shared fill helpers ──────────────────────────────────────────────────────
@@ -2634,6 +2815,130 @@
     // Use this when forwarding a name received from the API response — keep it exactly as-is.
     function rawNepaliName(...parts) {
       return parts.filter(Boolean).join(' ').replace(/[^\S\r\n]+/g, ' ').trim();
+    }
+
+    // ── Nepali Character Remapping ────────────────────────────────────────────
+    // Build a map from NFC-normalized grapheme cluster → exact DB byte sequence.
+    // We extract all grapheme clusters from Nepali names in voterListIndex.
+    function buildNepaliCharMap() {
+      const map = new Map(); // key: NFC form, value: raw DB string
+      const sources = [];
+      // From voterListIndex (voterlist API responses)
+      if (typeof voterListIndex === 'object' && voterListIndex) {
+        for (const entry of Object.values(voterListIndex)) {
+          const pd = entry.profileData || entry.rawPayload || entry || {};
+          const names = [
+            pd.VoterFirstName, pd.VoterMiddleName, pd.VoterLastName,
+            pd.FirstNameNp, pd.MiddleNameNp, pd.LastNameNp
+          ].filter(Boolean);
+          for (const n of names) sources.push(String(n));
+        }
+      }
+      // Also from allCachedRecords
+      if (Array.isArray(allCachedRecords)) {
+        for (const r of allCachedRecords) {
+          if (r.givenNp) sources.push(String(r.givenNp));
+          if (r.surnameNp) sources.push(String(r.surnameNp));
+        }
+      }
+      // Segment each source string into grapheme clusters
+      const seg = (typeof Intl !== 'undefined' && Intl.Segmenter)
+        ? new Intl.Segmenter('ne', { granularity: 'grapheme' })
+        : null;
+      for (const src of sources) {
+        const clusters = seg
+          ? [...seg.segment(src)].map(s => s.segment)
+          : [...src]; // fallback: code points
+        for (const cl of clusters) {
+          if (!cl.trim()) continue; // skip spaces
+          const key = cl.normalize('NFC');
+          if (!map.has(key)) map.set(key, cl); // first seen wins
+        }
+      }
+      return map;
+    }
+
+    // Replace each grapheme cluster in `text` with the canonical DB version.
+    function remapNepaliChars(text) {
+      if (!text) return text;
+      const map = buildNepaliCharMap();
+      if (!map.size) return text; // nothing collected yet
+      const seg = (typeof Intl !== 'undefined' && Intl.Segmenter)
+        ? new Intl.Segmenter('ne', { granularity: 'grapheme' })
+        : null;
+      const clusters = seg
+        ? [...seg.segment(text)].map(s => s.segment)
+        : [...text];
+      return clusters.map(cl => {
+        if (!cl.trim()) return cl; // preserve spaces as-is
+        const key = cl.normalize('NFC');
+        return map.has(key) ? map.get(key) : cl; // use DB version or keep as typed
+      }).join('');
+    }
+
+    // Common Nepali consonants + vowel signs used in names (for coverage report)
+    const _NEPALI_COMMON_CHARS = [
+      'क','ख','ग','घ','ङ','च','छ','ज','झ','ञ',
+      'ट','ठ','ड','ढ','ण','त','थ','द','ध','न',
+      'प','फ','ब','भ','म','य','र','ल','व','श',
+      'ष','स','ह','क्ष','त्र','ज्ञ',
+      'ा','ि','ी','ु','ू','े','ै','ो','ौ','ं','ः','्',
+      'अ','आ','इ','ई','उ','ऊ','ए','ऐ','ओ','औ',
+      'सु','षु','षु','म्','ष्','च्','श्','ध्','थ्','ब्','ग्','द्','व्','र्'
+    ];
+
+    function openNepaliCharInfo() {
+      const modal = document.getElementById('nepaliCharInfoModal');
+      if (!modal) return;
+      const map = buildNepaliCharMap();
+      const allChars = Array.from(map.keys()).sort();
+      const seg = (typeof Intl !== 'undefined' && Intl.Segmenter)
+        ? new Intl.Segmenter('ne', { granularity: 'grapheme' })
+        : null;
+
+      // Determine which common chars are already covered
+      const coveredSet = new Set();
+      for (const key of map.keys()) coveredSet.add(key);
+      const missing = _NEPALI_COMMON_CHARS.filter(c => !coveredSet.has(c.normalize('NFC')));
+
+      const body = document.getElementById('nepaliCharInfoBody');
+      if (body) {
+        body.innerHTML = `
+          <div class="space-y-4">
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-2">
+                ✅ Collected from Voterlist DB (${allChars.length} unique grapheme clusters)
+              </p>
+              <div class="flex flex-wrap gap-1.5 p-3 bg-emerald-50 border border-emerald-100 rounded-xl min-h-[40px]">
+                ${allChars.length === 0
+                  ? '<span class="text-slate-400 text-xs italic">No Nepali names stored yet. Run some NIN searches first.</span>'
+                  : allChars.map(k => {
+                      const raw = map.get(k);
+                      const cps = [...raw].map(c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4,'0')).join(' ');
+                      return `<span title="${cps}" class="inline-flex items-center justify-center min-w-[28px] px-1 py-0.5 bg-white border border-emerald-300 rounded text-sm font-semibold text-slate-800 cursor-default shadow-sm">${raw}</span>`;
+                    }).join('')
+                }
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2">
+                ⚠️ Common Nepali Characters Not Yet Seen (${missing.length} missing)
+              </p>
+              <div class="flex flex-wrap gap-1.5 p-3 bg-amber-50 border border-amber-100 rounded-xl min-h-[40px]">
+                ${missing.length === 0
+                  ? '<span class="text-emerald-600 text-xs font-semibold">🎉 All common characters collected!</span>'
+                  : missing.map(c => `<span class="inline-flex items-center justify-center min-w-[28px] px-1 py-0.5 bg-white border border-amber-300 rounded text-sm text-slate-500 cursor-default">${c}</span>`).join('')
+                }
+              </div>
+            </div>
+            <div class="text-[10px] text-slate-400 pt-2 border-t border-slate-100">
+              <strong>How it works:</strong> When you click "Request OTP" in Name Search, each character you typed is automatically replaced with the exact byte-sequence from the voterlist server response (if found in DB). This prevents DATA_NOT_FOUND errors caused by Unicode encoding mismatches.
+            </div>
+          </div>
+        `;
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     let pendingConfirmResolver = null;
@@ -6234,7 +6539,13 @@
       }
 
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
-      const fullNameLoc = rawNepaliName(document.getElementById("portalFullNameNp").value);
+      const fullNameLocRaw = rawNepaliName(document.getElementById("portalFullNameNp").value);
+      // Remap typed Nepali characters to exact DB byte sequences before sending
+      const fullNameLoc = remapNepaliChars(fullNameLocRaw);
+      // Also update the input so the user can see what will be sent
+      if (fullNameLoc !== fullNameLocRaw) {
+        document.getElementById("portalFullNameNp").value = fullNameLoc;
+      }
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
       const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
       const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
@@ -9959,6 +10270,11 @@
         }
 
         if (data) {
+          // Save successful NIN search result to local DB
+          try {
+            const vlNum = data.VoterNo || data.voterListNumber || data.voterNo || "";
+            await persistVoterListRecordToSecondaryDb(nin, data, "active", vlNum, "");
+          } catch (_saveErr) { /* non-critical */ }
           openNinResultModal(true, data, null);
         } else {
           const errMsg = error || "";
@@ -10061,8 +10377,36 @@
         const givenEn = [data.VoterFirstNameEn, data.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
         const surnameEn = (data.VoterLastNameEn || "").toUpperCase();
         const nameEn = `${givenEn} ${surnameEn}`.trim() || "N/A";
+        const nameNp = [
+          data.VoterFirstName || data.FirstNameNp || "",
+          data.VoterMiddleName || data.MiddleNameNp || "",
+          data.VoterLastName || data.LastNameNp || ""
+        ].filter(Boolean).join(" ").trim();
+        const dobDisplay = data.dobNp || data.Dob || data.dobEn || "—";
         document.getElementById("ninResultNameDisplay").innerText = nameEn;
         document.getElementById("ninResultNidDisplay").innerText = `NID: ${data.Nidno || "—"}`;
+
+        // Populate compact 3-field summary panel
+        const ninResultDetailPanel = document.getElementById("ninResultDetailPanel");
+        if (ninResultDetailPanel) {
+          ninResultDetailPanel.innerHTML = `
+            <div class="grid grid-cols-1 gap-2">
+              <div class="flex items-start gap-2">
+                <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">English Name</span>
+                <span class="font-semibold text-slate-800 text-xs">${nameEn || '—'}</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">Nepali Name</span>
+                <span class="font-semibold text-slate-800 text-xs">${nameNp || '—'}</span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">Date of Birth</span>
+                <span class="font-semibold text-slate-700 text-xs font-mono">${dobDisplay || '—'}</span>
+              </div>
+            </div>
+          `;
+          ninResultDetailPanel.classList.remove("hidden");
+        }
 
         const approvalText = String(data?.ApprovalMessage || data?.Approvalmessage || data?.ApprovalMassage || data?.error || data?.message || "").trim();
         const isAlreadyRegistered = shouldShowApprovalNotice(approvalText);
@@ -10108,6 +10452,10 @@
       // Clear any previous info divs and reset elements
       const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
       oldInfoDivs.forEach(div => div.remove());
+
+      // Reset detail panel
+      const detailPanel = document.getElementById("ninResultDetailPanel");
+      if (detailPanel) { detailPanel.innerHTML = ""; detailPanel.classList.add("hidden"); }
       
       // Reset white card display
       const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
@@ -13718,6 +14066,8 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:7pt;backgroun
             <p id="ninResultNameDisplay" class="font-bold text-slate-800 text-base"></p>
             <p id="ninResultNidDisplay" class="text-xs text-slate-500 font-mono mt-0.5"></p>
           </div>
+          <!-- Compact 3-field detail summary (only English name, Nepali name, DOB) -->
+          <div id="ninResultDetailPanel" class="hidden mb-3 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5"></div>
           <div class="flex flex-wrap gap-2">
             <button id="btnNinResultSaveCard" onclick="saveNidFlowWhiteCard()"
               class="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all border border-slate-200">
@@ -13981,6 +14331,31 @@ body{font-family:'Noto Sans Devanagari',Arial,sans-serif;font-size:7pt;backgroun
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <!-- ===== NEPALI CHARACTER INFO MODAL ===== -->
+  <div id="nepaliCharInfoModal"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[9999] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl flex flex-col max-h-[85vh] overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">i</div>
+          <div>
+            <p class="font-bold text-slate-800 text-sm">Nepali Character Collection</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Characters gathered from voterlist server responses</p>
+          </div>
+        </div>
+        <button onclick="document.getElementById('nepaliCharInfoModal').classList.add('hidden'); document.getElementById('nepaliCharInfoModal').classList.remove('flex');"
+          class="text-slate-400 hover:text-slate-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <!-- Body -->
+      <div id="nepaliCharInfoBody" class="flex-1 overflow-y-auto p-5 text-xs"></div>
     </div>
   </div>
 
