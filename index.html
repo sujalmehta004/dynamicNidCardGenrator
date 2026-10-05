@@ -2343,25 +2343,9 @@
       attachGeneralDateAutoFormatter("portalCcnIssuingDateLoc", true);
       attachGeneralDateAutoFormatter("filterRegStart", false);
 
-      document.getElementById("portalFullNameNp").addEventListener("blur", (e) => {
-        e.target.value = cleanNepaliText(e.target.value);
-      });
-      document.getElementById("portalFullNameNp").addEventListener("change", (e) => {
-        e.target.value = cleanNepaliText(e.target.value);
-      });
-
-      // Nepali text cleaning for form design studio name fields
-      ["formGivenNp", "formSurnameNp"].forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener("blur", (e) => {
-            e.target.value = cleanNepaliText(e.target.value);
-          });
-          el.addEventListener("change", (e) => {
-            e.target.value = cleanNepaliText(e.target.value);
-          });
-        }
-      });
+      // Note: we intentionally do NOT attach blur/change cleaners on Nepali name fields
+      // (portalFullNameNp, formGivenNp, formSurnameNp). The voter-list API matches names
+      // byte-for-byte including ZWJ/ZWNJ; silently rewriting pasted text breaks matching.
 
       loadSavedColumnVisibility();
       loadNepalAdministrativeData();
@@ -2379,12 +2363,16 @@
     }
 
     function cleanNepaliText(text) {
+      // Only normalize whitespace — do NOT strip ZWJ (\u200D), ZWNJ (\u200C) or other
+      // Indic combining characters. The voter-list API matches Nepali names byte-for-byte
+      // including these codepoints; stripping them causes "DATA_NOT_FOUND" even for active NIDs.
       if (!text) return "";
-      let clean = String(text).trim().replace(/\s+/g, ' ');
-      // Remove any artificially injected zero-width characters (ZWJ \u200D, ZWNJ \u200C, etc.)
-      // so exact font ligatures (such as 'ga' under 'anga' in तामाङ्ग) and exact Unicode match the official database
-      clean = clean.replace(/[\u200B-\u200D\uFEFF]/g, '');
-      return clean;
+      return String(text).trim().replace(/[^\S\r\n]+/g, ' ');
+    }
+
+    // Use this when forwarding a name received from the API response — keep it exactly as-is.
+    function rawNepaliName(...parts) {
+      return parts.filter(Boolean).join(' ').replace(/[^\S\r\n]+/g, ' ').trim();
     }
 
     let pendingConfirmResolver = null;
@@ -5301,9 +5289,9 @@
         ninEn: targetNinEn,
         ninNp: document.getElementById("formNinNp").value,
         givenEn: document.getElementById("formGivenEn").value,
-        givenNp: cleanNepaliText(document.getElementById("formGivenNp").value),
+        givenNp: rawNepaliName(document.getElementById("formGivenNp").value),
         surnameEn: document.getElementById("formSurnameEn").value,
-        surnameNp: cleanNepaliText(document.getElementById("formSurnameNp").value),
+        surnameNp: rawNepaliName(document.getElementById("formSurnameNp").value),
         dobEn: document.getElementById("formDobEn").value,
         dobNp: document.getElementById("formDobNp").value,
         nationality:
@@ -5943,7 +5931,7 @@
 
     async function requestPortalOtp() {
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
-      const fullNameLoc = cleanNepaliText(document.getElementById("portalFullNameNp").value);
+      const fullNameLoc = rawNepaliName(document.getElementById("portalFullNameNp").value);
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
       const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
       const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
@@ -6875,7 +6863,7 @@
           const nin = rec.ninEn;
 
           const fullName = `${rec.givenEn || ""} ${rec.surnameEn || ""}`.trim().toUpperCase();
-          const fullNameLoc = cleanNepaliText(`${rec.givenNp || ""} ${rec.surnameNp || ""}`);
+          const fullNameLoc = rawNepaliName(rec.givenNp, rec.surnameNp);
           const dobLoc = translateDigits(rec.dobNp || "", englishToNepaliDigits);
           const ccnIssuingDateLoc = translateDigits(rec.citDate || "", englishToNepaliDigits);
 
@@ -7245,7 +7233,7 @@
 
     function buildPortalPersonPayload(extra = {}) {
       const fullNameEn = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
-      const fullNameNp = cleanNepaliText(document.getElementById("portalFullNameNp").value.trim());
+      const fullNameNp = rawNepaliName(document.getElementById("portalFullNameNp").value.trim());
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
       const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
 
@@ -9901,10 +9889,12 @@
       const lastEn = (D.VoterLastNameEn || "").toUpperCase();
       const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(" ");
 
+      // Use rawNepaliName — preserve the exact bytes from the API response (including ZWJ/ZWNJ)
+      // so the voter-list OTP server can match the name it already has on file.
       const firstNp = D.VoterFirstName || "";
       const midNp = D.VoterMiddleName || "";
       const lastNp = D.VoterLastName || "";
-      const fullNameLoc = cleanNepaliText([firstNp, midNp, lastNp].filter(Boolean).join(" "));
+      const fullNameLoc = rawNepaliName(firstNp, midNp, lastNp);
 
       const dobLoc = translateDigits(D.dobNp || D.Dob || "", englishToNepaliDigits);
       const ccnIssuingDateLoc = translateDigits(D.CitizenshipIssuingDateLoc || D.CitizenIssueDate || "", englishToNepaliDigits);
@@ -10046,7 +10036,7 @@
         const midEn = (D.VoterMiddleNameEn || "").toUpperCase();
         const lastEn = (D.VoterLastNameEn || "").toUpperCase();
         const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(" ");
-        const fullNameLoc = cleanNepaliText([D.VoterFirstName, D.VoterMiddleName, D.VoterLastName].filter(Boolean).join(" "));
+        const fullNameLoc = rawNepaliName(D.VoterFirstName, D.VoterMiddleName, D.VoterLastName);
         const dobLocRaw = D.dobNp || D.Dob || "";
         const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
         const ccnIssuingDateLocRaw = D.CitizenshipIssuingDateLoc || D.CitizenIssueDate || "";
@@ -11228,10 +11218,12 @@
       const lastEn = (D.VoterLastNameEn || D.LastName || mainRow.surnameEn || '').trim().toUpperCase();
       const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(' ');
 
+      // Prefer the API response fields (VoterFirstName etc.) verbatim; fall back to saved DB
+      // fields only if no API data is present. Use rawNepaliName to preserve ZWJ/ZWNJ.
       const firstNp = (D.VoterFirstName || mainRow.givenNp || '').trim();
       const midNp = (D.VoterMiddleName || '').trim();
       const lastNp = (D.VoterLastName || mainRow.surnameNp || '').trim();
-      const fullNameLoc = cleanNepaliText([firstNp, midNp, lastNp].filter(Boolean).join(' '));
+      const fullNameLoc = rawNepaliName(firstNp, midNp, lastNp);
 
       let dobNpRaw = D.dobNp || mainRow.dobNp || '';
       if (!dobNpRaw && (D.Dob || D._dob || mainRow.dobEn)) {
