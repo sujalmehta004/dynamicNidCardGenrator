@@ -637,7 +637,7 @@
             <div id="portalCaptchaContainer" class="flex flex-col items-end gap-1.5 hidden">
               <div class="flex items-center gap-2 border border-slate-200 rounded-lg p-1 bg-slate-50">
                 <img id="portalCaptchaImg" src="" alt="Captcha" class="h-10 w-28 object-contain rounded" />
-                <button type="button" onclick="loadPortalCaptcha()" title="Refresh Captcha"
+                <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha"
                   class="bg-slate-200 hover:bg-slate-350 text-slate-700 p-1.5 rounded-lg transition-all">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -715,24 +715,24 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-slate-600 font-bold mb-1.5">Full Name (English)</label>
-                    <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA" required
+                    <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
                   </div>
                   <div>
                     <label class="block text-slate-600 font-bold mb-1.5">Full Name (Nepali)</label>
-                    <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता" required
+                    <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                   </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-slate-600 font-bold mb-1.5">Date of Birth (BS)</label>
-                    <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०" required
+                    <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                   </div>
                   <div>
                     <label class="block text-slate-600 font-bold mb-1.5">Citizenship Issue Date (BS)</label>
-                    <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५" required
+                    <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५"
                       class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
                   </div>
                 </div>
@@ -2349,11 +2349,272 @@
 
       loadSavedColumnVisibility();
       loadNepalAdministrativeData();
-      loadSavedVoterListRecords().then(() => fetchDatabase()).catch(() => fetchDatabase());
+      loadSavedVoterListRecords()
+        .then(() => fetchDatabase())
+        .catch(() => fetchDatabase())
+        .finally(() => initPortalAutocomplete());
       checkIpAccessControl();
       loadSavedBordersAndBackgrounds();
       generateVoterCaptcha();
     });
+
+    // ─── Real-time portal autocomplete (in-memory, instant) ────────────────────
+    function _portalAcFilter(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      const recs = Array.isArray(allCachedRecords) ? allCachedRecords : [];
+      const results = [];
+      for (let i = 0; i < recs.length && results.length < 12; i++) {
+        const r = recs[i];
+        const nameEn = `${r.givenEn || ''} ${r.surnameEn || ''}`.toLowerCase();
+        const nin    = (r.ninEn || '').toLowerCase().replace(/-/g, '');
+        const qClean = q.replace(/-/g, '');
+        if (nameEn.includes(q) || nin.includes(qClean) || (r.ninEn || '').toLowerCase().includes(q)) {
+          results.push(r);
+        }
+      }
+      return results;
+    }
+
+    function _highlightPortalAcItem(dropdownEl, newIndex) {
+      const items = dropdownEl.querySelectorAll('.portal-ac-item');
+      if (!items.length) return;
+
+      if (newIndex < 0) newIndex = items.length - 1;
+      if (newIndex >= items.length) newIndex = 0;
+
+      dropdownEl._activeIndex = newIndex;
+
+      items.forEach((item, idx) => {
+        if (idx === newIndex) {
+          item.classList.add('bg-blue-100', 'ring-1', 'ring-blue-400');
+          item.classList.remove('hover:bg-blue-50');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('bg-blue-100', 'ring-1', 'ring-blue-400');
+          item.classList.add('hover:bg-blue-50');
+        }
+      });
+    }
+
+    function _portalAcDropdown(results, dropdownEl, onSelect) {
+      dropdownEl._results = results || [];
+      dropdownEl._onSelect = onSelect;
+      dropdownEl._activeIndex = -1;
+
+      if (!results || !results.length) {
+        dropdownEl.innerHTML = `<div class="px-3 py-2 text-slate-400 text-[11px]">No matching records</div>`;
+        dropdownEl.classList.remove('hidden');
+        return;
+      }
+      dropdownEl.innerHTML = results.map((r, i) => {
+        const name = `${r.givenEn || ''} ${r.surnameEn || ''}`.trim().toUpperCase() || '—';
+        const nin  = r.ninEn || '—';
+        const npName = `${r.givenNp || ''} ${r.surnameNp || ''}`.trim();
+        return `<div class="portal-ac-item px-3 py-2.5 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors text-[11px] select-none" data-idx="${i}">
+          <div class="font-bold text-slate-800">${name}${npName ? ` <span class="font-normal text-slate-400">${npName}</span>` : ''}</div>
+          <div class="text-slate-400 font-mono text-[10px]">${nin}</div>
+        </div>`;
+      }).join('');
+      dropdownEl.classList.remove('hidden');
+
+      // Click & hover handlers
+      dropdownEl.querySelectorAll('[data-idx]').forEach(el => {
+        const idx = parseInt(el.dataset.idx, 10);
+        el.addEventListener('mouseenter', () => {
+          _highlightPortalAcItem(dropdownEl, idx);
+        });
+        el.addEventListener('mousedown', (e) => {
+          e.preventDefault(); // keep focus in input
+          if (results[idx]) {
+            onSelect(results[idx]);
+          }
+          dropdownEl.classList.add('hidden');
+          dropdownEl._activeIndex = -1;
+        });
+      });
+    }
+
+    function _attachPortalAcKeynav(inputEl, dropdownEl, onSelect) {
+      if (!inputEl || inputEl._portalAcKeynavAttached) return;
+      inputEl._portalAcKeynavAttached = true;
+
+      inputEl.addEventListener('keydown', (e) => {
+        const isOpen = dropdownEl && !dropdownEl.classList.contains('hidden');
+        const results = (dropdownEl && dropdownEl._results) || [];
+
+        if (e.key === 'ArrowDown') {
+          if (!isOpen && inputEl.value.trim()) {
+            inputEl.dispatchEvent(new Event('input'));
+            e.preventDefault();
+            return;
+          }
+          if (isOpen && results.length > 0) {
+            e.preventDefault();
+            const cur = typeof dropdownEl._activeIndex === 'number' ? dropdownEl._activeIndex : -1;
+            _highlightPortalAcItem(dropdownEl, cur + 1);
+          }
+        } else if (e.key === 'ArrowUp') {
+          if (isOpen && results.length > 0) {
+            e.preventDefault();
+            const cur = typeof dropdownEl._activeIndex === 'number' ? dropdownEl._activeIndex : 0;
+            _highlightPortalAcItem(dropdownEl, cur - 1);
+          }
+        } else if (e.key === 'Enter') {
+          if (isOpen && results.length > 0) {
+            const activeIdx = dropdownEl._activeIndex;
+            const selectTarget = (activeIdx >= 0 && results[activeIdx]) ? results[activeIdx] : null;
+            if (selectTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              onSelect(selectTarget);
+              dropdownEl.classList.add('hidden');
+              dropdownEl._activeIndex = -1;
+              return false;
+            }
+          }
+        } else if (e.key === 'Escape') {
+          if (isOpen) {
+            dropdownEl.classList.add('hidden');
+            dropdownEl._activeIndex = -1;
+            e.preventDefault();
+          }
+        }
+      }, true); // capturing phase to intercept Enter before inline onkeydown
+    }
+
+    function initPortalAutocomplete() {
+      // ── NIN tab: voterQuickSearch ──────────────────────────────────────────
+      const vqs    = document.getElementById('voterQuickSearch');
+      const vqsDd  = document.getElementById('voterQuickSearchDropdown');
+      if (vqs && vqsDd) {
+        const onSelectVqs = (rec) => {
+          vqs.value = '';
+          fillVoterFormFromRecord(rec);
+        };
+        _attachPortalAcKeynav(vqs, vqsDd, onSelectVqs);
+        vqs.addEventListener('input', () => {
+          const results = _portalAcFilter(vqs.value);
+          if (!vqs.value.trim()) { vqsDd.classList.add('hidden'); return; }
+          _portalAcDropdown(results, vqsDd, onSelectVqs);
+        });
+        vqs.addEventListener('blur', () => setTimeout(() => vqsDd.classList.add('hidden'), 150));
+        vqs.addEventListener('focus', () => { if (vqs.value.trim()) vqs.dispatchEvent(new Event('input')); });
+      }
+
+      // ── NIN tab: voterNidNin (NIN number field) ────────────────────────────
+      const ninInp  = document.getElementById('voterNidNin');
+      const ninDd   = (() => {
+        let dd = document.getElementById('voterNinAutocomplete');
+        if (!dd && ninInp) {
+          dd = document.createElement('div');
+          dd.id = 'voterNinAutocomplete';
+          dd.className = 'hidden absolute z-50 bg-white border border-blue-200 rounded-lg shadow-xl max-h-52 overflow-y-auto w-full';
+          const parent = ninInp.parentElement;
+          parent.style.position = 'relative';
+          parent.appendChild(dd);
+        }
+        return dd;
+      })();
+      if (ninInp && ninDd) {
+        const onSelectNin = (rec) => {
+          ninInp.value = rec.ninEn || '';
+          const firstnameEl = document.getElementById('voterNinFirstname');
+          const dobEl       = document.getElementById('voterNinDob');
+          const dobBsEl     = document.getElementById('voterNinDobBs');
+          if (firstnameEl) firstnameEl.value = (rec.givenEn || '').split(' ')[0].toUpperCase();
+          if (dobEl)       dobEl.value = (rec.dobEn || '').replace(/\//g, '-');
+          if (dobBsEl)     dobBsEl.value = rec.dobNp || '';
+        };
+        _attachPortalAcKeynav(ninInp, ninDd, onSelectNin);
+        ninInp.addEventListener('input', () => {
+          const results = _portalAcFilter(ninInp.value);
+          if (!ninInp.value.trim()) { ninDd.classList.add('hidden'); return; }
+          _portalAcDropdown(results, ninDd, onSelectNin);
+        });
+        ninInp.addEventListener('blur', () => setTimeout(() => ninDd.classList.add('hidden'), 150));
+        ninInp.addEventListener('focus', () => { if (ninInp.value.trim()) ninInp.dispatchEvent(new Event('input')); });
+      }
+
+      // ── Name tab: portalSearchQuery ────────────────────────────────────────
+      const psq   = document.getElementById('portalSearchQuery');
+      const psqDd = document.getElementById('portalSearchDropdown');
+      if (psq && psqDd) {
+        const onSelectPsq = (rec) => {
+          psq.value = '';
+          fillPortalFormFromRecord(rec);
+        };
+        _attachPortalAcKeynav(psq, psqDd, onSelectPsq);
+        psq.addEventListener('input', () => {
+          const results = _portalAcFilter(psq.value);
+          if (!psq.value.trim()) { psqDd.classList.add('hidden'); return; }
+          _portalAcDropdown(results, psqDd, onSelectPsq);
+        });
+        psq.addEventListener('blur', () => setTimeout(() => psqDd.classList.add('hidden'), 150));
+        psq.addEventListener('focus', () => { if (psq.value.trim()) psq.dispatchEvent(new Event('input')); });
+      }
+
+      // ── Name tab: portalFullNameEn (typed name field) ──────────────────────
+      const pfne   = document.getElementById('portalFullNameEn');
+      const pfneDd = (() => {
+        let dd = document.getElementById('portalNameAutocomplete');
+        if (!dd && pfne) {
+          dd = document.createElement('div');
+          dd.id = 'portalNameAutocomplete';
+          dd.className = 'hidden absolute z-50 bg-white border border-blue-200 rounded-lg shadow-xl max-h-52 overflow-y-auto w-full';
+          const parent = pfne.parentElement;
+          parent.style.position = 'relative';
+          parent.appendChild(dd);
+        }
+        return dd;
+      })();
+      if (pfne && pfneDd) {
+        const onSelectPfne = (rec) => {
+          fillPortalFormFromRecord(rec);
+          pfneDd.classList.add('hidden');
+        };
+        _attachPortalAcKeynav(pfne, pfneDd, onSelectPfne);
+        pfne.addEventListener('input', () => {
+          const results = _portalAcFilter(pfne.value);
+          if (!pfne.value.trim()) { pfneDd.classList.add('hidden'); return; }
+          _portalAcDropdown(results, pfneDd, onSelectPfne);
+        });
+        pfne.addEventListener('blur', () => setTimeout(() => pfneDd.classList.add('hidden'), 150));
+        pfne.addEventListener('focus', () => { if (pfne.value.trim()) pfne.dispatchEvent(new Event('input')); });
+      }
+    }
+
+    // Shared fill helpers ──────────────────────────────────────────────────────
+    function fillVoterFormFromRecord(rec) {
+      // NIN search panel fields
+      const ninEl     = document.getElementById('voterNidNin');
+      const firstEl   = document.getElementById('voterNinFirstname');
+      const dobAdEl   = document.getElementById('voterNinDob');
+      const dobBsEl   = document.getElementById('voterNinDobBs');
+      if (ninEl)   ninEl.value   = rec.ninEn || '';
+      if (firstEl) firstEl.value = (rec.givenEn || '').split(' ')[0].toUpperCase();
+      if (dobAdEl) dobAdEl.value = (rec.dobEn || '').replace(/\//g, '-');
+      if (dobBsEl) dobBsEl.value = rec.dobNp || '';
+      // Also close the voterQuickSearch dropdown
+      const vqsDd = document.getElementById('voterQuickSearchDropdown');
+      if (vqsDd) vqsDd.classList.add('hidden');
+    }
+
+    function fillPortalFormFromRecord(rec) {
+      portalNinValue = rec.ninEn || '';
+      const nameEn = `${rec.givenEn || ''} ${rec.surnameEn || ''}`.trim().toUpperCase();
+      const nameNp = `${rec.givenNp || ''} ${rec.surnameNp || ''}`.trim();
+      const el = (id) => document.getElementById(id);
+      if (el('portalSearchQuery'))       el('portalSearchQuery').value = '';
+      if (el('portalSearchNin'))         el('portalSearchNin').value = rec.ninEn || '';
+      if (el('portalFullNameEn'))        el('portalFullNameEn').value = nameEn;
+      if (el('portalFullNameNp'))        el('portalFullNameNp').value = nameNp;
+      if (el('portalDobLoc'))            el('portalDobLoc').value = rec.dobNp || '';
+      if (el('portalCcnIssuingDateLoc')) el('portalCcnIssuingDateLoc').value =
+        translateDigits(rec.citDate || '', englishToNepaliDigits);
+      if (el('portalSearchDropdown'))    el('portalSearchDropdown').classList.add('hidden');
+    }
 
     function translateDigits(str, map) {
       return str
@@ -2669,16 +2930,20 @@
       const savedFrontBg = localStorage.getItem("nid_front_bg");
       if (savedFrontBg) {
         const frontImg = document.getElementById("cardFrontBgImg");
-        frontImg.src = savedFrontBg;
-        frontImg.classList.remove("hidden");
-        updateFitStyle(frontImg, cardBackgroundFit);
+        if (frontImg) {
+          frontImg.src = savedFrontBg;
+          frontImg.classList.remove("hidden");
+          updateFitStyle(frontImg, cardBackgroundFit);
+        }
       }
       const savedBackBg = localStorage.getItem("nid_back_bg");
       if (savedBackBg) {
         const backImg = document.getElementById("cardBackBgImg");
-        backImg.src = savedBackBg;
-        backImg.classList.remove("hidden");
-        updateFitStyle(backImg, cardBackgroundFit);
+        if (backImg) {
+          backImg.src = savedBackBg;
+          backImg.classList.remove("hidden");
+          updateFitStyle(backImg, cardBackgroundFit);
+        }
       }
 
       // Load saved border settings
@@ -2738,10 +3003,14 @@
     function removeBackgrounds() {
       const frontImg = document.getElementById("cardFrontBgImg");
       const backImg = document.getElementById("cardBackBgImg");
-      frontImg.src = "";
-      frontImg.classList.add("hidden");
-      backImg.src = "";
-      backImg.classList.add("hidden");
+      if (frontImg) {
+        frontImg.src = "";
+        frontImg.classList.add("hidden");
+      }
+      if (backImg) {
+        backImg.src = "";
+        backImg.classList.add("hidden");
+      }
       localStorage.removeItem("nid_front_bg");
       localStorage.removeItem("nid_back_bg");
     }
@@ -2750,9 +3019,10 @@
       cardBorderRadius = val;
       const front = document.getElementById("cardFrontCanvasNode");
       const back = document.getElementById("cardBackCanvasNode");
-      front.style.borderRadius = `${val}px`;
-      back.style.borderRadius = `${val}px`;
-      document.getElementById("borderRadiusVal").textContent = `${val}px`;
+      if (front) front.style.borderRadius = `${val}px`;
+      if (back) back.style.borderRadius = `${val}px`;
+      const valEl = document.getElementById("borderRadiusVal");
+      if (valEl) valEl.textContent = `${val}px`;
       localStorage.setItem("nid_border_radius", val);
     }
 
@@ -2761,9 +3031,10 @@
       const scale = val / 100;
       const front = document.getElementById("cardFrontCanvasNode");
       const back = document.getElementById("cardBackCanvasNode");
-      front.style.setProperty("--card-font-scale", scale);
-      back.style.setProperty("--card-font-scale", scale);
-      document.getElementById("fontSizeVal").textContent = `${val}%`;
+      if (front) front.style.setProperty("--card-font-scale", scale);
+      if (back) back.style.setProperty("--card-font-scale", scale);
+      const valEl = document.getElementById("fontSizeVal");
+      if (valEl) valEl.textContent = `${val}%`;
       localStorage.setItem("nid_font_size", val);
     }
 
@@ -2771,9 +3042,10 @@
       cardVerticalGap = val;
       const front = document.getElementById("cardFrontCanvasNode");
       const back = document.getElementById("cardBackCanvasNode");
-      front.style.setProperty("--card-vertical-gap", `${val}px`);
-      back.style.setProperty("--card-vertical-gap", `${val}px`);
-      document.getElementById("verticalGapVal").textContent = `${val}px`;
+      if (front) front.style.setProperty("--card-vertical-gap", `${val}px`);
+      if (back) back.style.setProperty("--card-vertical-gap", `${val}px`);
+      const valEl = document.getElementById("verticalGapVal");
+      if (valEl) valEl.textContent = `${val}px`;
       localStorage.setItem("nid_vertical_gap", val);
     }
 
@@ -2781,9 +3053,10 @@
       cardFontWidth = val;
       const front = document.getElementById("cardFrontCanvasNode");
       const back = document.getElementById("cardBackCanvasNode");
-      front.style.setProperty("--card-letter-spacing", `${val}px`);
-      back.style.setProperty("--card-letter-spacing", `${val}px`);
-      document.getElementById("fontWidthVal").textContent = `${val}px`;
+      if (front) front.style.setProperty("--card-letter-spacing", `${val}px`);
+      if (back) back.style.setProperty("--card-letter-spacing", `${val}px`);
+      const valEl = document.getElementById("fontWidthVal");
+      if (valEl) valEl.textContent = `${val}px`;
       localStorage.setItem("nid_font_width", val);
     }
 
@@ -2791,8 +3064,8 @@
       cardBackgroundFit = val;
       const frontImg = document.getElementById("cardFrontBgImg");
       const backImg = document.getElementById("cardBackBgImg");
-      updateFitStyle(frontImg, val);
-      updateFitStyle(backImg, val);
+      if (frontImg) updateFitStyle(frontImg, val);
+      if (backImg) updateFitStyle(backImg, val);
       localStorage.setItem("nid_bg_fit", val);
     }
 
@@ -2871,16 +3144,16 @@
       const borderBtn = document.getElementById("btnToggleBorder");
 
       if (borderActive) {
-        front.style.border = "1px solid #000000";
-        back.style.border = "1px solid #000000";
+        if (front) front.style.border = "1px solid #000000";
+        if (back) back.style.border = "1px solid #000000";
         if (borderBtn) {
           borderBtn.textContent = "Remove Border";
           borderBtn.classList.remove("bg-slate-100", "text-slate-750");
           borderBtn.classList.add("bg-slate-800", "text-white");
         }
       } else {
-        front.style.border = "none";
-        back.style.border = "none";
+        if (front) front.style.border = "none";
+        if (back) back.style.border = "none";
         if (borderBtn) {
           borderBtn.textContent = "Add 1px Border";
           borderBtn.classList.remove("bg-slate-800", "text-white");
@@ -5645,6 +5918,13 @@
     }
 
     function resetPortalToInitial() {
+      isBulkMode = false;
+      const btnOtp = document.getElementById("btnPortalRequestOtp");
+      if (btnOtp) {
+        btnOtp.innerText = "Request OTP";
+        btnOtp.className = "bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+      }
+
       setPortalInputsDisabled(false);
       showPortalStep(0);
 
@@ -5813,8 +6093,10 @@
       return "";
     }
 
-    async function loadPortalCaptcha(bulkMode = false) {
-      isBulkMode = !!bulkMode;
+    async function loadPortalCaptcha(bulkMode = null) {
+      if (typeof bulkMode === "boolean") {
+        isBulkMode = bulkMode;
+      }
       // Clear steps and inputs
       document.getElementById("portalCaptchaCode").value = "";
       document.getElementById("portalOtpCode").value = "";
@@ -5829,8 +6111,20 @@
       document.getElementById("portalSuccessRow").classList.add("hidden");
       document.getElementById("portalScannedTokenVal").value = "";
       document.getElementById("portalCaptchaContainer").classList.add("hidden");
-      // DO NOT hide the action buttons row, keep Proceed to Verification / Verify All / Search visible
+      // Keep initial action buttons visible
       document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+
+      // Update button text and style according to isBulkMode
+      const btn = document.getElementById("btnPortalRequestOtp");
+      if (btn) {
+        if (isBulkMode) {
+          btn.innerText = "Send Bulk OTP Requests";
+          btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+        } else {
+          btn.innerText = "Request OTP";
+          btn.className = "bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+        }
+      }
 
       setPortalInputsDisabled(false);
       showPortalStep(1);
@@ -5848,6 +6142,10 @@
           img.src = "data:image/png;base64," + data.image;
           document.getElementById("portalCaptchaContainer").classList.remove("hidden");
           document.getElementById("portalCaptchaInputRow").classList.remove("hidden");
+          if (btn && isBulkMode) {
+            btn.innerText = "Send Bulk OTP Requests";
+            btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+          }
         } else {
           throw new Error("Invalid captcha response format.");
         }
@@ -5930,6 +6228,11 @@
     }
 
     async function requestPortalOtp() {
+      const btnOtp = document.getElementById("btnPortalRequestOtp");
+      if (isBulkMode || (btnOtp && (btnOtp.innerText.includes("Bulk") || btnOtp.className.includes("violet") || btnOtp.className.includes("purple")))) {
+        return requestPortalBulkOtp();
+      }
+
       const fullName = document.getElementById("portalFullNameEn").value.trim().toUpperCase();
       const fullNameLoc = rawNepaliName(document.getElementById("portalFullNameNp").value);
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
@@ -6087,7 +6390,14 @@
 
     // --- Wrapper: routes to single or bulk OTP based on mode ---
     function handleRequestOtpClick() {
-      if (isBulkMode) {
+      const modal = document.getElementById("portalBulkModal");
+      if (modal && modal.style.display === "none" && bulkResults && bulkResults.length > 0) {
+        modal.style.display = "flex";
+        return;
+      }
+      const btn = document.getElementById("btnPortalRequestOtp");
+      const isBulk = isBulkMode || (btn && (btn.innerText.includes("Bulk") || btn.innerText.includes("Fetching") || btn.className.includes("violet") || btn.className.includes("purple")));
+      if (isBulk) {
         requestPortalBulkOtp();
       } else {
         requestPortalOtp();
@@ -6096,32 +6406,42 @@
 
     // --- Bulk Verification Flow ---
     async function startVerifyAllFlow() {
-      // Reset and load captcha in bulk mode
-      await loadPortalCaptcha(true);
-      // Update button label to indicate bulk mode
+      const modal = document.getElementById("portalBulkModal");
+      if (modal && modal.style.display === "none" && bulkResults && bulkResults.length > 0) {
+        modal.style.display = "flex";
+        return;
+      }
+
+      isBulkMode = true;
+      if (currentVoterSearchMode === "nin") {
+        toggleVoterSearchMode();
+      }
+
+      // If captcha is already visible and user has already entered a code, submit bulk verification immediately
+      const captchaVal = (document.getElementById("portalCaptchaCode")?.value || "").trim();
+      const captchaRowVisible = !document.getElementById("portalCaptchaInputRow")?.classList.contains("hidden");
+      if (captchaRowVisible && captchaVal) {
+        return requestPortalBulkOtp();
+      }
+
+      // Update button label to indicate bulk mode immediately
       const btn = document.getElementById("btnPortalRequestOtp");
       if (btn) {
         btn.innerText = "Send Bulk OTP Requests";
         btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+      }
+
+      // Reset and load captcha in bulk mode
+      await loadPortalCaptcha(true);
+
+      const captchaInput = document.getElementById("portalCaptchaCode");
+      if (captchaInput) {
+        setTimeout(() => captchaInput.focus(), 150);
       }
     }
     
     async function handleVoterBulkSearchWithCaptcha() {
-      // Switch to name search mode
-      const currentMode = currentVoterSearchMode;
-      if (currentMode === "nin") {
-        toggleVoterSearchMode();
-      }
-      
-      // Load captcha in bulk mode
-      await loadPortalCaptcha(true);
-      
-      // Update button label to indicate bulk mode
-      const btn = document.getElementById("btnPortalRequestOtp");
-      if (btn) {
-        btn.innerText = "Send Bulk OTP Requests";
-        btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
-      }
+      return startVerifyAllFlow();
     }
     
     async function triggerVoterBulkSearchWithCaptcha() {
@@ -6129,7 +6449,18 @@
     }
 
     function closeBulkModal() {
-      document.getElementById("portalBulkModal").style.display = "none";
+      const modal = document.getElementById("portalBulkModal");
+      if (modal) modal.style.display = "none";
+      const btn = document.getElementById("btnPortalRequestOtp");
+      if (btn && bulkResults && bulkResults.length > 0) {
+        btn.disabled = false;
+        if (bulkStats.sending > 0) {
+          btn.innerText = "Fetching records... (Click to view)";
+        } else {
+          btn.innerText = `View Bulk Results (${bulkStats.total})`;
+        }
+        btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase cursor-pointer ring-2 ring-violet-400";
+      }
     }
 
     function updateBulkStats() {
@@ -6819,8 +7150,9 @@
       }
 
       const btn = document.getElementById("btnPortalRequestOtp");
-      btn.disabled = true;
-      btn.innerText = "Fetching records...";
+      btn.disabled = false;
+      btn.innerText = "Fetching records... (Click to view)";
+      btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase cursor-pointer ring-2 ring-violet-400";
 
       try {
         // 1. Fetch all non-done records from database
@@ -6986,9 +7318,14 @@
         alert("Bulk request error: " + err.message);
       } finally {
         btn.disabled = false;
-        btn.innerText = "Send Bulk OTP Requests";
-        // Reset to initial state behind the modal
-        resetPortalToInitial();
+        if (bulkResults && bulkResults.length > 0) {
+          btn.innerText = `View Bulk Results (${bulkStats.total})`;
+          btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase cursor-pointer ring-2 ring-violet-400";
+        } else {
+          btn.innerText = "Send Bulk OTP Requests";
+          // Reset to initial state behind the modal
+          resetPortalToInitial();
+        }
       }
     }
 
@@ -7725,71 +8062,84 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, maxAttempts = 8, delayMs = 1200) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 20, maxWaves = 4, waveDelayMs = 600) {
       const normalizedNin = String(nin || "").trim();
-      const dobValue = String(dob || "").trim();
-      const firstnameValue = String(firstname || "").trim();
+      const dobValue     = String(dob || "").trim();
+      const firstnameVal = String(firstname || "").trim();
+      const body = JSON.stringify({ nin: normalizedNin, dob: dobValue, firstname: firstnameVal, parallelCount });
+      const TRANSIENT_RE = /NID सर्भरबाट डेटा प्राप्त हुन सकेन|NID सर्भर/i;
       let lastError = "Failed to query the official voter portal.";
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        if (signal && signal.aborted) {
-          return { aborted: true, error: "Search stopped by user." };
+      for (let wave = 1; wave <= maxWaves; wave++) {
+        // Check outer abort before each wave
+        if (signal && signal.aborted) return { aborted: true, error: "Search stopped by user." };
+
+        // Create one AbortController per wave — aborted as soon as first success arrives
+        const waveController = new AbortController();
+        // Chain outer signal → wave controller
+        let outerAbortHandler = null;
+        if (signal) {
+          outerAbortHandler = () => waveController.abort();
+          signal.addEventListener("abort", outerAbortHandler, { once: true });
         }
-        try {
-          const res = await fetch(`${API_BASE}/api/voter-search`, {
+
+        // Build N parallel fetch promises
+        const requests = Array.from({ length: parallelCount }, (_, i) => {
+          return fetch(`${API_BASE}/api/voter-search`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nin: normalizedNin, dob: dobValue, firstname: firstnameValue }),
-            signal: signal
+            body,
+            signal: waveController.signal
+          })
+          .then(async (res) => {
+            const json = await res.json();
+            if (res.ok && json.success && json.data) {
+              return json.data;      // ← success value
+            }
+            const errMsg = json.error || "No data found from official voter portal.";
+            // Non-transient errors should stop the wave immediately too
+            if (!TRANSIENT_RE.test(errMsg)) {
+              lastError = errMsg;
+            }
+            throw new Error(errMsg); // ← causes Promise.any to keep trying others
+          })
+          .catch((err) => {
+            if (err.name === "AbortError") throw err; // propagate abort
+            if (err.message) lastError = err.message;
+            throw err;
           });
-          const json = await res.json();
-          if (res.ok && json.success && json.data) {
-            return { data: json.data };
+        });
+
+        try {
+          // Promise.any resolves with the first non-rejected promise
+          const successData = await Promise.any(requests);
+          // Cancel remaining in-flight requests
+          waveController.abort();
+          if (signal && outerAbortHandler) signal.removeEventListener("abort", outerAbortHandler);
+          return { data: successData };
+        } catch (aggErr) {
+          // All N requests failed (AggregateError) or outer abort
+          if (signal && outerAbortHandler) signal.removeEventListener("abort", outerAbortHandler);
+          if (signal && signal.aborted) return { aborted: true, error: "Search stopped by user." };
+          if (waveController.signal.aborted && !(signal && signal.aborted)) {
+            // Self-aborted (e.g. outer abort) but not by user — treat as final error
+            return { error: lastError };
           }
 
-          lastError = json.error || "No data found from official voter portal.";
-          const retryable = /NID सर्भरबाट डेटा प्राप्त हुन सकेन|NID सर्भर/i.test(lastError);
-          if (!retryable || (signal && signal.aborted)) {
-            return { error: lastError, aborted: Boolean(signal && signal.aborted) };
+          // Check if the errors were all transient (portal busy) — if so, retry wave
+          const allErrors = (aggErr instanceof AggregateError ? aggErr.errors : [aggErr])
+            .filter(e => e && e.name !== "AbortError");
+          const anyTransient = allErrors.some(e => TRANSIENT_RE.test(e.message || ""));
+          if (!anyTransient || wave >= maxWaves) {
+            return { error: lastError };
           }
 
-          if (attempt < maxAttempts) {
-            await new Promise((resolve) => {
-              const timer = setTimeout(resolve, delayMs);
-              if (signal) {
-                signal.addEventListener("abort", () => {
-                  clearTimeout(timer);
-                  resolve();
-                }, { once: true });
-              }
-            });
-            if (signal && signal.aborted) {
-              return { aborted: true, error: "Search stopped by user." };
-            }
-            continue;
-          }
-          return { error: lastError };
-        } catch (err) {
-          if ((signal && signal.aborted) || err.name === "AbortError") {
-            return { aborted: true, error: "Search stopped by user." };
-          }
-          lastError = err.message || "Failed to query the official voter portal.";
-          if (attempt < maxAttempts) {
-            await new Promise((resolve) => {
-              const timer = setTimeout(resolve, delayMs);
-              if (signal) {
-                signal.addEventListener("abort", () => {
-                  clearTimeout(timer);
-                  resolve();
-                }, { once: true });
-              }
-            });
-            if (signal && signal.aborted) {
-              return { aborted: true, error: "Search stopped by user." };
-            }
-            continue;
-          }
-          return { error: lastError };
+          // Wait between waves (allow user abort during wait)
+          await new Promise((resolve) => {
+            const t = setTimeout(resolve, waveDelayMs * wave);
+            if (signal) signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
+          });
+          if (signal && signal.aborted) return { aborted: true, error: "Search stopped by user." };
         }
       }
       return { error: lastError };
@@ -9478,39 +9828,23 @@
         return;
       }
       
-      try {
-        // Fetch all records from database
-        const res = await fetch(`${API_BASE}/api/people`);
-        if (!res.ok) throw new Error("Failed to fetch records");
-        
-        const allRecords = await res.json();
-        
-        // Filter records by name or NID
-        const filtered = allRecords.filter(r => {
-          const name = `${r.givenEn || ""} ${r.surnameEn || ""}`.toLowerCase();
-          const nin = (r.ninEn || "").toLowerCase();
-          return name.includes(query) || nin.includes(query);
-        }).slice(0, 10); // Limit to 10 results
-        
-        if (filtered.length === 0) {
-          dropdown.innerHTML = `<div class="px-3 py-2 text-slate-500 text-[11px]">No records found</div>`;
-          dropdown.classList.remove("hidden");
-          return;
-        }
-        
-        voterQuickSearchCache = filtered;
-        dropdown.innerHTML = filtered.map((rec, idx) => `
-          <div class="px-3 py-2.5 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors text-[11px]" onclick="fillVoterFormFromQuickSearch(${idx})">
-            <div class="font-bold text-slate-800">${rec.givenEn || ""} ${rec.surnameEn || ""}</div>
-            <div class="text-slate-500 font-mono text-[10px]">${rec.ninEn || "—"}</div>
-          </div>
-        `).join("");
-        
+      // Use in-memory cache (allCachedRecords) — no network call needed
+      const filtered = _portalAcFilter(query);
+      
+      if (filtered.length === 0) {
+        dropdown.innerHTML = `<div class="px-3 py-2 text-slate-500 text-[11px]">No records found</div>`;
         dropdown.classList.remove("hidden");
-      } catch (err) {
-        dropdown.innerHTML = `<div class="px-3 py-2 text-red-500 text-[11px]">Error: ${err.message}</div>`;
-        dropdown.classList.remove("hidden");
+        return;
       }
+      
+      voterQuickSearchCache = filtered;
+      dropdown.innerHTML = filtered.map((rec, idx) => `
+        <div class="px-3 py-2.5 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors text-[11px]" onclick="fillVoterFormFromQuickSearch(${idx})">
+          <div class="font-bold text-slate-800">${rec.givenEn || ""} ${rec.surnameEn || ""}</div>
+          <div class="text-slate-500 font-mono text-[10px]">${rec.ninEn || "—"}</div>
+        </div>
+      `).join("");
+      dropdown.classList.remove("hidden");
     }
     
     function fillVoterFormFromQuickSearch(idx) {
