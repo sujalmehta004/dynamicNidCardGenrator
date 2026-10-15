@@ -190,7 +190,7 @@ function applyManualFields(existingPerson, data) {
   // Internal / meta fields that the loop must never touch.
   const SKIP = new Set([
     '_id', 'updateHistory', 'updateAction', 'updateNote', '_tokenOnly',
-    'createdAt', 'updatedAt',
+    'createdAt', 'updatedAt', 'alert',
   ]);
   Object.keys(data).forEach(key => {
     if (SKIP.has(key)) return;
@@ -445,15 +445,28 @@ module.exports = async (req, res) => {
         // Compute field diff and record history
         const { changedFields, fieldChanges, previousSnapshot } = diffFields(existingPerson, data);
 
-        if (changedFields.length > 0) {
+        const hasAlertUpdate = data.alert !== undefined;
+        if (hasAlertUpdate) {
+          existingPerson.alert = {
+            enabled: Boolean(data.alert && data.alert.enabled),
+            message: data.alert && typeof data.alert.message === 'string' ? data.alert.message.trim() : '',
+            allowUse: Boolean(data.alert && data.alert.allowUse),
+            shopPhone: data.alert && typeof data.alert.shopPhone === 'string' ? data.alert.shopPhone.trim() : '',
+            updatedAt: new Date(),
+          };
+        }
+
+        if (changedFields.length > 0 || hasAlertUpdate) {
+          const actionText = data.updateAction || (hasAlertUpdate && changedFields.length === 0 ? (data.alert?.enabled ? 'Card Alert Configured' : 'Card Alert Cleared') : buildActionLabel(data, changedFields));
+          const noteText = data.updateNote || (hasAlertUpdate && changedFields.length === 0 ? `Alert ${data.alert?.enabled ? `enabled (Usage: ${data.alert.allowUse ? 'Allowed' : 'Blocked'}): "${data.alert.message || ''}"` : 'cleared'}` : `Updated ${changedFields.length} field(s): ${changedFields.join(', ')}`);
           pushHistory(existingPerson, {
             updatedAt: new Date(),
             updateDate: data.updateDate || new Date().toISOString().split('T')[0],
-            action: buildActionLabel(data, changedFields),
-            note: data.updateNote || `Updated ${changedFields.length} field(s): ${changedFields.join(', ')}`,
+            action: actionText,
+            note: noteText,
             computerName: deviceInfo.computerName,
             nickname: deviceInfo.nickname,
-            changedFields,
+            changedFields: changedFields.length > 0 ? changedFields : ['alert'],
             changes: fieldChanges,
             snapshot: previousSnapshot,
           });

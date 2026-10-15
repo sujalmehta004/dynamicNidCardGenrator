@@ -59,6 +59,16 @@ async function checkTokenValid(token) {
   }
 }
 
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function getVerifyHeaderCopy(person, mode) {
   const normalizedStatus = String(person && person.status ? person.status : '').trim().toLowerCase();
 
@@ -109,8 +119,122 @@ function getVerifyHeaderCopy(person, mode) {
   };
 }
 
-function renderVerifyPage(person, mode, nin) {
-  // mode: "no_token" | "expired_token"
+function renderVerifyPage(person, mode, nin, alertOptions = {}) {
+  // mode: "no_token" | "expired_token" | "token_valid"
+  const hasAlert = Boolean(alertOptions.alert && alertOptions.alert.enabled && alertOptions.alert.message && alertOptions.alert.message.trim() !== "");
+  const allowUse = Boolean(alertOptions.alert && alertOptions.alert.allowUse);
+  const alertMsg = alertOptions.alert ? (alertOptions.alert.message || "") : "";
+  const shopPhone = alertOptions.alert ? (alertOptions.alert.shopPhone || "") : "";
+  const tokenValid = Boolean(alertOptions.tokenValid);
+
+  let alertOverlayHtml = "";
+  if (hasAlert) {
+    if (allowUse) {
+      alertOverlayHtml = `
+  <!-- ALERT OVERLAY: USAGE ALLOWED -->
+  <div id="cardAlertModalOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border border-amber-200 max-w-lg w-full overflow-hidden p-6 sm:p-7 space-y-5">
+      <!-- Badge & Icon -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-2xl shadow-sm text-amber-600 shrink-0">
+          🔔
+        </div>
+        <div>
+          <span class="inline-block text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full mb-0.5">Card Notification</span>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Notice Regarding Your NID Card</h2>
+        </div>
+      </div>
+
+      <!-- Identity brief -->
+      <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex justify-between items-center text-xs">
+        <div>
+          <div class="text-[10px] text-slate-400 font-bold uppercase">Cardholder</div>
+          <div class="font-bold text-slate-800 uppercase">${escapeHtml(person.givenEn || '')} ${escapeHtml(person.surnameEn || '')}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-slate-400 font-bold uppercase">NID Number</div>
+          <div class="font-mono font-bold text-blue-600">${escapeHtml(person.ninEn || '')}</div>
+        </div>
+      </div>
+
+      <!-- Alert Message from Admin -->
+      <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-4 text-xs sm:text-sm text-amber-950 font-medium leading-relaxed whitespace-pre-wrap">
+        ${escapeHtml(alertMsg)}
+      </div>
+
+      <!-- Bilingual instruction notice -->
+      <div class="p-4 bg-blue-50/90 border border-blue-200 rounded-2xl text-xs space-y-1.5 leading-relaxed">
+        <div class="flex items-start gap-2.5 text-blue-950 font-bold text-xs sm:text-sm">
+          <span class="text-base shrink-0 mt-0.5">ℹ️</span>
+          <span>यो कार्ड आफैंले एक्टिभ गर्दा पनि हुन्छ तपाईंले, यदि तपाईंलाई आउँदैन भने पसलमा फोन गर्नुहोला।</span>
+        </div>
+        <div class="pl-6 text-[11px] sm:text-xs text-blue-800 font-medium">
+          You can activate this card yourself. If you do not know how, please call the shop.
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-1">
+        ${tokenValid && person.token
+          ? `<a href="https://citizenportal.donidcr.gov.np/en/verify?token=${encodeURIComponent(person.token.trim())}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-600/20">
+              Proceed to Activate / Use Card →
+             </a>`
+          : `<button type="button" onclick="dismissAlertModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-600/20">
+              Proceed to Activate the Card Yourself →
+             </button>`
+        }
+      </div>
+    </div>
+  </div>`;
+    } else {
+      // allowUse === false: Card CANNOT be used!
+      alertOverlayHtml = `
+  <!-- ALERT OVERLAY: CARD BLOCKED -->
+  <div id="cardAlertModalOverlay" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border border-rose-200 max-w-lg w-full overflow-hidden p-6 sm:p-7 space-y-5">
+      <!-- Badge & Icon -->
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-2xl shadow-sm text-rose-600 shrink-0">
+          🚫
+        </div>
+        <div>
+          <span class="inline-block text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-0.5 rounded-full mb-0.5">Card Locked</span>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Card Notice &amp; Restriction</h2>
+        </div>
+      </div>
+
+      <!-- Identity brief -->
+      <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex justify-between items-center text-xs">
+        <div>
+          <div class="text-[10px] text-slate-400 font-bold uppercase">Cardholder</div>
+          <div class="font-bold text-slate-800 uppercase">${escapeHtml(person.givenEn || '')} ${escapeHtml(person.surnameEn || '')}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-slate-400 font-bold uppercase">NID Number</div>
+          <div class="font-mono font-bold text-blue-600">${escapeHtml(person.ninEn || '')}</div>
+        </div>
+      </div>
+
+      <!-- Alert Message from Admin -->
+      <div class="bg-rose-50/80 border border-rose-200 rounded-2xl p-4 text-xs sm:text-sm text-rose-950 font-medium leading-relaxed whitespace-pre-wrap">
+        ${escapeHtml(alertMsg)}
+      </div>
+
+      <!-- Required bilingual instruction notice -->
+      <div class="p-4 bg-rose-100/90 border border-rose-300 rounded-2xl text-xs space-y-1.5 leading-relaxed">
+        <div class="flex items-start gap-2.5 text-rose-950 font-bold text-xs sm:text-sm">
+          <span class="text-base shrink-0 mt-0.5">⚠️</span>
+          <span>यो कार्ड अहिले प्रयोगको लागि प्रमाणित वा सक्रिय भएको छैन, थप जानकारीको लागि पसलमा फोन गरेर बुझ्नुहोला।</span>
+        </div>
+        <div class="pl-6 text-[11px] sm:text-xs text-rose-800 font-medium">
+          This card is currently not verified or activated for use. For further information, please call the shop to inquire.
+        </div>
+      </div>
+    </div>
+  </div>`;
+    }
+  }
+
   const statusCopy = getVerifyHeaderCopy(person, mode);
   const title = statusCopy.title;
   const subtitle = statusCopy.subtitle;
@@ -162,6 +286,7 @@ function renderVerifyPage(person, mode, nin) {
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 p-4 antialiased flex flex-col items-center justify-start pt-8 pb-8">
+  ${alertOverlayHtml}
 
   <div class="w-full max-w-2xl space-y-4">
 
@@ -240,6 +365,16 @@ function renderVerifyPage(person, mode, nin) {
 
       <!-- CTA Button -->
       <div id="verifyBtnArea" class="space-y-2">
+        ${hasAlert && !allowUse ? `
+        <div class="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs space-y-1 text-center">
+          <div class="font-bold text-rose-900 text-xs sm:text-sm flex items-center justify-center gap-1.5">
+            <span>🚫</span>
+            <span>यो कार्ड अहिले प्रयोगको लागि प्रमाणित वा सक्रिय भएको छैन।</span>
+          </div>
+          <div class="text-[11px] text-rose-700">
+            थप जानकारीको लागि पसलमा फोन गरेर बुझ्नुहोला। (This card is not verified or activated for use.)
+          </div>
+        </div>` : `
         <button onclick="startVerifyFlow()" id="startVerifyBtn"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-blue-600/20">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,7 +388,7 @@ function renderVerifyPage(person, mode, nin) {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-9 8a9 9 0 1118 0"/>
           </svg>
           View Details
-        </button>
+        </button>`}
       </div>
 
       <!-- Verification Flow Modal -->
@@ -1582,8 +1717,18 @@ function renderVerifyPage(person, mode, nin) {
       }
     }
 
+    function dismissAlertModal() {
+      const el = document.getElementById('cardAlertModalOverlay');
+      if (el) el.remove();
+      if (typeof startVerifyFlow === 'function') {
+        startVerifyFlow();
+      }
+    }
+
     // Auto-start captcha load and check local cache when page loads
     window.addEventListener('DOMContentLoaded', async () => {
+      const hasAlert = ${hasAlert};
+      if (hasAlert) return;
       const cached = localStorage.getItem('nid_token_' + PERSON_NIN);
       if (cached) {
         try {
@@ -1655,9 +1800,30 @@ module.exports = async (req, res) => {
 </html>`);
     }
 
-    // CASE B: Token exists — check validity
+    // CHECK ALERT: If alert is enabled on this person, show alert first!
+    const hasActiveAlert = Boolean(
+      person.alert &&
+      person.alert.enabled &&
+      person.alert.message &&
+      person.alert.message.trim() !== ""
+    );
+
+    let tokenValid = false;
     if (person.token && person.token.trim() !== "") {
-      const tokenValid = await checkTokenValid(person.token.trim());
+      tokenValid = await checkTokenValid(person.token.trim());
+    }
+
+    if (hasActiveAlert) {
+      res.setHeader("Content-Type", "text/html");
+      const pageMode = tokenValid ? "token_valid" : (person.token ? "expired_token" : "no_token");
+      return res.status(200).send(renderVerifyPage(person, pageMode, nin, {
+        alert: person.alert,
+        tokenValid
+      }));
+    }
+
+    // CASE B: Token exists (no alert) — check validity
+    if (person.token && person.token.trim() !== "") {
       if (tokenValid) {
         // Valid — redirect to citizen portal
         const redirectUrl = `https://citizenportal.donidcr.gov.np/en/verify?token=${encodeURIComponent(person.token.trim())}`;
