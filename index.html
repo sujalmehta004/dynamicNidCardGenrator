@@ -373,54 +373,70 @@
   </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800 lg:h-screen lg:overflow-hidden flex flex-col antialiased">
-  <header id="mainNavbarHeader" class="bg-white border-b border-slate-200/80 sticky top-0 z-50 hidden">
-    <div class="max-w-[1600px] mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-3.5">
-        <div
-          class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-500/10">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-              d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-4 0a1 1 0 011-1h2a1 1 0 011 1m-4 0h4">
-            </path>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-md font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            International Digital Photo Studio
-          </h1>
-          <p class="text-xs text-slate-555 font-medium">
-            Custom Smart Nid Card
-          </p>
-        </div>
-      </div>
+<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-row antialiased">
+    <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SIDEBAR NAVIGATION (Light Theme, Collapsible, Meaningful Icons) -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- FLOATING TOP NAV BAR (Icon-only, replaces sidebar)         -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="mainNavbarHeader" class="hidden">
+    <!-- placeholder kept for JS compatibility, actual nav is #floatingTopNav -->
+  </div>
+  <!-- Floating tab bar: appears at top-right after login -->
+  <nav id="floatingTopNav" class="hidden fixed top-3 right-4 sm:right-6 z-[9999] flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-2 py-1.5 shadow-lg shadow-slate-900/10 select-none">
+    <!-- Live dot -->
+    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-1 mr-2 shrink-0" title="Online"></span>
 
-      <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200/60" id="tabContainer">
-        <button id="tabFormBtn" onclick="shiftWorkspace('form')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Form Design Studio <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘K</kbd>
-        </button>
-        <button id="tabPortalBtn" onclick="shiftWorkspace('portal')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Download Card Portal <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘S</kbd>
-        </button>
-        <button id="tabDbBtn" onclick="shiftWorkspace('database')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150 hidden">
-          Database Index Table <kbd class="text-[10px] opacity-60 font-mono ml-1">⌘F</kbd>
-        </button>
-        <button id="tabAdminBtn" onclick="shiftWorkspace('admin')"
-          class="px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150">
-          Admin Setup
-        </button>
-      </div>
-    </div>
-  </header>
+    <!-- Tab: Card Portal (search icon) -->
+    <button id="tabPortalBtn" onclick="shiftWorkspace('portal')" title="Card Portal — ⌘S"
+      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
+      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+    </button>
+
+    <!-- Divider -->
+    <span class="w-px h-5 bg-slate-200 mx-0.5"></span>
+
+    <!-- Tab: Form Studio (pencil icon) -->
+    <button id="tabFormBtn" onclick="shiftWorkspace('form')" title="Form Studio — ⌘D"
+      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
+      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+    </button>
+
+    <!-- Tab: Database (database icon) -->
+    <button id="tabDbBtn" onclick="shiftWorkspace('database')" title="Database Vault — ⌘F"
+      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
+      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+      </svg>
+    </button>
+
+    <!-- Divider -->
+    <span class="w-px h-5 bg-slate-200 mx-0.5"></span>
+
+    <!-- Tab: Admin (gear icon) -->
+    <button id="tabAdminBtn" onclick="shiftWorkspace('admin')" title="Admin Setup"
+      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800">
+      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </button>
+  </nav>
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- MAIN WORKSPACE CONTAINER                                    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50">
 
   <input type="file" id="uploadFrontBg" accept="image/*" class="hidden" />
   <input type="file" id="uploadBackBg" accept="image/*" class="hidden" />
   <input type="file" id="uploadPhoto" accept="image/*" class="hidden" />
 
-  <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 lg:p-6 lg:overflow-hidden flex flex-col">
+  <main class="flex-1 w-full mx-auto pt-14 px-3 pb-3 sm:px-5 sm:pb-5 lg:px-6 lg:pb-6 overflow-y-auto lg:overflow-hidden flex flex-col min-h-0">
     <div id="mainGridLayoutGrid" class="flex justify-center items-center py-4 w-full flex-1 lg:overflow-hidden">
       <div id="leftLayoutConsoleColumn" class="w-full max-w-md mx-auto space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2">
         <section id="paneWorkspaceForm"
@@ -434,9 +450,17 @@
                 Modify parameters dynamically.
               </p>
             </div>
-            <span id="formBadgeMode"
-              class="text-[10px] bg-slate-100 text-slate-655 border border-slate-200 px-2.5 py-1 rounded-md font-mono font-medium">MODE:
-              NEW ENTRY</span>
+            <div class="flex items-center gap-2">
+              <button type="button" id="btnToggleFormFullscreen" onclick="toggleWorkspaceFullscreen('form')" title="Toggle Full Screen (Cmd+D / Ctrl+D)"
+                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                <span>⛶</span>
+                <span class="hidden sm:inline">Full Screen</span>
+                <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘D</kbd>
+              </button>
+              <span id="formBadgeMode"
+                class="text-[10px] bg-slate-100 text-slate-655 border border-slate-200 px-2.5 py-1 rounded-md font-mono font-medium">MODE:
+                NEW ENTRY</span>
+            </div>
           </div>
 
           <form id="clientForm" oninput="processFormMetricsSync()" class="space-y-4 text-xs"
@@ -507,10 +531,10 @@
                 <label class="block text-slate-600 font-semibold mb-1.5">Identity Status Mode</label>
                 <select id="formStatus"
                   class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition-all">
-                  <option value="pending" selected>Pending</option>
+                  <option value="pending">Pending</option>
                   <option value="done">Done</option>
                   <option value="inprogress">Mobile Number Update</option>
-                  <option value="not online">Not Online</option>
+                  <option value="not online" selected>Not Online</option>
                 </select>
               </div>
               <div>
@@ -634,6 +658,12 @@
               </p>
             </div>
             <div class="flex items-center gap-2">
+              <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')" title="Toggle Full Screen (Cmd+S / Ctrl+S)"
+                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                <span>⛶</span>
+                <span class="hidden sm:inline">Full Screen</span>
+                <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘S</kbd>
+              </button>
               <!-- Nepali Character Map Info Button -->
               <button type="button" onclick="openNepaliCharInfo()"
                 title="View collected Nepali characters from voterlist"
@@ -1277,256 +1307,243 @@
       </div>
     </div>
 
-    <div id="paneWorkspaceDb" class="mt-0 hidden space-y-6 flex-1 flex flex-col min-h-0 lg:overflow-hidden">
-      <!-- Database Page Dashboard Stats Header -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
-            📇
+    <div id="paneWorkspaceDb" class="mt-0 hidden space-y-4 flex-1 flex flex-col min-h-0 lg:overflow-hidden">
+
+      <!-- ── Database Stats Metric Cards (Compact & Attractive) ─────────── -->
+      <div id="dbStatsCardsRow" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
+        <!-- Total Records -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 shadow-xs text-white flex items-center justify-between hover:border-slate-700 transition-all">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">Total Records</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsTotalVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-white leading-tight">0</h3>
+              <span class="text-[10px] text-slate-400 font-medium">cards</span>
+            </div>
           </div>
-          <div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Records
-            </p>
-            <h3 id="statsTotalVal" class="text-lg font-bold text-slate-800 font-mono">
-              0
-            </h3>
-          </div>
+          <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs shrink-0 font-bold ml-2">📇</div>
         </div>
 
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-          <div
-            class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
-            ✅
+        <!-- Done / Issued -->
+        <div class="bg-white border border-emerald-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-emerald-300 transition-all">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Done / Issued</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-600 leading-tight">0</h3>
+              <span class="text-[10px] text-emerald-600/70 font-medium">active</span>
+            </div>
           </div>
-          <div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Done / Issued
-            </p>
-            <h3 id="statsDoneVal" class="text-lg font-bold text-slate-800 font-mono text-emerald-600">
-              0
-            </h3>
-          </div>
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">✅</div>
         </div>
 
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-          <div
-            class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">
-            ⏳
+        <!-- Pending -->
+        <div class="bg-white border border-amber-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-amber-300 transition-all">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Pending</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsPendingVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-amber-600 leading-tight">0</h3>
+              <span class="text-[10px] text-amber-600/70 font-medium">queued</span>
+            </div>
           </div>
-          <div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Pending
-            </p>
-            <h3 id="statsPendingVal" class="text-lg font-bold text-slate-800 font-mono text-amber-600">
-              0
-            </h3>
-          </div>
+          <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">⏳</div>
         </div>
 
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm flex items-center gap-4">
-          <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-lg">
-            ⚙️
+        <!-- Mobile / Offline Attention -->
+        <div class="bg-white border border-rose-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-rose-300 transition-all">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Mobile / Offline</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsOthersVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-rose-600 leading-tight">0</h3>
+              <span class="text-[10px] text-rose-600/70 font-medium">attention</span>
+            </div>
           </div>
-          <div>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Mobile Number Update/Offline
-            </p>
-            <h3 id="statsOthersVal" class="text-lg font-bold text-slate-800 font-mono text-red-500">
-              0
-            </h3>
-          </div>
+          <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">⚠️</div>
         </div>
       </div>
 
-      <!-- Main Database Filtering and Ledger View -->
-      <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div
-          class="p-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
-          <div>
-            <h3 class="text-sm font-bold text-slate-900 tracking-tight">
-              Identity Search & Vault Ledger
-            </h3>
-            <p class="text-xs text-slate-555 mt-0.5">
-              Instantly search and manage recorded smart identity card cards.
-            </p>
+      <!-- ── Main Database Ledger & Filtering Card ──────────────── -->
+      <div id="dbTableContainerCard" class="bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden relative">
+        
+        <!-- Top Toolbar: Search + Action Buttons -->
+        <div class="p-3.5 sm:px-5 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-white shrink-0">
+          
+          <!-- Search Bar -->
+          <div class="relative flex-1 min-w-[280px]">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+            <input type="text" id="searchQueryBar" placeholder="Search by Citizen Name, NID (10 digits), or Address..."
+              oninput="onSearchQueryInput()"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Column Visibility Options -->
+          <!-- Action Buttons Group -->
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <!-- Show/Hide Count Button -->
+            <button type="button" id="btnToggleDbStats" onclick="toggleDbStatsSection()"
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Show or hide count statistics">
+              <span id="btnToggleDbStatsIcon">📊</span>
+              <span id="btnToggleDbStatsText">Hide Count</span>
+            </button>
+
+            <!-- Force Sync Database -->
+            <button type="button" onclick="fetchDatabase(true)" title="Force sync latest records from database"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Sync DB</span>
+            </button>
+
+            <!-- Column Visibility Settings -->
             <div class="relative inline-block text-left">
-              <button onclick="
-                    document
-                      .getElementById('colDropdownMenu')
-                      .classList.toggle('hidden')
-                  "
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
-                ⚙️ Column Display Settings
+              <button onclick="document.getElementById('colDropdownMenu').classList.toggle('hidden')"
+                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>Columns</span>
               </button>
               <div id="colDropdownMenu"
-                class="absolute right-0 mt-2 w-56 rounded-xl bg-white border border-slate-200 shadow-xl z-50 p-3 hidden space-y-2">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 border-b pb-1">
+                class="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200 shadow-2xl z-50 p-3 hidden space-y-2">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1.5">
                   Toggle Columns
                 </p>
                 <div class="flex flex-col gap-2 text-xs">
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-nin" checked onchange="toggleColumn('nin', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-nin" checked onchange="toggleColumn('nin', this.checked)" class="accent-blue-600 rounded" />
                     NID Number
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-voterDb" checked onchange="toggleColumn('voterDb', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-voterDb" checked onchange="toggleColumn('voterDb', this.checked)" class="accent-blue-600 rounded" />
                     NIN Status VL
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-name" checked onchange="toggleColumn('name', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-name" checked onchange="toggleColumn('name', this.checked)" class="accent-blue-600 rounded" />
                     Full Name
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-token" checked onchange="toggleColumn('token', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-token" checked onchange="toggleColumn('token', this.checked)" class="accent-blue-600 rounded" />
                     Secure Token
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-dob" checked onchange="toggleColumn('dob', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-dob" checked onchange="toggleColumn('dob', this.checked)" class="accent-blue-600 rounded" />
                     DOB
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-citDate" checked onchange="toggleColumn('citDate', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-citDate" checked onchange="toggleColumn('citDate', this.checked)" class="accent-blue-600 rounded" />
                     Cit Date
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-address" checked onchange="toggleColumn('address', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-address" checked onchange="toggleColumn('address', this.checked)" class="accent-blue-600 rounded" />
                     Address
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-regDate" checked onchange="toggleColumn('regDate', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-regDate" checked onchange="toggleColumn('regDate', this.checked)" class="accent-blue-600 rounded" />
                     Reg Date
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-updateDate" checked onchange="toggleColumn('updateDate', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-updateDate" checked onchange="toggleColumn('updateDate', this.checked)" class="accent-blue-600 rounded" />
                     Update Date
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-status" checked onchange="toggleColumn('status', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-status" checked onchange="toggleColumn('status', this.checked)" class="accent-blue-600 rounded" />
                     Status
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-cardDesign" checked onchange="toggleColumn('cardDesign', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-cardDesign" checked onchange="toggleColumn('cardDesign', this.checked)" class="accent-blue-600 rounded" />
                     Card Design
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-mobile" checked onchange="toggleColumn('mobile', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-mobile" checked onchange="toggleColumn('mobile', this.checked)" class="accent-blue-600 rounded" />
                     Mobile Number
                   </label>
                   <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-device" onchange="toggleColumn('device', this.checked)"
-                      class="accent-blue-600" />
+                    <input type="checkbox" id="colCheckbox-device" onchange="toggleColumn('device', this.checked)" class="accent-blue-600 rounded" />
                     Device / Nickname
                   </label>
                 </div>
               </div>
             </div>
 
-            <!-- Backup DB Button -->
+            <!-- Backup DB -->
             <button onclick="backupDatabase()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
-              💾 Backup DB
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
+              <span>💾</span> Backup
             </button>
 
-            <!-- Update NIN Status Button -->
+            <!-- Update NIN Status -->
             <button id="btnUpdateNinStatus" onclick="updateNinStatusAll()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
-              🔄 Update NIN Status
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
+              <span>🔄</span> NIN Status
             </button>
 
-            <!-- Print Records Button -->
+            <!-- Print Records -->
             <button onclick="openPrintModal()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
-              🖨️ Print Records
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
+              <span>🖨️</span> Print
             </button>
 
-            <!-- Full Screen Table Button -->
+            <!-- Full Screen -->
             <button id="btnToggleDbFullscreen" onclick="toggleDatabaseFullscreen()"
               title="Toggle Full Screen View (Cmd+F / Ctrl+F)"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 transition-all">
+              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
               <span>⛶ Full Screen</span>
               <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>
             </button>
           </div>
         </div>
 
-        <!-- Filter Controls Block -->
-        <div class="px-5 py-4 border-b border-slate-100 bg-white grid grid-cols-1 md:grid-cols-12 gap-4 text-xs">
-          <div class="md:col-span-4">
-            <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Global Query
-              Search</label>
-            <div class="relative flex gap-2">
-              <input type="text" id="searchQueryBar" placeholder="Search by Name, NID, or Address..."
-                oninput="onSearchQueryInput()"
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all shadow-inner" />
-              <button onclick="fetchDatabase(true)"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 rounded-xl transition-all shadow-sm flex items-center gap-1.5 shrink-0">
-                🔄 Sync
-              </button>
+        <!-- Filter Controls Bar -->
+        <div class="px-4 sm:px-5 py-3 border-b border-slate-100 bg-slate-50/70 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 text-xs shrink-0 items-center">
+          <!-- Status Filter -->
+          <div class="lg:col-span-4">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Status:</span>
+              <select id="filterStatus" onchange="applyFiltersClientSide()"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-800 focus:outline-none focus:border-blue-500 transition-all text-xs">
+                <option value="all">All States</option>
+                <option value="not_done" selected>All Not Done</option>
+                <option value="pending">Pending</option>
+                <option value="done">Done</option>
+                <option value="inprogress">Mobile Number Update</option>
+                <option value="not online">Not Online</option>
+              </select>
             </div>
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Workflow
-              State</label>
-            <select id="filterStatus" onchange="applyFiltersClientSide()"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
-              <option value="all">All States</option>
-              <option value="not_done" selected>All Not Done</option>
-              <option value="pending">Pending</option>
-              <option value="done">Done</option>
-              <option value="inprogress">Mobile Number Update</option>
-              <option value="not online">Not Online</option>
-            </select>
+          <!-- Date Preset Filter -->
+          <div class="lg:col-span-3">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Date:</span>
+              <select id="filterRegPeriod" onchange="applyFiltersClientSide()"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-800 focus:outline-none focus:border-blue-500 transition-all text-xs">
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="this_week">This Week</option>
+                <option value="this_month">This Month</option>
+                <option value="this_year">This Year</option>
+              </select>
+            </div>
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Registered
-              Since</label>
-            <input type="text" id="filterRegStart" placeholder="YYYY-MM-DD" oninput="applyFiltersClientSide()"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 font-mono transition-all" />
+          <!-- Registered Date Input -->
+          <div class="lg:col-span-3">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Since:</span>
+              <input type="text" id="filterRegStart" placeholder="YYYY-MM-DD" oninput="applyFiltersClientSide()"
+                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-blue-500 font-mono transition-all text-xs" />
+            </div>
           </div>
 
-          <div class="md:col-span-3">
-            <label class="block text-slate-500 font-bold mb-1.5 uppercase tracking-wider text-[9px]">Date
-              Presets</label>
-            <select id="filterRegPeriod" onchange="applyFiltersClientSide()"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-blue-500 transition-all">
-              <option value="all">All Dates</option>
-              <option value="today">Registered Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="this_week">This Week</option>
-              <option value="this_month">This Month</option>
-              <option value="this_year">This Year</option>
-            </select>
-          </div>
-
-          <div class="md:col-span-1 flex items-end">
+          <!-- Reset Button -->
+          <div class="lg:col-span-2 flex justify-end">
             <button onclick="clearAdvancedFiltersConsole()"
-              class="w-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-650 font-bold py-2.5 rounded-xl transition-all text-center">
-              Reset
+              class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold py-1.5 px-3 rounded-xl transition-all text-center text-xs">
+              Reset Filters
             </button>
           </div>
         </div>
 
         <!-- Database Table Wrapper Card -->
-        <div id="dbTableContainerCard" class="flex-1 overflow-hidden border border-slate-250 rounded-xl bg-white shadow-sm flex flex-col mb-4 relative"
+        <div class="flex-1 overflow-hidden bg-white flex flex-col relative"
           style="scrollbar-width:none; -ms-overflow-style:none;">
           <style>
             .db-scroll-area::-webkit-scrollbar {
@@ -1549,23 +1566,28 @@
               z-index: 50 !important;
               background: #ffffff !important;
               overflow: hidden !important;
+              padding-top: 52px !important;
             }
             .db-table-fullscreen .db-scroll-area {
-              height: 100vh !important;
-              max-height: 100vh !important;
+              height: 100% !important;
+              max-height: 100% !important;
               overflow-y: auto !important;
+            }
+            body.workspace-fullscreen-active #mainNavbarHeader {
+              display: none !important;
+            }
+            body.workspace-fullscreen-active main {
+              padding-top: 56px !important;
+              padding-left: 14px !important;
+              padding-right: 14px !important;
+              padding-bottom: 14px !important;
             }
           </style>
 
-          <!-- Floating Exit Fullscreen Button -->
-          <button id="btnFloatingExitDbFullscreen" onclick="toggleDatabaseFullscreen(false)"
-            title="Exit Full Screen Mode (Esc or ⌘F / Ctrl+F)"
-            class="hidden fixed top-3 right-5 z-[60] bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-xl backdrop-blur flex items-center gap-2 transition-all cursor-pointer border border-white/20">
-            <span>⤢ Exit Full Screen</span>
-            <kbd class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-mono border border-slate-700">Esc / ⌘F</kbd>
-          </button>
+          <!-- Floating exit button hidden per user request (use Esc or Cmd+F or toolbar button) -->
+          <button id="btnFloatingExitDbFullscreen" style="display:none !important;" class="hidden"></button>
 
-          <div class="db-scroll-area overflow-auto h-full">
+          <div class="db-scroll-area overflow-auto h-full flex-1">
             <table class="min-w-full text-left text-xs" style="border-collapse:collapse;">
               <thead class="sticky top-0 z-10" style="background:#f8fafc;">
                 <tr id="dbTableHeaderRow" style="border-bottom: 2px solid #e2e8f0;">
@@ -1578,9 +1600,12 @@
             </table>
           </div>
         </div>
-      </div>
-    </div>
-  </main>
+
+      </div><!-- /Main Database Ledger & Filtering Card -->
+
+    </div><!-- /#paneWorkspaceDb -->
+</main>
+  </div><!-- /MAIN WORKSPACE CONTAINER -->
 
   <script>
     const API_BASE = "";
@@ -2319,6 +2344,22 @@
     window.clearNinStatusSelections = clearNinStatusSelections;
 
     window.addEventListener("DOMContentLoaded", () => {
+      // Initialize sidebar state (starts collapsed by default)
+      if (typeof applySidebarState === "function") {
+        applySidebarState();
+      }
+      // Auto-load default cardDesign, gap, and round border from DB silently
+      if (typeof loadConfigurationFromDatabase === "function") {
+        loadConfigurationFromDatabase(true);
+      }
+      // Check saved stats visibility preference
+      if (localStorage.getItem("db_stats_visible") === "false" && typeof toggleDbStatsSection === "function") {
+        toggleDbStatsSection();
+      }
+      // Set initial landing page to portal (Download Tab)
+      if (typeof shiftWorkspace === "function" && isDashboardUnlocked) {
+        shiftWorkspace("portal");
+      }
       // Listen for scanned token from the secure PDF viewer page
       window.addEventListener("message", (event) => {
         if (event.data && event.data.type === "QR_SCANNED") {
@@ -3065,13 +3106,61 @@
       document.getElementById("uploadBackBg").click();
     }
 
-    function shiftWorkspace(targetViewTab) {
+    let isSidebarCollapsed = true;
+    let currentWorkspaceTab = "portal";
+
+    function toggleSidebarCollapse() {
+      // No-op: sidebar replaced by floating top nav
+    }
+
+    function applySidebarState() {
       const tabs = {
-        form: "tabFormBtn",
         portal: "tabPortalBtn",
+        form: "tabFormBtn",
         database: "tabDbBtn",
         admin: "tabAdminBtn",
       };
+
+      Object.keys(tabs).forEach(key => {
+        const btn = document.getElementById(tabs[key]);
+        if (!btn) return;
+        const isActive = (key === currentWorkspaceTab);
+
+        // Base floating icon-only button classes
+        const activeClass = "bg-blue-600 text-white shadow-md shadow-blue-500/30";
+        const inactiveClass = "text-slate-500 hover:bg-slate-100 hover:text-slate-800";
+        btn.className = `w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? activeClass : inactiveClass}`;
+
+        if (!isDashboardUnlocked && key !== "admin") {
+          btn.classList.add("hidden");
+        } else {
+          btn.classList.remove("hidden");
+        }
+      });
+    }
+
+    let isDbStatsVisible = true;
+    function toggleDbStatsSection() {
+      isDbStatsVisible = !isDbStatsVisible;
+      const statsRow = document.getElementById("dbStatsCardsRow");
+      const toggleText = document.getElementById("btnToggleDbStatsText");
+      const toggleIcon = document.getElementById("btnToggleDbStatsIcon");
+
+      if (isDbStatsVisible) {
+        if (statsRow) statsRow.classList.remove("hidden");
+        if (toggleText) toggleText.innerText = "Hide Count";
+        if (toggleIcon) toggleIcon.innerText = "📊";
+        localStorage.setItem("db_stats_visible", "true");
+      } else {
+        if (statsRow) statsRow.classList.add("hidden");
+        if (toggleText) toggleText.innerText = "Show Count";
+        if (toggleIcon) toggleIcon.innerText = "📈";
+        localStorage.setItem("db_stats_visible", "false");
+      }
+    }
+
+    function shiftWorkspace(targetViewTab) {
+      currentWorkspaceTab = targetViewTab;
       const panes = {
         form: "paneWorkspaceForm",
         portal: "paneWorkspacePortal",
@@ -3086,23 +3175,15 @@
         return;
       }
 
-      Object.keys(tabs).forEach((key) => {
-        const button = document.getElementById(tabs[key]);
-        if (!button) return;
-        if (key === targetViewTab) {
-          button.className =
-            "px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150";
-          document.getElementById(panes[key]).classList.remove("hidden");
-        } else {
-          button.className =
-            "px-4 py-2 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-900 transition-all duration-150";
-          document.getElementById(panes[key]).classList.add("hidden");
-        }
-
-        if (!isDashboardUnlocked && key !== "admin") {
-          button.classList.add("hidden");
+      Object.keys(panes).forEach((key) => {
+        const paneEl = document.getElementById(panes[key]);
+        if (paneEl) {
+          if (key === targetViewTab) paneEl.classList.remove("hidden");
+          else paneEl.classList.add("hidden");
         }
       });
+
+      applySidebarState();
 
       if (targetViewTab === "form") {
         mainGrid.className =
@@ -3115,7 +3196,7 @@
         mainGrid.className =
           "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-1 lg:overflow-hidden w-full";
         leftColumn.className =
-          "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
+          "lg:col-span-12 max-w-5xl mx-auto w-full space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
         rightColumn.className =
           "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2 hidden";
         if (targetViewTab === "portal") {
@@ -3142,9 +3223,21 @@
         listedDevicesBtn.classList.toggle("hidden", targetViewTab !== "admin");
       }
 
-      // Exit database fullscreen if switching away from database tab
-      if (targetViewTab !== "database" && typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
-        toggleDatabaseFullscreen(false);
+      // Sync workspace fullscreen state across tab switches
+      if (typeof isWorkspaceFullscreen !== "undefined" && isWorkspaceFullscreen) {
+        if (targetViewTab === "database") {
+          const tableCard = document.getElementById("dbTableContainerCard");
+          if (tableCard) tableCard.classList.add("db-table-fullscreen");
+          isDbTableFullscreen = true;
+        } else {
+          const tableCard = document.getElementById("dbTableContainerCard");
+          if (tableCard) tableCard.classList.remove("db-table-fullscreen");
+          isDbTableFullscreen = false;
+        }
+        activeFullscreenTab = targetViewTab;
+      }
+      if (typeof updateFullscreenButtonsUI === "function") {
+        updateFullscreenButtonsUI(Boolean(typeof isWorkspaceFullscreen !== "undefined" && isWorkspaceFullscreen), targetViewTab);
       }
     }
 
@@ -3395,6 +3488,7 @@
           verticalGap: cardVerticalGap,
           fontWidth: cardFontWidth,
           backgroundFit: cardBackgroundFit,
+          cardDesign: document.getElementById("formCardDesign")?.value || "smart card",
         };
         const res = await fetch(`${API_BASE}/api/config`, {
           method: "POST",
@@ -3409,14 +3503,14 @@
       }
     }
 
-    async function loadConfigurationFromDatabase() {
+    async function loadConfigurationFromDatabase(silent = false) {
       try {
         const res = await fetch(`${API_BASE}/api/config`);
         if (!res.ok)
           throw new Error("Failed to load configuration from database");
         const data = await res.json();
 
-        // Apply values to inputs
+        // Apply values to inputs: gap, round border (border radius), font size, font width, bg fit, card design
         const radiusInput = document.getElementById("cardBorderRadiusInput");
         if (radiusInput) radiusInput.value = data.borderRadius ?? 0;
         updateBorderRadius(data.borderRadius ?? 0);
@@ -3437,9 +3531,18 @@
         if (bgFitInput) bgFitInput.value = data.backgroundFit ?? "100% 100%";
         updateBackgroundFit(data.backgroundFit ?? "100% 100%");
 
-        alert("Default configuration loaded from database successfully!");
+        const cardDesignSelect = document.getElementById("formCardDesign");
+        if (cardDesignSelect && data.cardDesign) {
+          cardDesignSelect.value = data.cardDesign;
+        }
+
+        if (!silent) {
+          alert("Default configuration loaded from database successfully!");
+        }
       } catch (err) {
-        alert("Error loading defaults from database: " + err.message);
+        if (!silent) {
+          alert("Error loading defaults from database: " + err.message);
+        }
       }
     }
 
@@ -4184,6 +4287,8 @@
 
       const tEl = document.getElementById("statsTotalVal");
       if (tEl) tEl.innerText = stats.total;
+      const tabBadge = document.getElementById("tabDbBadgeCount");
+      if (tabBadge) tabBadge.innerText = stats.total;
       const dEl = document.getElementById("statsDoneVal");
       if (dEl) dEl.innerText = stats.done;
       const pEl = document.getElementById("statsPendingVal");
@@ -4262,99 +4367,182 @@
 
     let isDbTableFullscreen = false;
 
+    let isWorkspaceFullscreen = false;
+    let activeFullscreenTab = null;
+
+    function isWorkspaceFullscreenActive() {
+      return Boolean(isWorkspaceFullscreen || isDbTableFullscreen);
+    }
+
     function isDatabaseFullscreenActive() {
-      return isDbTableFullscreen;
+      return isWorkspaceFullscreenActive();
+    }
+
+    function updateFullscreenButtonsUI(isFullscreen, activeTab) {
+      // 1. Database Full Screen Button
+      const dbBtn = document.getElementById("btnToggleDbFullscreen");
+      if (dbBtn) {
+        if (isFullscreen && (activeTab === "database" || currentWorkspaceTab === "database")) {
+          dbBtn.innerHTML = `<span>⤢ Exit Full Screen</span> <kbd class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono border border-blue-200">⌘F</kbd>`;
+          dbBtn.classList.add("bg-blue-50", "text-blue-700", "border-blue-300");
+        } else {
+          dbBtn.innerHTML = `<span>⛶ Full Screen</span> <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>`;
+          dbBtn.classList.remove("bg-blue-50", "text-blue-700", "border-blue-300");
+        }
+      }
+
+      // 2. Form Studio Full Screen Button
+      const formBtn = document.getElementById("btnToggleFormFullscreen");
+      if (formBtn) {
+        if (isFullscreen && (activeTab === "form" || currentWorkspaceTab === "form")) {
+          formBtn.innerHTML = `<span>⤢</span> <span class="hidden sm:inline">Exit Full Screen</span> <kbd class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-mono border border-blue-200">⌘D</kbd>`;
+          formBtn.classList.add("bg-blue-50", "text-blue-700", "border-blue-300");
+        } else {
+          formBtn.innerHTML = `<span>⛶</span> <span class="hidden sm:inline">Full Screen</span> <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘D</kbd>`;
+          formBtn.classList.remove("bg-blue-50", "text-blue-700", "border-blue-300");
+        }
+      }
+
+      // 3. Portal Full Screen Button
+      const portalBtn = document.getElementById("btnTogglePortalFullscreen");
+      if (portalBtn) {
+        if (isFullscreen && (activeTab === "portal" || currentWorkspaceTab === "portal")) {
+          portalBtn.innerHTML = `<span>⤢</span> <span class="hidden sm:inline">Exit Full Screen</span> <kbd class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-mono border border-blue-200">⌘S</kbd>`;
+          portalBtn.classList.add("bg-blue-50", "text-blue-700", "border-blue-300");
+        } else {
+          portalBtn.innerHTML = `<span>⛶</span> <span class="hidden sm:inline">Full Screen</span> <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘S</kbd>`;
+          portalBtn.classList.remove("bg-blue-50", "text-blue-700", "border-blue-300");
+        }
+      }
+    }
+
+    function enterWorkspaceFullscreen(tab) {
+      const targetTab = tab || currentWorkspaceTab;
+      isWorkspaceFullscreen = true;
+      activeFullscreenTab = targetTab;
+
+      // Keep floating nav visible even in full screen mode per user request!
+      const floatingNav = document.getElementById("floatingTopNav");
+      if (floatingNav && isDashboardUnlocked) {
+        floatingNav.classList.remove("hidden");
+      }
+
+      document.body.classList.add("workspace-fullscreen-active");
+
+      const tableCard = document.getElementById("dbTableContainerCard");
+      if (targetTab === "database") {
+        isDbTableFullscreen = true;
+        if (tableCard) tableCard.classList.add("db-table-fullscreen");
+        const searchInput = document.getElementById("searchQueryBar");
+        if (searchInput) {
+          setTimeout(() => searchInput.focus(), 60);
+        }
+      } else {
+        isDbTableFullscreen = false;
+        if (tableCard) tableCard.classList.remove("db-table-fullscreen");
+      }
+
+      updateFullscreenButtonsUI(true, targetTab);
+    }
+
+    function exitWorkspaceFullscreen() {
+      isWorkspaceFullscreen = false;
+      isDbTableFullscreen = false;
+      activeFullscreenTab = null;
+
+      document.body.classList.remove("workspace-fullscreen-active");
+
+      const tableCard = document.getElementById("dbTableContainerCard");
+      if (tableCard) tableCard.classList.remove("db-table-fullscreen");
+
+      const floatingNav = document.getElementById("floatingTopNav");
+      if (floatingNav && isDashboardUnlocked) {
+        floatingNav.classList.remove("hidden");
+      }
+
+      updateFullscreenButtonsUI(false, currentWorkspaceTab);
+    }
+
+    function toggleWorkspaceFullscreen(tab) {
+      const targetTab = tab || currentWorkspaceTab;
+      if (isWorkspaceFullscreenActive() && (activeFullscreenTab === targetTab || currentWorkspaceTab === targetTab)) {
+        exitWorkspaceFullscreen();
+      } else {
+        shiftWorkspace(targetTab);
+        enterWorkspaceFullscreen(targetTab);
+      }
     }
 
     function toggleDatabaseFullscreen(forceState) {
-      const tableCard = document.getElementById("dbTableContainerCard");
-      const floatingExitBtn = document.getElementById("btnFloatingExitDbFullscreen");
-      const toolbarBtn = document.getElementById("btnToggleDbFullscreen");
-      if (!tableCard) return;
-
       if (typeof forceState === "boolean") {
-        isDbTableFullscreen = forceState;
-      } else {
-        isDbTableFullscreen = !isDbTableFullscreen;
-      }
-
-      if (isDbTableFullscreen) {
-        tableCard.classList.add("db-table-fullscreen");
-        if (floatingExitBtn) floatingExitBtn.classList.remove("hidden");
-        if (toolbarBtn) {
-          toolbarBtn.innerHTML = `<span>⤢ Exit Full Screen</span> <kbd class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-mono border border-blue-200">⌘F</kbd>`;
-          toolbarBtn.classList.add("bg-blue-50", "text-blue-700", "border-blue-300");
+        if (forceState) {
+          shiftWorkspace("database");
+          enterWorkspaceFullscreen("database");
+        } else {
+          exitWorkspaceFullscreen();
         }
       } else {
-        tableCard.classList.remove("db-table-fullscreen");
-        if (floatingExitBtn) floatingExitBtn.classList.add("hidden");
-        if (toolbarBtn) {
-          toolbarBtn.innerHTML = `<span>⛶ Full Screen</span> <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>`;
-          toolbarBtn.classList.remove("bg-blue-50", "text-blue-700", "border-blue-300");
+        if (isWorkspaceFullscreenActive() && (activeFullscreenTab === "database" || currentWorkspaceTab === "database")) {
+          exitWorkspaceFullscreen();
+        } else {
+          shiftWorkspace("database");
+          enterWorkspaceFullscreen("database");
         }
       }
     }
 
+    function togglePortalFullscreen() {
+      toggleWorkspaceFullscreen("portal");
+    }
+
+    function toggleFormFullscreen() {
+      toggleWorkspaceFullscreen("form");
+    }
+
     // Global Keyboard Shortcuts:
-    // Cmd+F / Ctrl+F -> From ANY page or tab, automatically redirect to database table & make full screen (or toggle if already full screen)
-    // Cmd+S / Ctrl+S -> From ANY page or tab, automatically redirect to download tab (portal)
-    // Cmd+K / Ctrl+K -> From ANY page or tab, automatically redirect to form design studio
+    // Cmd+F / Ctrl+F -> From ANY page or tab, open Database table & toggle full screen
+    // Cmd+S / Ctrl+S -> From ANY page or tab, open Download Portal & toggle full screen
+    // Cmd+D / Ctrl+D -> From ANY page or tab, open Form Design Studio & toggle full screen
     // Escape -> Exit full screen
     window.addEventListener("keydown", (e) => {
       if (!e.key) return;
       const key = e.key.toLowerCase();
       const isCmdOrCtrl = Boolean(e.metaKey || e.ctrlKey);
 
-      // Cmd+F or Ctrl+F: from any page or tab, redirect to database table and make full screen
+      // Cmd+F or Ctrl+F: from any page or tab, redirect to database table and toggle full screen
       if (isCmdOrCtrl && key === "f") {
         e.preventDefault();
-        const dbPane = document.getElementById("paneWorkspaceDb");
-        const isDbTabActive = dbPane && !dbPane.classList.contains("hidden");
-
-        if (!isDbTabActive) {
-          // If on any other tab, redirect to database tab and make full screen
-          shiftWorkspace("database");
-          toggleDatabaseFullscreen(true);
-        } else {
-          // If already on database tab, toggle full screen
-          toggleDatabaseFullscreen();
-        }
+        toggleDatabaseFullscreen();
         return;
       }
 
-      // Cmd+S or Ctrl+S: automatically redirect to download tab (Download Card Portal)
+      // Cmd+S or Ctrl+S: from any page or tab, redirect to download portal and toggle full screen
       if (isCmdOrCtrl && key === "s") {
         e.preventDefault();
-        // Exit database fullscreen if active
-        if (typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
-          toggleDatabaseFullscreen(false);
-        }
-        shiftWorkspace("portal");
+        toggleWorkspaceFullscreen("portal");
         return;
       }
 
-      // Cmd+K or Ctrl+K: automatically redirect to form design studio
-      if (isCmdOrCtrl && key === "k") {
+      // Cmd+D or Ctrl+D (also Cmd+K): from any page or tab, redirect to form design studio and toggle full screen
+      if (isCmdOrCtrl && (key === "d" || key === "k")) {
         e.preventDefault();
-        // Exit database fullscreen if active
-        if (typeof isDatabaseFullscreenActive === "function" && isDatabaseFullscreenActive()) {
-          toggleDatabaseFullscreen(false);
-        }
-        shiftWorkspace("form");
+        toggleWorkspaceFullscreen("form");
         return;
       }
 
       // Exit fullscreen with Escape if no popups/modals are currently open
-      if (e.key === "Escape" && isDatabaseFullscreenActive()) {
+      if (e.key === "Escape" && isWorkspaceFullscreenActive()) {
         const rowModal = document.getElementById("rowDetailModal");
         const printModal = document.getElementById("printRecordsModal");
         const briefModal = document.getElementById("updateRecordBriefModal");
+        const alertModal = document.getElementById("userNotificationAlertModal");
         const isModalOpen = (rowModal && !rowModal.classList.contains("hidden")) ||
                             (printModal && !printModal.classList.contains("hidden")) ||
-                            (briefModal && !briefModal.classList.contains("hidden"));
+                            (briefModal && !briefModal.classList.contains("hidden")) ||
+                            (alertModal && !alertModal.classList.contains("hidden"));
         if (!isModalOpen) {
           e.preventDefault();
-          toggleDatabaseFullscreen(false);
+          exitWorkspaceFullscreen();
         }
       }
     });
@@ -9404,28 +9592,28 @@
     function lockDashboardTabs() {
       isDashboardUnlocked = false;
 
-      // Hide the navbar header completely
-      const header = document.getElementById("mainNavbarHeader");
-      if (header) header.classList.add("hidden");
+      // Hide floating nav (show only admin gear)
+      const floatingNav = document.getElementById("floatingTopNav");
+      if (floatingNav) floatingNav.classList.remove("hidden");
 
-      // Hide tabs
+      // Hide non-admin tabs
       document.getElementById("tabFormBtn").classList.add("hidden");
       document.getElementById("tabPortalBtn").classList.add("hidden");
       document.getElementById("tabDbBtn").classList.add("hidden");
-      document.getElementById("tabAdminBtn").classList.add("hidden");
+      // Keep admin tab visible always
+      const tabAdminBtn = document.getElementById("tabAdminBtn");
+      if (tabAdminBtn) {
+        tabAdminBtn.className = "w-9 h-9 rounded-xl flex items-center justify-center bg-blue-600 text-white shadow-md shadow-blue-500/30 transition-all duration-150 cursor-pointer";
+      }
 
       // Hide the other content panes
       document.getElementById("paneWorkspaceForm").classList.add("hidden");
       document.getElementById("paneWorkspacePortal").classList.add("hidden");
       document.getElementById("paneWorkspaceDb").classList.add("hidden");
-      document
-        .getElementById("rightLayoutPreviewColumn")
-        .classList.add("hidden");
+      document.getElementById("rightLayoutPreviewColumn").classList.add("hidden");
 
       // Show admin workspace pane
-      document
-        .getElementById("paneWorkspaceAdmin")
-        .classList.remove("hidden");
+      document.getElementById("paneWorkspaceAdmin").classList.remove("hidden");
 
       // Center the layout for a lock screen look
       const mainGrid = document.getElementById("mainGridLayoutGrid");
@@ -9433,53 +9621,28 @@
       document.getElementById("leftLayoutConsoleColumn").className =
         "w-full max-w-md mx-auto";
 
-      // Visual styling for selected admin tab
-      const tabAdminBtn = document.getElementById("tabAdminBtn");
-      if (tabAdminBtn) {
-        tabAdminBtn.className =
-          "px-4 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm border border-slate-200/40 transition-all duration-150";
-      }
-
       if (!authenticatedAdmin) {
         document.getElementById("adminAuthBox").classList.remove("hidden");
-        document
-          .getElementById("adminRegisterDeviceBox")
-          .classList.add("hidden");
-        document
-          .getElementById("adminWhitelistConsole")
-          .classList.add("hidden");
+        document.getElementById("adminRegisterDeviceBox").classList.add("hidden");
+        document.getElementById("adminWhitelistConsole").classList.add("hidden");
       } else {
         document.getElementById("adminAuthBox").classList.add("hidden");
-        document
-          .getElementById("adminRegisterDeviceBox")
-          .classList.remove("hidden");
-        document
-          .getElementById("adminWhitelistConsole")
-          .classList.remove("hidden");
+        document.getElementById("adminRegisterDeviceBox").classList.remove("hidden");
+        document.getElementById("adminWhitelistConsole").classList.remove("hidden");
       }
     }
 
     function unlockDashboardTabs() {
       isDashboardUnlocked = true;
 
-      // Show the navbar header completely
-      const header = document.getElementById("mainNavbarHeader");
-      if (header) header.classList.remove("hidden");
+      // Show the floating nav bar with all tabs
+      const floatingNav = document.getElementById("floatingTopNav");
+      if (floatingNav) floatingNav.classList.remove("hidden");
 
       document.getElementById("tabFormBtn").classList.remove("hidden");
       document.getElementById("tabPortalBtn").classList.remove("hidden");
       document.getElementById("tabDbBtn").classList.remove("hidden");
       document.getElementById("tabAdminBtn").classList.remove("hidden");
-
-      // Restore grid layouts to default
-      const leftColumn = document.getElementById("leftLayoutConsoleColumn");
-      const rightColumn = document.getElementById("rightLayoutPreviewColumn");
-      const mainGrid = document.getElementById("mainGridLayoutGrid");
-
-      mainGrid.className =
-        "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start";
-      leftColumn.className = "lg:col-span-6 space-y-6";
-      rightColumn.classList.remove("hidden");
 
       if (authenticatedAdmin) {
         document.getElementById("adminAuthBox").classList.add("hidden");
@@ -9499,7 +9662,7 @@
           .classList.add("hidden");
       }
 
-      shiftWorkspace("form");
+      shiftWorkspace("portal");
     }
 
     async function verifyPasswordAndWhitelistIp() {

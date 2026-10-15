@@ -43,7 +43,8 @@ module.exports = async (req, res) => {
           fontSize: 100,
           verticalGap: 6,
           fontWidth: 0,
-          backgroundFit: '100% 100%'
+          backgroundFit: '100% 100%',
+          cardDesign: 'smart card'
         });
         await config.save();
       }
@@ -63,7 +64,8 @@ module.exports = async (req, res) => {
           fontSize: data.fontSize ?? 100,
           verticalGap: data.verticalGap ?? 6,
           fontWidth: data.fontWidth ?? 0,
-          backgroundFit: data.backgroundFit ?? '100% 100%'
+          backgroundFit: data.backgroundFit ?? '100% 100%',
+          cardDesign: data.cardDesign ?? 'smart card'
         },
         { new: true, upsert: true }
       );
