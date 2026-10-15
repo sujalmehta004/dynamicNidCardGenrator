@@ -7808,6 +7808,16 @@
 
         // Open our embedded PDF viewer modal directly on the page!
         const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
+
+        // Trigger browser download for the PDF file directly to disk
+        const dlLink = document.createElement("a");
+        dlLink.href = URL.createObjectURL(encryptedBlob);
+        dlLink.download = filename;
+        document.body.appendChild(dlLink);
+        dlLink.click();
+        document.body.removeChild(dlLink);
+        setTimeout(() => URL.revokeObjectURL(dlLink.href), 1000);
+
         openEmbeddedPdfModal(encryptedBlob, filename, clipboardCode);
 
         // Hide download row, show manual token entry step
