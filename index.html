@@ -13180,9 +13180,7 @@ Your details were incorrect and have been changed/updated, but the update has no
 
                 <!-- Template 3: NID not online -->
                 <button type="button"
-                  onclick="appendAlertTemplate(`तपाईंको परिचयपत्र अनलाइनमा भएको छैन। अनलाइन भएपछि एक्टिभ गर्नु पर्छ, त्यसपछि कार्ड चलाउन सकिन्छ।
-
-Your identity card is not yet available online. Once it is available online, you will need to activate it before the card can be used.`)"
+                  onclick="appendAlertTemplate(`तपाईंको परिचयपत्र अनलाइनमा भएको छैन। अनलाइन भएपछि एक्टिभ गर्नु पर्छ, त्यसपछि कार्ड चलाउन सकिन्छ।\n\nYour identity card is not yet available online. Once it is available online, you will need to activate it before the card can be used.`)"
                   class="group w-full text-left rounded-2xl border border-violet-200/80 bg-white hover:bg-violet-50/60 hover:border-violet-300 hover:shadow-md transition-all duration-150 p-3.5 shadow-sm">
                   <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-xl bg-violet-100/80 text-violet-700 flex items-center justify-center text-base shrink-0 mt-0.5">🪪</div>
@@ -13192,6 +13190,22 @@ Your identity card is not yet available online. Once it is available online, you
                         <span class="text-[10px] font-semibold text-violet-700 bg-violet-100/70 px-2 py-0.5 rounded-full">Not Active</span>
                       </div>
                       <p class="text-[11px] text-slate-600 mt-1 leading-snug">परिचयपत्र online भएको छैन — online भएपछि active गरेर चलाउन सकिन्छ</p>
+                    </div>
+                  </div>
+                </button>
+
+                <!-- Template 4: Shop Call / OTP Pending -->
+                <button type="button"
+                  onclick="appendAlertTemplate(`तपाईंलाई पसलबाट धेरै पटक फोन गर्यौं, तर केही कारणले तपाईंको फोन कनेक्ट हुन सकेन। कृपया फुर्सद भएपछि हामीलाई फोन गर्नुहोला। तपाईंको कार्ड एक्टिभ गर्न चाहिने OTP का लागि फोन गरिएको थियो, OTP लिन सकिएन। आफैँ एक्टिभ गरे पनि हुन्छ नभए हामीलाई सम्पर्क गर्नुहोला।\n\nWe called you multiple times from the shop, but could not connect with your phone. Please call us back whenever you are free. We called regarding the OTP required to activate your card. You can either activate it yourself or contact us.`)"
+                  class="group w-full text-left rounded-2xl border border-emerald-200/80 bg-white hover:bg-emerald-50/60 hover:border-emerald-300 hover:shadow-md transition-all duration-150 p-3.5 shadow-sm">
+                  <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100/80 text-emerald-700 flex items-center justify-center text-base shrink-0 mt-0.5">📲</div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-900 group-hover:text-emerald-700">Shop Call / OTP Pending</span>
+                        <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">Call Back</span>
+                      </div>
+                      <p class="text-[11px] text-slate-600 mt-1 leading-snug">पसलबाट फोन गर्दा उठेन — फुर्सद भएपछि कल गर्नुहोस / OTP बाँकी</p>
                     </div>
                   </div>
                 </button>
