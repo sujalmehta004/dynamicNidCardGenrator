@@ -383,45 +383,45 @@
   <div id="mainNavbarHeader" class="hidden">
     <!-- placeholder kept for JS compatibility, actual nav is #floatingTopNav -->
   </div>
-  <!-- Floating tab bar: appears at top-right after login -->
-  <nav id="floatingTopNav" class="hidden fixed top-3 right-4 sm:right-6 z-[9999] flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-2 py-1.5 shadow-lg shadow-slate-900/10 select-none">
+  <!-- Floating tab bar: appears at top-right after login (wide & thin profile) -->
+  <nav id="floatingTopNav" class="hidden fixed top-2 right-4 sm:right-6 z-[9999] flex items-center gap-1 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-full px-2 py-0.5 shadow-sm shadow-slate-900/5 select-none">
     <!-- Live dot -->
-    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-1 mr-2 shrink-0" title="Online"></span>
+    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-1 mr-1.5 shrink-0" title="Online"></span>
 
     <!-- Tab: Card Portal (search icon) -->
     <button id="tabPortalBtn" onclick="shiftWorkspace('portal')" title="Card Portal — ⌘S"
-      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
-      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      class="w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
+      <svg class="w-4 h-4" style="width:15px;height:15px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
       </svg>
     </button>
 
     <!-- Divider -->
-    <span class="w-px h-5 bg-slate-200 mx-0.5"></span>
+    <span class="w-px h-3.5 bg-slate-200 mx-0.5"></span>
 
     <!-- Tab: Form Studio (pencil icon) -->
     <button id="tabFormBtn" onclick="shiftWorkspace('form')" title="Form Studio — ⌘D"
-      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
-      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      class="w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
+      <svg class="w-4 h-4" style="width:15px;height:15px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
       </svg>
     </button>
 
     <!-- Tab: Database (database icon) -->
     <button id="tabDbBtn" onclick="shiftWorkspace('database')" title="Database Vault — ⌘F"
-      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
-      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      class="w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800 hidden">
+      <svg class="w-4 h-4" style="width:15px;height:15px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
       </svg>
     </button>
 
     <!-- Divider -->
-    <span class="w-px h-5 bg-slate-200 mx-0.5"></span>
+    <span class="w-px h-3.5 bg-slate-200 mx-0.5"></span>
 
     <!-- Tab: Admin (gear icon) -->
     <button id="tabAdminBtn" onclick="shiftWorkspace('admin')" title="Admin Setup"
-      class="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800">
-      <svg class="w-4.5 h-4.5" style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      class="w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800">
+      <svg class="w-4 h-4" style="width:15px;height:15px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
@@ -647,206 +647,342 @@
         </section>
 
         <section id="paneWorkspacePortal"
-          class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
-          <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
-            <div>
-              <h3 class="text-sm font-bold tracking-tight text-slate-900">
-                Government Download Gateway
-              </h3>
-              <p class="text-xs text-slate-555 mt-0.5">
-                Extract individual identity data sets from sandbox repositories.
-              </p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')" title="Toggle Full Screen (Cmd+S / Ctrl+S)"
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
-                <span>⛶</span>
-                <span class="hidden sm:inline">Full Screen</span>
-                <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘S</kbd>
+          class="space-y-4 hidden">
+
+            <!-- Hidden compatibility elements for existing JS selectors -->
+            <div class="hidden">
+              <span id="ninSearchPortalLabel">Search by NIN Number</span>
+              <button type="button" id="tabModeNin" onclick="setVoterSearchMode('nin')">NIN</button>
+              <button type="button" id="tabModeName" onclick="setVoterSearchMode('name')">Name</button>
+              <button type="button" id="btnToggleVoterSearchMode" onclick="toggleVoterSearchMode()">
+                <span id="btnToggleSearchText">Switch Search</span>
               </button>
-              <!-- Nepali Character Map Info Button -->
-              <button type="button" onclick="openNepaliCharInfo()"
-                title="View collected Nepali characters from voterlist"
-                class="w-7 h-7 rounded-full bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-600 font-bold text-xs flex items-center justify-center transition-all shadow-sm">
-                i
-              </button>
-              <!-- Captcha display container -->
-              <div id="portalCaptchaContainer" class="flex flex-col items-end gap-1.5 hidden">
-                <div class="flex items-center gap-2 border border-slate-200 rounded-lg p-1 bg-slate-50">
-                  <img id="portalCaptchaImg" src="" alt="Captcha" class="h-10 w-28 object-contain rounded" />
-                  <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha"
-                    class="bg-slate-200 hover:bg-slate-350 text-slate-700 p-1.5 rounded-lg transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+              <button type="button" id="portalSubTabNidBtn" onclick="switchPortalSubTab('nid')">NID Gateway</button>
+              <button type="button" id="portalSubTabVoterBtn" onclick="switchPortalSubTab('voter')">Voter Portal</button>
+              <input type="hidden" id="portalSearchNin" />
+              <input type="hidden" id="voterQuickSearch" />
+              <div id="voterQuickSearchDropdown"></div>
             </div>
-          </div>
 
           <form id="portalForm" class="space-y-4 text-xs" onsubmit="event.preventDefault()">
-            <!-- Gateway Tab Switcher -->
-            <div class="flex gap-2 border-b border-slate-100 pb-2 text-[10px] uppercase font-bold tracking-wider mb-2">
-              <button type="button" id="portalSubTabNidBtn" onclick="switchPortalSubTab('nid')"
-                class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 transition-all duration-150 font-bold">
-                NID Gateway
-              </button>
-              <button type="button" id="portalSubTabVoterBtn" onclick="switchPortalSubTab('voter')"
-                class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-700 transition-all duration-150 font-bold hidden">
-                Voter Portal
-              </button>
-            </div>
-
             <!-- NID Portal Gateway Tab Content -->
-            <div id="portalSubTabNidContent" class="space-y-4">
-              <!-- Gateway Mode Switcher (Always at the top) -->
-              <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-                <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" />
-                  </svg>
-                  <span id="ninSearchPortalLabel"
-                    class="font-bold text-slate-800 uppercase tracking-wider text-[10px]">Search by NIN Number</span>
+            <div id="portalSubTabNidContent" class="space-y-3">
+
+              <!-- ── TOP ROW: DB Search (full width) + Fullscreen + ℹ button ── -->
+              <div class="flex items-center gap-2">
+                <!-- DB Search Input (full width flex) with live suggestions -->
+                <div class="relative flex-1">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                  </div>
+                  <input type="text" id="portalSearchQuery"
+                    placeholder="Search previously saved in database by name or NIN..."
+                    autocomplete="off"
+                    oninput="_onPortalSearchQueryInput(this.value)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                    class="w-full bg-white hover:bg-slate-50 border border-slate-200 focus:border-slate-700 focus:ring-1 focus:ring-slate-700 rounded-xl pl-9 pr-3 py-2 text-slate-900 text-xs shadow-2xs transition-all h-[36px] placeholder:text-slate-400 font-medium" />
+                  <!-- Live Suggestion Dropdown -->
+                  <div id="portalSearchDropdown" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-52 overflow-y-auto"></div>
                 </div>
-                <button type="button" id="btnToggleVoterSearchMode" onclick="toggleVoterSearchMode()"
-                  class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                <!-- Fullscreen button -->
+                <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')" title="Toggle Full Screen (Cmd+S / Ctrl+S)"
+                  class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[36px]">
+                  <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
-                  <span id="btnToggleSearchText">Switch to Name Search</span>
+                  <span class="hidden sm:inline text-[11px]">Fullscreen</span>
+                  <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200 hidden sm:inline">⌘S</kbd>
+                </button>
+                <!-- ℹ button -->
+                <button type="button" onclick="openNepaliCharInfo()"
+                  title="View collected Nepali characters from voterlist"
+                  class="w-9 h-9 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-bold text-sm flex items-center justify-center transition-all shadow-xs cursor-pointer shrink-0">
+                  ℹ
                 </button>
               </div>
 
-              <!-- Main NID Gateway (visible in Name Search mode, hidden by default) -->
-              <div id="nidGatewayMainFormContainer" class="hidden space-y-4">
-                <!-- Database Search Integration -->
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-4 space-y-3 shadow-sm">
-                  <label class="block text-blue-900 font-bold text-[9px] uppercase tracking-wider">🔍 Search Database to Populate Form</label>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <input type="text" id="portalSearchQuery"
-                      placeholder="Search by English NIN or Name..."
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();searchPortalDbToPopulate();}"
-                      class="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" />
-                    <input type="text" id="portalSearchNin" readonly
-                      placeholder="NIN Number (optional)"
-                      title="Auto-filled after selecting a search result. Used only for display."
-                      class="flex-1 bg-slate-100 border border-blue-300 rounded-lg px-3 py-2 font-medium text-slate-900 transition-all shadow-sm cursor-not-allowed" />
-                    <div class="flex gap-2 shrink-0">
-                      <button type="button" onclick="clearPortalSearchForm()"
-                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg transition-all shadow-sm uppercase text-[10px] border border-slate-200">
-                        Clear
-                      </button>
-                      <button type="button" onclick="searchPortalDbToPopulate()"
-                        class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
-                        Search
-                      </button>
-                    </div>
-                  </div>
-                  <div id="portalSearchDropdown" class="hidden bg-white border border-blue-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
+              <!-- ── CONTAINER 1: Search by NIN (Light Green Theme) ── -->
+              <div id="voterNinSearchPanel" class="bg-emerald-50/60 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                <div class="flex items-center justify-between mb-0.5">
+                  <span class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
+                    <span>🪪</span> Search by NIN Number
+                  </span>
+                  <span class="text-[10px] text-emerald-800/80 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Voter Records Query
+                  </span>
                 </div>
 
-                <!-- Input fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-slate-600 font-bold mb-1.5">Full Name (English)</label>
-                    <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-start">
+                  <!-- Field 1: NIN Number -->
+                  <div id="voterNidNin_fieldWrap" class="relative">
+                    <label class="block text-[11px] font-semibold text-emerald-950 mb-1">NIN Number</label>
+                    <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
+                      autocomplete="off"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                      class="w-full bg-white hover:border-emerald-300 focus:bg-white border border-emerald-200/90 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-3 py-2 text-slate-900 font-mono text-xs shadow-2xs transition-all h-[38px] placeholder:text-emerald-700/40" />
                   </div>
+
+                  <!-- Field 2: Date of Birth (BS) -->
+                  <div id="voterNinDobBs_fieldWrap" class="relative">
+                    <label class="block text-[11px] font-semibold text-emerald-950 mb-1">DOB (BS)</label>
+                    <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
+                      autocomplete="off"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                      class="w-full bg-white hover:border-emerald-300 focus:bg-white border border-emerald-200/90 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-3 py-2 text-slate-900 text-xs shadow-2xs transition-all h-[38px] placeholder:text-emerald-700/40" />
+                  </div>
+
+                  <!-- Field 3: Date of Birth (AD) -->
                   <div>
-                    <label class="block text-slate-600 font-bold mb-1.5">Full Name (Nepali)</label>
-                    <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                    <label class="block text-[11px] font-semibold text-emerald-950 mb-1">DOB (AD)</label>
+                    <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
+                      autocomplete="off"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                      class="w-full bg-white hover:border-emerald-300 focus:bg-white border border-emerald-200/90 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-3 py-2 text-slate-900 text-xs shadow-2xs transition-all h-[38px] placeholder:text-emerald-700/40" />
+                  </div>
+
+                  <!-- Field 4: First Name Only -->
+                  <div>
+                    <label class="block text-[11px] font-semibold text-emerald-950 mb-1">First Name Only</label>
+                    <input type="text" id="voterNinFirstname" placeholder="SUJAL"
+                      autocomplete="off"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                      class="w-full bg-white hover:border-emerald-300 focus:bg-white border border-emerald-200/90 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 rounded-xl px-3 py-2 text-slate-900 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-emerald-700/40" />
+                  </div>
+
+                  <!-- Field 5: Search Button -->
+                  <div>
+                    <label class="block text-[11px] font-semibold text-transparent mb-1 select-none">Action</label>
+                    <button type="button" id="btnSingleNinSearch" onclick="handleNinSearchClick()"
+                      class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span>Search NIN</span>
+                    </button>
                   </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-slate-600 font-bold mb-1.5">Date of Birth (BS)</label>
-                    <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+              </div>
+
+              <!-- ── CONVERTER: English to Nepali (Full Width, Sky Theme, between NIN and Name) ── -->
+              <div id="portalQuickConverterBox" class="w-full bg-sky-50/70 border border-sky-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-sky-950 uppercase tracking-wide flex items-center gap-1.5">
+                      <span>⌨️</span> English to Nepali Converter
+                    </span>
+                    <span class="text-[9px] text-sky-700/80 bg-sky-100/90 px-2 py-0.5 rounded-full border border-sky-200 font-semibold">
+                      Full Width · Smart Target Fill
+                    </span>
                   </div>
+                  <div class="flex items-center gap-2">
+                    <div id="quickConverterCopyNotice" class="hidden text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                      <span id="quickConverterCopyNoticeText">Filled!</span>
+                    </div>
+                    <span class="text-[9px] text-sky-700/70 bg-white/90 px-2 py-0.5 rounded-full border border-sky-200 font-medium hidden sm:inline">
+                      ↑↓ navigate · enter / click to fill target field
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <div class="relative sm:w-72 lg:w-80 shrink-0">
+                    <input type="text" id="quickConverterInput" placeholder="Type English name to convert..."
+                      autocomplete="off"
+                      oninput="handleQuickConverterInput()"
+                      onkeydown="handleQuickConverterKeyDown(event)"
+                      class="w-full bg-white hover:border-sky-300 focus:bg-white border border-sky-200/90 focus:border-sky-600 focus:ring-1 focus:ring-sky-600 rounded-xl px-3 py-2 text-xs text-slate-900 font-medium uppercase transition-all shadow-2xs h-[36px] placeholder:text-sky-700/40" />
+                  </div>
+                  <!-- Pills container taking the rest of full width -->
+                  <div id="quickConverterPills" class="flex-1 flex flex-wrap gap-1.5 items-center min-h-[36px] bg-white/70 border border-sky-200/60 rounded-xl px-3 py-1.5">
+                    <span class="text-[10px] text-sky-700/50 italic">Nepali suggestions will appear here...</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ── CONTAINER 2: Search by Name (Light Orange Theme) ── -->
+              <div id="nidGatewayMainFormContainer" class="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                <div class="flex items-center justify-between mb-0.5">
+                  <span class="text-xs font-bold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
+                    <span>👤</span> Search by Citizen Name &amp; Verification Details
+                  </span>
+                  <span class="text-[10px] text-amber-800/80 font-semibold bg-amber-100/70 px-2 py-0.5 rounded-full border border-amber-200">
+                    Use + for variants
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-start">
+                  <!-- Field 1: Full Name (English) -->
+                  <div id="portalFullNameEn_fieldWrap" class="relative">
+                    <label class="block text-[11px] font-semibold text-amber-950 mb-1">Full Name (English)</label>
+                    <div class="relative flex items-center">
+                      <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA"
+                        autocomplete="off"
+                        oninput="onPortalFieldInputChanged('portalFullNameEn')"
+                        class="w-full bg-white hover:border-amber-300 focus:bg-white border border-amber-200/90 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 rounded-xl px-3 py-2 pr-7 text-slate-900 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-amber-800/40" />
+                      <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameEn')" title="Add another English Name variant"
+                        class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-amber-700/60 hover:text-amber-950 hover:bg-amber-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+                        +
+                      </button>
+                    </div>
+                    <div id="portalFullNameEn_variants" class="space-y-1.5 mt-1.5"></div>
+                  </div>
+
+                  <!-- Field 2: Full Name (Nepali) -->
+                  <div id="portalFullNameNp_fieldWrap" class="relative">
+                    <div class="flex items-center justify-between mb-1">
+                      <label class="block text-[11px] font-semibold text-amber-950">Full Name (Nepali)</label>
+                      <span id="portalNpSuggestBadge" class="hidden"></span>
+                    </div>
+                    <div class="relative flex items-center">
+                      <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता"
+                        autocomplete="off"
+                        oninput="onPortalFieldInputChanged('portalFullNameNp')"
+                        onfocus="setConverterNepaliTarget(this)"
+                        class="w-full bg-white hover:border-amber-300 focus:bg-white border border-amber-200/90 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 rounded-xl px-3 py-2 pr-7 text-slate-900 font-serif text-xs shadow-2xs transition-all h-[38px] placeholder:text-amber-800/40" />
+                      <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameNp')" title="Add another Nepali Name variant"
+                        class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-amber-700/60 hover:text-amber-950 hover:bg-amber-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+                        +
+                      </button>
+                    </div>
+                    <div id="portalFullNameNp_variants" class="space-y-1.5 mt-1.5"></div>
+                  </div>
+
+                  <!-- Field 3: Date of Birth (BS) -->
+                  <div id="portalDobLoc_fieldWrap" class="relative">
+                    <label class="block text-[11px] font-semibold text-amber-950 mb-1">DOB (BS)</label>
+                    <div class="relative flex items-center">
+                      <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०"
+                        autocomplete="off"
+                        oninput="onPortalFieldInputChanged('portalDobLoc')"
+                        class="w-full bg-white hover:border-amber-300 focus:bg-white border border-amber-200/90 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 rounded-xl px-3 py-2 pr-7 text-slate-900 text-xs shadow-2xs transition-all h-[38px] placeholder:text-amber-800/40" />
+                      <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalDobLoc')" title="Add another Date of Birth variant"
+                        class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-amber-700/60 hover:text-amber-950 hover:bg-amber-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+                        +
+                      </button>
+                    </div>
+                    <div id="portalDobLoc_variants" class="space-y-1.5 mt-1.5"></div>
+                  </div>
+
+                  <!-- Field 4: Citizenship Issue Date (BS) -->
+                  <div id="portalCcnIssuingDateLoc_fieldWrap" class="relative">
+                    <label class="block text-[11px] font-semibold text-amber-950 mb-1">Citizenship Date (BS)</label>
+                    <div class="relative flex items-center">
+                      <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५"
+                        autocomplete="off"
+                        oninput="onPortalFieldInputChanged('portalCcnIssuingDateLoc')"
+                        class="w-full bg-white hover:border-amber-300 focus:bg-white border border-amber-200/90 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 rounded-xl px-3 py-2 pr-7 text-slate-900 text-xs shadow-2xs transition-all h-[38px] placeholder:text-amber-800/40" />
+                      <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalCcnIssuingDateLoc')" title="Add another Citizenship Date variant"
+                        class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-amber-700/60 hover:text-amber-950 hover:bg-amber-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+                        +
+                      </button>
+                    </div>
+                    <div id="portalCcnIssuingDateLoc_variants" class="space-y-1.5 mt-1.5"></div>
+                  </div>
+
+                  <!-- Field 5: Proceed Button -->
                   <div>
-                    <label class="block text-slate-600 font-bold mb-1.5">Citizenship Issue Date (BS)</label>
-                    <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                    <label class="block text-[11px] font-semibold text-transparent mb-1 select-none">Action</label>
+                    <button type="button" id="btnPortalInitProcess" onclick="handlePortalProceedClick()"
+                      class="w-full bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-semibold text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                      <span id="btnPortalProceedText">Proceed</span>
+                    </button>
                   </div>
                 </div>
 
                 <!-- Step Indicator -->
                 <div id="portalStepIndicator"
-                  class="hidden flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider pb-2 border-b border-slate-100 mb-3">
-                  <span id="portalStepInd1"
-                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">1.
-                    Captcha</span>
-                  <span class="text-slate-300">→</span>
-                  <span id="portalStepInd2"
-                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">2.
-                    OTP</span>
-                  <span class="text-slate-300">→</span>
-                  <span id="portalStepInd3"
-                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">3.
-                    Download</span>
-                  <span class="text-slate-300">→</span>
-                  <span id="portalStepInd4"
-                    class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 transition-all duration-300">4. Token
-                    Scan</span>
+                  class="hidden flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider pt-2 border-t border-amber-200/60">
+                  <span id="portalStepInd1" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">1. Captcha</span>
+                  <span class="text-amber-300">→</span>
+                  <span id="portalStepInd2" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">2. OTP</span>
+                  <span class="text-amber-300">→</span>
+                  <span id="portalStepInd3" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">3. Download</span>
+                  <span class="text-amber-300">→</span>
+                  <span id="portalStepInd4" class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">4. Token Scan</span>
                 </div>
 
-                <!-- Captcha input step -->
-                <div id="portalCaptchaInputRow" class="hidden fade-in">
-                  <label class="block text-slate-600 font-bold mb-1.5">Enter Captcha Code</label>
-                  <div class="flex gap-2">
-                    <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code"
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestOtpClick();}"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
-                    <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
-                      class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Request
-                      OTP</button>
-                  </div>
-                </div>
-
-                <!-- OTP input step -->
-                <div id="portalOtpRow"
-                  class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-                  <div class="flex flex-col gap-1">
-                    <span class="font-bold text-slate-700">OTP Info:</span>
-                    <span id="portalOtpInfoText" class="font-medium text-slate-600">Masked Mobile: -, NIN: -</span>
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class="block text-slate-600 font-bold">Enter OTP Code</label>
-                    <div class="flex gap-2">
-                      <input type="text" id="portalOtpCode" placeholder="Enter OTP code"
-                        onkeydown="if(event.key==='Enter'){event.preventDefault();verifyPortalOtp();}"
-                        class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 font-mono text-sm tracking-wider" />
-                      <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase">Verify
-                        OTP</button>
+                <!-- ── Unified Captcha Station ── -->
+                <div id="portalCaptchaInputRow" class="hidden fade-in bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                      <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Enter Security Captcha</span>
                     </div>
+                    <button type="button" onclick="resetPortalToInitial()" title="Cancel Captcha"
+                      class="text-slate-400 hover:text-slate-600 text-xs font-semibold px-2 py-0.5 rounded hover:bg-slate-200/60 transition-all cursor-pointer">
+                      ✕ Cancel
+                    </button>
+                  </div>
+
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <div id="portalCaptchaContainer" class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1.5 shadow-2xs shrink-0">
+                      <img id="portalCaptchaImg" src="" alt="Captcha" class="h-9 w-28 object-contain rounded bg-slate-50" />
+                      <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha Image"
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg transition-all border border-slate-200 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div class="flex-1 relative">
+                      <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code" autocomplete="off"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestOtpClick();}"
+                        class="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-lg py-2 px-3 text-slate-900 font-bold tracking-widest text-sm transition-all shadow-2xs h-[38px]" />
+                    </div>
+
+                    <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
+                      class="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold px-6 py-2 rounded-lg transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span>Request OTP</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- ── OTP Input Step ── -->
+                <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-slate-700">OTP Sent:</span>
+                    <span id="portalOtpInfoText" class="font-mono text-slate-600 text-[11px]">Masked Mobile: -, NIN: -</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <input type="text" id="portalOtpCode" placeholder="Enter 6-digit OTP code"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();verifyPortalOtp();}"
+                      class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 font-mono text-sm tracking-widest h-[38px]" />
+                    <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
+                      class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2 rounded-lg transition-all shadow-sm shrink-0 uppercase text-xs cursor-pointer h-[38px]">
+                      Verify OTP
+                    </button>
                   </div>
                   <div class="flex justify-end">
                     <button type="button" id="btnPortalResendOtp" onclick="loadPortalCaptcha(false)"
-                      class="bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-4 py-2 rounded-lg transition-all uppercase text-[10px]">Resend
-                      OTP / Start Over</button>
+                      class="text-slate-600 hover:text-slate-900 font-medium text-xs transition-all cursor-pointer underline">
+                      Resend OTP / Start Over
+                    </button>
                   </div>
                 </div>
 
-                <!-- Step 3: Verified & ready to download -->
-                <div id="portalDownloadRow"
-                  class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-                  <div
-                    class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-800 font-semibold text-[11px] flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                <!-- ── Download Ready Step ── -->
+                <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg text-emerald-800 font-medium text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd"
                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                         clip-rule="evenodd"></path>
                     </svg>
-                    <span>Authentication Successful! Proceed to download.</span>
+                    <span>Authentication Successful! Ready to download identity record.</span>
                   </div>
                   <button type="button" id="btnPortalDownloadNid" onclick="executePortalDownload()"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md">
+                    class="w-full bg-slate-900 hover:bg-black text-white font-semibold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md cursor-pointer">
                     <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -855,141 +991,88 @@
                   </button>
                 </div>
 
-                <!-- Manual scanned token entry step -->
-                <div id="portalManualTokenRow"
-                  class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                <!-- ── Manual Scanned Token Entry Step ── -->
+                <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
                   <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
                     <span class="font-bold block mb-1">⚠️ PDF Downloaded Successfully!</span>
-                    Open the downloaded PDF card, scan the QR code inside the card PDF, copy the text/URL, and paste it
-                    below to verify and update the database.
-                    <br /><span class="text-red-650 font-bold">Do not close or refresh this page.</span>
+                    Open the downloaded PDF card, scan the QR code inside, copy the text/URL, and paste it below to verify and update the database.
+                    <span class="text-rose-600 font-bold block mt-0.5">Do not close or refresh this page.</span>
                   </div>
                   <div class="flex flex-col gap-1">
                     <span class="font-bold text-slate-700 text-xs">Pasted Scanned QR URL / Token:</span>
-                    <textarea id="portalScannedTokenVal" rows="3" placeholder="Paste the full scanned QR URL here..."
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-blue-500 rounded-xl transition-all"></textarea>
+                    <textarea id="portalScannedTokenVal" rows="2" placeholder="Paste the full scanned QR URL here..."
+                      class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-slate-800 transition-all"></textarea>
                   </div>
                   <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">Verify
-                    & Save Token</button>
+                    class="w-full bg-slate-900 hover:bg-black text-white font-semibold py-2.5 rounded-xl transition-all tracking-wider uppercase text-xs flex items-center justify-center gap-2 cursor-pointer">
+                    Verify &amp; Save Token
+                  </button>
                 </div>
 
-                <!-- Step 5: Success -->
-                <div id="portalSuccessRow"
-                  class="hidden space-y-4 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
-                  <div
-                    class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
-                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- ── Success Row ── -->
+                <div id="portalSuccessRow" class="hidden space-y-3 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
+                  <div class="w-12 h-12 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                   <div>
                     <div class="text-sm font-bold text-emerald-700">Verification &amp; Update Complete!</div>
-                    <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and the database
-                      status updated to Done.</div>
-                    <div class="text-[10px] text-slate-400 mt-2">Resetting download portal in <span
-                        id="portalCountdownTimer">5</span>s...</div>
-                  </div>
-                </div>
-
-                <!-- NID Tab Action Buttons in one row -->
-                <div id="portalInitialActionBtnRow" class="pt-2 flex gap-3">
-                  <button type="button" id="btnPortalInitProcess" onclick="loadPortalCaptcha(false)"
-                    class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] text-center shadow-md flex items-center justify-center gap-1.5">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Proceed (Single)
-                  </button>
-                  <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()"
-                    class="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase text-[10px] flex items-center justify-center gap-1.5 shadow-md">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                        d="M4 6h16M4 12h16M4 18h7" />
-                    </svg>
-                    Verify All (Bulk)
-                  </button>
-                </div>
-              </div>
-
-              <!-- NIN Search Portal Panel (Visible by default in NIN mode) -->
-              <div id="voterNinSearchPanel" class="space-y-4">
-                <!-- Quick Search Integration -->
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200 rounded-xl p-4 space-y-3 shadow-sm">
-                  <label class="block text-blue-900 font-bold text-[9px] uppercase tracking-wider">🔍 Search Database to Populate Form</label>
-                  <div class="flex gap-2">
-                    <input type="text" id="voterQuickSearch" placeholder="Search by Name or NID (e.g. 615-385-908-6)..."
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleVoterQuickSearchPopup();}"
-                      class="flex-1 bg-white border border-blue-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-[11px] font-medium shadow-sm" />
-                    <button type="button" onclick="handleVoterQuickSearchPopup()"
-                      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold px-4 py-2 rounded-lg transition-all shadow-md shrink-0 uppercase text-[10px]">
-                      Search
-                    </button>
-                  </div>
-                  <div id="voterQuickSearchDropdown" class="hidden bg-white border border-blue-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"></div>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                  <div>
-                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">NID / NIN
-                      Number</label>
-                    <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono text-[11px]" />
-                  </div>
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of
-                        Birth (BS)</label>
-                      <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
-                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                        class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
-                    </div>
-                    <div>
-                      <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">Date of
-                        Birth (AD)</label>
-                      <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
-                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                        class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-slate-500 font-bold mb-1 text-[9px] uppercase tracking-wide">First Name
-                      Only</label>
-                    <input type="text" id="voterNinFirstname" placeholder="SUJAL"
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                      class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all text-[11px]" />
-                  </div>
-                  <div class="flex gap-2">
-                    <button type="button" id="btnSingleNinSearch" onclick="handleNinSearchClick()"
-                      class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      Single Search
-                    </button>
-                    <button type="button" onclick="handleVoterBulkSearchWithCaptcha()"
-                      class="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-1.5">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                          d="M4 6h16M4 12h16M4 18h7" />
-                      </svg>
-                      Verify All (Bulk)
-                    </button>
+                    <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and database status marked Done.</div>
+                    <div class="text-[10px] text-slate-400 mt-1">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
                   </div>
                 </div>
               </div>
 
-              <!-- Hidden captcha elements -->
+              <!-- ── Clear All + Verify All (outside, below Search by Name) ── -->
+              <div class="flex items-center justify-end gap-2.5">
+                <button type="button" onclick="clearPortalAllFields()" title="Clear all input fields"
+                  class="group bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.97]">
+                  <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Clear All</span>
+                </button>
+                <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()" title="Verify all records in database"
+                  class="relative overflow-hidden bg-gradient-to-r from-sky-400 to-cyan-500 hover:from-sky-500 hover:to-cyan-600 active:scale-[0.97] text-white font-bold text-xs px-5 py-2 rounded-xl shadow-md hover:shadow-sky-300/50 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer">
+                  <!-- shimmer -->
+                  <span class="absolute inset-0 bg-white/20 -skew-x-12 -translate-x-full hover:translate-x-full transition-transform duration-700 pointer-events-none"></span>
+                  <svg class="w-3.5 h-3.5 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="relative">Verify All (Bulk)</span>
+                </button>
+              </div>
+
+              <!-- ── PERMUTATION: Hidden legacy (kept for JS compatibility) ── -->
+              <div id="portalPermutationPanel" class="hidden">
+                <span id="portalPermutationSubtitle"></span>
+                <span id="portalPermutationBadge"></span>
+                <div id="portalPermutationProgressContainer"><span id="portalPermutationProgressText"></span><div id="portalPermutationProgressBar"></div></div>
+                <div id="portalPermutationStatsRow"><div id="permStatTotal"></div><div id="permStatActive"></div><div id="permStatSuccess"></div><div id="permStatFailed"></div></div>
+                <div id="portalPermutationNotice"></div>
+                <div id="portalPermutationCardsList"></div>
+              </div>
+
+              <!-- ── RESPONSE ALERT: shows result info after a successful search/verify ── -->
+              <div id="portalResponseAlert" class="hidden animate-fade-in">
+                <!-- filled dynamically by showPortalResponseAlert() -->
+              </div>
+
+              <!-- Hidden legacy elements -->
               <div class="hidden">
                 <span id="captchaQuestion">8 - 6 = ?</span>
                 <input type="number" id="captchaInput" />
+                <div id="portalNpSuggestionsContainer"></div>
+                <div id="portalNpSuggestionsPills"></div>
+                <input type="hidden" id="portalSearchNin" />
+                <div id="voterQuickSearchDropdown"></div>
+                <input type="hidden" id="voterQuickSearch" />
+                <div id="portalInitialActionBtnRow"></div>
               </div>
-            </div> <!-- End of portalSubTabNidContent -->
-
-
+            </div>
           </form>
+
         </section>
 
         <!-- ===== BULK VERIFICATION MODAL ===== -->
@@ -1305,14 +1388,19 @@
           </button>
         </div>
       </div>
+
+      <!-- ── Legacy compatibility anchor for portal suggestions column ── -->
+      <div id="portalSuggestionsSideColumn" class="hidden"></div>
     </div>
 
-    <div id="paneWorkspaceDb" class="mt-0 hidden space-y-4 flex-1 flex flex-col min-h-0 lg:overflow-hidden">
+    <div id="paneWorkspaceDb" class="mt-0 pt-2 hidden space-y-3.5 flex-1 flex flex-col min-h-0 lg:overflow-hidden">
 
-      <!-- ── Database Stats Metric Cards (Compact & Attractive) ─────────── -->
-      <div id="dbStatsCardsRow" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
+      <!-- ── Database Stats Metric Cards (Interactive 1-Click Filters) ─── -->
+      <div id="dbStatsCardsRow" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 shrink-0">
         <!-- Total Records -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 shadow-xs text-white flex items-center justify-between hover:border-slate-700 transition-all">
+        <div id="cardStatTotal" onclick="filterDatabaseByCard('all')"
+          class="db-stat-card cursor-pointer bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 shadow-xs text-white flex items-center justify-between hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Total Records">
           <div class="min-w-0">
             <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">Total Records</span>
             <div class="flex items-baseline gap-1 mt-0.5">
@@ -1323,20 +1411,24 @@
           <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs shrink-0 font-bold ml-2">📇</div>
         </div>
 
-        <!-- Done / Issued -->
-        <div class="bg-white border border-emerald-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-emerald-300 transition-all">
+        <!-- All Not Done (Pending + Not Online) -->
+        <div id="cardStatNotDone" onclick="filterDatabaseByCard('not_done')"
+          class="db-stat-card cursor-pointer bg-white border border-indigo-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-indigo-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: All Not Done (Pending + Not Online)">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Done / Issued</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-indigo-700 block leading-tight">All Not Done</span>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h3 id="statsDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-600 leading-tight">0</h3>
-              <span class="text-[10px] text-emerald-600/70 font-medium">active</span>
+              <h3 id="statsNotDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-indigo-600 leading-tight">0</h3>
+              <span class="text-[10px] text-indigo-500 font-medium">unprocessed</span>
             </div>
           </div>
-          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">✅</div>
+          <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">📋</div>
         </div>
 
         <!-- Pending -->
-        <div class="bg-white border border-amber-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-amber-300 transition-all">
+        <div id="cardStatPending" onclick="filterDatabaseByCard('pending')"
+          class="db-stat-card cursor-pointer bg-white border border-amber-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-amber-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Pending Records">
           <div class="min-w-0">
             <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Pending</span>
             <div class="flex items-baseline gap-1 mt-0.5">
@@ -1348,7 +1440,9 @@
         </div>
 
         <!-- Mobile / Offline Attention -->
-        <div class="bg-white border border-rose-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-rose-300 transition-all">
+        <div id="cardStatOthers" onclick="filterDatabaseByCard('not online')"
+          class="db-stat-card cursor-pointer bg-white border border-rose-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-rose-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Mobile / Offline Attention">
           <div class="min-w-0">
             <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Mobile / Offline</span>
             <div class="flex items-baseline gap-1 mt-0.5">
@@ -1357,6 +1451,20 @@
             </div>
           </div>
           <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">⚠️</div>
+        </div>
+
+        <!-- Done / Issued -->
+        <div id="cardStatDone" onclick="filterDatabaseByCard('done')"
+          class="db-stat-card cursor-pointer bg-white border border-emerald-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-emerald-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Done / Issued">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Done / Issued</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-600 leading-tight">0</h3>
+              <span class="text-[10px] text-emerald-600/70 font-medium">active</span>
+            </div>
+          </div>
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">✅</div>
         </div>
       </div>
 
@@ -1549,6 +1657,47 @@
             .db-scroll-area::-webkit-scrollbar {
               display: none;
             }
+            .db-pane-fullscreen {
+              position: fixed !important;
+              inset: 0 !important;
+              top: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              bottom: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              max-width: 100vw !important;
+              max-height: 100vh !important;
+              margin: 0 !important;
+              border: none !important;
+              border-radius: 0 !important;
+              z-index: 50 !important;
+              background: #f8fafc !important;
+              padding-top: 56px !important;
+              padding-left: 16px !important;
+              padding-right: 16px !important;
+              padding-bottom: 12px !important;
+              display: flex !important;
+              flex-direction: column !important;
+              box-sizing: border-box !important;
+              overflow: hidden !important;
+            }
+            .db-pane-fullscreen #dbStatsCardsRow {
+              margin-bottom: 8px !important;
+            }
+            .db-pane-fullscreen #dbTableContainerCard {
+              flex: 1 1 0% !important;
+              min-height: 0 !important;
+              height: auto !important;
+              border-radius: 1rem !important;
+              border: 1px solid #e2e8f0 !important;
+            }
+            .db-pane-fullscreen .db-scroll-area,
+            .db-table-fullscreen .db-scroll-area {
+              height: 100% !important;
+              max-height: 100% !important;
+              overflow-y: auto !important;
+            }
             .db-table-fullscreen {
               position: fixed !important;
               inset: 0 !important;
@@ -1566,18 +1715,13 @@
               z-index: 50 !important;
               background: #ffffff !important;
               overflow: hidden !important;
-              padding-top: 52px !important;
-            }
-            .db-table-fullscreen .db-scroll-area {
-              height: 100% !important;
-              max-height: 100% !important;
-              overflow-y: auto !important;
+              padding-top: 56px !important;
             }
             body.workspace-fullscreen-active #mainNavbarHeader {
               display: none !important;
             }
             body.workspace-fullscreen-active main {
-              padding-top: 56px !important;
+              padding-top: 58px !important;
               padding-left: 14px !important;
               padding-right: 14px !important;
               padding-bottom: 14px !important;
@@ -2534,7 +2678,7 @@
     }
 
     function initPortalAutocomplete() {
-      // ── NIN tab: voterQuickSearch ──────────────────────────────────────────
+      // ── NIN tab: voterQuickSearch (Legacy compatibility) ──────────────────
       const vqs    = document.getElementById('voterQuickSearch');
       const vqsDd  = document.getElementById('voterQuickSearchDropdown');
       if (vqs && vqsDd) {
@@ -2552,178 +2696,839 @@
         vqs.addEventListener('focus', () => { if (vqs.value.trim()) vqs.dispatchEvent(new Event('input')); });
       }
 
-      // ── NIN tab: voterNidNin (NIN number field) ────────────────────────────
-      const ninInp  = document.getElementById('voterNidNin');
-      const ninDd   = (() => {
-        let dd = document.getElementById('voterNinAutocomplete');
-        if (!dd && ninInp) {
-          dd = document.createElement('div');
-          dd.id = 'voterNinAutocomplete';
-          dd.className = 'hidden absolute z-50 bg-white border border-blue-200 rounded-lg shadow-xl max-h-52 overflow-y-auto w-full';
-          const parent = ninInp.parentElement;
-          parent.style.position = 'relative';
-          parent.appendChild(dd);
-        }
-        return dd;
-      })();
-      if (ninInp && ninDd) {
-        const onSelectNin = (rec) => {
-          ninInp.value = rec.ninEn || '';
-          const firstnameEl = document.getElementById('voterNinFirstname');
-          const dobEl       = document.getElementById('voterNinDob');
-          const dobBsEl     = document.getElementById('voterNinDobBs');
-          if (firstnameEl) firstnameEl.value = (rec.givenEn || '').split(' ')[0].toUpperCase();
-          if (dobEl)       dobEl.value = (rec.dobEn || '').replace(/\//g, '-');
-          if (dobBsEl)     dobBsEl.value = rec.dobNp || '';
-        };
-        _attachPortalAcKeynav(ninInp, ninDd, onSelectNin);
-        ninInp.addEventListener('input', () => {
-          const results = _portalAcFilter(ninInp.value);
-          if (!ninInp.value.trim()) { ninDd.classList.add('hidden'); return; }
-          _portalAcDropdown(results, ninDd, onSelectNin);
-        });
-        ninInp.addEventListener('blur', () => setTimeout(() => ninDd.classList.add('hidden'), 150));
-        ninInp.addEventListener('focus', () => { if (ninInp.value.trim()) ninInp.dispatchEvent(new Event('input')); });
-      }
+      // ── Remove any database suggestion dropdowns from NIN and Name input fields per user request ──
+      const oldNinDd = document.getElementById('voterNinAutocomplete');
+      if (oldNinDd) oldNinDd.remove();
+      const oldPfneDd = document.getElementById('portalNameAutocomplete');
+      if (oldPfneDd) oldPfneDd.remove();
+      const oldPfnpDd = document.getElementById('portalNameNpAutocomplete');
+      if (oldPfnpDd) oldPfnpDd.classList.add('hidden');
 
-      // ── Name tab: portalSearchQuery ────────────────────────────────────────
+      // ── Top Dedicated Database Search: live autocomplete as user types ──────
       const psq   = document.getElementById('portalSearchQuery');
       const psqDd = document.getElementById('portalSearchDropdown');
       if (psq && psqDd) {
         const onSelectPsq = (rec) => {
           psq.value = '';
+          psqDd.classList.add('hidden');
           fillPortalFormFromRecord(rec);
         };
         _attachPortalAcKeynav(psq, psqDd, onSelectPsq);
+        // Live filter as user types
         psq.addEventListener('input', () => {
           const results = _portalAcFilter(psq.value);
           if (!psq.value.trim()) { psqDd.classList.add('hidden'); return; }
           _portalAcDropdown(results, psqDd, onSelectPsq);
         });
-        psq.addEventListener('blur', () => setTimeout(() => psqDd.classList.add('hidden'), 150));
+        psq.addEventListener('blur', () => setTimeout(() => psqDd.classList.add('hidden'), 200));
         psq.addEventListener('focus', () => { if (psq.value.trim()) psq.dispatchEvent(new Event('input')); });
       }
 
-      // ── Name tab: portalFullNameEn (typed name field) ──────────────────────
-      const pfne   = document.getElementById('portalFullNameEn');
-      const pfneDd = (() => {
-        let dd = document.getElementById('portalNameAutocomplete');
-        if (!dd && pfne) {
-          dd = document.createElement('div');
-          dd.id = 'portalNameAutocomplete';
-          dd.className = 'hidden absolute z-50 bg-white border border-blue-200 rounded-lg shadow-xl max-h-52 overflow-y-auto w-full';
-          const parent = pfne.parentElement;
-          parent.style.position = 'relative';
-          parent.appendChild(dd);
-        }
-        return dd;
-      })();
-      if (pfne && pfneDd) {
-        const onSelectPfne = (rec) => {
-          fillPortalFormFromRecord(rec);
-          pfneDd.classList.add('hidden');
-        };
-        _attachPortalAcKeynav(pfne, pfneDd, onSelectPfne);
+      // ── Name tab: portalFullNameEn (Sync to English-Nepali converter, NO database suggestions) ──
+      const pfne = document.getElementById('portalFullNameEn');
+      if (pfne) {
         pfne.addEventListener('input', () => {
-          const results = _portalAcFilter(pfne.value);
-          if (!pfne.value.trim()) { pfneDd.classList.add('hidden'); return; }
-          _portalAcDropdown(results, pfneDd, onSelectPfne);
+          const val = pfne.value.trim();
+          // Sync directly to English to Nepali converter
+          const convInput = document.getElementById("quickConverterInput");
+          if (convInput) {
+            convInput.value = val;
+            handleQuickConverterInput();
+          }
         });
-        pfne.addEventListener('blur', () => setTimeout(() => pfneDd.classList.add('hidden'), 150));
-        pfne.addEventListener('focus', () => { if (pfne.value.trim()) pfne.dispatchEvent(new Event('input')); });
       }
-      // ── Name tab: portalFullNameNp (Nepali word-level autocomplete) ─────────
-      const pfnp   = document.getElementById('portalFullNameNp');
-      const pfnpDd = (() => {
-        let dd = document.getElementById('portalNameNpAutocomplete');
-        if (!dd && pfnp) {
-          dd = document.createElement('div');
-          dd.id = 'portalNameNpAutocomplete';
-          dd.className = 'hidden absolute z-50 bg-white border border-blue-200 rounded-lg shadow-xl max-h-52 overflow-y-auto w-full';
-          const parent = pfnp.parentElement;
-          parent.style.position = 'relative';
-          parent.appendChild(dd);
-        }
-        return dd;
-      })();
-      if (pfnp && pfnpDd) {
-        const onSelectNpWord = (word) => {
-          // Replace current word being typed with selected suggestion
-          const val = pfnp.value;
-          const cursorPos = pfnp.selectionStart || val.length;
-          const beforeCursor = val.substring(0, cursorPos);
-          const afterCursor = val.substring(cursorPos);
-          // Find start of current word
-          const lastSpaceIdx = beforeCursor.lastIndexOf(' ');
-          const wordStart = lastSpaceIdx === -1 ? 0 : lastSpaceIdx + 1;
-          const newBefore = beforeCursor.substring(0, wordStart) + word;
-          const newAfter = afterCursor.startsWith(' ') ? afterCursor : (afterCursor ? ' ' + afterCursor : ' ');
-          pfnp.value = newBefore + newAfter;
-          const newPos = newBefore.length + 1;
-          pfnp.setSelectionRange(newPos, newPos);
-          pfnpDd.classList.add('hidden');
-          pfnpDd._activeIndex = -1;
-        };
 
-        // Custom keynav for word suggestions
-        if (!pfnp._npWordKeynavAttached) {
-          pfnp._npWordKeynavAttached = true;
-          pfnp.addEventListener('keydown', (e) => {
-            const isOpen = pfnpDd && !pfnpDd.classList.contains('hidden');
-            const words = (pfnpDd && pfnpDd._words) || [];
-            if (e.key === 'ArrowDown') {
-              if (isOpen && words.length > 0) {
-                e.preventDefault();
-                const cur = typeof pfnpDd._activeIndex === 'number' ? pfnpDd._activeIndex : -1;
-                _highlightNpWordItem(pfnpDd, cur + 1);
-              }
-            } else if (e.key === 'ArrowUp') {
-              if (isOpen && words.length > 0) {
-                e.preventDefault();
-                const cur = typeof pfnpDd._activeIndex === 'number' ? pfnpDd._activeIndex : 0;
-                _highlightNpWordItem(pfnpDd, cur - 1);
-              }
-            } else if (e.key === 'Enter') {
-              if (isOpen && words.length > 0) {
-                const activeIdx = pfnpDd._activeIndex;
-                if (activeIdx >= 0 && words[activeIdx]) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  e.stopImmediatePropagation();
-                  onSelectNpWord(words[activeIdx]);
-                  return false;
+      // ── Name tab: portalFullNameNp (Track as active target) ──
+      const pfnp = document.getElementById('portalFullNameNp');
+      if (pfnp) {
+        pfnp.addEventListener('focus', () => setConverterNepaliTarget(pfnp));
+      }
+    }
+
+    // Called by oninput on portalSearchQuery — show live suggestions
+    function _onPortalSearchQueryInput(val) {
+      const psqDd = document.getElementById('portalSearchDropdown');
+      if (!psqDd) return;
+      if (!val || !val.trim()) { psqDd.classList.add('hidden'); return; }
+      const results = _portalAcFilter(val);
+      const onSelectPsq = (rec) => {
+        const psq = document.getElementById('portalSearchQuery');
+        if (psq) psq.value = '';
+        psqDd.classList.add('hidden');
+        fillPortalFormFromRecord(rec);
+      };
+      _portalAcDropdown(results, psqDd, onSelectPsq);
+    }
+
+    // ─── Response Alert (replaces permutation box) ─────────────────────────────
+    function showPortalResponseAlert(type, data) {
+      const el = document.getElementById('portalResponseAlert');
+      if (!el) return;
+
+      const themes = {
+        success: { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: '✅', titleColor: 'text-emerald-800', textColor: 'text-emerald-700' },
+        warning: { bg: 'bg-amber-50',   border: 'border-amber-200',   icon: '⚠️', titleColor: 'text-amber-800',   textColor: 'text-amber-700'  },
+        error:   { bg: 'bg-rose-50',    border: 'border-rose-200',    icon: '❌', titleColor: 'text-rose-800',    textColor: 'text-rose-700'   },
+        info:    { bg: 'bg-sky-50',     border: 'border-sky-200',     icon: 'ℹ️', titleColor: 'text-sky-800',     textColor: 'text-sky-700'    },
+      };
+      const t = themes[type] || themes.info;
+
+      // Build detail rows from data object
+      const rows = Object.entries(data || {}).filter(([,v]) => v).map(([k, v]) =>
+        `<div class="flex items-center gap-2">
+          <span class="text-[10px] font-semibold ${t.textColor} min-w-[90px] shrink-0">${k}</span>
+          <span class="text-[10px] text-slate-700 font-mono break-all">${escapeHtml(String(v))}</span>
+        </div>`
+      ).join('');
+
+      el.className = `${t.bg} border ${t.border} rounded-2xl p-3.5 shadow-xs space-y-2 animate-fade-in`;
+      el.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-base">${t.icon}</span>
+            <span class="text-xs font-bold ${t.titleColor}">${data._title || 'Response Data'}</span>
+          </div>
+          <button type="button" onclick="hidePortalResponseAlert()" class="text-slate-400 hover:text-slate-600 text-xs px-2 py-0.5 rounded hover:bg-white/70 transition-all cursor-pointer">✕ Dismiss</button>
+        </div>
+        ${rows ? `<div class="space-y-1 pt-1 border-t ${t.border}">${rows}</div>` : ''}
+      `;
+      el.classList.remove('hidden');
+      setTimeout(() => hidePortalResponseAlert(), 18000);
+    }
+
+    function hidePortalResponseAlert() {
+      const el = document.getElementById('portalResponseAlert');
+      if (el) {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-4px)';
+        el.style.transition = 'all 0.2s ease';
+        setTimeout(() => {
+          el.classList.add('hidden');
+          el.style.opacity = '';
+          el.style.transform = '';
+          el.style.transition = '';
+        }, 200);
+      }
+    }
+
+    // ─── Nepali multi-writing generator & transliteration dictionary ──────────
+    const _NEPALI_NAME_DICT = {
+      // First Names
+      "sujal": ["सुजल", "सूजल", "सुजाल"],
+      "ramesh": ["रमेश", "रमेस"],
+      "suresh": ["सुरेश", "सुरेस"],
+      "mahesh": ["महेश", "महेस"],
+      "dinesh": ["दिनेश", "दीनेश", "दिनेस"],
+      "rajesh": ["राजेश", "राजेस"],
+      "ganesh": ["गणेश", "गनेश"],
+      "prakash": ["प्रकाश", "प्रकास"],
+      "bikash": ["विकास", "बिकास", "बिकाश", "विकाश"],
+      "vikash": ["विकास", "बिकास", "बिकाश", "विकाश"],
+      "vikas": ["विकास", "बिकास", "बिकाश"],
+      "bikas": ["विकास", "बिकास", "बिकाश"],
+      "deepak": ["दीपक", "दिपक"],
+      "dipak": ["दिपक", "दीपक"],
+      "pradeep": ["प्रदीप", "प्रदिप"],
+      "pradip": ["प्रदिप", "प्रदीप"],
+      "sandeep": ["सन्दीप", "संदीप", "सन्दिय"],
+      "sandip": ["सन्दिप", "सन्दिय", "संदीप"],
+      "kuldeep": ["कुलदीप", "कुलदिप"],
+      "kuldip": ["कुलदिप", "कुलदीप"],
+      "dilip": ["दिलिप", "दिलीप"],
+      "sita": ["सीता", "सिता"],
+      "gita": ["गीता", "गिता"],
+      "geeta": ["गीता", "गिता"],
+      "rita": ["रीता", "रिता"],
+      "reeta": ["रीता", "रिता"],
+      "anita": ["अनिता", "अनीता"],
+      "aneeta": ["अनीता", "अनिता"],
+      "sunita": ["सुनिता", "सुनीता"],
+      "suneeta": ["सुनीता", "सुनिता"],
+      "binita": ["बिनिता", "विनीता", "विनिता"],
+      "vinita": ["विनीता", "विनिता", "बिनिता"],
+      "sarita": ["सरिता", "सरीता"],
+      "kabita": ["कविता", "कबिता", "कवीता"],
+      "kavita": ["कविता", "कवीता", "कबिता"],
+      "nabina": ["नबिना", "नवीना", "नविना"],
+      "navina": ["नवीना", "नविना", "नबिना"],
+      "sabina": ["सविना", "सबिना", "सबीना"],
+      "puja": ["पूजा", "पुजा"],
+      "pooja": ["पूजा", "पुजा"],
+      "roshan": ["रोशन", "रोसन"],
+      "santosh": ["सन्तोष", "संतोष", "सन्तोश"],
+      "binod": ["विनोद", "बिनोद"],
+      "vinod": ["विनोद", "बिनोद"],
+      "bijay": ["विजय", "बिजय"],
+      "vijay": ["विजय", "बिजय"],
+      "ajay": ["अजय"],
+      "sanjay": ["सञ्जय", "संजय"],
+      "anil": ["अनिल", "अनील"],
+      "sunil": ["सुनिल", "सुनील"],
+      "suneel": ["सुनील", "सुनिल"],
+      "amit": ["अमित", "अमीत"],
+      "sumit": ["सुमित", "सुमीत"],
+      "bishnu": ["विष्णु", "बिष्णु"],
+      "vishnu": ["विष्णु", "बिष्णु"],
+      "shiva": ["शिव", "सिव"],
+      "siba": ["शिव", "सिव"],
+      "hari": ["हरि", "हरी"],
+      "krishna": ["कृष्ण", "क्रिसन"],
+      "ram": ["राम"],
+      "shyam": ["श्याम", "स्याम"],
+      "mohan": ["मोहन"],
+      "sohan": ["सोहन"],
+      "rohan": ["रोहन"],
+      "milan": ["मिलन", "मीलन"],
+      "kiran": ["किरण", "किरन"],
+      "arjun": ["अर्जुन"],
+      "bhim": ["भीम", "भिम"],
+      "manoj": ["मनोज"],
+      "saroj": ["सरोज"],
+      "pramod": ["प्रमोद"],
+      "naresh": ["नरेश", "नरेस"],
+      "mukesh": ["मुकेश", "मुकेस"],
+      "ashok": ["अशोक", "असोक"],
+      "kishor": ["किशोर", "किसोर"],
+      "bimal": ["विमल", "बिमल"],
+      "vimal": ["विमल", "बिमल"],
+      "kamal": ["कमल"],
+      "hemant": ["हेमन्त", "हेमंत"],
+      "basant": ["वसन्त", "बसन्त", "बसंत"],
+      "vasant": ["वसन्त", "बसन्त", "बसंत"],
+      "govinda": ["गोविन्द", "गोबिन्द", "गोविन्दा"],
+      "gobinda": ["गोबिन्द", "गोविन्द", "गोविन्दा"],
+      "balkrishna": ["बालकृष्ण", "वालकृष्ण"],
+      "lokendra": ["लोकेन्द्र", "लोकेन्द"],
+      "devendra": ["देवेन्द्र", "देबेन्द्र"],
+      "debendra": ["देबेन्द्र", "देवेन्द्र"],
+      "surendra": ["सुरेन्द्र", "सुरेन्द"],
+      "narendra": ["नरेन्द्र", "नरेन्द"],
+      "rajendra": ["राजेन्द्र", "राजेन्द"],
+      "jitendra": ["जितेन्द्र", "जीतेन्द्र"],
+      "dharmendra": ["धर्मेन्द्र"],
+      "upendra": ["उपेन्द्र"],
+      "gopal": ["गोपाल"],
+      "madhav": ["माधव"],
+      "keshav": ["केशव", "केसब"],
+      "laxman": ["लक्ष्मण", "लक्ष्मन", "लछमन"],
+      "lakshman": ["लक्ष्मण", "लक्ष्मन", "लछमन"],
+      "bharat": ["भरत"],
+      "anup": ["अनुप", "अनूप"],
+      "sandesh": ["सन्देश", "सन्दैस"],
+      "subash": ["सुवास", "सुभाष", "सुबास"],
+      "subhash": ["सुभाष", "सुवास", "सुबास"],
+      "pankaj": ["पंकज", "पङ्कज"],
+      "niraj": ["निरज", "नीरज"],
+      "neeraj": ["नीरज", "निरज"],
+      "dhiraj": ["धिरज", "धीरज"],
+      "suraj": ["सुरज", "सूरज"],
+      "susma": ["सुष्मा", "सुषमा", "सुस्मा"],
+      "sushma": ["सुषमा", "सुष्मा", "सुस्मा"],
+      "sushila": ["सुशीला", "सुशिला"],
+      "radha": ["राधा"],
+      "parbati": ["पार्वती", "पार्वति", "पार्बती"],
+      "parvati": ["पार्वती", "पार्वति", "पार्बती"],
+      "laxmi": ["लक्ष्मी", "लक्ष्मि"],
+      "lakshmi": ["लक्ष्मी", "लक्ष्मि"],
+      "saraswati": ["सरस्वती", "सरस्वति"],
+      "manju": ["मन्जु", "मञ्जु"],
+      "renu": ["रेनु", "रेनू"],
+      "menuka": ["मेनुका"],
+      "asha": ["आशा", "आसा"],
+      "usha": ["उषा", "उसा"],
+      "bina": ["बिना", "बीना"],
+      "mina": ["मिना", "मीना"],
+      "rina": ["रिना", "रीना"],
+      "tina": ["तिना", "तीना"],
+      "kalpana": ["कल्पना"],
+      "bhabana": ["भावना", "भाबना"],
+      "bhavana": ["भावना", "भाबना"],
+      "rachana": ["रचना"],
+      "kamala": ["कमला"],
+      "bimala": ["विमला", "बिमला"],
+      "nirmala": ["निर्मला"],
+      "sharmila": ["शर्मिला", "सरमिला"],
+      "pramila": ["प्रमिला"],
+      "shova": ["शोभा", "सोभा"],
+      "shobha": ["शोभा", "सोभा"],
+      "rupa": ["रुपा", "रूपा"],
+      "pushpa": ["पुष्पा", "पुस्पा"],
+      "shanta": ["शान्ता", "सान्ता"],
+      "shanti": ["शान्ति", "शान्ती", "सान्ति"],
+      "kushal": ["कुशल", "कुसल"],
+      "bibek": ["विवेक", "बिबेक"],
+      "vivek": ["विवेक", "बिबेक"],
+      "nabaraj": ["नवराज", "नबराज"],
+      "navaraj": ["नवराज", "नबराज"],
+      "yubaraj": ["युवराज", "युबराज"],
+      "jubaraj": ["युवराज", "युबराज"],
+      "prashant": ["प्रशान्त", "प्रसान्त"],
+      "sushant": ["सुशान्त", "सुसान्त"],
+      "nishant": ["निशान्त", "निसान्त"],
+      "durga": ["दुर्गा"],
+      "ganga": ["गङ्गा", "गंगा"],
+      "jamuna": ["यमुना", "जमुना"],
+      "bhawana": ["भावना"],
+      "anusha": ["अनुषा", "अनुसा"],
+      "samiksha": ["समीक्षा", "समिक्षा"],
+      "sneha": ["स्नेहा"],
+      "sweta": ["श्वेता", "स्वेता"],
+      "shweta": ["श्वेता", "स्वेता"],
+      "smriti": ["स्मृति", "स्मृती"],
+      "kriti": ["कृति", "कृती"],
+      "aayush": ["आयुष", "आयूस"],
+      "ayush": ["आयुष", "आयूस"],
+      "aashish": ["आशिष", "आशीष", "आसिस"],
+      "ashish": ["आशिष", "आशीष", "आसिस"],
+      "anurag": ["अनुराग"],
+      "avishek": ["अभिषेक", "अविशेक"],
+      "abhishek": ["अभिषेक", "अभिसेक"],
+      "saurav": ["सौरभ", "सौरव"],
+      "gaurav": ["गौरव", "गौरभ"],
+      "prajwal": ["प्रज्वल", "प्रज्वल"],
+      "aayan": ["आयान", "अयान"],
+      "anupama": ["अनुपमा"],
+      "bipin": ["बिपिन", "विपिन"],
+
+      // Middle Names
+      "kumar": ["कुमार", "कूमर"],
+      "kumari": ["कुमारी", "कुमारि"],
+      "prasad": ["प्रसाद", "प्रषाद"],
+      "bahadur": ["बहादुर", "वहादुर"],
+      "maya": ["माया"],
+      "devi": ["देवी", "देवि"],
+      "lal": ["लाल"],
+      "man": ["मान"],
+      "singh": ["सिंह", "सिं"],
+      "raj": ["राज"],
+      "chandra": ["चन्द्र", "चन्द"],
+      "jung": ["जंग", "जङ्ग"],
+      "jang": ["जंग", "जङ्ग"],
+      "nath": ["नाथ"],
+      "ratna": ["रत्न"],
+      "kanta": ["कान्त", "कान्ता"],
+      "bhakta": ["भक्त"],
+      "mani": ["मणि", "मनि"],
+      "das": ["दास"],
+
+      // Surnames / Castes
+      "mehta": ["मेहता", "मेहेता", "महता"],
+      "shrestha": ["श्रेष्ठ", "श्रेष्ट", "श्रेसठ"],
+      "adhikari": ["अधिकारी", "अधिकारि"],
+      "khadka": ["खड्का", "खड्गा", "खडका"],
+      "thapa": ["थापा"],
+      "bhandari": ["भण्डारी", "भन्डारी", "भण्डारि"],
+      "subedi": ["सुवेदी", "सुबेदी", "सुवेदि", "सुबेदि"],
+      "pokharel": ["पोखरेल", "पोख्रेल"],
+      "pokhrel": ["पोखरेल", "पोख्रेल"],
+      "bhattarai": ["भट्टराई", "भटराई", "भट्टराइ"],
+      "acharya": ["आचार्य", "अचार्य"],
+      "chhetri": ["क्षेत्री", "छेत्री", "क्षेत्रि", "छेत्रि"],
+      "khetri": ["क्षेत्री", "छेत्री"],
+      "rizal": ["रिजाल"],
+      "rijal": ["रिजाल"],
+      "tiwari": ["तिवारी", "तिवारि"],
+      "nepal": ["नेपाल"],
+      "sharma": ["शर्मा", "सरमा"],
+      "pandey": ["पाण्डे", "पाण्डेय", "पान्डे", "पाँडे"],
+      "pande": ["पाण्डे", "पाण्डेय", "पान्डे"],
+      "basnet": ["बस्नेत", "वसनेत"],
+      "kafle": ["काफ्ले", "काफले"],
+      "giri": ["गिरी", "गिरि"],
+      "puri": ["पुरी", "पूरी"],
+      "regmi": ["रेग्मी", "रेगमी"],
+      "dahal": ["दाहाल"],
+      "koirala": ["कोइराला"],
+      "tamang": ["तामाङ", "तामाङ्ग"],
+      "gurung": ["गुरुङ", "गुरुङ्ग"],
+      "magar": ["मगर"],
+      "rai": ["राई", "राइ"],
+      "limbu": ["लिम्बु", "लिम्बू"],
+      "yadav": ["यादव"],
+      "chaudhary": ["चौधरी", "चौधरि", "चौधुरी"],
+      "choudhary": ["चौधरी", "चौधरि"],
+      "sah": ["साह", "शाह"],
+      "shah": ["शाह", "साह"],
+      "joshi": ["जोशी", "जोशि", "जोसी"],
+      "mahato": ["महतो"],
+      "mandal": ["मण्डल", "मन्डल"],
+      "gupta": ["गुप्ता"],
+      "thakur": ["ठाकुर"],
+      "ray": ["राय"],
+      "ghimire": ["घिमिरे"],
+      "paudel": ["पौडेल", "पौड्याल"],
+      "poudel": ["पौडेल", "पौड्याल"],
+      "bista": ["बिष्ट", "विष्ट", "विष्टा"],
+      "rawat": ["रावत"],
+      "shahi": ["शाही", "शाहि"],
+      "rokaya": ["रोकाया"],
+      "budha": ["बुढा", "बूढा"],
+      "bogati": ["बोगटी", "बोगटि"],
+      "karki": ["कार्की", "कार्कि"],
+      "baniya": ["बानियाँ", "बनियाँ", "बनिया"],
+      "lama": ["लामा"],
+      "sherpa": ["शेर्पा"],
+      "rana": ["राणा", "राना"],
+      "dhakal": ["ढकाल"],
+      "kattel": ["कट्टेल"],
+      "chapagain": ["चापागाईं", "चापागाइ"],
+      "bastola": ["बास्तोला"],
+      "phuyal": ["फुयाँल", "फुयाल"],
+      "sapkota": ["सापकोटा"],
+      "neupane": ["न्यौपाने", "नेउपाने"],
+      "upadhyaya": ["उपाध्याय"],
+      "upadhyay": ["उपाध्याय"],
+      "kharel": ["खरेल"],
+      "mainali": ["मैनाली", "मैनालि"],
+      "bhatia": ["भाटिया"],
+      "bhatta": ["भट्ट"],
+      "devkota": ["देवकोटा", "देबकोटा"],
+      "debkota": ["देबकोटा", "देवकोटा"],
+      "dhami": ["धामी", "धामि"],
+      "pariyar": ["परियार"],
+      "bk": ["बि.क.", "वि.क.", "विश्वकर्मा"],
+      "bishwakarma": ["विश्वकर्मा", "बिश्बकर्मा"],
+      "vishwakarma": ["विश्वकर्मा", "बिश्बकर्मा"],
+      "sarki": ["सार्की", "सार्कि"],
+      "damai": ["दमाई", "दमाइ"],
+      "kami": ["कामी", "कामि"],
+      "sunar": ["सुनार"],
+      "gajmer": ["गजमेर"],
+      "rasaily": ["रसाइली", "रसाइलि"],
+      "baral": ["बराल", "वराल"],
+      "silwal": ["सिलवाल"],
+      "raut": ["राउत"],
+      "khanal": ["खनाल"],
+      "kandel": ["कँडेल", "कंडेल"],
+      "dangi": ["डाँगी", "डांगी"],
+      "oli": ["ओली", "ओलि"],
+      "khadgi": ["खड्गी"],
+      "maharjan": ["महर्जन"],
+      "dangol": ["डंगोल"],
+      "shakya": ["शाक्य"],
+      "bajracharya": ["बज्राचार्य", "वज्राचार्य"],
+      "tuladhar": ["तुलाधर"],
+      "pradhan": ["प्रधान"],
+      "tamrakar": ["ताम्राकार"],
+      "karmacharya": ["कर्माचार्य"],
+      "kayastha": ["कायस्थ"],
+      "amatya": ["अमात्य"],
+      "manandhar": ["मानन्धर"],
+      "rajbhandari": ["राजभण्डारी", "राजभन्डारी"],
+      "ansari": ["अन्सारी", "अन्सारि"],
+      "khan": ["खान"],
+      "ali": ["अलि", "अली"]
+    };
+
+    function _transliterateFallbackPhonetic(rawWord) {
+      if (!rawWord) return [];
+      const word = rawWord.toLowerCase().trim();
+      const initialVowels = [
+        ["aa","आ"], ["ee","ई"], ["oo","ऊ"], ["ai","ऐ"], ["au","औ"],
+        ["ri","ऋ"], ["a","अ"], ["i","इ"], ["u","उ"], ["e","ए"], ["o","ओ"]
+      ];
+      const matras = [
+        ["aa","ा"], ["ee","ी"], ["oo","ू"], ["ai","ै"], ["au","ौ"],
+        ["a",""], ["i","ि"], ["u","ु"], ["e","े"], ["o","ो"]
+      ];
+      const consonants = [
+        ["ksh", "क्ष"], ["ksha", "क्ष"], ["gya", "ज्ञा"], ["gy", "ज्ञ"],
+        ["chh", "छ"], ["ch", "च"], ["kh", "ख"], ["gh", "घ"], ["jh", "झ"],
+        ["th", "थ"], ["dh", "ध"], ["bh", "भ"], ["ph", "फ"], ["sh", "श"],
+        ["k", "क"], ["g", "ग"], ["j", "ज"], ["t", "त"], ["d", "द"],
+        ["n", "न"], ["p", "प"], ["f", "फ"], ["b", "ब"], ["v", "व"],
+        ["w", "व"], ["m", "म"], ["y", "य"], ["r", "र"], ["l", "ल"],
+        ["s", "स"], ["h", "ह"]
+      ];
+
+      function parse(str, altVowel = false, altSibilant = false, altLabial = false) {
+        let res = "";
+        let i = 0;
+        let prevIsConsonant = false;
+        while (i < str.length) {
+          if (!prevIsConsonant) {
+            let matchedVowel = false;
+            for (const [v, dev] of initialVowels) {
+              if (str.startsWith(v, i)) {
+                let outDev = dev;
+                if (altVowel) {
+                  if (dev === "इ") outDev = "ई";
+                  else if (dev === "ई") outDev = "इ";
+                  else if (dev === "उ") outDev = "ऊ";
+                  else if (dev === "ऊ") outDev = "उ";
                 }
-              }
-            } else if (e.key === 'Escape') {
-              if (isOpen) {
-                pfnpDd.classList.add('hidden');
-                pfnpDd._activeIndex = -1;
-                e.preventDefault();
+                res += outDev;
+                i += v.length;
+                matchedVowel = true;
+                prevIsConsonant = false;
+                break;
               }
             }
-          }, true);
-        }
+            if (matchedVowel) continue;
+          } else {
+            let matchedMatra = false;
+            for (const [v, dev] of matras) {
+              if (str.startsWith(v, i)) {
+                let outDev = dev;
+                if (v === "a" && str[i-1] !== "a" && i === str.length - 1) {
+                  outDev = "ा";
+                } else if (altVowel) {
+                  if (dev === "ि") outDev = "ी";
+                  else if (dev === "ी") outDev = "ि";
+                  else if (dev === "ु") outDev = "ू";
+                  else if (dev === "ू") outDev = "ु";
+                }
+                res += outDev;
+                i += v.length;
+                matchedMatra = true;
+                prevIsConsonant = false;
+                break;
+              }
+            }
+            if (matchedMatra) continue;
+          }
 
-        pfnp.addEventListener('input', () => {
-          const val = pfnp.value;
-          const cursorPos = pfnp.selectionStart || val.length;
-          const beforeCursor = val.substring(0, cursorPos);
-          const lastSpaceIdx = beforeCursor.lastIndexOf(' ');
-          const currentWord = beforeCursor.substring(lastSpaceIdx + 1);
-          if (!currentWord.trim()) { pfnpDd.classList.add('hidden'); return; }
-          const matchedWords = _nepaliWordAcFilter(currentWord);
-          _showNpWordDropdown(pfnpDd, matchedWords, onSelectNpWord);
-        });
-        pfnp.addEventListener('blur', () => setTimeout(() => pfnpDd.classList.add('hidden'), 150));
-        pfnp.addEventListener('focus', () => {
-          const val = pfnp.value;
-          const cursorPos = pfnp.selectionStart || val.length;
-          const beforeCursor = val.substring(0, cursorPos);
-          const lastSpaceIdx = beforeCursor.lastIndexOf(' ');
-          const currentWord = beforeCursor.substring(lastSpaceIdx + 1);
-          if (currentWord.trim()) pfnp.dispatchEvent(new Event('input'));
-        });
+          let matchedConsonant = false;
+          for (const [c, dev] of consonants) {
+            if (str.startsWith(c, i)) {
+              if (prevIsConsonant) res += "्";
+              let outDev = dev;
+              if (altSibilant) {
+                if (dev === "श") outDev = "स";
+                else if (dev === "स") outDev = "श";
+              }
+              if (altLabial) {
+                if (dev === "ब") outDev = "व";
+                else if (dev === "व") outDev = "ब";
+              }
+              res += outDev;
+              i += c.length;
+              matchedConsonant = true;
+              prevIsConsonant = true;
+              break;
+            }
+          }
+          if (matchedConsonant) continue;
+
+          res += str[i];
+          i++;
+          prevIsConsonant = false;
+        }
+        return res;
       }
+
+      const v1 = parse(word, false, false, false);
+      const v2 = parse(word, true, false, false);
+      const v3 = parse(word, false, true, false);
+      const v4 = parse(word, false, false, true);
+      return Array.from(new Set([v1, v2, v3, v4])).filter(Boolean);
+    }
+
+    // Generate comprehensive multi-technique Nepali writing suggestions for an English full name
+    function getNepaliWritingSuggestions(englishFullName) {
+      if (!englishFullName) return [];
+      const clean = String(englishFullName).trim().replace(/\s+/g, ' ');
+      if (!clean) return [];
+
+      const cleanLower = clean.toLowerCase();
+      const words = clean.split(' ').filter(Boolean);
+      const results = [];
+      const seen = new Set();
+
+      // 1. Direct match in local cached DB records (allCachedRecords & voterListIndex)
+      if (Array.isArray(allCachedRecords)) {
+        for (const r of allCachedRecords) {
+          const recNameEn = `${r.givenEn || ''} ${r.surnameEn || ''}`.trim().toLowerCase();
+          const singleNameEn = (r.name || '').trim().toLowerCase();
+          if (recNameEn === cleanLower || singleNameEn === cleanLower) {
+            const npFull = `${r.givenNp || ''} ${r.surnameNp || ''}`.trim();
+            if (npFull) {
+              const remapped = remapNepaliChars(npFull);
+              if (!seen.has(remapped)) {
+                seen.add(remapped);
+                results.push({ text: remapped, isDb: true });
+              }
+            }
+          }
+        }
+      }
+
+      if (typeof voterListIndex === 'object' && voterListIndex) {
+        for (const entry of Object.values(voterListIndex)) {
+          const pd = entry.profileData || entry.rawPayload || entry || {};
+          const first = (pd.VoterFirstName || pd.FirstName || '').trim().toLowerCase();
+          const last = (pd.VoterLastName || pd.LastName || '').trim().toLowerCase();
+          const fullEn = `${first} ${last}`.trim();
+          if (fullEn === cleanLower) {
+            const firstNp = pd.FirstNameNp || pd.VoterFirstNameNp || '';
+            const lastNp = pd.LastNameNp || pd.VoterLastNameNp || '';
+            const fullNp = `${firstNp} ${lastNp}`.trim();
+            if (fullNp) {
+              const remapped = remapNepaliChars(fullNp);
+              if (!seen.has(remapped)) {
+                seen.add(remapped);
+                results.push({ text: remapped, isDb: true });
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Word-by-word variations lookup
+      const wordVariants = words.map(w => {
+        const lower = w.toLowerCase();
+        let vars = [];
+        // Dictionary lookup
+        if (_NEPALI_NAME_DICT[lower]) {
+          vars.push(..._NEPALI_NAME_DICT[lower]);
+        }
+        // Match from individual word in DB records
+        if (Array.isArray(allCachedRecords)) {
+          for (const r of allCachedRecords) {
+            if ((r.givenEn || '').trim().toLowerCase() === lower && r.givenNp) {
+              vars.push(r.givenNp.trim());
+            }
+            if ((r.surnameEn || '').trim().toLowerCase() === lower && r.surnameNp) {
+              vars.push(r.surnameNp.trim());
+            }
+          }
+        }
+        // Fallback phonetic rules
+        const fallback = _transliterateFallbackPhonetic(lower);
+        vars.push(...fallback);
+
+        // Deduplicate word variants and remap with voterlist letters
+        const unique = [];
+        const wSeen = new Set();
+        for (const v of vars) {
+          const r = remapNepaliChars(v.trim());
+          if (r && !wSeen.has(r)) {
+            wSeen.add(r);
+            unique.push(r);
+          }
+        }
+        return unique.length ? unique : [w];
+      });
+
+      // 3. Cartesian combination of word variants (up to top combinations)
+      let combos = [[]];
+      for (const vars of wordVariants) {
+        const next = [];
+        for (const c of combos) {
+          for (const v of vars.slice(0, 4)) {
+            next.push([...c, v]);
+          }
+        }
+        combos = next.slice(0, 16);
+      }
+
+      for (const c of combos) {
+        const fullCandidate = remapNepaliChars(c.join(' ').trim());
+        if (fullCandidate && !seen.has(fullCandidate)) {
+          seen.add(fullCandidate);
+          results.push({ text: fullCandidate, isDb: false });
+          if (results.length >= 10) break;
+        }
+      }
+
+      return results;
+    }
+
+    // Refresh English to Nepali Converter at the top (distraction-free, no suggestions on Nepali field)
+    function refreshPortalNpSuggestions(nameEn, openDropdown = false) {
+      const pfnpDd = document.getElementById('portalNameNpAutocomplete');
+      if (pfnpDd) pfnpDd.classList.add('hidden');
+      const badge = document.getElementById('portalNpSuggestBadge');
+      if (badge) badge.classList.add('hidden');
+      const container = document.getElementById('portalNpSuggestionsContainer');
+      if (container) container.classList.add('hidden');
+
+      if (!nameEn || !nameEn.trim()) return;
+
+      const convInput = document.getElementById("quickConverterInput");
+      if (convInput) {
+        convInput.value = nameEn.trim();
+        handleQuickConverterInput();
+      }
+    }
+
+    // ─── Active Nepali target tracking (Parent vs Child Variant) ─────────────
+    let _activeNepaliTargetInput = null;
+
+    function setConverterNepaliTarget(inputEl) {
+      if (inputEl) {
+        _activeNepaliTargetInput = inputEl;
+      }
+    }
+
+    // Insert chosen Nepali name into target form field (smart fill child if focused, else parent)
+    function insertNepaliNameToForm(text) {
+      let target = _activeNepaliTargetInput;
+      // If current target is detached or not specified, fall back to main parent input
+      if (!target || !document.contains(target)) {
+        target = document.getElementById('portalFullNameNp');
+      }
+      if (target) {
+        target.value = text;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+        target.classList.add('ring-2', 'ring-emerald-500', 'border-emerald-500');
+        setTimeout(() => {
+          if (target) target.classList.remove('ring-2', 'ring-emerald-500', 'border-emerald-500');
+        }, 800);
+        if (typeof onPortalFieldInputChanged === 'function') {
+          onPortalFieldInputChanged('portalFullNameNp');
+        }
+      }
+    }
+
+    let _activeConverterIndex = -1;
+    let _currentConverterSuggestions = [];
+
+    // Quick English to Nepali Converter Handler (copies to clipboard & auto-fills form)
+    function handleQuickConverterInput() {
+      const input = document.getElementById("quickConverterInput");
+      const pillsContainer = document.getElementById("quickConverterPills");
+      if (!input || !pillsContainer) return;
+
+      const val = input.value.trim();
+      if (!val) {
+        _currentConverterSuggestions = [];
+        _activeConverterIndex = -1;
+        pillsContainer.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">Type an English name above to see Nepali writings...</span>';
+        return;
+      }
+
+      const suggestions = getNepaliWritingSuggestions(val);
+      _currentConverterSuggestions = suggestions || [];
+      _activeConverterIndex = -1;
+      _renderConverterPills();
+    }
+
+    function _renderConverterPills() {
+      const pillsContainer = document.getElementById("quickConverterPills");
+      if (!pillsContainer) return;
+
+      if (!_currentConverterSuggestions || !_currentConverterSuggestions.length) {
+        pillsContainer.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">No transliteration matches found.</span>';
+        return;
+      }
+
+      pillsContainer.innerHTML = _currentConverterSuggestions.map((s, idx) => {
+        const isActive = idx === _activeConverterIndex;
+        const stateClasses = isActive
+          ? 'bg-sky-600 text-white border-sky-600 shadow-xs scale-[1.03]'
+          : 'bg-white text-slate-800 border-sky-200/90 hover:border-sky-400 hover:bg-sky-50 shadow-2xs';
+        return `
+          <button type="button" tabindex="-1" onclick="selectConverterSuggestion('${escapeHtml(s.text)}', this)"
+            class="quick-conv-pill px-3 py-1.5 rounded-xl border text-xs font-serif font-medium transition-all cursor-pointer flex items-center gap-1.5 ${stateClasses}"
+            title="Click or press Enter to select '${escapeHtml(s.text)}'">
+            <span>${escapeHtml(s.text)}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function handleQuickConverterKeyDown(e) {
+      if (!_currentConverterSuggestions || !_currentConverterSuggestions.length) return;
+
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+        e.preventDefault();
+        _activeConverterIndex = (_activeConverterIndex + 1) % _currentConverterSuggestions.length;
+        _renderConverterPills();
+        const chosen = _currentConverterSuggestions[_activeConverterIndex]?.text;
+        if (chosen) insertNepaliNameToForm(chosen);
+      } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        _activeConverterIndex = (_activeConverterIndex - 1 + _currentConverterSuggestions.length) % _currentConverterSuggestions.length;
+        _renderConverterPills();
+        const chosen = _currentConverterSuggestions[_activeConverterIndex]?.text;
+        if (chosen) insertNepaliNameToForm(chosen);
+      } else if (e.key === "Enter" && _activeConverterIndex >= 0) {
+        e.preventDefault();
+        const chosen = _currentConverterSuggestions[_activeConverterIndex]?.text;
+        if (chosen) selectConverterSuggestion(chosen);
+      }
+    }
+
+    function selectConverterSuggestion(text, btnElement) {
+      if (!text) return;
+      copyConverterNameToClipboard(text, btnElement);
+      insertNepaliNameToForm(text);
+    }
+
+    function copyConverterNameToClipboard(text, btnElement) {
+      if (!text) return;
+
+      const triggerFeedback = () => {
+        const notice = document.getElementById("quickConverterCopyNotice");
+        const noticeText = document.getElementById("quickConverterCopyNoticeText");
+        if (notice && noticeText) {
+          noticeText.innerText = `Selected "${text}" (copied to clipboard & filled)`;
+          notice.classList.remove("hidden");
+          setTimeout(() => { if (notice) notice.classList.add("hidden"); }, 2800);
+        }
+        if (btnElement) {
+          const originalClass = btnElement.className;
+          btnElement.className = "quick-conv-pill px-3 py-1.5 rounded-xl border text-xs font-serif font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm bg-sky-600 text-white border-sky-600";
+          setTimeout(() => { if (btnElement) btnElement.className = originalClass; }, 800);
+        }
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(triggerFeedback).catch(() => {
+          fallbackCopyToClipboard(text);
+          triggerFeedback();
+        });
+      } else {
+        fallbackCopyToClipboard(text);
+        triggerFeedback();
+      }
+    }
+
+    function fallbackCopyToClipboard(text) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    function _showNpSuggestionsDropdown(dropdownEl, suggestions, onSelect) {
+      dropdownEl._words = (suggestions || []).map(s => s.text);
+      dropdownEl._activeIndex = -1;
+      if (!suggestions || !suggestions.length) {
+        dropdownEl.classList.add('hidden');
+        return;
+      }
+      dropdownEl.innerHTML = `
+        <div class="px-3 py-1.5 bg-blue-50/80 border-b border-blue-100 text-[10px] font-bold text-blue-800 uppercase tracking-wider flex items-center justify-between select-none">
+          <span>Suggested Nepali Spellings</span>
+          <span class="text-[9px] font-mono text-emerald-700 bg-white px-1.5 py-0.5 rounded border border-emerald-200">Voterlist Aligned</span>
+        </div>
+        ${suggestions.map((s, i) => `
+          <div class="np-word-ac-item px-3 py-2 border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors text-xs font-semibold font-serif text-slate-800 select-none flex items-center justify-between" data-idx="${i}">
+            <span class="text-sm">${escapeHtml(s.text)}</span>
+            <span class="text-[10px] font-sans font-medium text-slate-400 flex items-center gap-1">
+              ${s.isDb ? '<span class="bg-emerald-100 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded font-bold">Verified DB</span>' : '<span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[9px]">Variant #' + (i + 1) + '</span>'}
+            </span>
+          </div>
+        `).join('')}
+      `;
+      dropdownEl.classList.remove('hidden');
+      dropdownEl.querySelectorAll('[data-idx]').forEach(el => {
+        const idx = parseInt(el.dataset.idx, 10);
+        el.addEventListener('mouseenter', () => _highlightNpWordItem(dropdownEl, idx));
+        el.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          if (suggestions[idx]) onSelect(suggestions[idx].text);
+          dropdownEl.classList.add('hidden');
+          dropdownEl._activeIndex = -1;
+        });
+      });
     }
 
     // ─── Nepali word autocomplete helpers ────────────────────────────────────────
@@ -2836,6 +3641,19 @@
       if (el('portalCcnIssuingDateLoc')) el('portalCcnIssuingDateLoc').value =
         translateDigits(rec.citDate || '', englishToNepaliDigits);
       if (el('portalSearchDropdown'))    el('portalSearchDropdown').classList.add('hidden');
+
+      // Also populate Search by NIN inputs
+      if (el('voterNidNin'))             el('voterNidNin').value = rec.ninEn || '';
+      if (el('voterNinDobBs'))           el('voterNinDobBs').value = rec.dobNp || '';
+      if (el('voterNinDob'))             el('voterNinDob').value = (rec.dobEn || '').replace(/\//g, '-');
+      if (el('voterNinFirstname'))       el('voterNinFirstname').value = (rec.givenEn || '').split(' ')[0].toUpperCase();
+
+      if (nameEn) {
+        refreshPortalNpSuggestions(nameEn, false);
+      }
+      if (typeof updatePermutationPanelPreview === "function") {
+        updatePermutationPanelPreview();
+      }
     }
 
     function translateDigits(str, map) {
@@ -3126,10 +3944,10 @@
         if (!btn) return;
         const isActive = (key === currentWorkspaceTab);
 
-        // Base floating icon-only button classes
-        const activeClass = "bg-blue-600 text-white shadow-md shadow-blue-500/30";
+        // Base floating icon-only button classes (wide & thin pill)
+        const activeClass = "bg-blue-600 text-white shadow-sm shadow-blue-500/30";
         const inactiveClass = "text-slate-500 hover:bg-slate-100 hover:text-slate-800";
-        btn.className = `w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? activeClass : inactiveClass}`;
+        btn.className = `w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? activeClass : inactiveClass}`;
 
         if (!isDashboardUnlocked && key !== "admin") {
           btn.classList.add("hidden");
@@ -3169,6 +3987,7 @@
       };
       const leftColumn = document.getElementById("leftLayoutConsoleColumn");
       const rightColumn = document.getElementById("rightLayoutPreviewColumn");
+      const portalSideCol = document.getElementById("portalSuggestionsSideColumn");
       const mainGrid = document.getElementById("mainGridLayoutGrid");
 
       if (!isDashboardUnlocked && targetViewTab !== "admin") {
@@ -3192,29 +4011,53 @@
           "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
         rightColumn.className =
           "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
-      } else if (targetViewTab === "portal" || targetViewTab === "admin") {
+        if (portalSideCol) portalSideCol.classList.add("hidden");
+      } else if (targetViewTab === "portal") {
+        mainGrid.className =
+          "block w-full max-w-6xl mx-auto flex-1 lg:overflow-hidden";
+        leftColumn.className =
+          "w-full space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
+        rightColumn.className =
+          "hidden";
+        if (portalSideCol) {
+          portalSideCol.className = "hidden";
+        }
+        // Reset multi-step flow visibility states to default initial view
+        document.getElementById("portalCaptchaInputRow").classList.add("hidden");
+        document.getElementById("portalOtpRow").classList.add("hidden");
+        document.getElementById("portalDownloadRow").classList.add("hidden");
+        document.getElementById("portalCaptchaContainer").classList.add("hidden");
+        document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
+
+        // Keep right side empty in the beginning until a name is typed
+        const pfne = document.getElementById("portalFullNameEn");
+        if (pfne && pfne.value.trim()) {
+          refreshPortalNpSuggestions(pfne.value.trim(), false);
+        } else {
+          const npContainer = document.getElementById("portalNpSuggestionsContainer");
+          if (npContainer) npContainer.classList.add("hidden");
+          // converter box stays visible always
+          const npBadge = document.getElementById("portalNpSuggestBadge");
+          if (npBadge) npBadge.classList.add("hidden");
+        }
+      } else if (targetViewTab === "admin") {
         mainGrid.className =
           "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-1 lg:overflow-hidden w-full";
         leftColumn.className =
           "lg:col-span-12 max-w-5xl mx-auto w-full space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
         rightColumn.className =
           "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2 hidden";
-        if (targetViewTab === "portal") {
-          // Reset multi-step flow visibility states to default initial view
-          document.getElementById("portalCaptchaInputRow").classList.add("hidden");
-          document.getElementById("portalOtpRow").classList.add("hidden");
-          document.getElementById("portalDownloadRow").classList.add("hidden");
-          document.getElementById("portalCaptchaContainer").classList.add("hidden");
-          document.getElementById("portalInitialActionBtnRow").classList.remove("hidden");
-        }
+        if (portalSideCol) portalSideCol.classList.add("hidden");
       } else if (targetViewTab === "database") {
         mainGrid.className = "hidden";
         leftColumn.className = "hidden";
         rightColumn.className = "hidden";
+        if (portalSideCol) portalSideCol.classList.add("hidden");
       } else {
         mainGrid.className = "block w-full lg:h-full lg:overflow-y-auto";
         leftColumn.className = "hidden";
         rightColumn.className = "hidden";
+        if (portalSideCol) portalSideCol.classList.add("hidden");
       }
 
       // Show "See Listed Computers" button only on the Admin Setup tab
@@ -3225,12 +4068,14 @@
 
       // Sync workspace fullscreen state across tab switches
       if (typeof isWorkspaceFullscreen !== "undefined" && isWorkspaceFullscreen) {
+        const dbPane = document.getElementById("paneWorkspaceDb");
+        const tableCard = document.getElementById("dbTableContainerCard");
         if (targetViewTab === "database") {
-          const tableCard = document.getElementById("dbTableContainerCard");
-          if (tableCard) tableCard.classList.add("db-table-fullscreen");
+          if (dbPane) dbPane.classList.add("db-pane-fullscreen");
+          if (tableCard) tableCard.classList.remove("db-table-fullscreen");
           isDbTableFullscreen = true;
         } else {
-          const tableCard = document.getElementById("dbTableContainerCard");
+          if (dbPane) dbPane.classList.remove("db-pane-fullscreen");
           if (tableCard) tableCard.classList.remove("db-table-fullscreen");
           isDbTableFullscreen = false;
         }
@@ -4278,8 +5123,8 @@
       const stats = {
         total: allCachedRecords.length,
         done: allCachedRecords.filter((r) => r.status === "done").length,
-        pending: allCachedRecords.filter((r) => r.status === "pending")
-          .length,
+        pending: allCachedRecords.filter((r) => r.status === "pending").length,
+        notDone: allCachedRecords.filter((r) => r.status !== "done").length,
         others: allCachedRecords.filter(
           (r) => r.status === "inprogress" || r.status === "not online",
         ).length,
@@ -4287,6 +5132,8 @@
 
       const tEl = document.getElementById("statsTotalVal");
       if (tEl) tEl.innerText = stats.total;
+      const ndEl = document.getElementById("statsNotDoneVal");
+      if (ndEl) ndEl.innerText = stats.notDone;
       const tabBadge = document.getElementById("tabDbBadgeCount");
       if (tabBadge) tabBadge.innerText = stats.total;
       const dEl = document.getElementById("statsDoneVal");
@@ -4295,6 +5142,44 @@
       if (pEl) pEl.innerText = stats.pending;
       const oEl = document.getElementById("statsOthersVal");
       if (oEl) oEl.innerText = stats.others;
+
+      const sel = document.getElementById("filterStatus");
+      if (sel) {
+        updateActiveDbStatCardUI(sel.value);
+      }
+    }
+
+    function filterDatabaseByCard(status) {
+      const sel = document.getElementById("filterStatus");
+      if (sel) {
+        if (status === "others") sel.value = "not online";
+        else sel.value = status;
+      }
+      applyFiltersClientSide();
+    }
+
+    function updateActiveDbStatCardUI(currentStatus) {
+      const allCards = [
+        { id: "cardStatTotal", active: currentStatus === "all", ring: "ring-2 ring-blue-500 border-blue-400" },
+        { id: "cardStatNotDone", active: currentStatus === "not_done", ring: "ring-2 ring-indigo-500 border-indigo-400 bg-indigo-50/40" },
+        { id: "cardStatPending", active: currentStatus === "pending", ring: "ring-2 ring-amber-500 border-amber-400 bg-amber-50/40" },
+        { id: "cardStatOthers", active: currentStatus === "not online" || currentStatus === "others" || currentStatus === "inprogress", ring: "ring-2 ring-rose-500 border-rose-400 bg-rose-50/40" },
+        { id: "cardStatDone", active: currentStatus === "done", ring: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/40" },
+      ];
+
+      allCards.forEach(c => {
+        const el = document.getElementById(c.id);
+        if (!el) return;
+        el.classList.remove(
+          "ring-2", "ring-blue-500", "ring-indigo-500", "ring-amber-500", "ring-rose-500", "ring-emerald-500",
+          "border-blue-400", "border-indigo-400", "border-amber-400", "border-rose-400", "border-emerald-400",
+          "bg-indigo-50/40", "bg-amber-50/40", "bg-rose-50/40", "bg-emerald-50/40", "shadow-md", "scale-[1.02]"
+        );
+        if (c.active) {
+          c.ring.split(" ").forEach(cls => { if (cls) el.classList.add(cls); });
+          el.classList.add("shadow-md", "scale-[1.02]");
+        }
+      });
     }
 
     async function fetchDatabase(forceRefresh = false) {
@@ -4416,6 +5301,75 @@
       }
     }
 
+    // Native Browser Fullscreen helpers (hide browser URL/tab bar like F11)
+    function enterNativeBrowserFullscreen() {
+      try {
+        const docEl = document.documentElement;
+        const isAlreadyNativeFs = Boolean(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        );
+        if (!isAlreadyNativeFs) {
+          const req = docEl.requestFullscreen ||
+                      docEl.webkitRequestFullscreen ||
+                      docEl.mozRequestFullScreen ||
+                      docEl.msRequestFullscreen;
+          if (req) {
+            const p = req.call(docEl);
+            if (p && typeof p.catch === "function") {
+              p.catch(() => {});
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    function exitNativeBrowserFullscreen() {
+      try {
+        const isNativeFs = Boolean(
+          document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement
+        );
+        if (isNativeFs) {
+          const exit = document.exitFullscreen ||
+                       document.webkitExitFullscreen ||
+                       document.mozCancelFullScreen ||
+                       document.msExitFullscreen;
+          if (exit) {
+            const p = exit.call(document);
+            if (p && typeof p.catch === "function") {
+              p.catch(() => {});
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    let _isSyncingFullscreen = false;
+    function handleNativeFullscreenChange() {
+      if (_isSyncingFullscreen) return;
+      const isNativeFs = Boolean(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+      if (!isNativeFs && isWorkspaceFullscreenActive()) {
+        _isSyncingFullscreen = true;
+        exitWorkspaceFullscreen();
+        _isSyncingFullscreen = false;
+      }
+    }
+
+    document.addEventListener("fullscreenchange", handleNativeFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleNativeFullscreenChange);
+    document.addEventListener("mozfullscreenchange", handleNativeFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleNativeFullscreenChange);
+
     function enterWorkspaceFullscreen(tab) {
       const targetTab = tab || currentWorkspaceTab;
       isWorkspaceFullscreen = true;
@@ -4429,20 +5383,26 @@
 
       document.body.classList.add("workspace-fullscreen-active");
 
+      const dbPane = document.getElementById("paneWorkspaceDb");
       const tableCard = document.getElementById("dbTableContainerCard");
       if (targetTab === "database") {
         isDbTableFullscreen = true;
-        if (tableCard) tableCard.classList.add("db-table-fullscreen");
+        if (dbPane) dbPane.classList.add("db-pane-fullscreen");
+        if (tableCard) tableCard.classList.remove("db-table-fullscreen");
         const searchInput = document.getElementById("searchQueryBar");
         if (searchInput) {
           setTimeout(() => searchInput.focus(), 60);
         }
       } else {
         isDbTableFullscreen = false;
+        if (dbPane) dbPane.classList.remove("db-pane-fullscreen");
         if (tableCard) tableCard.classList.remove("db-table-fullscreen");
       }
 
       updateFullscreenButtonsUI(true, targetTab);
+
+      // Trigger true OS/browser-level full screen (hides browser address/tab top bar like F11)
+      enterNativeBrowserFullscreen();
     }
 
     function exitWorkspaceFullscreen() {
@@ -4452,6 +5412,8 @@
 
       document.body.classList.remove("workspace-fullscreen-active");
 
+      const dbPane = document.getElementById("paneWorkspaceDb");
+      if (dbPane) dbPane.classList.remove("db-pane-fullscreen");
       const tableCard = document.getElementById("dbTableContainerCard");
       if (tableCard) tableCard.classList.remove("db-table-fullscreen");
 
@@ -4461,6 +5423,9 @@
       }
 
       updateFullscreenButtonsUI(false, currentWorkspaceTab);
+
+      // Exit browser native full screen
+      exitNativeBrowserFullscreen();
     }
 
     function toggleWorkspaceFullscreen(tab) {
@@ -4503,11 +5468,19 @@
     // Cmd+F / Ctrl+F -> From ANY page or tab, open Database table & toggle full screen
     // Cmd+S / Ctrl+S -> From ANY page or tab, open Download Portal & toggle full screen
     // Cmd+D / Ctrl+D -> From ANY page or tab, open Form Design Studio & toggle full screen
+    // F11 -> Toggle full screen in any page
     // Escape -> Exit full screen
     window.addEventListener("keydown", (e) => {
       if (!e.key) return;
       const key = e.key.toLowerCase();
       const isCmdOrCtrl = Boolean(e.metaKey || e.ctrlKey);
+
+      // F11: Full screen like native browser F11 across all tabs
+      if (e.key === "F11") {
+        e.preventDefault();
+        toggleWorkspaceFullscreen();
+        return;
+      }
 
       // Cmd+F or Ctrl+F: from any page or tab, redirect to database table and toggle full screen
       if (isCmdOrCtrl && key === "f") {
@@ -4632,9 +5605,14 @@
 
       let filtered = [...allCachedRecords];
 
+      // Sync active state on count cards
+      updateActiveDbStatCardUI(statusFilter);
+
       // 1. Status Filter
       if (statusFilter === "not_done") {
         filtered = filtered.filter((row) => row.status !== "done");
+      } else if (statusFilter === "not online" || statusFilter === "others") {
+        filtered = filtered.filter((row) => row.status === "not online" || row.status === "inprogress");
       } else if (statusFilter && statusFilter !== "all") {
         filtered = filtered.filter((row) => row.status === statusFilter);
       }
@@ -6705,6 +7683,12 @@
         portalSearchDropdown.classList.add("hidden");
       }
 
+      const npSugContainer = document.getElementById("portalNpSuggestionsContainer");
+      if (npSugContainer) npSugContainer.classList.add("hidden");
+      // converter box stays always visible, don't hide it
+      const npSugBadge = document.getElementById("portalNpSuggestBadge");
+      if (npSugBadge) npSugBadge.classList.add("hidden");
+
       const portalOtpInfoText = document.getElementById("portalOtpInfoText");
       if (portalOtpInfoText) {
         portalOtpInfoText.innerText = "Masked Mobile: -, NIN: -";
@@ -6714,6 +7698,61 @@
       if (portalFullNameEn) {
         portalFullNameEn.focus();
       }
+    }
+
+    function clearPortalAllFields() {
+      resetPortalToInitial();
+
+      // Clear NIN Search inputs
+      ["voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+
+      // Clear Name Search inputs
+      ["portalFullNameEn", "portalFullNameNp", "portalDobLoc", "portalCcnIssuingDateLoc"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+
+      // Clear all dynamic variant rows
+      [
+        "voterNidNin_variants",
+        "voterNinDobBs_variants",
+        "portalFullNameEn_variants",
+        "portalFullNameNp_variants",
+        "portalDobLoc_variants",
+        "portalCcnIssuingDateLoc_variants"
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+      });
+
+      // Clear quick converter
+      const qInput = document.getElementById("quickConverterInput");
+      if (qInput) qInput.value = "";
+      _activeConverterIndex = -1;
+      _currentConverterSuggestions = [];
+      const qPills = document.getElementById("quickConverterPills");
+      if (qPills) qPills.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">Type an English name above to see Nepali writings...</span>';
+      const qNotice = document.getElementById("quickConverterCopyNotice");
+      if (qNotice) qNotice.classList.add("hidden");
+
+      // Reset active converter target
+      _activeNepaliTargetInput = null;
+
+      // Reset permutation state & cards
+      if (typeof updatePermutationPanelPreview === "function") {
+        updatePermutationPanelPreview();
+      }
+      const permPanel = document.getElementById("portalPermutationPanel");
+      if (permPanel) permPanel.classList.add("hidden");
+      const permCards = document.getElementById("portalPermutationCardsList");
+      if (permCards) {
+        permCards.innerHTML = '<div class="text-[10px] text-slate-400 italic py-2">Add variants using the + button to see combination previews here.</div>';
+      }
+      const permBadge = document.getElementById("portalPermutationBadge");
+      if (permBadge) permBadge.textContent = "0 Combinations";
     }
 
     // ----- Token verifying modal helpers -----
@@ -7048,20 +8087,17 @@
 
         if (!res.ok) {
           const errMsg = _rawText || res.statusText || "OTP request failed";
-          alert(`OTP Request failed: ${errMsg}`);
           loadPortalCaptcha(false);
           return;
         }
 
         if (typeof responseBody === "string") {
-          alert(`OTP Request failed: ${responseBody}`);
           loadPortalCaptcha(false);
           return;
         }
 
         const responseMsg = extractOtpResponseMessage(responseBody);
         if (responseMsg) {
-          alert(`OTP request failed: ${responseMsg}`);
           loadPortalCaptcha(false);
           return;
         }
@@ -7087,6 +8123,15 @@
         document.getElementById("portalOtpRow").classList.remove("hidden");
         showPortalStep(2);
 
+        // Show response info alert
+        showPortalResponseAlert('success', {
+          _title: '✅ OTP Sent Successfully',
+          'Masked Mobile': data.maskedMobile || '—',
+          'NIN': portalNinValue || data.nin || '—',
+          'Transaction ID': portalOtpTransactionId || '—',
+          'Status': data.code || 'OTP_SENT',
+        });
+
         // Only auto-search voter-list data for bulk verification flow.
         if (isBulkMode) {
           const _dobBsRaw = document.getElementById("portalDobLoc").value.trim();
@@ -7105,6 +8150,440 @@
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MULTI-FIELD VARIANT & PERMUTATION REQUEST SYSTEM
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const PORTAL_VARIANT_FIELD_CONFIG = {
+      portalFullNameEn:       { placeholder: 'SUJAL MEHTA',       isUppercase: true,  isNepali: false, isDate: false },
+      portalFullNameNp:       { placeholder: 'सुजल मेहता',          isUppercase: false, isNepali: true,  isDate: false },
+      portalDobLoc:           { placeholder: '२०६२-०१-२०',         isUppercase: false, isNepali: false, isDate: true  },
+      portalCcnIssuingDateLoc:{ placeholder: '२०७८-०३-२५',         isUppercase: false, isNepali: false, isDate: true  },
+      voterNidNin:            { placeholder: 'e.g. 615-385-908-6', isUppercase: false, isNepali: false, isDate: false },
+      voterNinDobBs:          { placeholder: 'YYYY-MM-DD',         isUppercase: false, isNepali: false, isDate: true  },
+    };
+
+    // Add a child variant input row below a primary or sibling input
+    function addPortalFieldVariant(fieldId) {
+      const container = document.getElementById(fieldId + '_variants');
+      if (!container) return;
+      const parentEl = document.getElementById(fieldId);
+      const cfg = PORTAL_VARIANT_FIELD_CONFIG[fieldId] || {};
+      const rowId = fieldId + '_v' + Date.now();
+
+      const row = document.createElement('div');
+      row.id = rowId;
+      row.className = 'flex items-center gap-1.5 animate-fade-in';
+
+      const isNepali = cfg.isNepali || (parentEl && parentEl.classList.contains('font-serif'));
+      const isUpper  = cfg.isUppercase;
+      const isDate   = cfg.isDate || fieldId === 'portalDobLoc' || fieldId === 'portalCcnIssuingDateLoc' || fieldId === 'voterNinDobBs';
+      const placeholder = (parentEl && parentEl.placeholder) || cfg.placeholder || '';
+      const maxLengthAttr = (parentEl && parentEl.maxLength > 0 && parentEl.maxLength < 1000) ? `maxlength="${parentEl.maxLength}"` : '';
+
+      const inputClass = [
+        'flex-1 bg-white hover:border-amber-300 focus:bg-white border border-amber-200/90 focus:border-amber-600 focus:ring-1 focus:ring-amber-600 rounded-xl px-3 py-2 pr-7 text-slate-900 transition-all text-xs h-[38px] shadow-2xs',
+        isNepali ? 'font-serif' : '',
+        isUpper  ? 'uppercase' : '',
+      ].filter(Boolean).join(' ');
+
+      row.innerHTML = `
+        <div class="relative flex-1 flex items-center">
+          <input type="text" id="${rowId}_input" placeholder="${placeholder}" ${maxLengthAttr}
+            autocomplete="off"
+            oninput="onPortalFieldInputChanged('${fieldId}')"
+            ${isNepali ? `onfocus="setConverterNepaliTarget(this)"` : ''}
+            class="${inputClass}" />
+          <button type="button" tabindex="-1" onclick="addPortalFieldVariant('${fieldId}')"
+            title="Add another variant"
+            class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-amber-700/60 hover:text-amber-950 hover:bg-amber-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+            +
+          </button>
+        </div>
+        <button type="button" tabindex="-1" onclick="removePortalVariantRow('${rowId}', '${fieldId}')"
+          title="Remove this variant"
+          class="w-6 h-6 rounded flex items-center justify-center text-amber-700/40 hover:text-rose-600 hover:bg-rose-50 transition-all text-xs font-bold cursor-pointer shrink-0">
+          ✕
+        </button>
+      `;
+
+      container.appendChild(row);
+
+      const newInp = document.getElementById(rowId + '_input');
+
+      // Attach date auto-formatter to child variant if it's a date field so it only writes Nepali digits
+      if (isDate) {
+        attachGeneralDateAutoFormatter(rowId + '_input', true);
+      }
+
+      // If it's a Nepali field, set it as current target immediately & attach focus listener
+      if (isNepali && newInp) {
+        setConverterNepaliTarget(newInp);
+        newInp.addEventListener('focus', () => setConverterNepaliTarget(newInp));
+      }
+
+      // Focus the new input and set active converter target
+      setTimeout(() => {
+        if (newInp) {
+          newInp.focus();
+          if (isNepali) setConverterNepaliTarget(newInp);
+        }
+      }, 50);
+
+      onPortalFieldInputChanged(fieldId);
+    }
+
+    function removePortalVariantRow(rowId, fieldId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        const inp = document.getElementById(rowId + '_input');
+        if (_activeNepaliTargetInput === inp) {
+          _activeNepaliTargetInput = document.getElementById('portalFullNameNp');
+        }
+        row.style.opacity = '0';
+        row.style.transform = 'scale(0.95)';
+        row.style.transition = 'all 0.15s ease';
+        setTimeout(() => { if (row.parentNode) row.parentNode.removeChild(row); onPortalFieldInputChanged(fieldId); }, 150);
+      }
+    }
+
+    // Collect all values for a given field (primary + variants)
+    function getPortalFieldValues(fieldId) {
+      const primary = document.getElementById(fieldId);
+      const vals = [];
+      if (primary) {
+        const v = primary.value.trim();
+        if (v) vals.push(v);
+      }
+      const container = document.getElementById(fieldId + '_variants');
+      if (container) {
+        container.querySelectorAll('input[type="text"]').forEach(inp => {
+          const v = inp.value.trim();
+          if (v) vals.push(v);
+        });
+      }
+      return vals;
+    }
+
+    // Cartesian product helper
+    function cartesian(...arrays) {
+      return arrays.reduce((acc, arr) => {
+        if (!arr || arr.length === 0) return acc;
+        const res = [];
+        acc.forEach(existingCombo => {
+          arr.forEach(item => {
+            res.push([...existingCombo, item]);
+          });
+        });
+        return res;
+      }, [[]]);
+    }
+
+    // Generate all permutations of the 4 portal form fields
+    function generatePortalPermutations() {
+      const namesEn  = getPortalFieldValues('portalFullNameEn');
+      const namesNp  = getPortalFieldValues('portalFullNameNp');
+      const dobs     = getPortalFieldValues('portalDobLoc');
+      const citDates = getPortalFieldValues('portalCcnIssuingDateLoc');
+
+      if (!namesEn.length || !namesNp.length || !dobs.length || !citDates.length) return [];
+
+      const combos = cartesian(namesEn, namesNp, dobs, citDates);
+      return combos.map(([fullName, fullNameNp, dob, citDate]) => ({
+        fullName,
+        fullNameNp,
+        dob,
+        citDate
+      }));
+    }
+
+    // Update the permutation panel whenever field values change
+    function onPortalFieldInputChanged(fieldId) {
+      updatePermutationPanelPreview();
+    }
+
+    function updatePermutationPanelPreview() {
+      // Panel is permanently hidden — only silently update the Proceed button label
+      const combos = generatePortalPermutations();
+      const proceedText = document.getElementById('btnPortalProceedText');
+      if (proceedText) {
+        proceedText.textContent = combos.length > 1 ? `Proceed (${combos.length} Combos)` : 'Proceed';
+      }
+      // Always keep panel hidden
+      const panel = document.getElementById('portalPermutationPanel');
+      if (panel) panel.classList.add('hidden');
+    }
+
+    // Live permutation state tracker
+    let _permState = { total: 0, active: 0, success: 0, failed: 0, done: 0, cards: [] };
+
+    function _initPermState(combos) {
+      _permState = { total: combos.length, active: 0, success: 0, failed: 0, done: 0, cards: [] };
+    }
+
+    function _updatePermUI() {
+      const progress = _permState.total > 0 ? Math.round((_permState.done / _permState.total) * 100) : 0;
+      const el = (id) => document.getElementById(id);
+
+      if (el('permStatTotal'))   el('permStatTotal').textContent   = _permState.total;
+      if (el('permStatActive'))  el('permStatActive').textContent  = _permState.active;
+      if (el('permStatSuccess')) el('permStatSuccess').textContent = _permState.success;
+      if (el('permStatFailed'))  el('permStatFailed').textContent  = _permState.failed;
+
+      const bar = el('portalPermutationProgressBar');
+      if (bar) bar.style.width = progress + '%';
+      const txt = el('portalPermutationProgressText');
+      if (txt) txt.textContent = `${_permState.done} / ${_permState.total} Completed`;
+
+      // update card UI
+      _permState.cards.forEach(card => {
+        const cardEl = document.getElementById('perm_card_' + card.id);
+        if (!cardEl) return;
+        let statusHtml = '';
+        if (card.status === 'active') {
+          statusHtml = '<span class="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-200 flex items-center gap-0.5"><span class="animate-spin">⟳</span> In Flight</span>';
+        } else if (card.status === 'success') {
+          statusHtml = '<span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold border border-emerald-200">✓ OTP Sent</span>';
+        } else if (card.status === 'not_found') {
+          statusHtml = '<span class="text-[9px] bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded font-bold border border-sky-200">⊘ Not Found</span>';
+        } else if (card.status === 'failed') {
+          statusHtml = '<span class="text-[9px] bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold border border-rose-200">✕ Failed</span>';
+        }
+
+        const statusEl = cardEl.querySelector('.perm-card-status');
+        if (statusEl) statusEl.innerHTML = statusHtml;
+
+        if (card.status === 'success') {
+          cardEl.classList.remove('border-slate-200', 'border-amber-200');
+          cardEl.classList.add('border-emerald-300', 'bg-emerald-50');
+        } else if (card.status === 'not_found') {
+          cardEl.classList.remove('border-slate-200', 'border-amber-200');
+          cardEl.classList.add('border-sky-300', 'bg-sky-50');
+        } else if (card.status === 'failed') {
+          cardEl.classList.remove('border-slate-200', 'border-amber-200');
+          cardEl.classList.add('border-rose-300', 'bg-rose-50');
+        } else if (card.status === 'active') {
+          cardEl.classList.add('border-amber-200');
+        }
+
+        if (card.message) {
+          const msgEl = cardEl.querySelector('.perm-card-msg');
+          if (msgEl) { msgEl.textContent = card.message; msgEl.classList.remove('hidden'); }
+        }
+      });
+    }
+
+    function _renderPermCards(combos) {
+      const cardsList = document.getElementById('portalPermutationCardsList');
+      if (!cardsList) return;
+
+      _permState.cards = combos.map((c, i) => ({ id: i, combo: c, status: 'pending', message: '' }));
+
+      cardsList.innerHTML = _permState.cards.map(card => `
+        <div id="perm_card_${card.id}"
+          class="bg-white border border-slate-200 rounded-lg p-2 text-[10px] space-y-1 transition-all duration-300">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1 min-w-0 space-y-0.5">
+              <div class="font-mono font-bold text-indigo-700 text-[9px]">#${card.id + 1}</div>
+              <div class="font-medium text-slate-800 truncate">${escapeHtml(card.combo.fullName)}</div>
+              <div class="font-serif text-slate-600 truncate">${escapeHtml(card.combo.fullNameNp)}</div>
+              <div class="text-slate-400 font-mono text-[8px]">DOB: ${escapeHtml(card.combo.dob)} | Cit: ${escapeHtml(card.combo.citDate)}</div>
+            </div>
+            <div class="perm-card-status shrink-0 pt-0.5">
+              <span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold border border-slate-200">Queued</span>
+            </div>
+          </div>
+          <div class="perm-card-msg hidden text-[9px] text-slate-500 italic truncate"></div>
+        </div>
+      `).join('');
+    }
+
+    // Main Proceed handler — routes to single or multi-permutation
+    async function handlePortalProceedClick() {
+      const combos = generatePortalPermutations();
+
+      if (combos.length <= 1) {
+        // Single mode — fall through to existing captcha flow
+        return loadPortalCaptcha(false);
+      }
+
+      // Multi-permutation mode
+      // First, need captcha — load it
+      const captchaRowVisible = !document.getElementById('portalCaptchaInputRow')?.classList.contains('hidden');
+      const captchaVal = (document.getElementById('portalCaptchaCode')?.value || '').trim();
+
+      if (captchaRowVisible && captchaVal) {
+        // Captcha already entered — dispatch permutations immediately
+        return dispatchPortalPermutations(combos, captchaVal);
+      }
+
+      // Need to load captcha first
+      const panel = document.getElementById('portalPermutationPanel');
+      if (panel) {
+        panel.classList.remove('hidden');
+        const notice = document.getElementById('portalPermutationNotice');
+        if (notice) {
+          notice.textContent = `⚡ ${combos.length} combinations ready. Enter the captcha code below then click "Request OTP" to dispatch all combinations in parallel.`;
+          notice.classList.remove('hidden');
+        }
+      }
+
+      // Populate preview cards
+      _initPermState(combos);
+      _renderPermCards(combos);
+
+      // Show progress + stats rows
+      document.getElementById('portalPermutationProgressContainer')?.classList.remove('hidden');
+      document.getElementById('portalPermutationStatsRow')?.classList.remove('hidden');
+      const badge = document.getElementById('portalPermutationBadge');
+      if (badge) badge.textContent = `${combos.length} Combinations`;
+
+      // Store combos in a temp global so captcha submit can pick them up
+      window._pendingPortalPermutations = combos;
+
+      // Load captcha (single mode to get one captcha for all)
+      await loadPortalCaptcha(false);
+
+      // Override the Request OTP button to dispatch permutations
+      const btn = document.getElementById('btnPortalRequestOtp');
+      if (btn) {
+        btn.innerText = `Send ${combos.length} Requests`;
+        btn.className = 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase';
+        btn.onclick = async function() {
+          const cc = document.getElementById('portalCaptchaCode')?.value.trim();
+          if (!cc) { alert('Please enter the captcha code first.'); return; }
+          dispatchPortalPermutations(window._pendingPortalPermutations || combos, cc);
+        };
+      }
+    }
+
+    // Dispatch all permutation combos concurrently with a single captcha code
+    async function dispatchPortalPermutations(combos, captchaCode) {
+      if (!combos || !combos.length) return;
+
+      const panel = document.getElementById('portalPermutationPanel');
+      if (panel) panel.classList.remove('hidden');
+
+      _initPermState(combos);
+      _renderPermCards(combos);
+
+      document.getElementById('portalPermutationProgressContainer')?.classList.remove('hidden');
+      document.getElementById('portalPermutationStatsRow')?.classList.remove('hidden');
+
+      const notice = document.getElementById('portalPermutationNotice');
+      if (notice) {
+        notice.textContent = `⚡ Dispatching ${combos.length} parallel requests...`;
+        notice.classList.remove('hidden');
+      }
+
+      // Hide initial action row while requests are in flight
+      document.getElementById('portalInitialActionBtnRow')?.classList.add('hidden');
+
+      const url = `${API_BASE}/api/request-otp`;
+
+      // Fire all requests concurrently
+      const promises = combos.map(async (combo, i) => {
+        const card = _permState.cards[i];
+        card.status = 'active';
+        _permState.active++;
+        _updatePermUI();
+
+        const fullName    = combo.fullName.trim().toUpperCase();
+        const fullNameLoc = remapNepaliChars(rawNepaliName(combo.fullNameNp));
+        const dobLoc      = translateDigits(combo.dob, englishToNepaliDigits);
+        const citLoc      = translateDigits(combo.citDate, englishToNepaliDigits);
+
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode },
+            body: JSON.stringify({ fullName, fullNameLoc: fullNameLoc, dobLoc, ccnIssuingDateLoc: citLoc })
+          });
+          const body = await parseResponseBody(res);
+
+          const rawCode = getOtpErrorCode(body);
+          const isKnownSuccess = res.ok && body && (
+            body.code === 'OTP_SENT' ||
+            body.code === 'OTP_VERIFIED' ||
+            body.code === 'SUCCESS' ||
+            Boolean(body.transactionId) ||
+            Boolean(body.maskedMobile)
+          );
+
+          const errCode = (!isKnownSuccess && rawCode && rawCode !== 'OTP_SENT' && rawCode !== 'SUCCESS') ? rawCode : null;
+          const errText = (!isKnownSuccess) ? (typeof body === 'string' ? body : extractOtpResponseMessage(body)) : null;
+          const resolvedCode = errCode || parseOtpErrorCodeFromText(typeof body === 'string' ? body : (body?.message || body?.detail || body?.description));
+
+          if (resolvedCode === 'DATA_NOT_FOUND' || (errText && errText.includes('DATA_NOT_FOUND'))) {
+            card.status = 'not_found';
+            card.message = 'DATA_NOT_FOUND — name mismatch';
+            _permState.failed++;
+          } else if (resolvedCode === 'MOBILE_NOT_REGISTERED' || (errText && errText.includes('MOBILE_NOT_REGISTERED'))) {
+            // OTP not sent but data found — treat as partial success
+            card.status = 'not_found';
+            card.message = 'MOBILE_NOT_REGISTERED';
+            _permState.failed++;
+          } else if (isKnownSuccess || (res.ok && !errCode && !errText)) {
+            // Success — OTP was triggered!
+            card.status = 'success';
+            card.message = `OTP sent to ${body?.maskedMobile || 'registered mobile'}`;
+            _permState.success++;
+
+            // Auto-populate the main form with the winning combination
+            if (_permState.success === 1) {
+              document.getElementById('portalFullNameEn').value = combo.fullName;
+              document.getElementById('portalFullNameNp').value = combo.fullNameNp;
+              document.getElementById('portalDobLoc').value = combo.dob;
+              document.getElementById('portalCcnIssuingDateLoc').value = combo.citDate;
+
+              if (body?.transactionId) portalOtpTransactionId = body.transactionId;
+              const resolvedNin = await resolvePortalNinValue(body?.nin || '');
+              portalNinValue = resolvedNin || body?.nin || '';
+              document.getElementById('portalOtpInfoText').innerText = `Masked Mobile: ${body?.maskedMobile || '-'}, NIN: ${portalNinValue || '-'}`;
+
+              // Show OTP input row
+              document.getElementById('portalCaptchaInputRow')?.classList.add('hidden');
+              document.getElementById('portalOtpRow')?.classList.remove('hidden');
+              showPortalStep(2);
+              setTimeout(() => document.getElementById('portalOtpCode')?.focus(), 100);
+
+              if (notice) {
+                notice.className = 'text-[10px] p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold';
+                notice.textContent = `✓ Winning combination found: "${combo.fullName}" + "${combo.fullNameNp}". OTP sent!`;
+              }
+            }
+          } else {
+            card.status = 'failed';
+            card.message = errText || errCode || `HTTP ${res.status}`;
+            _permState.failed++;
+          }
+        } catch (err) {
+          card.status = 'failed';
+          card.message = err.message || 'Network error';
+          _permState.failed++;
+        }
+
+        _permState.active--;
+        _permState.done++;
+        _updatePermUI();
+      });
+
+      await Promise.allSettled(promises);
+
+      // All done
+      if (notice) {
+        if (_permState.success > 0) {
+          notice.className = 'text-[10px] p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800';
+          notice.textContent = `✓ Dispatch complete: ${_permState.success} OTP(s) sent, ${_permState.failed} failed. Enter the OTP code above.`;
+        } else {
+          notice.className = 'text-[10px] p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800';
+          notice.textContent = `✕ All ${_permState.total} combinations failed. Try checking the field values or refreshing the captcha.`;
+          document.getElementById('portalInitialActionBtnRow')?.classList.remove('hidden');
+        }
+      }
+      window._pendingPortalPermutations = null;
     }
 
     // --- Wrapper: routes to single or bulk OTP based on mode ---
@@ -7132,9 +8611,10 @@
       }
 
       isBulkMode = true;
-      if (currentVoterSearchMode === "nin") {
-        toggleVoterSearchMode();
-      }
+      const ninPanel = document.getElementById("voterNinSearchPanel");
+      if (ninPanel) ninPanel.classList.remove("hidden");
+      const namePanel = document.getElementById("nidGatewayMainFormContainer");
+      if (namePanel) namePanel.classList.remove("hidden");
 
       // If captcha is already visible and user has already entered a code, submit bulk verification immediately
       const captchaVal = (document.getElementById("portalCaptchaCode")?.value || "").trim();
@@ -8978,6 +10458,20 @@
         englishToNepaliDigits,
       );
       document.getElementById("portalCcnIssuingDateLoc").value = citDateNp;
+
+      // Also populate Search by NIN inputs
+      const ninInput = document.getElementById("voterNidNin");
+      if (ninInput) ninInput.value = person.ninEn || "";
+      const ninDobBsInput = document.getElementById("voterNinDobBs");
+      if (ninDobBsInput) ninDobBsInput.value = person.dobNp || "";
+      const ninDobInput = document.getElementById("voterNinDob");
+      if (ninDobInput) ninDobInput.value = (person.dobEn || "").replace(/\//g, "-");
+      const ninFirstnameInput = document.getElementById("voterNinFirstname");
+      if (ninFirstnameInput) ninFirstnameInput.value = (person.givenEn || "").split(" ")[0].toUpperCase();
+
+      if (typeof updatePermutationPanelPreview === "function") {
+        updatePermutationPanelPreview();
+      }
     }
 
     function attachGeneralDateAutoFormatter(inputId, isNepaliDigits = false) {
@@ -9603,7 +11097,7 @@
       // Keep admin tab visible always
       const tabAdminBtn = document.getElementById("tabAdminBtn");
       if (tabAdminBtn) {
-        tabAdminBtn.className = "w-9 h-9 rounded-xl flex items-center justify-center bg-blue-600 text-white shadow-md shadow-blue-500/30 transition-all duration-150 cursor-pointer";
+        tabAdminBtn.className = "w-12 sm:w-14 h-7 rounded-full flex items-center justify-center bg-blue-600 text-white shadow-sm shadow-blue-500/30 transition-all duration-150 cursor-pointer";
       }
 
       // Hide the other content panes
@@ -10494,29 +11988,43 @@
       }
     }
 
-    // Toggle Voter Search Mode
+    // Switch or Toggle Voter Search Mode
     let currentVoterSearchMode = "nin"; // "nin" or "name"
-    function toggleVoterSearchMode() {
+
+    function setVoterSearchMode(mode) {
+      currentVoterSearchMode = mode;
+      const tabNin = document.getElementById("tabModeNin");
+      const tabName = document.getElementById("tabModeName");
+      const ninPanel = document.getElementById("voterNinSearchPanel");
+      const namePanel = document.getElementById("nidGatewayMainFormContainer");
       const modeText = document.getElementById("btnToggleSearchText");
       const label = document.getElementById("ninSearchPortalLabel");
-      const ninInputs = document.getElementById("voterNinSearchPanel");
-      const mainForm = document.getElementById("nidGatewayMainFormContainer");
-      const btnToggle = document.getElementById("btnToggleVoterSearchMode");
 
-      if (currentVoterSearchMode === "nin") {
-        currentVoterSearchMode = "name";
-        modeText.innerText = "Switch to NIN Search";
-        label.innerText = "Search by Name / NID";
-        ninInputs.classList.add("hidden");
-        if (mainForm) mainForm.classList.remove("hidden");
-        btnToggle.className = "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-slate-700 border border-slate-355 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition-all";
+      if (mode === "name") {
+        if (tabNin) tabNin.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 cursor-pointer";
+        if (tabName) tabName.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-xs cursor-pointer";
+        if (modeText) modeText.innerText = "Switch to NIN Search";
+        if (label) label.innerText = "Search by Name / NID";
+        const pfne = document.getElementById("portalFullNameEn");
+        if (pfne && pfne.value.trim()) {
+          const conv = document.getElementById("quickConverterInput");
+          if (conv) { conv.value = pfne.value.trim(); handleQuickConverterInput(); }
+        }
       } else {
-        currentVoterSearchMode = "nin";
-        modeText.innerText = "Switch to Name Search";
-        label.innerText = "Search by NIN Number";
-        if (mainForm) mainForm.classList.add("hidden");
-        ninInputs.classList.remove("hidden");
-        btnToggle.className = "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wide text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-all";
+        if (tabNin) tabNin.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-blue-700 shadow-xs cursor-pointer";
+        if (tabName) tabName.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 cursor-pointer";
+        if (modeText) modeText.innerText = "Switch to Name Search";
+        if (label) label.innerText = "Search by NIN Number";
+      }
+      if (ninPanel) ninPanel.classList.remove("hidden");
+      if (namePanel) namePanel.classList.remove("hidden");
+    }
+
+    function toggleVoterSearchMode() {
+      if (currentVoterSearchMode === "nin") {
+        setVoterSearchMode("name");
+      } else {
+        setVoterSearchMode("nin");
       }
     }
 
