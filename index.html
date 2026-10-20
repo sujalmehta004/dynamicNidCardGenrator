@@ -1000,401 +1000,438 @@
               <div id="voterQuickSearchDropdown"></div>
             </div>
 
-          <form id="portalForm" class="space-y-4 text-xs w-[90%] max-w-[90vw] mx-auto" onsubmit="event.preventDefault()">
-            <!-- NID Portal Gateway Tab Content -->
-            <div id="portalSubTabNidContent" class="space-y-3.5 flex flex-col justify-center min-h-full">
+          <form id="portalForm" class="text-xs w-[96%] max-w-[96vw] mx-auto" onsubmit="event.preventDefault()">
+            <!-- NID Portal Gateway Tab Content: 2 Columns Layout (30% Left Converter 90vh, 70% Right Main Workstation) -->
+            <div id="portalSubTabNidContent" class="flex flex-col lg:flex-row gap-4 w-full items-start">
 
-              <!-- ── TOP ROW: DB Search (full width) + Fullscreen + ℹ button ── -->
-              <div class="flex items-center gap-2.5">
-                <!-- DB Search Input (full width flex) with live suggestions -->
-                <div class="relative flex-1">
-                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
+              <!-- ── LEFT COLUMN (30% width, full 90vh height): English to Nepali Converter ONLY ── -->
+              <div class="w-full lg:w-[30%] lg:min-w-[280px] lg:h-[90vh] flex flex-col shrink-0">
+                <div id="portalQuickConverterBox" class="bg-sky-50/40 border border-sky-100 rounded-2xl p-4 shadow-2xs flex flex-col h-full space-y-3">
+                  <div class="flex items-center justify-between pb-2 mb-1 border-b border-sky-100 shrink-0">
+                    <div class="flex items-center gap-2 text-xs font-normal text-slate-800">
+                      <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                      <span class="text-xs font-normal text-slate-800">English to Nepali Converter</span>
+                    </div>
+                    <div id="quickConverterCopyNotice" class="hidden text-[10px] text-emerald-800 font-normal bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <span id="quickConverterCopyNoticeText">Filled!</span>
+                    </div>
                   </div>
-                  <input type="text" id="portalSearchQuery"
-                    placeholder="Search previously saved in database by name or NIN..."
-                    autocomplete="off"
-                    oninput="_onPortalSearchQueryInput(this.value)"
-                    onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                    class="w-full bg-white hover:bg-slate-50 border border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-300 rounded-xl pl-9 pr-3 py-2 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                  <!-- Live Suggestion Dropdown -->
-                  <div id="portalSearchDropdown" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-52 overflow-y-auto"></div>
-                </div>
-                <!-- Fullscreen button -->
-                <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')" title="Toggle Full Screen (Cmd+S / Ctrl+S)"
-                  class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[38px]">
-                  <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                  <span class="hidden sm:inline text-xs">Fullscreen</span>
-                  <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200 hidden sm:inline">⌘S</kbd>
-                </button>
-                <!-- ℹ button -->
-                <button type="button" onclick="openNepaliCharInfo()"
-                  title="View collected Nepali characters from voterlist"
-                  class="w-[38px] h-[38px] rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex items-center justify-center transition-all shadow-2xs cursor-pointer shrink-0">
-                  ℹ
-                </button>
-              </div>
 
-              <!-- ── 3 EQUAL HEIGHT COLUMNS ROW (Search by Name | Converter | Search by NIN) ── -->
-              <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5 items-stretch w-full">
-
-                <!-- ── COLUMN 1: Search by Name (Amber Theme) ── -->
-                <div id="nidGatewayMainFormContainer" class="bg-amber-50/40 border border-amber-100 rounded-2xl p-4 shadow-2xs flex flex-col justify-between h-full space-y-3">
-                  <div>
-                    <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-100">
-                      <div class="flex items-center gap-2 text-xs font-normal text-slate-800">
-                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span class="text-xs font-normal text-slate-800">Search by Name</span>
+                  <div class="space-y-3 flex-1 flex flex-col min-h-0">
+                    <div class="shrink-0">
+                      <label class="block text-xs font-normal text-slate-600 mb-1">Type English Name to Convert</label>
+                      <div class="relative">
+                        <input type="text" id="quickConverterInput" placeholder="Type English name here (e.g. SUJAL)..."
+                          autocomplete="off"
+                          oninput="handleQuickConverterInput()"
+                          onkeydown="handleQuickConverterKeyDown(event)"
+                          class="w-full bg-white hover:border-slate-300 focus:bg-white border border-sky-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-xl px-3 py-1.5 text-xs text-slate-800 uppercase font-normal transition-all shadow-2xs h-[38px] placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal placeholder:text-xs" />
                       </div>
-                      <span class="text-[10px] font-normal text-amber-800 bg-amber-100/60 px-2 py-0.5 rounded-md border border-amber-200/50">Gateway API</span>
                     </div>
 
-                    <div class="space-y-2.5">
-                      <!-- Field 1: Full Name (English) -->
-                      <div id="portalFullNameEn_fieldWrap" class="relative">
-                        <label class="block text-xs font-normal text-slate-600 mb-1">Full Name (English)</label>
-                        <div class="relative flex items-center">
-                          <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA"
-                            autocomplete="off"
-                            oninput="onPortalFieldInputChanged('portalFullNameEn')"
-                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                          <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameEn')" title="Add another English Name variant"
-                            class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
-                            +
-                          </button>
-                        </div>
-                        <div id="portalFullNameEn_variants" class="space-y-1.5 mt-1.5"></div>
+                    <div class="flex-1 flex flex-col min-h-0">
+                      <div class="flex items-center justify-between mb-1.5 shrink-0">
+                        <label class="block text-xs font-normal text-slate-600">Nepali Suggestions</label>
+                        <span class="text-[10px] text-slate-400 font-normal">Hover pill to magnify</span>
                       </div>
-
-                      <!-- Field 2: Full Name (Nepali) -->
-                      <div id="portalFullNameNp_fieldWrap" class="relative">
-                        <div class="flex items-center justify-between mb-1">
-                          <label class="block text-xs font-normal text-slate-600">Full Name (Nepali)</label>
-                          <span id="portalNpSuggestBadge" class="hidden"></span>
-                        </div>
-                        <div class="relative flex items-center">
-                          <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता"
-                            autocomplete="off"
-                            oninput="onPortalFieldInputChanged('portalFullNameNp')"
-                            onfocus="setConverterNepaliTarget(this)"
-                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                          <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameNp')" title="Add another Nepali Name variant"
-                            class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
-                            +
-                          </button>
-                        </div>
-                        <div id="portalFullNameNp_variants" class="space-y-1.5 mt-1.5"></div>
-                      </div>
-
-                      <!-- Field 3 & 4: Date of Birth (BS) & Citizenship Issue Date (BS) -->
-                      <div class="grid grid-cols-2 gap-2">
-                        <div id="portalDobLoc_fieldWrap" class="relative">
-                          <label class="block text-xs font-normal text-slate-600 mb-1">DOB (BS)</label>
-                          <div class="relative flex items-center">
-                            <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०"
-                              autocomplete="off"
-                              oninput="onPortalFieldInputChanged('portalDobLoc')"
-                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-2.5 py-1.5 pr-6 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                            <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalDobLoc')" title="Add another Date of Birth variant"
-                              class="absolute right-1 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
-                              +
-                            </button>
-                          </div>
-                          <div id="portalDobLoc_variants" class="space-y-1.5 mt-1.5"></div>
-                        </div>
-
-                        <div id="portalCcnIssuingDateLoc_fieldWrap" class="relative">
-                          <label class="block text-xs font-normal text-slate-600 mb-1 truncate" title="Citizenship Issue Date (BS)">Citizenship Date</label>
-                          <div class="relative flex items-center">
-                            <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५"
-                              autocomplete="off"
-                              oninput="onPortalFieldInputChanged('portalCcnIssuingDateLoc')"
-                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-2.5 py-1.5 pr-6 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                            <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalCcnIssuingDateLoc')" title="Add another Citizenship Date variant"
-                              class="absolute right-1 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
-                              +
-                            </button>
-                          </div>
-                          <div id="portalCcnIssuingDateLoc_variants" class="space-y-1.5 mt-1.5"></div>
-                        </div>
+                      <!-- Suggestion pills container: flex-1, taking full height of 90vh column -->
+                      <div id="quickConverterPills" class="flex-1 w-full flex flex-wrap gap-2.5 items-start content-start bg-white/80 border border-sky-100 rounded-xl p-3 overflow-y-auto shadow-2xs">
+                        <span class="text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali transliterations...</span>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Field 5: Proceed Button at bottom -->
-                  <div class="pt-2">
-                    <button type="button" id="btnPortalInitProcess" onclick="handlePortalProceedClick()"
-                      class="w-full bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-normal text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                      <span id="btnPortalProceedText">Proceed</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- ── COLUMN 2: English to Nepali Quick Converter (Sky Theme) ── -->
-                <div id="portalQuickConverterBox" class="bg-sky-50/40 border border-sky-100 rounded-2xl p-4 shadow-2xs flex flex-col justify-between h-full space-y-3">
-                  <div class="flex-1 flex flex-col min-h-0">
-                    <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-sky-100">
-                      <div class="flex items-center gap-2 text-xs font-normal text-slate-800">
-                        <span class="w-2 h-2 rounded-full bg-sky-500"></span>
-                        <span class="text-xs font-normal text-slate-800">Name Converter</span>
-                      </div>
-                      <div id="quickConverterCopyNotice" class="hidden text-[10px] text-emerald-800 font-normal bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                        <span id="quickConverterCopyNoticeText">Filled!</span>
-                      </div>
-                    </div>
-
-                    <div class="space-y-2.5 flex-1 flex flex-col min-h-0">
-                      <div>
-                        <label class="block text-xs font-normal text-slate-600 mb-1">Type English Name to Convert</label>
-                        <div class="relative">
-                          <input type="text" id="quickConverterInput" placeholder="Type English name here (e.g. SUJAL)..."
-                            autocomplete="off"
-                            oninput="handleQuickConverterInput()"
-                            onkeydown="handleQuickConverterKeyDown(event)"
-                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-sky-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-xl px-3 py-1.5 text-xs text-slate-800 uppercase font-normal transition-all shadow-2xs h-[38px] placeholder:text-slate-400 placeholder:normal-case placeholder:font-normal placeholder:text-xs" />
-                        </div>
-                      </div>
-
-                      <div class="flex-1 flex flex-col min-h-[130px]">
-                        <div class="flex items-center justify-between mb-1">
-                          <label class="block text-xs font-normal text-slate-600">Nepali Suggestions</label>
-                          <span class="text-[10px] text-slate-400 font-normal">Hover pill to magnify</span>
-                        </div>
-                        <!-- Suggestion pills container -->
-                        <div id="quickConverterPills" class="flex-1 w-full flex flex-wrap gap-2 items-start content-start bg-white/80 border border-sky-100 rounded-xl p-2.5 overflow-y-auto min-h-[130px] max-h-[175px] shadow-2xs">
-                          <span class="text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali transliterations...</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="pt-2">
+                  <div class="pt-2 shrink-0">
                     <div class="text-xs text-sky-800/80 font-normal flex items-center gap-1.5 bg-sky-100/50 px-2.5 py-1.5 rounded-lg border border-sky-200/50">
                       <span class="text-sky-600">💡</span>
                       <span>Hover any pill to magnify, click to auto-fill into Nepali Name.</span>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <!-- ── COLUMN 3: Search by NIN (Emerald Theme) ── -->
-                <div id="voterNinSearchPanel" class="bg-emerald-50/40 border border-emerald-100 rounded-2xl p-4 shadow-2xs flex flex-col justify-between h-full space-y-3">
-                  <div>
-                    <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-emerald-100">
-                      <div class="flex items-center gap-2 text-xs font-normal text-slate-800">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span class="text-xs font-normal text-slate-800">Search by NIN</span>
-                      </div>
-                      <span class="text-[10px] font-normal text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md border border-emerald-200/50">Direct Query</span>
-                    </div>
+              <!-- ── RIGHT COLUMN (70% width): Search Top Row + Search by Name & Search by NIN + Captcha / Actions ── -->
+              <div class="w-full lg:w-[70%] flex flex-col space-y-3.5">
 
-                    <div class="space-y-2.5">
-                      <!-- Field 1: NIN Number -->
-                      <div id="voterNidNin_fieldWrap" class="relative">
-                        <label class="block text-xs font-normal text-slate-600 mb-1">NIN Number</label>
-                        <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
-                          autocomplete="off"
-                          onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                          class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                      </div>
-
-                      <!-- Field 2 & 3: Date of Birth (BS & AD) -->
-                      <div class="grid grid-cols-2 gap-2">
-                        <div id="voterNinDobBs_fieldWrap" class="relative">
-                          <label class="block text-xs font-normal text-slate-600 mb-1">DOB (BS)</label>
-                          <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
-                            autocomplete="off"
-                            onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-2.5 py-1.5 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                        </div>
-
-                        <div>
-                          <label class="block text-xs font-normal text-slate-600 mb-1">DOB (AD)</label>
-                          <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
-                            autocomplete="off"
-                            onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-2.5 py-1.5 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                        </div>
-                      </div>
-
-                      <!-- Field 4: First Name Only -->
-                      <div>
-                        <label class="block text-xs font-normal text-slate-600 mb-1">First Name Only</label>
-                        <input type="text" id="voterNinFirstname" placeholder="SUJAL"
-                          autocomplete="off"
-                          onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                          class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Field 5: Search Button at bottom -->
-                  <div class="pt-2">
-                    <button type="button" id="btnSingleNinSearch" onclick="handleNinSearchClick()"
-                      class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-normal text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                <!-- ── ROW 1: DB Search (full width) + Fullscreen + ℹ button ── -->
+                <div class="flex items-center gap-2.5">
+                  <!-- DB Search Input (full width flex) with live suggestions -->
+                  <div class="relative flex-1">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                       </svg>
-                      <span>Search NIN</span>
-                    </button>
+                    </div>
+                    <input type="text" id="portalSearchQuery"
+                      placeholder="Search previously saved in database by name or NIN..."
+                      autocomplete="off"
+                      oninput="_onPortalSearchQueryInput(this.value)"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                      class="w-full bg-white hover:bg-slate-50 border border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-300 rounded-xl pl-9 pr-3 py-2 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                    <!-- Live Suggestion Dropdown -->
+                    <div id="portalSearchDropdown" class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-52 overflow-y-auto"></div>
                   </div>
-                </div>
-
-              </div>
-
-              <!-- ── Step Workflow Sections (Full Width below 3 columns, shown dynamically) ── -->
-              <!-- Step Indicator -->
-              <div id="portalStepIndicator"
-                class="hidden flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-wider py-2 bg-slate-50 border border-slate-200 rounded-xl shadow-2xs">
-                <span id="portalStepInd1" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">1. Captcha</span>
-                <span class="text-slate-400">→</span>
-                <span id="portalStepInd2" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">2. OTP</span>
-                <span class="text-slate-400">→</span>
-                <span id="portalStepInd3" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">3. Download</span>
-                <span class="text-slate-400">→</span>
-                <span id="portalStepInd4" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">4. Token Scan</span>
-              </div>
-
-              <!-- Unified Captcha Station -->
-              <div id="portalCaptchaInputRow" class="hidden fade-in bg-slate-50 border border-slate-200 rounded-xl p-3.5 shadow-xs space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                    <span class="text-xs font-semibold text-slate-800 uppercase tracking-wide">Enter Security Captcha</span>
-                  </div>
-                  <button type="button" onclick="resetPortalToInitial()" title="Cancel Captcha"
-                    class="text-slate-400 hover:text-slate-600 text-xs font-medium px-2 py-0.5 rounded hover:bg-slate-200/60 transition-all cursor-pointer">
-                    ✕ Cancel
-                  </button>
-                </div>
-
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                  <div id="portalCaptchaContainer" class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1.5 shadow-2xs shrink-0">
-                    <img id="portalCaptchaImg" src="" alt="Captcha" class="h-14 w-44 object-contain rounded bg-slate-50" />
-                    <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha Image"
-                      class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg transition-all border border-slate-200 cursor-pointer">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
-                      </svg>
-                    </button>
-                  </div>
-
-                  <div class="flex-1 relative">
-                    <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code" autocomplete="off"
-                      onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestOtpClick();}"
-                      class="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-lg py-2 px-3 text-slate-900 font-bold tracking-widest text-sm transition-all shadow-2xs h-[38px]" />
-                  </div>
-
-                  <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
-                    class="bg-amber-100 hover:bg-amber-200 active:scale-[0.98] text-amber-900 font-semibold px-6 py-2 rounded-lg border border-amber-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <!-- Fullscreen button -->
+                  <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')" title="Toggle Full Screen (Cmd+S / Ctrl+S)"
+                    class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[38px]">
+                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>
-                    <span>Request OTP</span>
+                    <span class="hidden sm:inline text-xs">Fullscreen</span>
+                    <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200 hidden sm:inline">⌘S</kbd>
+                  </button>
+                  <!-- ℹ button -->
+                  <button type="button" onclick="openNepaliCharInfo()"
+                    title="View collected Nepali characters from voterlist"
+                    class="w-[38px] h-[38px] rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex items-center justify-center transition-all shadow-2xs cursor-pointer shrink-0">
+                    ℹ
                   </button>
                 </div>
-              </div>
 
-              <!-- OTP Input Step -->
-              <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-medium text-slate-700">OTP Sent:</span>
-                  <span id="portalOtpInfoText" class="font-mono text-slate-600 text-[11px]">Masked Mobile: -, NIN: -</span>
+                <!-- ── ROW 2: Search by Name (Amber Theme) & Search by NIN (Emerald Theme) side-by-side ── -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch w-full">
+
+                  <!-- ── COLUMN A: Search by Name (Amber Theme) ── -->
+                  <div id="nidGatewayMainFormContainer" class="bg-amber-50/40 border border-amber-100 rounded-2xl p-4 shadow-2xs flex flex-col justify-between h-full space-y-3">
+                    <div>
+                      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-100">
+                        <div class="flex items-center gap-2 text-xs font-normal text-slate-800">
+                          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                          <span class="text-xs font-normal text-slate-800">Search by Name</span>
+                        </div>
+                        <span class="text-[10px] font-normal text-amber-800 bg-amber-100/60 px-2 py-0.5 rounded-md border border-amber-200/50">Gateway API</span>
+                      </div>
+
+                      <div class="space-y-2.5">
+                        <!-- Field 1: Full Name (English) -->
+                        <div id="portalFullNameEn_fieldWrap" class="relative">
+                          <label class="block text-xs font-normal text-slate-600 mb-1">Full Name (English)</label>
+                          <div class="relative flex items-center">
+                            <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA"
+                              autocomplete="off"
+                              oninput="onPortalFieldInputChanged('portalFullNameEn')"
+                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                            <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameEn')" title="Add another English Name variant"
+                              class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
+                              +
+                            </button>
+                          </div>
+                          <div id="portalFullNameEn_variants" class="space-y-1.5 mt-1.5"></div>
+                        </div>
+
+                        <!-- Field 2: Full Name (Nepali) -->
+                        <div id="portalFullNameNp_fieldWrap" class="relative">
+                          <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-normal text-slate-600">Full Name (Nepali)</label>
+                            <span id="portalNpSuggestBadge" class="hidden"></span>
+                          </div>
+                          <div class="relative flex items-center">
+                            <input type="text" id="portalFullNameNp" placeholder="सुजल मेहता"
+                              autocomplete="off"
+                              oninput="onPortalFieldInputChanged('portalFullNameNp')"
+                              onfocus="setConverterNepaliTarget(this)"
+                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                            <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameNp')" title="Add another Nepali Name variant"
+                              class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
+                              +
+                            </button>
+                          </div>
+                          <div id="portalFullNameNp_variants" class="space-y-1.5 mt-1.5"></div>
+                        </div>
+
+                        <!-- Field 3 & 4: Date of Birth (BS) & Citizenship Issue Date (BS) -->
+                        <div class="grid grid-cols-2 gap-2">
+                          <div id="portalDobLoc_fieldWrap" class="relative">
+                            <label class="block text-xs font-normal text-slate-600 mb-1">DOB (BS)</label>
+                            <div class="relative flex items-center">
+                              <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०"
+                                autocomplete="off"
+                                oninput="onPortalFieldInputChanged('portalDobLoc')"
+                                class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-2.5 py-1.5 pr-6 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                              <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalDobLoc')" title="Add another Date of Birth variant"
+                                class="absolute right-1 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
+                                +
+                              </button>
+                            </div>
+                            <div id="portalDobLoc_variants" class="space-y-1.5 mt-1.5"></div>
+                          </div>
+
+                          <div id="portalCcnIssuingDateLoc_fieldWrap" class="relative">
+                            <label class="block text-xs font-normal text-slate-600 mb-1 truncate" title="Citizenship Issue Date (BS)">Citizenship Date</label>
+                            <div class="relative flex items-center">
+                              <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५"
+                                autocomplete="off"
+                                oninput="onPortalFieldInputChanged('portalCcnIssuingDateLoc')"
+                                class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-2.5 py-1.5 pr-6 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                              <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalCcnIssuingDateLoc')" title="Add another Citizenship Date variant"
+                                class="absolute right-1 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
+                                +
+                              </button>
+                            </div>
+                            <div id="portalCcnIssuingDateLoc_variants" class="space-y-1.5 mt-1.5"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Field 5: Proceed Button at bottom -->
+                    <div class="pt-2">
+                      <button type="button" id="btnPortalInitProcess" onclick="handlePortalProceedClick()"
+                        class="w-full bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-normal text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                        <span id="btnPortalProceedText">Proceed</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- ── COLUMN B: Search by NIN (Emerald Theme) ── -->
+                  <div id="voterNinSearchPanel" class="bg-emerald-50/40 border border-emerald-100 rounded-2xl p-4 shadow-2xs flex flex-col justify-between h-full space-y-3">
+                    <div>
+                      <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-emerald-100">
+                        <div class="flex items-center gap-2 text-xs font-normal text-slate-800">
+                          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <span class="text-xs font-normal text-slate-800">Search by NIN</span>
+                        </div>
+                        <span class="text-[10px] font-normal text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md border border-emerald-200/50">Direct Query</span>
+                      </div>
+
+                      <div class="space-y-2.5">
+                        <!-- Field 1: NIN Number -->
+                        <div id="voterNidNin_fieldWrap" class="relative">
+                          <label class="block text-xs font-normal text-slate-600 mb-1">NIN Number</label>
+                          <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
+                            autocomplete="off"
+                            onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                        </div>
+
+                        <!-- Field 2 & 3: Date of Birth (BS & AD) -->
+                        <div class="grid grid-cols-2 gap-2">
+                          <div id="voterNinDobBs_fieldWrap" class="relative">
+                            <label class="block text-xs font-normal text-slate-600 mb-1">DOB (BS)</label>
+                            <input type="text" id="voterNinDobBs" placeholder="YYYY-MM-DD" maxlength="10"
+                              autocomplete="off"
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-2.5 py-1.5 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                          </div>
+
+                          <div>
+                            <label class="block text-xs font-normal text-slate-600 mb-1">DOB (AD)</label>
+                            <input type="text" id="voterNinDob" placeholder="YYYY-MM-DD" maxlength="10"
+                              autocomplete="off"
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-2.5 py-1.5 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                          </div>
+                        </div>
+
+                        <!-- Field 4: First Name Only -->
+                        <div>
+                          <label class="block text-xs font-normal text-slate-600 mb-1">First Name Only</label>
+                          <input type="text" id="voterNinFirstname" placeholder="SUJAL"
+                            autocomplete="off"
+                            onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
+                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Field 5: Search Button at bottom -->
+                    <div class="pt-2">
+                      <button type="button" id="btnSingleNinSearch" onclick="handleNinSearchClick()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-normal text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <span>Search NIN</span>
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
-                <div class="flex gap-2">
-                  <input type="text" id="portalOtpCode" placeholder="Enter 6-digit OTP code"
-                    onkeydown="if(event.key==='Enter'){event.preventDefault();verifyPortalOtp();}"
-                    class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 font-mono text-sm tracking-widest h-[38px]" />
-                  <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-2 rounded-lg transition-all shadow-sm shrink-0 uppercase text-xs cursor-pointer h-[38px]">
-                    Verify OTP
+
+                <!-- ── Step Workflow Sections (Shown dynamically) ── -->
+                <!-- Step Indicator -->
+                <div id="portalStepIndicator"
+                  class="hidden flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-wider py-2 bg-slate-50 border border-slate-200 rounded-xl shadow-2xs">
+                  <span id="portalStepInd1" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">1. Captcha</span>
+                  <span class="text-slate-400">→</span>
+                  <span id="portalStepInd2" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">2. OTP</span>
+                  <span class="text-slate-400">→</span>
+                  <span id="portalStepInd3" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">3. Download</span>
+                  <span class="text-slate-400">→</span>
+                  <span id="portalStepInd4" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">4. Token Scan</span>
+                </div>
+
+                <!-- Unified Captcha Station (ENLARGED FOR CLEAR UNDERSTANDING) -->
+                <div id="portalCaptchaInputRow" class="hidden fade-in bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-xs space-y-3">
+                  <div class="flex items-center justify-between pb-1 border-b border-slate-200">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+                      <span class="text-xs font-normal text-slate-800 uppercase tracking-wide">Security Verification Captcha</span>
+                    </div>
+                    <button type="button" onclick="resetPortalToInitial()" title="Cancel Captcha"
+                      class="text-slate-400 hover:text-slate-600 text-xs font-normal px-2.5 py-1 rounded-lg hover:bg-slate-200/60 transition-all cursor-pointer">
+                      ✕ Cancel
+                    </button>
+                  </div>
+
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <!-- Enlarged Captcha image and refresh button -->
+                    <div id="portalCaptchaContainer" class="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-2 shadow-2xs shrink-0">
+                      <img id="portalCaptchaImg" src="" alt="Captcha" class="h-20 sm:h-24 w-56 sm:w-72 object-contain rounded-lg bg-white" />
+                      <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha Image"
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2.5 rounded-lg transition-all border border-slate-200 cursor-pointer h-12 w-12 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- Captcha Code Input -->
+                    <div class="flex-1 relative">
+                      <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code" autocomplete="off"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestOtpClick();}"
+                        class="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-xl py-3 px-4 text-slate-900 font-mono text-base tracking-widest transition-all shadow-2xs h-[48px] placeholder:font-normal placeholder:tracking-normal placeholder:text-xs" />
+                    </div>
+
+                    <!-- Request OTP button -->
+                    <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
+                      class="bg-amber-100 hover:bg-amber-200 active:scale-[0.98] text-amber-900 font-normal px-6 py-2.5 rounded-xl border border-amber-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[48px]">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span>Request OTP</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- OTP Input Step -->
+                <div id="portalOtpRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-normal text-slate-700">OTP Sent:</span>
+                    <span id="portalOtpInfoText" class="font-mono text-slate-600 text-[11px]">Masked Mobile: -, NIN: -</span>
+                  </div>
+                  <div class="flex gap-2">
+                    <input type="text" id="portalOtpCode" placeholder="Enter 6-digit OTP code"
+                      onkeydown="if(event.key==='Enter'){event.preventDefault();verifyPortalOtp();}"
+                      class="flex-1 bg-white border border-slate-300 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 font-mono text-sm tracking-widest h-[38px]" />
+                    <button type="button" id="btnPortalVerifyOtp" onclick="verifyPortalOtp()"
+                      class="bg-emerald-600 hover:bg-emerald-700 text-white font-normal px-6 py-2 rounded-lg transition-all shadow-sm shrink-0 uppercase text-xs cursor-pointer h-[38px]">
+                      Verify OTP
+                    </button>
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="button" id="btnPortalResendOtp" onclick="loadPortalCaptcha(false)"
+                      class="text-slate-600 hover:text-slate-900 font-normal text-xs transition-all cursor-pointer underline">
+                      Resend OTP / Start Over
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Download Ready Step -->
+                <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg text-emerald-800 font-normal text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd"></path>
+                    </svg>
+                    <span>Authentication Successful! Ready to download identity record.</span>
+                  </div>
+                  <button type="button" id="btnPortalDownloadNid" onclick="executePortalDownload()"
+                    class="w-full bg-slate-900 hover:bg-black text-white font-normal py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md cursor-pointer">
+                    <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Download NID Card PDF
                   </button>
                 </div>
-                <div class="flex justify-end">
-                  <button type="button" id="btnPortalResendOtp" onclick="loadPortalCaptcha(false)"
-                    class="text-slate-600 hover:text-slate-900 font-normal text-xs transition-all cursor-pointer underline">
-                    Resend OTP / Start Over
+
+                <!-- Manual Scanned Token Entry Step -->
+                <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
+                  <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
+                    <span class="font-normal block mb-1">⚠️ PDF Downloaded Successfully!</span>
+                    Open the downloaded PDF card, scan the QR code inside, copy the text/URL, and paste it below to verify and update the database.
+                    <span class="text-rose-600 font-normal block mt-0.5">Do not close or refresh this page.</span>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <span class="font-normal text-slate-700 text-xs">Pasted Scanned QR URL / Token:</span>
+                    <textarea id="portalScannedTokenVal" rows="2" placeholder="Paste the full scanned QR URL here..."
+                      class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-slate-800 transition-all font-normal"></textarea>
+                  </div>
+                  <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
+                    class="w-full bg-slate-900 hover:bg-black text-white font-normal py-2.5 rounded-xl transition-all tracking-wider uppercase text-xs flex items-center justify-center gap-2 cursor-pointer">
+                    Verify &amp; Save Token
                   </button>
                 </div>
-              </div>
 
-              <!-- Download Ready Step -->
-              <div id="portalDownloadRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-                <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg text-emerald-800 font-medium text-xs flex items-center gap-2">
-                  <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clip-rule="evenodd"></path>
-                  </svg>
-                  <span>Authentication Successful! Ready to download identity record.</span>
+                <!-- Success Row -->
+                <div id="portalSuccessRow" class="hidden space-y-3 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
+                  <div class="w-12 h-12 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="text-sm font-normal text-emerald-700">Verification &amp; Update Complete!</div>
+                    <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and database status marked Done.</div>
+                    <div class="text-[10px] text-slate-400 mt-1">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
+                  </div>
                 </div>
-                <button type="button" id="btnPortalDownloadNid" onclick="executePortalDownload()"
-                  class="w-full bg-slate-900 hover:bg-black text-white font-medium py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md cursor-pointer">
-                  <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                  </svg>
-                  Download NID Card PDF
-                </button>
-              </div>
 
-              <!-- Manual Scanned Token Entry Step -->
-              <div id="portalManualTokenRow" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
-                <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
-                  <span class="font-semibold block mb-1">⚠️ PDF Downloaded Successfully!</span>
-                  Open the downloaded PDF card, scan the QR code inside, copy the text/URL, and paste it below to verify and update the database.
-                  <span class="text-rose-600 font-medium block mt-0.5">Do not close or refresh this page.</span>
+                <!-- ── Clear All + Verify All ── -->
+                <div class="flex items-center justify-end gap-2.5 pt-1">
+                  <button type="button" onclick="clearPortalAllFields()" title="Clear all input fields"
+                    class="group bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-normal text-xs px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.97] h-[38px]">
+                    <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Clear All</span>
+                  </button>
+                  <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()" title="Verify all records in database"
+                    class="bg-sky-100 hover:bg-sky-200 active:scale-[0.97] text-sky-900 font-normal text-xs px-5 py-2 rounded-xl border border-sky-300 shadow-2xs transition-all flex items-center gap-2 cursor-pointer h-[38px]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Verify All (Bulk)</span>
+                  </button>
                 </div>
-                <div class="flex flex-col gap-1">
-                  <span class="font-medium text-slate-700 text-xs">Pasted Scanned QR URL / Token:</span>
-                  <textarea id="portalScannedTokenVal" rows="2" placeholder="Paste the full scanned QR URL here..."
-                    class="w-full bg-white border border-slate-300 rounded-lg p-2.5 font-mono text-xs text-slate-800 focus:outline-none focus:border-slate-800 transition-all font-normal"></textarea>
-                </div>
-                <button type="button" id="btnPortalScannedTokenSubmit" onclick="verifyAndSavePortalScannedToken()"
-                  class="w-full bg-slate-900 hover:bg-black text-white font-medium py-2.5 rounded-xl transition-all tracking-wider uppercase text-xs flex items-center justify-center gap-2 cursor-pointer">
-                  Verify &amp; Save Token
-                </button>
-              </div>
 
-              <!-- Success Row -->
-              <div id="portalSuccessRow" class="hidden space-y-3 text-center p-6 bg-slate-50 rounded-xl border border-slate-200 fade-in">
-                <div class="w-12 h-12 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center mx-auto">
-                  <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
+                <!-- ── PERMUTATION: Hidden legacy (kept for JS compatibility) ── -->
+                <div id="portalPermutationPanel" class="hidden">
+                  <span id="portalPermutationSubtitle"></span>
+                  <span id="portalPermutationBadge"></span>
+                  <div id="portalPermutationProgressContainer"><span id="portalPermutationProgressText"></span><div id="portalPermutationProgressBar"></div></div>
+                  <div id="portalPermutationStatsRow"><div id="permStatTotal"></div><div id="permStatActive"></div><div id="permStatSuccess"></div><div id="permStatFailed"></div></div>
+                  <div id="portalPermutationNotice"></div>
+                  <div id="portalPermutationCardsList"></div>
                 </div>
-                <div>
-                  <div class="text-sm font-semibold text-emerald-700">Verification &amp; Update Complete!</div>
-                  <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and database status marked Done.</div>
-                  <div class="text-[10px] text-slate-400 mt-1">Resetting download portal in <span id="portalCountdownTimer">5</span>s...</div>
-                </div>
-              </div>
 
-              <!-- ── Clear All + Verify All (below 3 columns) ── -->
-              <div class="flex items-center justify-end gap-2.5 pt-1">
-                <button type="button" onclick="clearPortalAllFields()" title="Clear all input fields"
-                  class="group bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 font-normal text-xs px-4 py-2 rounded-xl border border-slate-200 hover:border-slate-300 shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.97] h-[38px]">
-                  <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  <span>Clear All</span>
-                </button>
-                <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()" title="Verify all records in database"
-                  class="bg-sky-100 hover:bg-sky-200 active:scale-[0.97] text-sky-900 font-normal text-xs px-5 py-2 rounded-xl border border-sky-300 shadow-2xs transition-all flex items-center gap-2 cursor-pointer h-[38px]">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Verify All (Bulk)</span>
-                </button>
+                <!-- ── RESPONSE ALERT: shows result info after a successful search/verify ── -->
+                <div id="portalResponseAlert" class="hidden animate-fade-in">
+                  <!-- filled dynamically by showPortalResponseAlert() -->
+                </div>
+
+                <!-- Hidden legacy elements -->
+                <div class="hidden">
+                  <span id="captchaQuestion">8 - 6 = ?</span>
+                  <input type="number" id="captchaInput" />
+                  <div id="portalNpSuggestionsContainer"></div>
+                  <div id="portalNpSuggestionsPills"></div>
+                  <input type="hidden" id="portalSearchNin" />
+                  <div id="voterQuickSearchDropdown"></div>
+                  <input type="hidden" id="voterQuickSearch" />
+                  <div id="portalInitialActionBtnRow"></div>
+                </div>
+
               </div>
+            </div>
+          </form>              </div>
 
               <!-- ── PERMUTATION: Hidden legacy (kept for JS compatibility) ── -->
               <div id="portalPermutationPanel" class="hidden">
@@ -4295,7 +4332,7 @@
         if (portalSideCol) portalSideCol.classList.add("hidden");
       } else if (targetViewTab === "portal") {
         mainGrid.className =
-          "block w-[90vw] max-w-[90vw] mx-auto flex-1 lg:overflow-hidden";
+          "block w-[96vw] max-w-[96vw] mx-auto flex-1 lg:overflow-hidden";
         leftColumn.className =
           "w-full space-y-4 lg:h-full lg:overflow-y-auto";
         rightColumn.className =
@@ -8575,15 +8612,6 @@
         document.getElementById("portalCaptchaInputRow").classList.add("hidden");
         document.getElementById("portalOtpRow").classList.remove("hidden");
         showPortalStep(2);
-
-        // Show response info alert
-        showPortalResponseAlert('success', {
-          _title: '✅ OTP Sent Successfully',
-          'Masked Mobile': data.maskedMobile || '—',
-          'NIN': portalNinValue || data.nin || '—',
-          'Transaction ID': portalOtpTransactionId || '—',
-          'Status': data.code || 'OTP_SENT',
-        });
 
         // Only auto-search voter-list data for bulk verification flow.
         if (isBulkMode) {
