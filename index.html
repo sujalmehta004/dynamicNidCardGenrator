@@ -68,6 +68,31 @@
       animation: fadeIn 0.3s ease forwards;
     }
 
+    @keyframes _toastIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1);    }
+    }
+    @keyframes _toastOut {
+      from { opacity: 1; transform: translateY(0)   scale(1);    }
+      to   { opacity: 0; transform: translateY(24px) scale(0.97); }
+    }
+
+    /* Nepali converter pill hover magnify */
+    .quick-conv-pill {
+      transform-origin: left center;
+      transition: transform 0.18s cubic-bezier(.4,0,.2,1),
+                  font-size 0.18s cubic-bezier(.4,0,.2,1),
+                  background 0.15s, border-color 0.15s, box-shadow 0.15s;
+      position: relative;
+      z-index: 0;
+    }
+    .quick-conv-pill:hover {
+      transform: scale(1.35);
+      font-size: 1rem;
+      z-index: 10;
+      box-shadow: 0 4px 18px rgba(14,165,233,0.18);
+    }
+
     body {
       font-family: "Plus Jakarta Sans", sans-serif;
     }
@@ -647,7 +672,7 @@
         </section>
 
         <section id="paneWorkspacePortal"
-          class="space-y-4 hidden">
+          class="flex flex-col items-center justify-center hidden min-h-[70vh]">
 
             <!-- Hidden compatibility elements for existing JS selectors -->
             <div class="hidden">
@@ -664,9 +689,9 @@
               <div id="voterQuickSearchDropdown"></div>
             </div>
 
-          <form id="portalForm" class="space-y-4 text-xs" onsubmit="event.preventDefault()">
+          <form id="portalForm" class="space-y-4 text-xs w-full max-w-6xl" onsubmit="event.preventDefault()">
             <!-- NID Portal Gateway Tab Content -->
-            <div id="portalSubTabNidContent" class="space-y-3">
+            <div id="portalSubTabNidContent" class="space-y-3 flex flex-col justify-center min-h-full">
 
               <!-- ── TOP ROW: DB Search (full width) + Fullscreen + ℹ button ── -->
               <div class="flex items-center gap-2">
@@ -706,14 +731,6 @@
 
               <!-- ── CONTAINER 1: Search by NIN (Light Green Theme) ── -->
               <div id="voterNinSearchPanel" class="bg-emerald-50/60 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-                <div class="flex items-center justify-between mb-0.5">
-                  <span class="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
-                    <span>🪪</span> Search by NIN Number
-                  </span>
-                  <span class="text-[10px] text-emerald-800/80 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full border border-emerald-200">
-                    Voter Records Query
-                  </span>
-                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-start">
                   <!-- Field 1: NIN Number -->
@@ -768,22 +785,9 @@
 
               <!-- ── CONVERTER: English to Nepali (Full Width, Sky Theme, between NIN and Name) ── -->
               <div id="portalQuickConverterBox" class="w-full bg-sky-50/70 border border-sky-200/90 rounded-2xl p-3 sm:p-3.5 shadow-xs space-y-2">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-sky-950 uppercase tracking-wide flex items-center gap-1.5">
-                      <span>⌨️</span> English to Nepali Converter
-                    </span>
-                    <span class="text-[9px] text-sky-700/80 bg-sky-100/90 px-2 py-0.5 rounded-full border border-sky-200 font-semibold">
-                      Full Width · Smart Target Fill
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <div id="quickConverterCopyNotice" class="hidden text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
-                      <span id="quickConverterCopyNoticeText">Filled!</span>
-                    </div>
-                    <span class="text-[9px] text-sky-700/70 bg-white/90 px-2 py-0.5 rounded-full border border-sky-200 font-medium hidden sm:inline">
-                      ↑↓ navigate · enter / click to fill target field
-                    </span>
+                <div class="flex items-center justify-end">
+                  <div id="quickConverterCopyNotice" class="hidden text-[10px] text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                    <span id="quickConverterCopyNoticeText">Filled!</span>
                   </div>
                 </div>
 
@@ -804,14 +808,6 @@
 
               <!-- ── CONTAINER 2: Search by Name (Light Orange Theme) ── -->
               <div id="nidGatewayMainFormContainer" class="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-                <div class="flex items-center justify-between mb-0.5">
-                  <span class="text-xs font-bold text-amber-950 uppercase tracking-wide flex items-center gap-1.5">
-                    <span>👤</span> Search by Citizen Name &amp; Verification Details
-                  </span>
-                  <span class="text-[10px] text-amber-800/80 font-semibold bg-amber-100/70 px-2 py-0.5 rounded-full border border-amber-200">
-                    Use + for variants
-                  </span>
-                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 items-start">
                   <!-- Field 1: Full Name (English) -->
@@ -922,7 +918,7 @@
 
                   <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
                     <div id="portalCaptchaContainer" class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1.5 shadow-2xs shrink-0">
-                      <img id="portalCaptchaImg" src="" alt="Captcha" class="h-9 w-28 object-contain rounded bg-slate-50" />
+                      <img id="portalCaptchaImg" src="" alt="Captcha" class="h-14 w-44 object-contain rounded bg-slate-50" />
                       <button type="button" onclick="loadPortalCaptcha(isBulkMode)" title="Refresh Captcha Image"
                         class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2 rounded-lg transition-all border border-slate-200 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -939,7 +935,7 @@
                     </div>
 
                     <button type="button" id="btnPortalRequestOtp" onclick="handleRequestOtpClick()"
-                      class="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold px-6 py-2 rounded-lg transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
+                      class="bg-amber-100 hover:bg-amber-200 active:scale-[0.98] text-amber-900 font-semibold px-6 py-2 rounded-lg border border-amber-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
@@ -1034,13 +1030,11 @@
                   <span>Clear All</span>
                 </button>
                 <button type="button" id="btnPortalVerifyAll" onclick="startVerifyAllFlow()" title="Verify all records in database"
-                  class="relative overflow-hidden bg-gradient-to-r from-sky-400 to-cyan-500 hover:from-sky-500 hover:to-cyan-600 active:scale-[0.97] text-white font-bold text-xs px-5 py-2 rounded-xl shadow-md hover:shadow-sky-300/50 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer">
-                  <!-- shimmer -->
-                  <span class="absolute inset-0 bg-white/20 -skew-x-12 -translate-x-full hover:translate-x-full transition-transform duration-700 pointer-events-none"></span>
-                  <svg class="w-3.5 h-3.5 relative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  class="bg-sky-100 hover:bg-sky-200 active:scale-[0.97] text-sky-900 font-semibold text-xs px-5 py-2 rounded-xl border border-sky-300 shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span class="relative">Verify All (Bulk)</span>
+                  <span>Verify All (Bulk)</span>
                 </button>
               </div>
 
@@ -3421,9 +3415,9 @@
           : 'bg-white text-slate-800 border-sky-200/90 hover:border-sky-400 hover:bg-sky-50 shadow-2xs';
         return `
           <button type="button" tabindex="-1" onclick="selectConverterSuggestion('${escapeHtml(s.text)}', this)"
-            class="quick-conv-pill px-3 py-1.5 rounded-xl border text-xs font-serif font-medium transition-all cursor-pointer flex items-center gap-1.5 ${stateClasses}"
-            title="Click or press Enter to select '${escapeHtml(s.text)}'">
-            <span>${escapeHtml(s.text)}</span>
+            class="quick-conv-pill px-3 py-1.5 rounded-xl border font-serif font-medium cursor-pointer flex items-center gap-1.5 transform-gpu ${stateClasses}"
+            title="${escapeHtml(s.text)}">
+            <span class="text-sm">${escapeHtml(s.text)}</span>
           </button>
         `;
       }).join('');
@@ -8400,6 +8394,67 @@
       `).join('');
     }
 
+    // ── 5-second toast for winning permutation payload ──────────────────────
+    function showPermToast(payload) {
+      // Remove any existing toast
+      const existing = document.getElementById('_permToast');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = '_permToast';
+      toast.style.cssText = [
+        'position:fixed',
+        'bottom:24px',
+        'right:24px',
+        'z-index:99999',
+        'max-width:320px',
+        'background:#f0fdf4',
+        'border:1.5px solid #86efac',
+        'border-radius:14px',
+        'padding:14px 16px',
+        'box-shadow:0 8px 32px rgba(0,0,0,0.13)',
+        'font-family:inherit',
+        'animation:_toastIn 0.35s cubic-bezier(.4,0,.2,1) both',
+      ].join(';');
+
+      toast.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:18px">✅</span>
+          <span style="font-size:12px;font-weight:700;color:#166534;letter-spacing:.02em">OTP Sent — Request Payload</span>
+          <button onclick="this.closest('#_permToast').remove()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#6b7280;font-size:16px;line-height:1;padding:0">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:11px;color:#374151">
+          <span style="color:#6b7280;font-weight:600">Name (EN)</span>
+          <span style="font-weight:700;color:#166534">${escapeHtml(payload.nameEn)}</span>
+          <span style="color:#6b7280;font-weight:600">Name (NP)</span>
+          <span style="font-weight:600">${escapeHtml(payload.nameNp)}</span>
+          <span style="color:#6b7280;font-weight:600">DOB (BS)</span>
+          <span style="font-weight:600;font-family:monospace">${escapeHtml(payload.dob)}</span>
+          <span style="color:#6b7280;font-weight:600">Cit. Date</span>
+          <span style="font-weight:600;font-family:monospace">${escapeHtml(payload.citDate)}</span>
+        </div>
+        <div style="margin-top:8px;height:3px;background:#dcfce7;border-radius:99px;overflow:hidden">
+          <div id="_permToastBar" style="height:100%;width:100%;background:#22c55e;border-radius:99px;transition:width 5s linear"></div>
+        </div>
+      `;
+
+      document.body.appendChild(toast);
+
+      // Start progress bar drain
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const bar = document.getElementById('_permToastBar');
+          if (bar) bar.style.width = '0%';
+        });
+      });
+
+      // Auto-dismiss after 5s with slide-out
+      setTimeout(() => {
+        toast.style.animation = '_toastOut 0.3s cubic-bezier(.4,0,.2,1) both';
+        setTimeout(() => toast.remove(), 320);
+      }, 5000);
+    }
+
     // Main Proceed handler — routes to single or multi-permutation
     async function handlePortalProceedClick() {
       const combos = generatePortalPermutations();
@@ -8410,37 +8465,16 @@
       }
 
       // Multi-permutation mode
-      // First, need captcha — load it
       const captchaRowVisible = !document.getElementById('portalCaptchaInputRow')?.classList.contains('hidden');
       const captchaVal = (document.getElementById('portalCaptchaCode')?.value || '').trim();
 
       if (captchaRowVisible && captchaVal) {
-        // Captcha already entered — dispatch permutations immediately
         return dispatchPortalPermutations(combos, captchaVal);
       }
 
-      // Need to load captcha first
-      const panel = document.getElementById('portalPermutationPanel');
-      if (panel) {
-        panel.classList.remove('hidden');
-        const notice = document.getElementById('portalPermutationNotice');
-        if (notice) {
-          notice.textContent = `⚡ ${combos.length} combinations ready. Enter the captcha code below then click "Request OTP" to dispatch all combinations in parallel.`;
-          notice.classList.remove('hidden');
-        }
-      }
-
-      // Populate preview cards
+      // Store combos so captcha submit can pick them up
       _initPermState(combos);
       _renderPermCards(combos);
-
-      // Show progress + stats rows
-      document.getElementById('portalPermutationProgressContainer')?.classList.remove('hidden');
-      document.getElementById('portalPermutationStatsRow')?.classList.remove('hidden');
-      const badge = document.getElementById('portalPermutationBadge');
-      if (badge) badge.textContent = `${combos.length} Combinations`;
-
-      // Store combos in a temp global so captcha submit can pick them up
       window._pendingPortalPermutations = combos;
 
       // Load captcha (single mode to get one captcha for all)
@@ -8450,7 +8484,7 @@
       const btn = document.getElementById('btnPortalRequestOtp');
       if (btn) {
         btn.innerText = `Send ${combos.length} Requests`;
-        btn.className = 'bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase';
+        btn.className = 'bg-sky-100 hover:bg-sky-200 active:scale-[0.98] text-sky-900 font-semibold px-6 py-2 rounded-lg border border-sky-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]';
         btn.onclick = async function() {
           const cc = document.getElementById('portalCaptchaCode')?.value.trim();
           if (!cc) { alert('Please enter the captcha code first.'); return; }
@@ -8463,22 +8497,10 @@
     async function dispatchPortalPermutations(combos, captchaCode) {
       if (!combos || !combos.length) return;
 
-      const panel = document.getElementById('portalPermutationPanel');
-      if (panel) panel.classList.remove('hidden');
-
+      // Panel always stays hidden — we only track state silently
       _initPermState(combos);
       _renderPermCards(combos);
 
-      document.getElementById('portalPermutationProgressContainer')?.classList.remove('hidden');
-      document.getElementById('portalPermutationStatsRow')?.classList.remove('hidden');
-
-      const notice = document.getElementById('portalPermutationNotice');
-      if (notice) {
-        notice.textContent = `⚡ Dispatching ${combos.length} parallel requests...`;
-        notice.classList.remove('hidden');
-      }
-
-      // Hide initial action row while requests are in flight
       document.getElementById('portalInitialActionBtnRow')?.classList.add('hidden');
 
       const url = `${API_BASE}/api/request-otp`;
@@ -8549,10 +8571,13 @@
               showPortalStep(2);
               setTimeout(() => document.getElementById('portalOtpCode')?.focus(), 100);
 
-              if (notice) {
-                notice.className = 'text-[10px] p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold';
-                notice.textContent = `✓ Winning combination found: "${combo.fullName}" + "${combo.fullNameNp}". OTP sent!`;
-              }
+              // Show 5-second toast with request payload
+              showPermToast({
+                nameEn: fullName,
+                nameNp: fullNameLoc,
+                dob: dobLoc,
+                citDate: citLoc,
+              });
             }
           } else {
             card.status = 'failed';
@@ -8572,16 +8597,9 @@
 
       await Promise.allSettled(promises);
 
-      // All done
-      if (notice) {
-        if (_permState.success > 0) {
-          notice.className = 'text-[10px] p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800';
-          notice.textContent = `✓ Dispatch complete: ${_permState.success} OTP(s) sent, ${_permState.failed} failed. Enter the OTP code above.`;
-        } else {
-          notice.className = 'text-[10px] p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800';
-          notice.textContent = `✕ All ${_permState.total} combinations failed. Try checking the field values or refreshing the captcha.`;
-          document.getElementById('portalInitialActionBtnRow')?.classList.remove('hidden');
-        }
+      // All done — restore action buttons; success toast already shown
+      if (_permState.success === 0) {
+        document.getElementById('portalInitialActionBtnRow')?.classList.remove('hidden');
       }
       window._pendingPortalPermutations = null;
     }
@@ -8627,7 +8645,7 @@
       const btn = document.getElementById("btnPortalRequestOtp");
       if (btn) {
         btn.innerText = "Send Bulk OTP Requests";
-        btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+        btn.className = "bg-sky-100 hover:bg-sky-200 active:scale-[0.98] text-sky-900 font-semibold px-6 py-2 rounded-lg border border-sky-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]";
       }
 
       // Reset and load captcha in bulk mode
@@ -12099,12 +12117,12 @@
                   document.querySelector("[onclick='handleNinSearch()']");
       if (!btn) return;
       btn.disabled = false;
-      btn.className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-sm flex items-center justify-center gap-2";
+      btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold text-xs py-2 px-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]";
       btn.innerHTML = `
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        Single Search
+        Search NIN
       `;
     }
 
@@ -12147,13 +12165,12 @@
 
       if (btn) {
         btn.disabled = false; // keep clickable so user can click to STOP
-        btn.className = "flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg transition-all tracking-wider uppercase text-[10px] shadow-md flex items-center justify-center gap-2 ring-2 ring-rose-400/50 animate-pulse";
+        btn.className = "w-full bg-emerald-100 hover:bg-emerald-200 active:scale-[0.98] text-emerald-800 font-semibold text-xs py-2 px-3 rounded-xl border border-emerald-300 shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]";
         btn.innerHTML = `
-          <svg class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg class="animate-spin h-3.5 w-3.5 text-emerald-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span class="inline-block w-2.5 h-2.5 bg-white rounded-xs"></span>
           Stop Search
         `;
       }
@@ -16373,7 +16390,7 @@ Your details were incorrect and have been changed/updated, but the update has no
           <input id="nidFlowCaptchaCode" type="text" placeholder="Enter captcha code"
             class="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-400" />
           <button id="btnNidFlowSubmitCaptcha" onclick="submitNidFlowCaptcha()"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow">
+            class="bg-amber-100 hover:bg-amber-200 active:scale-[0.98] text-amber-900 font-semibold px-4 py-2 rounded-lg text-xs border border-amber-300 transition-all shadow-sm">
             Request OTP
           </button>
         </div>
