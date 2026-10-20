@@ -957,9 +957,10 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       }, 150);
     }
 
-    // Saved captcha key (shared with main app)
+    // Saved captcha keys (shared with main app via localStorage + DB)
     const VERIFY_SAVED_CAPTCHA_KEY = 'portal_saved_captcha_code';
     const VERIFY_SAVED_SESSION_KEY = 'portal_saved_captcha_session';
+    const VERIFY_SAVED_TIME_KEY    = 'portal_saved_captcha_time';
 
     function isInvalidCaptchaError(msg) {
       if (!msg) return false;
@@ -967,12 +968,72 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       return m.includes('captcha') || m.includes('invalid code') || m.includes('session expired') || m.includes('session_expired') || m.includes('invalid_captcha');
     }
 
-    function startVerifyFlow() {
+    function _verifyFormatAge(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function _verifyFormatSavedTime(ts) {
+      if (!ts) return '';
+      try {
+        return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (_) {
+        return '';
+      }
+    }
+
+    let _verifyTimerInterval = null;
+
+    function _updateVerifySavedNotice(code, savedTime) {
+      if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
+      const tick = () => {
+        const elapsed = savedTime ? _verifyFormatAge(Date.now() - savedTime) : '00:00';
+        const savedClock = savedTime ? _verifyFormatSavedTime(savedTime) : '';
+        const notice = '\u2713 Using saved captcha from database: <strong style="font-family:monospace;letter-spacing:1px;">' + code + '</strong>' + 
+          ' <span style="font-family:monospace;font-weight:700;margin-left:4px;">(\u23F1\uFE0F ' + elapsed + (savedClock ? ' - ' + savedClock : '') + ')</span>' + 
+          ' <button type="button" onclick="loadCaptcha(true)" style="margin-left:8px;text-decoration:underline;cursor:pointer;font-weight:bold;color:#047857;background:none;border:none;padding:0;">Re-enter</button>';
+        showError(1, notice);
+        const errEl = document.getElementById('step1Error');
+        if (errEl) { errEl.classList.remove('hidden'); errEl.style.color = '#059669'; errEl.style.background = '#ecfdf5'; errEl.style.borderColor = '#6ee7b7'; }
+      };
+      tick();
+      _verifyTimerInterval = setInterval(tick, 1000);
+    }
+
+    async function startVerifyFlow() {
       const btn = document.getElementById('startVerifyBtn');
       openVerifyFlowModal();
 
-      // Try to reuse saved captcha — skip API fetch if available
-      const savedCode = (localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || '').trim();
+      let savedCode = '';
+      let savedTime = 0;
+      let savedSession = '';
+
+      // 1. Check database first to get the shared captcha
+      try {
+        const dbRes = await fetch('/api/captcha-store');
+        if (dbRes.ok) {
+          const dbData = await dbRes.json();
+          if (dbData && dbData.code) {
+            savedCode = dbData.code.trim();
+            savedTime = dbData.savedAt ? new Date(dbData.savedAt).getTime() : Date.now();
+            savedSession = dbData.session || '';
+            try {
+              localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, savedCode);
+              localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(savedTime));
+              if (savedSession) localStorage.setItem(VERIFY_SAVED_SESSION_KEY, savedSession);
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+
+      // 2. Fallback to localStorage if DB was empty
+      if (!savedCode) {
+        savedCode = (localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || '').trim();
+        savedTime = parseInt(localStorage.getItem(VERIFY_SAVED_TIME_KEY) || '0', 10);
+      }
+
       if (savedCode) {
         if (btn) {
           btn.disabled = false;
@@ -984,17 +1045,14 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         const captchaInputEl = document.getElementById('captchaInput');
         if (captchaInputEl) captchaInputEl.value = savedCode;
         document.getElementById('captchaImg').src = '';
-        // Show saved captcha notice
-        showError(1, '\u2713 Using saved captcha: ' + savedCode);
-        const errEl = document.getElementById('step1Error');
-        if (errEl) { errEl.classList.remove('hidden'); errEl.style.color = '#059669'; errEl.style.background = '#ecfdf5'; errEl.style.borderColor = '#6ee7b7'; }
+
+        _updateVerifySavedNotice(savedCode, savedTime);
         resetStartVerifyButton();
-        // Auto-submit immediately
         setTimeout(() => requestOtp(), 300);
         return;
       }
 
-      // No saved captcha — load fresh
+      // No saved captcha anywhere — load fresh
       if (btn) {
         btn.disabled = false;
         btn.classList.add('opacity-70');
@@ -1087,23 +1145,57 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
             errMsg = "Citizen data is not found on the NID portal.";
           }
 
-          // If captcha invalid — clear saved and reload fresh
+          // If captcha invalid — check DB for newer captcha; if same found, clear and give option to enter new captcha
           if (isInvalidCaptchaError(errMsg)) {
-            try { localStorage.removeItem(VERIFY_SAVED_CAPTCHA_KEY); localStorage.removeItem(VERIFY_SAVED_SESSION_KEY); } catch(_) {}
-            showError(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
+            try {
+              const checkDbRes = await fetch('/api/captcha-store');
+              if (checkDbRes.ok) {
+                const checkDb = await checkDbRes.json();
+                if (checkDb && checkDb.code && checkDb.code.trim() !== captchaCode.trim()) {
+                  const newerCode = checkDb.code.trim();
+                  const newerTs = checkDb.savedAt ? new Date(checkDb.savedAt).getTime() : Date.now();
+                  try {
+                    localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, newerCode);
+                    localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(newerTs));
+                    if (checkDb.session) localStorage.setItem(VERIFY_SAVED_SESSION_KEY, checkDb.session);
+                  } catch (_) {}
+                  showError(1, '✓ Found updated captcha from database: ' + newerCode + '. Retrying...');
+                  const captchaInputEl = document.getElementById('captchaInput');
+                  if (captchaInputEl) captchaInputEl.value = newerCode;
+                  setTimeout(() => requestOtp(), 400);
+                  return;
+                }
+              }
+            } catch (_) {}
+
+            // Same captcha found in database (or DB empty) — clear everywhere and prompt for new
+            try {
+              localStorage.removeItem(VERIFY_SAVED_CAPTCHA_KEY);
+              localStorage.removeItem(VERIFY_SAVED_SESSION_KEY);
+              localStorage.removeItem(VERIFY_SAVED_TIME_KEY);
+            } catch (_) {}
+            fetch('/api/captcha-store', { method: 'DELETE' }).catch(() => {});
+            showError(1, '⚠️ Captcha expired or invalid. Please enter the fresh captcha below:');
             const errEl = document.getElementById('step1Error');
             if (errEl) { errEl.style.color = '#dc2626'; errEl.style.background = '#fef2f2'; errEl.style.borderColor = '#fecaca'; }
-            setTimeout(() => loadCaptcha(true), 800);
+            setTimeout(() => loadCaptcha(true), 600);
+            return;
           } else {
             showError(1, 'OTP request failed: ' + errMsg);
           }
           return;
         }
 
-        // Success — persist captcha for next time
+        // Success — persist captcha to localStorage + DB
         try {
           localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, captchaCode);
+          localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(Date.now()));
         } catch(_) {}
+        fetch('/api/captcha-store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: captchaCode, session: savedSession || '' })
+        }).catch(() => {});
 
         verifyTransactionId = data.transactionId || '';
         verifyNin = data.nin || PERSON_NIN;
@@ -1888,7 +1980,8 @@ module.exports = async (req, res) => {
     }
 
     // CASE B: Token exists (no alert) — check validity
-    if (person.token && person.token.trim() !== "") {
+    const allowReverify = Boolean(req.query?.reverify || req.query?.force || req.query?.verify);
+    if (!allowReverify && person.token && person.token.trim() !== "") {
       if (tokenValid) {
         // Valid — redirect to citizen portal
         const redirectUrl = `https://citizenportal.donidcr.gov.np/en/verify?token=${encodeURIComponent(person.token.trim())}`;

@@ -34,6 +34,14 @@
       "destination": "/api/voter-search.js"
     },
     {
+      "source": "/api/captcha-store",
+      "destination": "/api/captcha-store.js"
+    },
+    {
+      "source": "/api/search-by-request-number",
+      "destination": "/api/search-by-request-number.js"
+    },
+    {
       "source": "/verify/:nin",
       "destination": "/api/verify?nin=:nin"
     }

@@ -1263,6 +1263,7 @@
                             <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA"
                               autocomplete="off"
                               oninput="onPortalFieldInputChanged('portalFullNameEn')"
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
                               class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                             <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameEn')" title="Add another English Name variant"
                               class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
@@ -1283,6 +1284,7 @@
                               autocomplete="off"
                               oninput="onPortalFieldInputChanged('portalFullNameNp')"
                               onfocus="setConverterNepaliTarget(this)"
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
                               class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                             <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameNp')" title="Add another Nepali Name variant"
                               class="absolute right-1.5 w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
@@ -1300,6 +1302,7 @@
                               <input type="text" id="portalDobLoc" placeholder="२०६२-०१-२०"
                                 autocomplete="off"
                                 oninput="onPortalFieldInputChanged('portalDobLoc')"
+                                onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
                                 class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-2.5 py-1.5 pr-6 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                               <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalDobLoc')" title="Add another Date of Birth variant"
                                 class="absolute right-1 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
@@ -1315,6 +1318,7 @@
                               <input type="text" id="portalCcnIssuingDateLoc" placeholder="२०७८-०३-२५"
                                 autocomplete="off"
                                 oninput="onPortalFieldInputChanged('portalCcnIssuingDateLoc')"
+                                onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
                                 class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-2.5 py-1.5 pr-6 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                               <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalCcnIssuingDateLoc')" title="Add another Citizenship Date variant"
                                 class="absolute right-1 w-4 h-4 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-normal leading-none cursor-pointer">
@@ -1341,11 +1345,13 @@
                       <div id="savedCaptchaBadge" class="hidden flex items-center justify-between bg-amber-100/70 border border-amber-200/90 px-2.5 py-1 rounded-xl text-xs text-amber-900 mt-2 shadow-2xs">
                         <span class="flex items-center gap-1.5 font-medium text-[11px]">
                           <span>⚡</span>
-                          <span>Saved Captcha: <strong id="savedCaptchaCodeText" class="font-mono font-bold tracking-wider"></strong> <span class="text-[9px] text-amber-700">(Auto-reused)</span></span>
+                          <span>Captcha: <strong id="savedCaptchaCodeText" class="font-mono font-bold tracking-wider"></strong>
+                            <span class="text-[9px] text-amber-600 ml-1" id="captchaAgeTimer"></span>
+                          </span>
                         </span>
                         <button type="button" onclick="clearSavedPortalCaptcha()" title="Clear and enter fresh captcha"
                           class="text-[10px] text-amber-700 hover:text-amber-950 font-bold underline cursor-pointer ml-2">
-                          Change
+                          Refresh
                         </button>
                       </div>
                     </div>
@@ -1363,6 +1369,38 @@
                       </div>
 
                       <div class="space-y-2.5">
+                        <!-- Field 0: Request Number Search -->
+                        <div id="voterNidRequestNumber_fieldWrap" class="relative bg-white/70 p-2.5 rounded-xl border border-emerald-200/90 shadow-2xs">
+                          <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-semibold text-emerald-950">Search by Request Number</label>
+                            <span class="text-[9px] text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono font-bold">Press Enter ↵</span>
+                          </div>
+                          <div class="relative flex items-center">
+                            <input type="text" id="voterNidRequestNumber" placeholder="e.g. 1234567891234556"
+                              autocomplete="off"
+                              oninput="document.getElementById('btnClearRequestNumber')?.classList.toggle('hidden', !this.value.trim())"
+                              onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestNumberSearch();}"
+                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-lg px-2.5 py-1.5 pr-14 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[34px] placeholder:text-slate-400 font-normal" />
+                            <div class="absolute right-1 flex items-center gap-0.5">
+                              <button type="button" id="btnClearRequestNumber" onclick="clearRequestNumberField()" title="Clear Request Number"
+                                class="hidden w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+                                ✕
+                              </button>
+                              <button type="button" id="btnSearchByRequestNumber" onclick="handleRequestNumberSearch()" title="Check Status (Enter)"
+                                class="w-6 h-6 rounded flex items-center justify-center text-emerald-700 hover:text-emerald-950 hover:bg-emerald-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
+                                ↵
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="relative flex items-center py-0.5">
+                          <div class="flex-grow border-t border-emerald-200/60"></div>
+                          <span class="flex-shrink mx-2 text-[9px] text-emerald-700/80 font-bold uppercase tracking-wider">OR Query by NIN</span>
+                          <div class="flex-grow border-t border-emerald-200/60"></div>
+                        </div>
+
                         <!-- Field 1: NIN Number -->
                         <div id="voterNidNin_fieldWrap" class="relative">
                           <label class="block text-xs font-normal text-slate-600 mb-1">NIN Number</label>
@@ -6810,10 +6848,12 @@
       if (typeof resetPortalToInitial === "function") {
         resetPortalToInitial();
       }
-      ["voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
+      ["voterNidRequestNumber", "voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
       });
+      const btnClearReq = document.getElementById("btnClearRequestNumber");
+      if (btnClearReq) btnClearReq.classList.add("hidden");
       const qInput = document.getElementById("quickConverterInput");
       if (qInput) qInput.value = "";
       const qPills = document.getElementById("quickConverterPills");
@@ -7881,19 +7921,21 @@
 
       // ── Try to reuse saved captcha first (skip fetch if not forced) ──
       if (!forceReload) {
-        const savedCode = (localStorage.getItem('portal_saved_captcha_code') || '').trim();
+        const stored = await getSavedPortalCaptcha();
+        const savedCode = stored.code;
         if (savedCode) {
           const captchaCodeEl = document.getElementById('rdCaptchaCode');
           if (captchaCodeEl) captchaCodeEl.value = savedCode;
           const img = document.getElementById('rdCaptchaImg');
           if (img) img.src = '';
-          // Show a subtle indicator that saved captcha is being reused
           const errEl = document.getElementById('rdStep1Err');
           if (errEl) {
             errEl.style.color = '#059669';
             errEl.style.background = '#ecfdf5';
             errEl.style.borderColor = '#6ee7b7';
-            errEl.textContent = '✓ Using saved captcha: ' + savedCode + ' — Click "Validate Captcha & Send OTP" to proceed.';
+            const elapsed = stored.time ? _formatCaptchaAge(Date.now() - stored.time) : '00:00';
+            const savedClock = stored.time ? _formatCaptchaSavedTime(stored.time) : '';
+            errEl.innerHTML = `✓ Using saved captcha: <strong class="font-mono">${savedCode}</strong> <span class="text-xs font-mono font-bold">⏱️ ${elapsed}${savedClock ? ' (' + savedClock + ')' : ''}</span> <button type="button" onclick="rdModalLoadCaptcha(true)" class="text-xs text-blue-700 underline font-semibold ml-2 cursor-pointer">Re-enter</button> — Click "Check — Start Verification" to proceed.`;
             errEl.style.display = 'block';
           }
           const btn = document.getElementById('rdBtnStart');
@@ -7918,7 +7960,6 @@
         const data = await res.json();
         if (!data.image) throw new Error('Invalid captcha response from server.');
         if (img) img.src = 'data:image/png;base64,' + data.image;
-        // Store session if available
         if (data.captchaSession) window._currentCaptchaSession = data.captchaSession;
         setTimeout(() => document.getElementById('rdCaptchaCode')?.focus(), 50);
       } catch (err) {
@@ -7941,7 +7982,7 @@
       // Auto-fill from saved captcha if input is empty
       let captchaCode = (document.getElementById('rdCaptchaCode')?.value || '').trim();
       if (!captchaCode) {
-        captchaCode = (localStorage.getItem('portal_saved_captcha_code') || '').trim();
+        captchaCode = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
         if (captchaCode) {
           const cEl = document.getElementById('rdCaptchaCode');
           if (cEl) cEl.value = captchaCode;
@@ -7962,7 +8003,7 @@
       const btn = document.getElementById('rdBtnSendOtp');
       if (btn) { btn.disabled = true; btn.textContent = 'Validating & Sending OTP…'; }
 
-      const sessionToSend = window._currentCaptchaSession || localStorage.getItem('portal_saved_captcha_session') || '';
+      const sessionToSend = window._currentCaptchaSession || localStorage.getItem(SAVED_CAPTCHA_SESSION_KEY) || '';
       const reqHeaders = { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode };
       if (sessionToSend) reqHeaders['x-captcha-session'] = sessionToSend;
 
@@ -7977,12 +8018,21 @@
 
         if (!res.ok) {
           const errMsg = body.error || body.message || body.code || res.statusText;
-          // If captcha is invalid — clear saved captcha, force fresh reload
           if (rdIsInvalidCaptchaError(errMsg)) {
-            try { localStorage.removeItem('portal_saved_captcha_code'); localStorage.removeItem('portal_saved_captcha_session'); } catch(_) {}
-            if (typeof updateSavedCaptchaIndicator === 'function') updateSavedCaptchaIndicator();
-            rdModalShowErr(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
-            setTimeout(() => rdModalLoadCaptcha(true), 800);
+            handleInvalidCaptchaFlow({
+              failedCode: captchaCode,
+              onFoundNewInDb: (newCode, newSession) => {
+                const cEl = document.getElementById('rdCaptchaCode');
+                if (cEl) cEl.value = newCode;
+                window._currentCaptchaSession = newSession;
+                rdModalShowErr(1, `✓ Found newer captcha "${newCode}" in database. Retrying...`);
+                setTimeout(() => rdModalRequestOtp(), 400);
+              },
+              onNeedNewCaptcha: () => {
+                rdModalShowErr(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
+                setTimeout(() => rdModalLoadCaptcha(true), 600);
+              }
+            });
           } else {
             rdModalShowErr(1, 'OTP request failed: ' + errMsg);
           }
@@ -7992,22 +8042,28 @@
         if (body.code && body.code !== 'OTP_SENT' && body.code !== 'SUCCESS') {
           const codeMsg = body.message || body.code;
           if (rdIsInvalidCaptchaError(codeMsg)) {
-            try { localStorage.removeItem('portal_saved_captcha_code'); localStorage.removeItem('portal_saved_captcha_session'); } catch(_) {}
-            if (typeof updateSavedCaptchaIndicator === 'function') updateSavedCaptchaIndicator();
-            rdModalShowErr(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
-            setTimeout(() => rdModalLoadCaptcha(true), 800);
+            handleInvalidCaptchaFlow({
+              failedCode: captchaCode,
+              onFoundNewInDb: (newCode, newSession) => {
+                const cEl = document.getElementById('rdCaptchaCode');
+                if (cEl) cEl.value = newCode;
+                window._currentCaptchaSession = newSession;
+                rdModalShowErr(1, `✓ Found newer captcha "${newCode}" in database. Retrying...`);
+                setTimeout(() => rdModalRequestOtp(), 400);
+              },
+              onNeedNewCaptcha: () => {
+                rdModalShowErr(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
+                setTimeout(() => rdModalLoadCaptcha(true), 600);
+              }
+            });
           } else {
             rdModalShowErr(1, 'OTP request failed: ' + codeMsg);
           }
           return;
         }
 
-        // Success — save captcha for future reuse
-        if (typeof savePortalCaptcha === 'function') {
-          savePortalCaptcha(captchaCode, sessionToSend);
-        } else {
-          try { localStorage.setItem('portal_saved_captcha_code', captchaCode); } catch(_) {}
-        }
+        // Success — save captcha to DB and localStorage
+        savePortalCaptcha(captchaCode, sessionToSend);
 
         rdModal_txId = body.transactionId || '';
 
@@ -9304,10 +9360,18 @@
       portalDownloadToken = "";
     }
 
+    function clearRequestNumberField() {
+      const el = document.getElementById("voterNidRequestNumber");
+      if (el) { el.value = ""; el.focus(); }
+      const btn = document.getElementById("btnClearRequestNumber");
+      if (btn) btn.classList.add("hidden");
+    }
+
     function clearPortalSearchForm() {
       resetPortalToInitial();
 
       const fieldsToClear = [
+        "voterNidRequestNumber",
         "portalFullNameEn",
         "portalFullNameNp",
         "portalDobLoc",
@@ -9320,6 +9384,8 @@
           el.value = "";
         }
       });
+      const btnClearReq = document.getElementById("btnClearRequestNumber");
+      if (btnClearReq) btnClearReq.classList.add("hidden");
 
       const portalSearchDropdown = document.getElementById("portalSearchDropdown");
       if (portalSearchDropdown) {
@@ -9348,10 +9414,12 @@
       resetPortalToInitial();
 
       // Clear NIN Search inputs
-      ["voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
+      ["voterNidRequestNumber", "voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
       });
+      const btnClearReq = document.getElementById("btnClearRequestNumber");
+      if (btnClearReq) btnClearReq.classList.add("hidden");
 
       // Clear Name Search inputs
       ["portalFullNameEn", "portalFullNameNp", "portalDobLoc", "portalCcnIssuingDateLoc"].forEach((id) => {
@@ -9489,43 +9557,206 @@
       return "";
     }
 
-    // ── Saved Captcha Management for Search by Name ──
-    const SAVED_CAPTCHA_CODE_KEY = 'portal_saved_captcha_code';
+    // ── Saved Captcha Management (LocalStorage + Database Sync) ──
+    const SAVED_CAPTCHA_CODE_KEY    = 'portal_saved_captcha_code';
     const SAVED_CAPTCHA_SESSION_KEY = 'portal_saved_captcha_session';
+    const SAVED_CAPTCHA_TIME_KEY    = 'portal_saved_captcha_time';
     window._currentCaptchaSession = '';
+    let _captchaTimerInterval = null;
 
-    function savePortalCaptcha(code, session) {
-      if (!code) return;
-      try {
-        localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, code.trim());
-        if (session) {
-          localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, session);
-        }
-      } catch (e) {}
-      updateSavedCaptchaIndicator();
+    // Format elapsed time in minutes:seconds (mm:ss) format
+    function _formatCaptchaAge(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
-    function clearSavedPortalCaptcha() {
+    // Format human-readable clock time when captcha was created/saved (e.g. 11:32:15 PM)
+    function _formatCaptchaSavedTime(ts) {
+      if (!ts) return '';
+      try {
+        const d = new Date(ts);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (_) {
+        return '';
+      }
+    }
+
+    // Sync captcha from MongoDB database
+    async function syncCaptchaFromDb() {
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha-store`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.code) {
+            const dbTs = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
+            const localTs = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
+            if (!localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || dbTs >= localTs) {
+              localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, data.code.trim());
+              localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(dbTs));
+              if (data.session) localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, data.session);
+              updateSavedCaptchaIndicator();
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Retrieve saved captcha (from localStorage, fallback to DB)
+    async function getSavedPortalCaptcha() {
+      let code = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+      let session = localStorage.getItem(SAVED_CAPTCHA_SESSION_KEY) || '';
+      let time = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
+
+      if (!code) {
+        try {
+          const res = await fetch(`${API_BASE}/api/captcha-store`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.code) {
+              code = data.code.trim();
+              session = data.session || '';
+              time = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
+              try {
+                localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, code);
+                localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(time));
+                if (session) localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, session);
+              } catch (_) {}
+              updateSavedCaptchaIndicator();
+            }
+          }
+        } catch (_) {}
+      }
+      return { code, session, time };
+    }
+
+    // Persist captcha to localStorage AND MongoDB database
+    async function savePortalCaptcha(code, session) {
+      if (!code) return;
+      const cleanCode = String(code).trim();
+      const ts = Date.now();
+      try {
+        localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, cleanCode);
+        localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(ts));
+        if (session) localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, session);
+      } catch (e) {}
+      updateSavedCaptchaIndicator();
+
+      // Persist to DB in background
+      try {
+        fetch(`${API_BASE}/api/captcha-store`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: cleanCode, session: session || window._currentCaptchaSession || '' })
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    // Clear captcha from localStorage AND MongoDB database
+    async function clearSavedPortalCaptcha(callApi = true) {
       try {
         localStorage.removeItem(SAVED_CAPTCHA_CODE_KEY);
         localStorage.removeItem(SAVED_CAPTCHA_SESSION_KEY);
+        localStorage.removeItem(SAVED_CAPTCHA_TIME_KEY);
       } catch (e) {}
       window._currentCaptchaSession = '';
       const cc = document.getElementById('portalCaptchaCode');
       if (cc) cc.value = '';
       updateSavedCaptchaIndicator();
+
+      if (callApi) {
+        try {
+          fetch(`${API_BASE}/api/captcha-store`, { method: 'DELETE' }).catch(() => {});
+        } catch (_) {}
+      }
       loadPortalCaptcha(false);
     }
 
+    // Centralized handling when captcha is invalid or expired:
+    // 1. Searches database for newer/different captcha
+    // 2. If same found in DB (or empty), clears DB and local storage, then prompts user to enter new captcha
+    async function handleInvalidCaptchaFlow({ failedCode, onFoundNewInDb, onNeedNewCaptcha }) {
+      console.warn('[Captcha] Invalid/expired captcha encountered:', failedCode);
+
+      // Search database for a newer/different captcha
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha-store`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.code && data.code.trim() !== (failedCode || '').trim()) {
+            const newCode = data.code.trim();
+            const newSession = data.session || '';
+            const newTime = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
+            try {
+              localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, newCode);
+              localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(newTime));
+              if (newSession) localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, newSession);
+            } catch (_) {}
+            updateSavedCaptchaIndicator();
+            if (typeof onFoundNewInDb === 'function') {
+              return onFoundNewInDb(newCode, newSession);
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('[Captcha] Error checking database for newer captcha:', e);
+      }
+
+      // If same found in database (or DB empty/failed) -> clear and give option to enter a new captcha
+      try {
+        localStorage.removeItem(SAVED_CAPTCHA_CODE_KEY);
+        localStorage.removeItem(SAVED_CAPTCHA_SESSION_KEY);
+        localStorage.removeItem(SAVED_CAPTCHA_TIME_KEY);
+      } catch (_) {}
+      updateSavedCaptchaIndicator();
+
+      try {
+        fetch(`${API_BASE}/api/captcha-store`, { method: 'DELETE' }).catch(() => {});
+      } catch (_) {}
+
+      if (typeof onNeedNewCaptcha === 'function') {
+        onNeedNewCaptcha();
+      }
+    }
+
+    // Live timer counter on the saved captcha badge
     function updateSavedCaptchaIndicator() {
       const saved = localStorage.getItem(SAVED_CAPTCHA_CODE_KEY);
       const badge = document.getElementById('savedCaptchaBadge');
-      const text = document.getElementById('savedCaptchaCodeText');
+      const text  = document.getElementById('savedCaptchaCodeText');
+      const timer = document.getElementById('captchaAgeTimer');
+
+      if (_captchaTimerInterval) { clearInterval(_captchaTimerInterval); _captchaTimerInterval = null; }
+
       if (saved && badge && text) {
         text.textContent = saved;
         badge.classList.remove('hidden');
+        badge.classList.add('flex');
+
+        const savedTime = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
+        const savedClock = savedTime ? _formatCaptchaSavedTime(savedTime) : '';
+        const tick = () => {
+          if (!document.getElementById('savedCaptchaBadge')) return;
+          const elapsedMs = Date.now() - (savedTime || Date.now());
+          if (timer) {
+            const mmSs = _formatCaptchaAge(elapsedMs);
+            timer.textContent = `⏱️ ${mmSs}${savedClock ? ' (' + savedClock + ')' : ''}`;
+            // If over 2 minutes old, subtly highlight
+            if (elapsedMs > 120000) {
+              timer.className = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-200 text-[10px] font-mono font-bold text-amber-900 ml-1 border border-amber-300';
+            } else {
+              timer.className = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-[10px] font-mono font-bold text-amber-800 ml-1';
+            }
+          }
+        };
+        tick();
+        _captchaTimerInterval = setInterval(tick, 1000);
       } else if (badge) {
         badge.classList.add('hidden');
+        badge.classList.remove('flex');
+        if (timer) timer.textContent = '';
       }
     }
 
@@ -9744,10 +9975,24 @@
         const _parsedCode = parseOtpErrorCodeFromText(_rawText);
         const _resolvedCode = _respCode || _parsedCode;
 
-        // If captcha specifically failed, clear saved captcha and prompt fresh captcha
+        // If captcha specifically failed, search DB for new, or give option to enter new captcha
         if (_resolvedCode === "CAPTCHA_INVALID" || (typeof _rawText === 'string' && /captcha/i.test(_rawText) && /invalid|expire|मिल्दैन|गलत/i.test(_rawText))) {
-          clearSavedPortalCaptcha();
-          alert("Captcha expired or invalid. Please type the fresh captcha code.");
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          handleInvalidCaptchaFlow({
+            failedCode: captchaCode,
+            onFoundNewInDb: (newCode, newSession) => {
+              const cInp = document.getElementById("portalCaptchaCode");
+              if (cInp) cInp.value = newCode;
+              window._currentCaptchaSession = newSession;
+              alert(`✓ Found updated captcha from database: "${newCode}". Retrying...`);
+              requestPortalOtp();
+            },
+            onNeedNewCaptcha: () => {
+              loadPortalCaptcha(false);
+              alert("⚠️ Captcha expired or invalid. Please type the fresh captcha code.");
+            }
+          });
           return;
         }
 
@@ -9901,6 +10146,7 @@
           <input type="text" id="${rowId}_input" placeholder="${placeholder}" ${maxLengthAttr}
             autocomplete="off"
             oninput="onPortalFieldInputChanged('${fieldId}')"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
             ${isNepali ? `onfocus="setConverterNepaliTarget(this)"` : ''}
             class="${inputClass}" />
           <button type="button" tabindex="-1" onclick="addPortalFieldVariant('${fieldId}')"
@@ -10172,11 +10418,13 @@
     async function handlePortalProceedClick() {
       const combos = generatePortalPermutations();
 
-      // Check if we have a saved captcha code to automatically use
-      const savedCaptcha = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+      // Check if we have a saved captcha code to automatically use (localStorage or DB)
+      const stored = await getSavedPortalCaptcha();
+      const savedCaptcha = (stored.code || '').trim();
       if (savedCaptcha) {
         const cInput = document.getElementById('portalCaptchaCode');
         if (cInput) cInput.value = savedCaptcha;
+        if (stored.session) window._currentCaptchaSession = stored.session;
 
         if (combos.length <= 1) {
           return requestPortalOtp();
@@ -14077,6 +14325,222 @@
       `;
     }
 
+    // ── Search by Request Number Handler & Modal Logic ──
+    let _currentApprovedNin = '';
+
+    async function handleRequestNumberSearch() {
+      const reqNumInput = document.getElementById('voterNidRequestNumber');
+      const reqNum = (reqNumInput?.value || '').trim().replace(/[^0-9]/g, '');
+      if (!reqNum) {
+        alert('Please enter a valid Request Number.');
+        reqNumInput?.focus();
+        return;
+      }
+
+      const btn = document.getElementById('btnSearchByRequestNumber');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin">⟳</span>';
+      }
+
+      // 1. Get stored captcha
+      const stored = await getSavedPortalCaptcha();
+      let captchaCode = (stored.code || '').trim();
+      let session = stored.session || window._currentCaptchaSession || '';
+
+      if (!captchaCode) {
+        alert('No captcha found. Loading fresh captcha...');
+        if (btn) { btn.disabled = false; btn.innerHTML = '↵'; }
+        loadPortalCaptcha(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
+          method: 'GET',
+          headers: {
+            'Captcha-Code': captchaCode,
+            'x-captcha-session': session,
+          }
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        // Check if error is related to captcha
+        const errMsg = data.error || data.message || '';
+        const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
+          rdIsInvalidCaptchaError(errMsg) :
+          /captcha|invalid code|expire|session_expired/i.test(errMsg);
+
+        if (isCapErr) {
+          handleInvalidCaptchaFlow({
+            failedCode: captchaCode,
+            onFoundNewInDb: (newCode, newSession) => {
+              handleRequestNumberSearch();
+            },
+            onNeedNewCaptcha: () => {
+              alert('⚠️ Captcha expired or invalid. Please solve the fresh captcha below.');
+              loadPortalCaptcha(false);
+            }
+          });
+          return;
+        }
+
+        if (!res.ok) {
+          showRequestNumberResultModal({
+            success: false,
+            requestNumber: reqNum,
+            error: data.message || data.error || 'Request Not Found',
+            raw: data
+          });
+          return;
+        }
+
+        // Success — persist captcha since it worked!
+        savePortalCaptcha(captchaCode, session);
+
+        showRequestNumberResultModal({
+          success: true,
+          requestNumber: reqNum,
+          nin: data.nin || '',
+          applicationStatus: data.applicationStatus || '',
+          ninStatus: data.ninStatus || '',
+          message: data.message || '',
+          messageLoc: data.messageLoc || '',
+          raw: data
+        });
+
+      } catch (err) {
+        alert('Network error searching request number: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '↵';
+        }
+      }
+    }
+
+    function showRequestNumberResultModal(info) {
+      const modal = document.getElementById('requestNumberResultModal');
+      if (!modal) return;
+
+      document.getElementById('reqNumModalSubtitle').textContent = `Request #: ${info.requestNumber || '—'}`;
+
+      const banner = document.getElementById('reqNumStatusBanner');
+      const icon = document.getElementById('reqNumStatusIcon');
+      const appStatusText = document.getElementById('reqNumApplicationStatusText');
+      const printedBadge = document.getElementById('reqNumCardPrintedBadge');
+      const ninHeroBox = document.getElementById('reqNumNinHeroBox');
+      const ninValEl = document.getElementById('reqNumApprovedNinVal');
+      const statusTag = document.getElementById('reqNumNinStatusTag');
+      const printedText = document.getElementById('reqNumCardPrintedText');
+      const msgEnText = document.getElementById('reqNumMsgEnText');
+      const msgNpText = document.getElementById('reqNumMsgNpText');
+      const useNinBtn = document.getElementById('btnUseNinInSearch');
+
+      if (!info.success) {
+        // Error state (e.g. 404 Request Not Found)
+        banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-50 border-rose-200 text-rose-900';
+        icon.textContent = '✕';
+        appStatusText.textContent = info.error || 'Request Not Found';
+        printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200';
+        printedBadge.textContent = 'NOT FOUND';
+        ninHeroBox.classList.add('hidden');
+        statusTag.textContent = 'NOT_FOUND';
+        printedText.textContent = '—';
+        msgEnText.innerHTML = info.raw?.message || info.error || 'The requested application could not be found.';
+        document.getElementById('reqNumMsgNpBox').classList.add('hidden');
+        useNinBtn.classList.add('hidden');
+      } else {
+        // Success state
+        _currentApprovedNin = info.nin || '';
+        const statusUpper = (info.ninStatus || '').toUpperCase();
+        const appUpper = (info.applicationStatus || '').toUpperCase();
+        const isApproved = appUpper === 'APPROVED';
+
+        // Determine if card is printed or not
+        const isPrinted = statusUpper === 'PRINTED' ||
+                          statusUpper === 'CARD_PRINTED' ||
+                          statusUpper === 'DISPATCHED' ||
+                          statusUpper === 'DELIVERED';
+
+        banner.className = isApproved ?
+          'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-emerald-50 border-emerald-200' :
+          'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-blue-50 border-blue-200';
+        icon.textContent = isApproved ? '✅' : 'ℹ️';
+        appStatusText.textContent = info.applicationStatus || 'PROCESSED';
+
+        if (isPrinted) {
+          printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+          printedBadge.textContent = '✅ Card Printed';
+          printedText.className = 'font-bold text-emerald-700';
+          printedText.textContent = 'Card Printed';
+        } else {
+          printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300';
+          printedBadge.textContent = '⏳ Not Printed';
+          printedText.className = 'font-bold text-amber-700';
+          printedText.textContent = 'Not Printed';
+        }
+
+        if (info.nin) {
+          ninHeroBox.classList.remove('hidden');
+          ninValEl.textContent = info.nin;
+          useNinBtn.classList.remove('hidden');
+        } else {
+          ninHeroBox.classList.add('hidden');
+          useNinBtn.classList.add('hidden');
+        }
+
+        statusTag.textContent = info.ninStatus || '—';
+        msgEnText.innerHTML = info.message || 'No official message provided.';
+        if (info.messageLoc) {
+          document.getElementById('reqNumMsgNpBox').classList.remove('hidden');
+          msgNpText.innerHTML = info.messageLoc;
+        } else {
+          document.getElementById('reqNumMsgNpBox').classList.add('hidden');
+        }
+      }
+
+      const copyBtnText = document.getElementById('btnCopyReqNumNinText');
+      if (copyBtnText) copyBtnText.textContent = 'Copy Number';
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeRequestNumberResultModal() {
+      const modal = document.getElementById('requestNumberResultModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function copyReqNumApprovedNin() {
+      if (!_currentApprovedNin) return;
+      navigator.clipboard.writeText(_currentApprovedNin).then(() => {
+        const textEl = document.getElementById('btnCopyReqNumNinText');
+        if (textEl) {
+          textEl.textContent = '✓ Copied!';
+          setTimeout(() => { textEl.textContent = 'Copy Number'; }, 2000);
+        }
+      }).catch(() => {
+        prompt('Copy NIN:', _currentApprovedNin);
+      });
+    }
+
+    function useApprovedNinInSearch() {
+      if (!_currentApprovedNin) return;
+      closeRequestNumberResultModal();
+      const ninInp = document.getElementById('voterNidNin');
+      if (ninInp) {
+        ninInp.value = _currentApprovedNin;
+        ninInp.focus();
+        ninInp.classList.add('ring-2', 'ring-emerald-500');
+        setTimeout(() => ninInp.classList.remove('ring-2', 'ring-emerald-500'), 1500);
+      }
+    }
+
     async function handleNinSearchClick() {
       if (isNinSearchRunning) {
         // Stop current active search
@@ -14404,46 +14868,88 @@
     // Force helpers removed by request — no forced extraction or session-refresh UI will be present.
 
 
-    async function loadNidFlowCaptcha() {
-      const img = document.getElementById("nidFlowCaptchaImg");
+    let _nidFlowTimerInterval = null;
+
+    async function loadNidFlowCaptcha(forceReload = false) {
+      if (_nidFlowTimerInterval) { clearInterval(_nidFlowTimerInterval); _nidFlowTimerInterval = null; }
+
+      const img   = document.getElementById("nidFlowCaptchaImg");
       const title = document.getElementById("nidFlowModalSubtitle");
-      img.src = "";
-      title.innerText = "Loading captcha...";
+      const inp   = document.getElementById("nidFlowCaptchaCode");
+
+      // 1. Use saved captcha if available and not forced to reload
+      if (!forceReload) {
+        const stored = await getSavedPortalCaptcha();
+        const savedCode = stored.code;
+        if (savedCode) {
+          if (img) img.src = '';
+          if (inp) inp.value = savedCode;
+
+          const tickNid = () => {
+            const currentSaved = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+            if (!currentSaved) return;
+            const savedTime = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
+            const savedClock = savedTime ? _formatCaptchaSavedTime(savedTime) : '';
+            if (title) {
+              title.innerHTML = `Using saved captcha: <strong class="font-mono text-amber-900">${currentSaved}</strong> <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ml-1">⏱️ ${elapsed}${savedClock ? ' (' + savedClock + ')' : ''}</span> <button type="button" onclick="loadNidFlowCaptcha(true)" class="text-xs text-blue-600 hover:text-blue-800 underline font-semibold ml-2 cursor-pointer">Re-enter</button>`;
+            }
+          };
+          tickNid();
+          _nidFlowTimerInterval = setInterval(tickNid, 1000);
+
+          // Auto-submit immediately with same captcha
+          setTimeout(() => submitNidFlowCaptcha(), 300);
+          return;
+        }
+      }
+
+      // 2. No saved captcha, or forced reload — fetch fresh captcha
+      if (img) img.src = '';
+      if (inp) inp.value = '';
+      if (title) title.innerText = "Loading fresh captcha...";
 
       try {
         const res = await fetch(`${API_BASE}/api/captcha`);
         if (!res.ok) throw new Error("Captcha fetch failed");
         const data = await res.json();
         if (data.image) {
-          img.src = "data:image/png;base64," + data.image;
-          title.innerText = "Verify captcha to request OTP.";
+          if (img) img.src = "data:image/png;base64," + data.image;
+          if (data.captchaSession) window._currentCaptchaSession = data.captchaSession;
+          if (title) title.innerText = "Please enter the captcha code to request OTP.";
         }
       } catch (err) {
-        title.innerText = "Failed to load captcha. Try again.";
+        if (title) title.innerText = "Failed to load captcha. Try again.";
       }
     }
 
     // Submit NID Flow Captcha
     async function submitNidFlowCaptcha() {
-      const captchaVal = document.getElementById("nidFlowCaptchaCode").value.trim();
-      if (!captchaVal) {
+      let finalCaptcha = (document.getElementById("nidFlowCaptchaCode")?.value || "").trim();
+      if (!finalCaptcha) {
+        finalCaptcha = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || "").trim();
+        if (finalCaptcha) {
+          const inp = document.getElementById("nidFlowCaptchaCode");
+          if (inp) inp.value = finalCaptcha;
+        }
+      }
+      if (!finalCaptcha) {
         alert("Please enter the captcha code.");
         return;
       }
 
       const btn = document.getElementById("btnNidFlowSubmitCaptcha");
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = "Requesting OTP...";
+      const originalText = btn ? btn.innerHTML : "Request OTP";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = "Requesting OTP...";
+      }
 
-      const D = currentNinVoterData;
+      const D = currentNinVoterData || {};
       const firstEn = (D.VoterFirstNameEn || "").toUpperCase();
       const midEn = (D.VoterMiddleNameEn || "").toUpperCase();
       const lastEn = (D.VoterLastNameEn || "").toUpperCase();
       const fullName = [firstEn, midEn, lastEn].filter(Boolean).join(" ");
 
-      // Use rawNepaliName — preserve the exact bytes from the API response (including ZWJ/ZWNJ)
-      // so the voter-list OTP server can match the name it already has on file.
       const firstNp = D.VoterFirstName || "";
       const midNp = D.VoterMiddleName || "";
       const lastNp = D.VoterLastName || "";
@@ -14452,13 +14958,14 @@
       const dobLoc = translateDigits(D.dobNp || D.Dob || "", englishToNepaliDigits);
       const ccnIssuingDateLoc = translateDigits(D.CitizenshipIssuingDateLoc || D.CitizenIssueDate || "", englishToNepaliDigits);
 
+      const sessionForFlow = window._currentCaptchaSession || localStorage.getItem(SAVED_CAPTCHA_SESSION_KEY) || '';
+      const reqHeadersFlow = { "Content-Type": "application/json", "Captcha-Code": finalCaptcha };
+      if (sessionForFlow) reqHeadersFlow['x-captcha-session'] = sessionForFlow;
+
       try {
         const res = await fetch(`${API_BASE}/api/request-otp`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Captcha-Code": captchaVal
-          },
+          headers: reqHeadersFlow,
           body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
         });
 
@@ -14467,30 +14974,77 @@
         const otpSuccess = document.getElementById("nidFlowOtpSuccess");
         const otpSection = document.getElementById("nidFlowOtpSection");
 
-        otpSection.classList.remove("hidden");
+        if (otpSection) otpSection.classList.remove("hidden");
 
         if (!res.ok) {
           const errMsg = extractOtpResponseMessage(responseBody) || "OTP request failed";
           const errCode = parseOtpErrorCodeFromText(errMsg) || "OTP_REQUEST_FAILED";
 
-          otpError.classList.remove("hidden");
-          otpSuccess.classList.add("hidden");
+          if (otpError) otpError.classList.remove("hidden");
+          if (otpSuccess) otpSuccess.classList.add("hidden");
+          const errH = document.getElementById("nidFlowOtpErrorHeader");
+          if (errH) errH.innerText = errCode.replace(/_/g, " ");
+          const errM = document.getElementById("nidFlowOtpErrorMsg");
+          if (errM) errM.innerText = errMsg;
 
-          document.getElementById("nidFlowOtpErrorHeader").innerText = errCode.replace(/_/g, " ");
-          document.getElementById("nidFlowOtpErrorMsg").innerText = errMsg;
-          loadNidFlowCaptcha();
+          const isCapErr = rdIsInvalidCaptchaError ? rdIsInvalidCaptchaError(errMsg) :
+            errMsg.toLowerCase().includes('captcha') || errMsg.toLowerCase().includes('session');
+
+          if (isCapErr) {
+            handleInvalidCaptchaFlow({
+              failedCode: finalCaptcha,
+              onFoundNewInDb: (newCode, newSession) => {
+                const cEl = document.getElementById("nidFlowCaptchaCode");
+                if (cEl) cEl.value = newCode;
+                window._currentCaptchaSession = newSession;
+                if (errM) errM.innerText = `✓ Found newer captcha "${newCode}" in database. Retrying...`;
+                setTimeout(() => submitNidFlowCaptcha(), 400);
+              },
+              onNeedNewCaptcha: () => {
+                if (errM) errM.innerText = '⚠️ Captcha expired. Please enter the fresh captcha below.';
+                loadNidFlowCaptcha(true);
+              }
+            });
+          } else {
+            loadNidFlowCaptcha(false);
+          }
           return;
         }
 
         const responseMsg = extractOtpResponseMessage(responseBody);
         if (responseMsg) {
-          otpError.classList.remove("hidden");
-          otpSuccess.classList.add("hidden");
-          document.getElementById("nidFlowOtpErrorHeader").innerText = "FAILED";
-          document.getElementById("nidFlowOtpErrorMsg").innerText = responseMsg;
-          loadNidFlowCaptcha();
+          const isCapErr2 = rdIsInvalidCaptchaError ? rdIsInvalidCaptchaError(responseMsg) :
+            responseMsg.toLowerCase().includes('captcha') || responseMsg.toLowerCase().includes('session');
+          if (otpError) otpError.classList.remove("hidden");
+          if (otpSuccess) otpSuccess.classList.add("hidden");
+          const errH = document.getElementById("nidFlowOtpErrorHeader");
+          if (errH) errH.innerText = isCapErr2 ? "CAPTCHA EXPIRED" : "FAILED";
+          const errM = document.getElementById("nidFlowOtpErrorMsg");
+          if (errM) errM.innerText = isCapErr2 ? '⚠️ Captcha expired — loading fresh captcha...' : responseMsg;
+
+          if (isCapErr2) {
+            handleInvalidCaptchaFlow({
+              failedCode: finalCaptcha,
+              onFoundNewInDb: (newCode, newSession) => {
+                const cEl = document.getElementById("nidFlowCaptchaCode");
+                if (cEl) cEl.value = newCode;
+                window._currentCaptchaSession = newSession;
+                if (errM) errM.innerText = `✓ Found newer captcha "${newCode}" in database. Retrying...`;
+                setTimeout(() => submitNidFlowCaptcha(), 400);
+              },
+              onNeedNewCaptcha: () => {
+                if (errM) errM.innerText = '⚠️ Captcha expired. Please enter the fresh captcha below.';
+                loadNidFlowCaptcha(true);
+              }
+            });
+          } else {
+            loadNidFlowCaptcha(false);
+          }
           return;
         }
+
+        // OTP sent successfully — persist captcha in localStorage AND database for future reuse
+        savePortalCaptcha(finalCaptcha, sessionForFlow);
 
         otpError.classList.add("hidden");
         otpSuccess.classList.remove("hidden");
@@ -18231,6 +18785,108 @@ Your details were incorrect and have been changed/updated, but the update has no
     })();
   </script>
 
+
+  <!-- ===== REQUEST NUMBER STATUS MODAL ===== -->
+  <div id="requestNumberResultModal"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[99999] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden border border-slate-200 animate-fade-in">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-base font-bold shadow-2xs">
+            🪪
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-sm">Application Status Inquiry</h3>
+            <p id="reqNumModalSubtitle" class="text-[11px] text-slate-500 font-mono">Request #: —</p>
+          </div>
+        </div>
+        <button onclick="closeRequestNumberResultModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div id="reqNumModalBody" class="p-5 overflow-y-auto space-y-4">
+        <!-- Status Banner -->
+        <div id="reqNumStatusBanner" class="p-3.5 rounded-xl border flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span id="reqNumStatusIcon" class="text-xl">✅</span>
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Application Status</p>
+              <p id="reqNumApplicationStatusText" class="font-bold text-sm text-slate-900">APPROVED</p>
+            </div>
+          </div>
+          <div id="reqNumCardPrintedBadge" class="px-2.5 py-1 rounded-lg text-xs font-bold border">
+            <!-- Printed or Not Printed -->
+          </div>
+        </div>
+
+        <!-- Approved NIN Hero Box -->
+        <div id="reqNumNinHeroBox" class="bg-emerald-50/70 border-2 border-emerald-300 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+          <div>
+            <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-widest flex items-center gap-1">
+              <span>National Identification Number (NIN)</span>
+            </span>
+            <p id="reqNumApprovedNinVal" class="text-2xl font-mono font-black text-emerald-950 tracking-wider mt-0.5 select-all">
+              —
+            </p>
+          </div>
+          <button id="btnCopyReqNumNin" onclick="copyReqNumApprovedNin()"
+            class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+            <span id="btnCopyReqNumNinText">Copy Number</span>
+          </button>
+        </div>
+
+        <!-- Card Printing Status Details -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-medium">Card Production Status:</span>
+            <span id="reqNumNinStatusTag" class="font-mono font-bold text-slate-800">PLANNED_FOR_PRODUCTION</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-500 font-medium">Card Status:</span>
+            <span id="reqNumCardPrintedText" class="font-bold text-amber-700">Not Printed</span>
+          </div>
+        </div>
+
+        <!-- Official Messages -->
+        <div class="space-y-2">
+          <!-- English Message -->
+          <div id="reqNumMsgEnBox" class="bg-blue-50/60 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
+            <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-1">Official Notice</p>
+            <div id="reqNumMsgEnText"></div>
+          </div>
+          <!-- Nepali Message -->
+          <div id="reqNumMsgNpBox" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 leading-relaxed font-serif">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 font-sans">नेपाली जानकारी</p>
+            <div id="reqNumMsgNpText"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="px-5 py-3.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between gap-2">
+        <button id="btnUseNinInSearch" onclick="useApprovedNinInSearch()"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Search with this NIN</span>
+        </button>
+        <button onclick="closeRequestNumberResultModal()"
+          class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== NIN SEARCH RESULT MODAL ===== -->
   <div id="ninSearchResultModal"
