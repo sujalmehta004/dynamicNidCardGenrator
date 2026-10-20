@@ -212,8 +212,20 @@
 
     .status-row-inprogress,
     .status-row-inprogress td {
-      background-color: #fef4f4 !important;
-      /* Very light red (mobile not registered) */
+      background-color: #f0f9ff !important;
+      /* Very light sky/blue (mobile number update) */
+    }
+
+    .status-row-dataupdate,
+    .status-row-dataupdate td {
+      background-color: #fbf5ff !important;
+      /* Very light purple (data update) */
+    }
+
+    .status-row-carderror,
+    .status-row-carderror td {
+      background-color: #fef2f2 !important;
+      /* Very light soft red (card error) */
     }
 
     .status-row-notonline,
@@ -559,6 +571,8 @@
                   <option value="pending">Pending</option>
                   <option value="done">Done</option>
                   <option value="inprogress">Mobile Number Update</option>
+                  <option value="data_update">Data Update</option>
+                  <option value="card_error">Card Error</option>
                   <option value="not online" selected>Not Online</option>
                 </select>
               </div>
@@ -1390,76 +1404,122 @@
     <div id="paneWorkspaceDb" class="mt-0 pt-2 hidden space-y-3.5 flex-1 flex flex-col min-h-0 lg:overflow-hidden">
 
       <!-- ── Database Stats Metric Cards (Interactive 1-Click Filters) ─── -->
-      <div id="dbStatsCardsRow" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 shrink-0">
+      <div id="dbStatsCardsRow" class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2 shrink-0">
         <!-- Total Records -->
         <div id="cardStatTotal" onclick="filterDatabaseByCard('all')"
-          class="db-stat-card cursor-pointer bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 shadow-xs text-white flex items-center justify-between hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          class="db-stat-card cursor-pointer bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 shadow-xs text-white flex items-center justify-between hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
           title="Click to filter: Total Records">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">Total Records</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block leading-tight truncate">Total</span>
             <div class="flex items-baseline gap-1 mt-0.5">
               <h3 id="statsTotalVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-white leading-tight">0</h3>
-              <span class="text-[10px] text-slate-400 font-medium">cards</span>
+              <span class="text-[9px] text-slate-400 font-medium">cards</span>
             </div>
           </div>
-          <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs shrink-0 font-bold ml-2">📇</div>
+          <div class="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">📇</div>
         </div>
 
-        <!-- All Not Done (Pending + Not Online) -->
+        <!-- All Not Done (Pending + Mobile + Data Update + Error + Not Online) -->
         <div id="cardStatNotDone" onclick="filterDatabaseByCard('not_done')"
-          class="db-stat-card cursor-pointer bg-white border border-indigo-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-indigo-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
-          title="Click to filter: All Not Done (Pending + Not Online)">
+          class="db-stat-card cursor-pointer bg-white border border-indigo-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-indigo-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: All Not Done">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-indigo-700 block leading-tight">All Not Done</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-indigo-700 block leading-tight truncate">Not Done</span>
             <div class="flex items-baseline gap-1 mt-0.5">
               <h3 id="statsNotDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-indigo-600 leading-tight">0</h3>
-              <span class="text-[10px] text-indigo-500 font-medium">unprocessed</span>
+              <span class="text-[9px] text-indigo-500 font-medium">pending</span>
             </div>
           </div>
-          <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">📋</div>
+          <div class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">📋</div>
         </div>
 
         <!-- Pending -->
         <div id="cardStatPending" onclick="filterDatabaseByCard('pending')"
-          class="db-stat-card cursor-pointer bg-white border border-amber-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-amber-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          class="db-stat-card cursor-pointer bg-white border border-amber-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-amber-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
           title="Click to filter: Pending Records">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Pending</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-amber-700 block leading-tight truncate">Pending</span>
             <div class="flex items-baseline gap-1 mt-0.5">
               <h3 id="statsPendingVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-amber-600 leading-tight">0</h3>
-              <span class="text-[10px] text-amber-600/70 font-medium">queued</span>
+              <span class="text-[9px] text-amber-600/70 font-medium">queued</span>
             </div>
           </div>
-          <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">⏳</div>
+          <div class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">⏳</div>
         </div>
 
-        <!-- Mobile / Offline Attention -->
-        <div id="cardStatOthers" onclick="filterDatabaseByCard('not online')"
-          class="db-stat-card cursor-pointer bg-white border border-rose-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-rose-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
-          title="Click to filter: Mobile / Offline Attention">
+        <!-- Mobile Number Update -->
+        <div id="cardStatMobile" onclick="filterDatabaseByCard('inprogress')"
+          class="db-stat-card cursor-pointer bg-white border border-sky-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-sky-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Mobile Number Update">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Mobile / Offline</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-sky-700 block leading-tight truncate">Mobile Update</span>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h3 id="statsOthersVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-rose-600 leading-tight">0</h3>
-              <span class="text-[10px] text-rose-600/70 font-medium">attention</span>
+              <h3 id="statsMobileVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-sky-600 leading-tight">0</h3>
+              <span class="text-[9px] text-sky-600/70 font-medium">phone</span>
             </div>
           </div>
-          <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">⚠️</div>
+          <div class="w-6 h-6 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">📱</div>
+        </div>
+
+        <!-- Data Update -->
+        <div id="cardStatDataUpdate" onclick="filterDatabaseByCard('data_update')"
+          class="db-stat-card cursor-pointer bg-white border border-purple-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-purple-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Data Update">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-purple-700 block leading-tight truncate">Data Update</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsDataUpdateVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-purple-600 leading-tight">0</h3>
+              <span class="text-[9px] text-purple-600/70 font-medium">updates</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">🔄</div>
+        </div>
+
+        <!-- Card Error -->
+        <div id="cardStatCardError" onclick="filterDatabaseByCard('card_error')"
+          class="db-stat-card cursor-pointer bg-white border border-rose-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-rose-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Card Error">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-rose-700 block leading-tight truncate">Card Error</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsCardErrorVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-rose-600 leading-tight">0</h3>
+              <span class="text-[9px] text-rose-600/70 font-medium">issues</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">⚠️</div>
+        </div>
+
+        <!-- Not Online -->
+        <div id="cardStatNotOnline" onclick="filterDatabaseByCard('not online')"
+          class="db-stat-card cursor-pointer bg-white border border-slate-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-slate-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          title="Click to filter: Not Online">
+          <div class="min-w-0">
+            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight truncate">Not Online</span>
+            <div class="flex items-baseline gap-1 mt-0.5">
+              <h3 id="statsNotOnlineVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-slate-600 leading-tight">0</h3>
+              <span class="text-[9px] text-slate-500 font-medium">offline</span>
+            </div>
+          </div>
+          <div class="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">☁️</div>
         </div>
 
         <!-- Done / Issued -->
         <div id="cardStatDone" onclick="filterDatabaseByCard('done')"
-          class="db-stat-card cursor-pointer bg-white border border-emerald-200/90 rounded-xl px-3.5 py-2 shadow-xs flex items-center justify-between hover:border-emerald-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          class="db-stat-card cursor-pointer bg-white border border-emerald-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-emerald-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
           title="Click to filter: Done / Issued">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-500 block leading-tight">Done / Issued</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-700 block leading-tight truncate">Done</span>
             <div class="flex items-baseline gap-1 mt-0.5">
               <h3 id="statsDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-600 leading-tight">0</h3>
-              <span class="text-[10px] text-emerald-600/70 font-medium">active</span>
+              <span class="text-[9px] text-emerald-600/70 font-medium">issued</span>
             </div>
           </div>
-          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0 font-bold ml-2">✅</div>
+          <div class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">✅</div>
         </div>
+
+        <!-- Hidden compat elements -->
+        <div id="cardStatOthers" class="hidden"></div>
+        <span id="statsOthersVal" class="hidden">0</span>
       </div>
 
       <!-- ── Main Database Ledger & Filtering Card ──────────────── -->
@@ -1605,6 +1665,8 @@
                 <option value="pending">Pending</option>
                 <option value="done">Done</option>
                 <option value="inprogress">Mobile Number Update</option>
+                <option value="data_update">Data Update</option>
+                <option value="card_error">Card Error</option>
                 <option value="not online">Not Online</option>
               </select>
             </div>
@@ -5119,8 +5181,12 @@
         done: allCachedRecords.filter((r) => r.status === "done").length,
         pending: allCachedRecords.filter((r) => r.status === "pending").length,
         notDone: allCachedRecords.filter((r) => r.status !== "done").length,
+        mobile: allCachedRecords.filter((r) => r.status === "inprogress").length,
+        dataUpdate: allCachedRecords.filter((r) => r.status === "data_update" || r.status === "data update").length,
+        cardError: allCachedRecords.filter((r) => r.status === "card_error" || r.status === "card error").length,
+        notOnline: allCachedRecords.filter((r) => r.status === "not online").length,
         others: allCachedRecords.filter(
-          (r) => r.status === "inprogress" || r.status === "not online",
+          (r) => r.status === "inprogress" || r.status === "not online" || r.status === "data_update" || r.status === "data update" || r.status === "card_error" || r.status === "card error",
         ).length,
       };
 
@@ -5134,6 +5200,14 @@
       if (dEl) dEl.innerText = stats.done;
       const pEl = document.getElementById("statsPendingVal");
       if (pEl) pEl.innerText = stats.pending;
+      const mEl = document.getElementById("statsMobileVal");
+      if (mEl) mEl.innerText = stats.mobile;
+      const duEl = document.getElementById("statsDataUpdateVal");
+      if (duEl) duEl.innerText = stats.dataUpdate;
+      const ceEl = document.getElementById("statsCardErrorVal");
+      if (ceEl) ceEl.innerText = stats.cardError;
+      const noEl = document.getElementById("statsNotOnlineVal");
+      if (noEl) noEl.innerText = stats.notOnline;
       const oEl = document.getElementById("statsOthersVal");
       if (oEl) oEl.innerText = stats.others;
 
@@ -5157,7 +5231,10 @@
         { id: "cardStatTotal", active: currentStatus === "all", ring: "ring-2 ring-blue-500 border-blue-400" },
         { id: "cardStatNotDone", active: currentStatus === "not_done", ring: "ring-2 ring-indigo-500 border-indigo-400 bg-indigo-50/40" },
         { id: "cardStatPending", active: currentStatus === "pending", ring: "ring-2 ring-amber-500 border-amber-400 bg-amber-50/40" },
-        { id: "cardStatOthers", active: currentStatus === "not online" || currentStatus === "others" || currentStatus === "inprogress", ring: "ring-2 ring-rose-500 border-rose-400 bg-rose-50/40" },
+        { id: "cardStatMobile", active: currentStatus === "inprogress", ring: "ring-2 ring-sky-500 border-sky-400 bg-sky-50/40" },
+        { id: "cardStatDataUpdate", active: currentStatus === "data_update" || currentStatus === "data update", ring: "ring-2 ring-purple-500 border-purple-400 bg-purple-50/40" },
+        { id: "cardStatCardError", active: currentStatus === "card_error" || currentStatus === "card error", ring: "ring-2 ring-rose-500 border-rose-400 bg-rose-50/40" },
+        { id: "cardStatNotOnline", active: currentStatus === "not online", ring: "ring-2 ring-slate-500 border-slate-400 bg-slate-50/40" },
         { id: "cardStatDone", active: currentStatus === "done", ring: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/40" },
       ];
 
@@ -5165,9 +5242,9 @@
         const el = document.getElementById(c.id);
         if (!el) return;
         el.classList.remove(
-          "ring-2", "ring-blue-500", "ring-indigo-500", "ring-amber-500", "ring-rose-500", "ring-emerald-500",
-          "border-blue-400", "border-indigo-400", "border-amber-400", "border-rose-400", "border-emerald-400",
-          "bg-indigo-50/40", "bg-amber-50/40", "bg-rose-50/40", "bg-emerald-50/40", "shadow-md", "scale-[1.02]"
+          "ring-2", "ring-blue-500", "ring-indigo-500", "ring-amber-500", "ring-sky-500", "ring-purple-500", "ring-rose-500", "ring-slate-500", "ring-emerald-500",
+          "border-blue-400", "border-indigo-400", "border-amber-400", "border-sky-400", "border-purple-400", "border-rose-400", "border-slate-400", "border-emerald-400",
+          "bg-indigo-50/40", "bg-amber-50/40", "bg-sky-50/40", "bg-purple-50/40", "bg-rose-50/40", "bg-slate-50/40", "bg-emerald-50/40", "shadow-md", "scale-[1.02]"
         );
         if (c.active) {
           c.ring.split(" ").forEach(cls => { if (cls) el.classList.add(cls); });
@@ -5605,8 +5682,14 @@
       // 1. Status Filter
       if (statusFilter === "not_done") {
         filtered = filtered.filter((row) => row.status !== "done");
-      } else if (statusFilter === "not online" || statusFilter === "others") {
-        filtered = filtered.filter((row) => row.status === "not online" || row.status === "inprogress");
+      } else if (statusFilter === "not online") {
+        filtered = filtered.filter((row) => row.status === "not online");
+      } else if (statusFilter === "others") {
+        filtered = filtered.filter((row) => row.status === "not online" || row.status === "inprogress" || row.status === "data_update" || row.status === "data update" || row.status === "card_error" || row.status === "card error");
+      } else if (statusFilter === "data_update") {
+        filtered = filtered.filter((row) => row.status === "data_update" || row.status === "data update");
+      } else if (statusFilter === "card_error") {
+        filtered = filtered.filter((row) => row.status === "card_error" || row.status === "card error");
       } else if (statusFilter && statusFilter !== "all") {
         filtered = filtered.filter((row) => row.status === statusFilter);
       }
@@ -5703,7 +5786,9 @@
     function getStatusAccentColor(status) {
       if (status === "done") return { left: "#22c55e", badge_bg: "#dcfce7", badge_text: "#166534", badge_border: "#bbf7d0" };
       if (status === "pending") return { left: "#f59e0b", badge_bg: "#fef3c7", badge_text: "#92400e", badge_border: "#fde68a" };
-      if (status === "inprogress") return { left: "#ef4444", badge_bg: "#fee8e8", badge_text: "#991b1b", badge_border: "#fca5a5" };
+      if (status === "inprogress") return { left: "#0284c7", badge_bg: "#e0f2fe", badge_text: "#0369a1", badge_border: "#bae6fd" };
+      if (status === "data_update" || status === "data update") return { left: "#8b5cf6", badge_bg: "#f3e8ff", badge_text: "#6b21a8", badge_border: "#d8b4fe" };
+      if (status === "card_error" || status === "card error") return { left: "#ef4444", badge_bg: "#fee2e2", badge_text: "#991b1b", badge_border: "#fca5a5" };
       if (status === "not online") return { left: "#94a3b8", badge_bg: "#f8fafc", badge_text: "#475569", badge_border: "#e2e8f0" };
       return { left: "#e2e8f0", badge_bg: "#f8fafc", badge_text: "#64748b", badge_border: "#e2e8f0" };
     }
@@ -6054,7 +6139,9 @@
 
       const savedPortrait = getSavedVoterRecord(row.ninEn);
       const sc = getStatusAccentColor(row.status);
-      const statusLabel = row.status === 'inprogress' ? 'Mobile Not Registered' :
+      const statusLabel = row.status === 'inprogress' ? 'Mobile Number Update' :
+        (row.status === 'data_update' || row.status === 'data update') ? 'Data Update' :
+        (row.status === 'card_error' || row.status === 'card error') ? 'Card Error' :
         row.status === 'not online' ? 'Not Online' :
           row.status === 'pending' ? 'Pending' :
             row.status === 'done' ? 'Done' : row.status;
@@ -6159,7 +6246,9 @@
                 <option value="">Change Status…</option>
                 <option value="pending" ${row.status==='pending'?'selected':''}>Pending</option>
                 <option value="done" ${row.status==='done'?'selected':''}>Done</option>
-                <option value="inprogress" ${row.status==='inprogress'?'selected':''}>Mobile Not Registered</option>
+                <option value="inprogress" ${row.status==='inprogress'?'selected':''}>Mobile Number Update</option>
+                <option value="data_update" ${(row.status==='data_update'||row.status==='data update')?'selected':''}>Data Update</option>
+                <option value="card_error" ${(row.status==='card_error'||row.status==='card error')?'selected':''}>Card Error</option>
                 <option value="not online" ${row.status==='not online'?'selected':''}>Not Online</option>
               </select>
             </div>
@@ -6983,10 +7072,14 @@
         if (row.status === "done") statusRowClass = "status-row-done";
         else if (row.status === "pending") statusRowClass = "status-row-pending";
         else if (row.status === "inprogress") statusRowClass = "status-row-inprogress";
+        else if (row.status === "data_update" || row.status === "data update") statusRowClass = "status-row-dataupdate";
+        else if (row.status === "card_error" || row.status === "card error") statusRowClass = "status-row-carderror";
         else if (row.status === "not online") statusRowClass = "status-row-notonline";
 
         const sc = getStatusAccentColor(row.status);
-        const statusLabel = row.status === "inprogress" ? "Mobile Not Reg." :
+        const statusLabel = row.status === "inprogress" ? "Mobile Number Update" :
+          (row.status === "data_update" || row.status === "data update") ? "Data Update" :
+          (row.status === "card_error" || row.status === "card error") ? "Card Error" :
           row.status === "not online" ? "Not Online" :
             row.status === "pending" ? "Pending" :
               row.status === "done" ? "Done" : (row.status || "—");
@@ -8822,12 +8915,15 @@
           else if (row.state === "sending") rowBg = "#fffbeb";
 
           // Original DB status badge
-          const statusColors = {
-            pending: { bg: "#fef3c7", text: "#92400e", border: "#fde68a" },
-            inprogress: { bg: "#dbeafe", text: "#1e40af", border: "#bfdbfe" },
-            default: { bg: "#f1f5f9", text: "#475569", border: "#e2e8f0" }
-          };
-          const sc = statusColors[rec.status] || statusColors.default;
+          const scAcc = getStatusAccentColor(rec.status);
+          const sc = { bg: scAcc.badge_bg, text: scAcc.badge_text, border: scAcc.badge_border };
+          const statusBadgeText =
+            rec.status === "inprogress" ? "Mobile Update" :
+            (rec.status === "data_update" || rec.status === "data update") ? "Data Update" :
+            (rec.status === "card_error" || rec.status === "card error") ? "Card Error" :
+            rec.status === "not online" ? "Not Online" :
+            rec.status === "pending" ? "Pending" :
+            rec.status === "done" ? "Done" : (rec.status || "—");
 
           // Verification badge
           let verifLabel = ""; let verifBg = ""; let verifText = ""; let verifBorder = "";
@@ -8884,7 +8980,7 @@
                 <div style="font-size:10px; color:#64748b; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="nepali-font">${nameNp || "—"}</div>
               </td>
               <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
-                <span style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid ${sc.border}; background:${sc.bg}; color:${sc.text}; text-transform:uppercase; letter-spacing:.04em;">${rec.status}</span>
+                <span style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid ${sc.border}; background:${sc.bg}; color:${sc.text}; text-transform:uppercase; letter-spacing:.04em;">${statusBadgeText}</span>
               </td>
               <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
                 <span style="font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid ${verifBorder}; background:${verifBg}; color:${verifText}; white-space:nowrap; ${pulseCss}">${verifLabel}</span>
@@ -9486,16 +9582,49 @@
         await triggerBulkVoterSearch();
 
         // Auto-update workflow status based on OTP response
-        const statusMappings = { success: "pending", MOBILE_NOT_REGISTERED: "inprogress", DATA_NOT_FOUND: "not online" };
         const autoUpdatePromises = bulkResults
           .filter(rowObj => rowObj.state !== "sending")
           .map(async rowObj => {
             const rec = rowObj.record;
+            const currentStatus = String(rec.status || "").trim().toLowerCase();
+            const isMobileUpdate = currentStatus === "inprogress" || currentStatus === "mobile_updated" || currentStatus.includes("mobile");
+            const isDataUpdate = currentStatus === "data_update" || currentStatus === "data update";
+            const isCardError = currentStatus === "card_error" || currentStatus === "card error";
+            const isNotOnline = currentStatus === "not online" || currentStatus === "notonline";
+
             let targetStatus = null;
-            if (rowObj.state === "success") targetStatus = "pending";
-            else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") targetStatus = "inprogress";
-            else if (rowObj.resolvedCode === "DATA_NOT_FOUND") targetStatus = "not online";
-            // Only update if there's a mapping and current status differs
+
+            if (isMobileUpdate) {
+              // 1. Mobile Update: never change to pending — keep as usual mobile update status
+              targetStatus = null;
+            } else if (isDataUpdate || isCardError) {
+              // 2. Data Update & Card Error: if successful, change to pending; else keep as-is
+              if (rowObj.state === "success") {
+                targetStatus = "pending";
+              } else {
+                targetStatus = null;
+              }
+            } else if (isNotOnline) {
+              // 3. Not Online: if successful, change to pending; else keep system as usual
+              if (rowObj.state === "success") {
+                targetStatus = "pending";
+              } else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") {
+                targetStatus = "inprogress";
+              } else if (rowObj.resolvedCode === "DATA_NOT_FOUND") {
+                targetStatus = "not online";
+              }
+            } else {
+              // Other statuses (e.g. pending)
+              if (rowObj.state === "success") {
+                targetStatus = "pending";
+              } else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") {
+                targetStatus = "inprogress";
+              } else if (rowObj.resolvedCode === "DATA_NOT_FOUND") {
+                targetStatus = "not online";
+              }
+            }
+
+            // Only update if there's a targetStatus and current status differs
             if (targetStatus && rec.status !== targetStatus) {
               try {
                 const devInfo = getCurrentClientDeviceInfo();
@@ -9515,6 +9644,7 @@
                     nickname: devInfo.nickname,
                   })
                 });
+                rec.status = targetStatus;
               } catch (e) {
                 console.warn("Auto-status update failed for", rec.ninEn, e);
               }
@@ -11813,10 +11943,14 @@
         filtered = filtered.filter((row) => row.status === "pending");
       } else if (statusFilter === "inprogress") {
         filtered = filtered.filter((row) => row.status === "inprogress");
+      } else if (statusFilter === "data_update") {
+        filtered = filtered.filter((row) => row.status === "data_update" || row.status === "data update");
+      } else if (statusFilter === "card_error") {
+        filtered = filtered.filter((row) => row.status === "card_error" || row.status === "card error");
       } else if (statusFilter === "not_online") {
-        filtered = filtered.filter((row) => row.status === "notonline");
+        filtered = filtered.filter((row) => row.status === "notonline" || row.status === "not online");
       } else if (statusFilter === "mobile_updated") {
-        filtered = filtered.filter((row) => row.status === "mobile_updated" || (row.executionStatus && row.executionStatus.toLowerCase().includes("mobile")));
+        filtered = filtered.filter((row) => row.status === "mobile_updated" || row.status === "inprogress" || (row.executionStatus && row.executionStatus.toLowerCase().includes("mobile")));
       }
 
       if (filtered.length === 0) {
@@ -11826,8 +11960,9 @@
 
       const statusLabelMap = {
         all: "All Records", not_done: "All Not Done", done: "Done",
-        pending: "Pending", inprogress: "In Progress", not_online: "Not Online",
-        mobile_updated: "Mobile Number Updated"
+        pending: "Pending", inprogress: "Mobile Number Update",
+        data_update: "Data Update", card_error: "Card Error",
+        not_online: "Not Online", mobile_updated: "Mobile Number Updated"
       };
       const filterLabel = statusLabelMap[statusFilter] || statusFilter;
 
@@ -15382,7 +15517,9 @@ Your details were incorrect and have been changed/updated, but the update has no
             <option value="not_done">All Not Done</option>
             <option value="done">Done Records</option>
             <option value="pending">Pending Records</option>
-            <option value="inprogress">In Progress Records</option>
+            <option value="inprogress">Mobile Number Update</option>
+            <option value="data_update">Data Update</option>
+            <option value="card_error">Card Error</option>
             <option value="not_online">Not Online Records</option>
             <option value="mobile_updated">Mobile Number Updated</option>
           </select>
