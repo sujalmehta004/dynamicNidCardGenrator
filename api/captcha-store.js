@@ -61,12 +61,25 @@ module.exports = async (req, res) => {
     try {
       let body = req.body;
       if (typeof body === 'string') { try { body = JSON.parse(body); } catch (_) {} }
-      const { code, session } = body || {};
+      const { code, session, savedAt } = body || {};
       if (!code) return res.status(400).json({ error: 'code is required' });
+
+      const cleanCode = String(code).trim();
+      const existing = await CaptchaStore.findOne({ key: 'shared' }).lean();
+      const isSameCode = existing && existing.code && existing.code.trim() === cleanCode;
+
+      let finalSavedAt;
+      if (savedAt) {
+        finalSavedAt = new Date(savedAt);
+      } else if (isSameCode && (existing.savedAt || existing.createdAt)) {
+        finalSavedAt = existing.savedAt || existing.createdAt;
+      } else {
+        finalSavedAt = new Date();
+      }
 
       const doc = await CaptchaStore.findOneAndUpdate(
         { key: 'shared' },
-        { code: String(code).trim(), session: session || '', savedAt: new Date() },
+        { code: cleanCode, session: session || '', savedAt: finalSavedAt },
         { new: true, upsert: true }
       );
       return res.status(200).json({ ok: true, code: doc.code, savedAt: doc.savedAt });

@@ -984,15 +984,12 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       }
     }
 
-    let _verifyTimerInterval = null;
-
     function _updateVerifySavedNotice(code, savedTime) {
       if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
       const tick = () => {
         const elapsed = savedTime ? _verifyFormatAge(Date.now() - savedTime) : '00:00';
-        const savedClock = savedTime ? _verifyFormatSavedTime(savedTime) : '';
         const notice = '\u2713 Using saved captcha from database: <strong style="font-family:monospace;letter-spacing:1px;">' + code + '</strong>' + 
-          ' <span style="font-family:monospace;font-weight:700;margin-left:4px;">(\u23F1\uFE0F ' + elapsed + (savedClock ? ' - ' + savedClock : '') + ')</span>' + 
+          ' <span style="font-family:monospace;font-weight:700;margin-left:4px;">(\u23F1\uFE0F ' + elapsed + ')</span>' + 
           ' <button type="button" onclick="loadCaptcha(true)" style="margin-left:8px;text-decoration:underline;cursor:pointer;font-weight:bold;color:#047857;background:none;border:none;padding:0;">Re-enter</button>';
         showError(1, notice);
         const errEl = document.getElementById('step1Error');
@@ -1187,14 +1184,20 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         }
 
         // Success — persist captcha to localStorage + DB
+        let currentTs = Date.now();
         try {
+          const oldCode = (localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || '').trim();
+          const oldTs = parseInt(localStorage.getItem(VERIFY_SAVED_TIME_KEY) || '0', 10);
+          if (oldCode === captchaCode.trim() && oldTs > 0) {
+            currentTs = oldTs;
+          }
           localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, captchaCode);
-          localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(Date.now()));
+          localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(currentTs));
         } catch(_) {}
         fetch('/api/captcha-store', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: captchaCode, session: savedSession || '' })
+          body: JSON.stringify({ code: captchaCode, session: savedSession || '', savedAt: new Date(currentTs).toISOString() })
         }).catch(() => {});
 
         verifyTransactionId = data.transactionId || '';

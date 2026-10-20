@@ -1373,12 +1373,13 @@
                         <div id="voterNidRequestNumber_fieldWrap" class="relative bg-white/70 p-2.5 rounded-xl border border-emerald-200/90 shadow-2xs">
                           <div class="flex items-center justify-between mb-1">
                             <label class="block text-xs font-semibold text-emerald-950">Search by Request Number</label>
-                            <span class="text-[9px] text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono font-bold">Press Enter ↵</span>
+                            <span class="text-[9px] text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono font-bold">16 Digits ↵</span>
                           </div>
                           <div class="relative flex items-center">
-                            <input type="text" id="voterNidRequestNumber" placeholder="e.g. 1234567891234556"
+                            <input type="text" id="voterNidRequestNumber" placeholder="16-digit Request No."
+                              maxlength="16" inputmode="numeric"
                               autocomplete="off"
-                              oninput="document.getElementById('btnClearRequestNumber')?.classList.toggle('hidden', !this.value.trim())"
+                              oninput="this.value = this.value.replace(/\D/g, '').slice(0, 16); onReqNumInputChanged(this);"
                               onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestNumberSearch();}"
                               class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-lg px-2.5 py-1.5 pr-14 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[34px] placeholder:text-slate-400 font-normal" />
                             <div class="absolute right-1 flex items-center gap-0.5">
@@ -1406,6 +1407,7 @@
                           <label class="block text-xs font-normal text-slate-600 mb-1">NIN Number</label>
                           <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
                             autocomplete="off"
+                            oninput="onNinInputChanged(this);"
                             onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                             class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                         </div>
@@ -7934,8 +7936,7 @@
             errEl.style.background = '#ecfdf5';
             errEl.style.borderColor = '#6ee7b7';
             const elapsed = stored.time ? _formatCaptchaAge(Date.now() - stored.time) : '00:00';
-            const savedClock = stored.time ? _formatCaptchaSavedTime(stored.time) : '';
-            errEl.innerHTML = `✓ Using saved captcha: <strong class="font-mono">${savedCode}</strong> <span class="text-xs font-mono font-bold">⏱️ ${elapsed}${savedClock ? ' (' + savedClock + ')' : ''}</span> <button type="button" onclick="rdModalLoadCaptcha(true)" class="text-xs text-blue-700 underline font-semibold ml-2 cursor-pointer">Re-enter</button> — Click "Check — Start Verification" to proceed.`;
+            errEl.innerHTML = `✓ Using saved captcha: <strong class="font-mono">${savedCode}</strong> <span class="text-xs font-mono font-bold">⏱️ ${elapsed}</span> <button type="button" onclick="rdModalLoadCaptcha(true)" class="text-xs text-blue-700 underline font-semibold ml-2 cursor-pointer">Re-enter</button> — Click "Check — Start Verification" to proceed.`;
             errEl.style.display = 'block';
           }
           const btn = document.getElementById('rdBtnStart');
@@ -9632,10 +9633,22 @@
     }
 
     // Persist captcha to localStorage AND MongoDB database
-    async function savePortalCaptcha(code, session) {
+    async function savePortalCaptcha(code, session, explicitTime = null) {
       if (!code) return;
       const cleanCode = String(code).trim();
-      const ts = Date.now();
+      const existingCode = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+      const existingTime = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
+
+      // Do NOT refresh the timer when reusing captcha: keep active continuously from original save time!
+      let ts = explicitTime;
+      if (!ts) {
+        if (cleanCode === existingCode && existingTime > 0) {
+          ts = existingTime;
+        } else {
+          ts = Date.now();
+        }
+      }
+
       try {
         localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, cleanCode);
         localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(ts));
@@ -9648,7 +9661,7 @@
         fetch(`${API_BASE}/api/captcha-store`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: cleanCode, session: session || window._currentCaptchaSession || '' })
+          body: JSON.stringify({ code: cleanCode, session: session || window._currentCaptchaSession || '', savedAt: new Date(ts).toISOString() })
         }).catch(() => {});
       } catch (_) {}
     }
@@ -9742,7 +9755,7 @@
           const elapsedMs = Date.now() - (savedTime || Date.now());
           if (timer) {
             const mmSs = _formatCaptchaAge(elapsedMs);
-            timer.textContent = `⏱️ ${mmSs}${savedClock ? ' (' + savedClock + ')' : ''}`;
+            timer.textContent = `⏱️ ${mmSs}`;
             // If over 2 minutes old, subtly highlight
             if (elapsedMs > 120000) {
               timer.className = 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-200 text-[10px] font-mono font-bold text-amber-900 ml-1 border border-amber-300';
@@ -14328,11 +14341,31 @@
     // ── Search by Request Number Handler & Modal Logic ──
     let _currentApprovedNin = '';
 
+    function onReqNumInputChanged(el) {
+      document.getElementById('btnClearRequestNumber')?.classList.toggle('hidden', !el.value.trim());
+      if (el.value.trim().length > 0) {
+        const ninInp = document.getElementById('voterNidNin');
+        if (ninInp && ninInp.value) {
+          ninInp.value = '';
+        }
+      }
+    }
+
+    function onNinInputChanged(el) {
+      if (el.value.trim().length > 0) {
+        const reqInp = document.getElementById('voterNidRequestNumber');
+        if (reqInp && reqInp.value) {
+          reqInp.value = '';
+          document.getElementById('btnClearRequestNumber')?.classList.add('hidden');
+        }
+      }
+    }
+
     async function handleRequestNumberSearch() {
       const reqNumInput = document.getElementById('voterNidRequestNumber');
       const reqNum = (reqNumInput?.value || '').trim().replace(/[^0-9]/g, '');
-      if (!reqNum) {
-        alert('Please enter a valid Request Number.');
+      if (reqNum.length !== 16) {
+        alert('Please enter a valid 16-digit Request Number (exactly 16 digits).');
         reqNumInput?.focus();
         return;
       }
@@ -14342,6 +14375,21 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="inline-block animate-spin">⟳</span>';
       }
+
+      // Check if DOB and First Name are also filled
+      let dobAd = document.getElementById("voterNinDob") ? document.getElementById("voterNinDob").value.trim() : "";
+      const dobBs = document.getElementById("voterNinDobBs") ? document.getElementById("voterNinDobBs").value.trim() : "";
+      const firstname = document.getElementById("voterNinFirstname") ? document.getElementById("voterNinFirstname").value.trim() : "";
+
+      if (!dobAd && dobBs) {
+        const englishBsVal = translateDigits(dobBs, nepaliToEnglishDigits);
+        dobAd = convertBsToAd(englishBsVal) || "";
+        if (dobAd && document.getElementById("voterNinDob")) {
+          document.getElementById("voterNinDob").value = dobAd;
+        }
+      }
+
+      const hasDobAndName = Boolean(dobAd && firstname);
 
       // 1. Get stored captcha
       const stored = await getSavedPortalCaptcha();
@@ -14399,7 +14447,7 @@
         // Success — persist captcha since it worked!
         savePortalCaptcha(captchaCode, session);
 
-        showRequestNumberResultModal({
+        const reqInfo = {
           success: true,
           requestNumber: reqNum,
           nin: data.nin || '',
@@ -14408,7 +14456,18 @@
           message: data.message || '',
           messageLoc: data.messageLoc || '',
           raw: data
-        });
+        };
+
+        // If DOB and First Name are filled and NIN was returned:
+        // Automatically make search by NIN!
+        if (hasDobAndName && data.nin) {
+          const ninInp = document.getElementById('voterNidNin');
+          if (ninInp) ninInp.value = data.nin;
+
+          await runNinSearchForRequestNumber(data.nin, dobAd, firstname, reqInfo);
+        } else {
+          showRequestNumberResultModal(reqInfo);
+        }
 
       } catch (err) {
         alert('Network error searching request number: ' + err.message);
@@ -14420,11 +14479,82 @@
       }
     }
 
+    async function runNinSearchForRequestNumber(nin, dobAd, firstname, reqInfo) {
+      const btn = document.getElementById("btnSingleNinSearch") ||
+                  document.querySelector("[onclick='handleNinSearchClick()']") ||
+                  document.querySelector("[onclick='handleNinSearch()']");
+
+      isNinSearchRunning = true;
+      ninSearchAbortController = new AbortController();
+
+      if (btn) {
+        btn.disabled = false;
+        btn.className = "w-full bg-emerald-100 hover:bg-emerald-200 active:scale-[0.98] text-emerald-800 font-semibold text-xs py-2 px-3 rounded-xl border border-emerald-300 shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]";
+        btn.innerHTML = `
+          <svg class="animate-spin h-3.5 w-3.5 text-emerald-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Searching Voter Portal...
+        `;
+      }
+
+      try {
+        const { data, error, aborted } = await queryVoterPortalWithRetry({
+          nin,
+          dob: dobAd,
+          firstname,
+          signal: ninSearchAbortController.signal
+        });
+
+        if (aborted || !isNinSearchRunning) return;
+
+        if (data) {
+          // Positive — show card itself in NIN result modal!
+          openNinResultModal(true, data, null);
+          try {
+            const vlNum = data.VoterNo || data.voterListNumber || data.voterNo || "";
+            persistVoterListRecordToSecondaryDb(nin, data, "active", vlNum, "").catch(() => {});
+          } catch (_) {}
+        } else {
+          // Negative or no record found response in voterlist search:
+          // Show the response of request number with NIN prominently!
+          const voterMsg = error || "Record not found on voter portal.";
+          showRequestNumberResultModal({
+            ...reqInfo,
+            voterNotice: `Voter Portal: ${voterMsg}. Showing approved NIN number obtained from Request Number.`
+          });
+        }
+      } catch (err) {
+        if (err.name === "AbortError" || !isNinSearchRunning) return;
+        showRequestNumberResultModal({
+          ...reqInfo,
+          voterNotice: `Voter Portal: ${err.message}. Showing approved NIN number obtained from Request Number.`
+        });
+      } finally {
+        isNinSearchRunning = false;
+        ninSearchAbortController = null;
+        resetNinSearchButton();
+      }
+    }
+
     function showRequestNumberResultModal(info) {
       const modal = document.getElementById('requestNumberResultModal');
       if (!modal) return;
 
       document.getElementById('reqNumModalSubtitle').textContent = `Request #: ${info.requestNumber || '—'}`;
+
+      const voterNoticeBox = document.getElementById('reqNumVoterNoticeBox');
+      const voterNoticeText = document.getElementById('reqNumVoterNoticeText');
+      if (voterNoticeBox && voterNoticeText) {
+        if (info.voterNotice) {
+          voterNoticeText.textContent = info.voterNotice;
+          voterNoticeBox.classList.remove('hidden');
+        } else {
+          voterNoticeBox.classList.add('hidden');
+          voterNoticeText.textContent = '';
+        }
+      }
 
       const banner = document.getElementById('reqNumStatusBanner');
       const icon = document.getElementById('reqNumStatusIcon');
@@ -14552,7 +14682,21 @@
         return;
       }
 
+      const reqNumInput = document.getElementById('voterNidRequestNumber');
+      const reqNum = (reqNumInput?.value || '').trim().replace(/\D/g, '');
       const nin = document.getElementById("voterNidNin").value.trim();
+
+      // If Request Number entered and NIN empty: route to handleRequestNumberSearch
+      if (reqNum && !nin) {
+        if (reqNum.length !== 16) {
+          alert('Request Number must be exactly 16 digits.');
+          reqNumInput?.focus();
+          return;
+        }
+        await handleRequestNumberSearch();
+        return;
+      }
+
       let dobAd = document.getElementById("voterNinDob").value.trim();
       const dobBs = document.getElementById("voterNinDobBs") ? document.getElementById("voterNinDobBs").value.trim() : "";
       const firstname = document.getElementById("voterNinFirstname").value.trim();
@@ -14888,10 +15032,8 @@
           const tickNid = () => {
             const currentSaved = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
             if (!currentSaved) return;
-            const savedTime = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
-            const savedClock = savedTime ? _formatCaptchaSavedTime(savedTime) : '';
             if (title) {
-              title.innerHTML = `Using saved captcha: <strong class="font-mono text-amber-900">${currentSaved}</strong> <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ml-1">⏱️ ${elapsed}${savedClock ? ' (' + savedClock + ')' : ''}</span> <button type="button" onclick="loadNidFlowCaptcha(true)" class="text-xs text-blue-600 hover:text-blue-800 underline font-semibold ml-2 cursor-pointer">Re-enter</button>`;
+              title.innerHTML = `Using saved captcha: <strong class="font-mono text-amber-900">${currentSaved}</strong> <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ml-1">⏱️ ${elapsed}</span> <button type="button" onclick="loadNidFlowCaptcha(true)" class="text-xs text-blue-600 hover:text-blue-800 underline font-semibold ml-2 cursor-pointer">Re-enter</button>`;
             }
           };
           tickNid();
@@ -18810,6 +18952,15 @@ Your details were incorrect and have been changed/updated, but the update has no
 
       <!-- Content -->
       <div id="reqNumModalBody" class="p-5 overflow-y-auto space-y-4">
+        <!-- Voterlist Notice Banner (Shown if voter search was attempted and negative) -->
+        <div id="reqNumVoterNoticeBox" class="hidden p-3 rounded-xl border border-amber-200 bg-amber-50/90 text-amber-900 flex items-start gap-2.5">
+          <span class="text-base shrink-0">ℹ️</span>
+          <div>
+            <p class="font-bold text-xs text-amber-900">Voter Portal Status</p>
+            <p id="reqNumVoterNoticeText" class="text-[11px] text-amber-800 leading-snug mt-0.5"></p>
+          </div>
+        </div>
+
         <!-- Status Banner -->
         <div id="reqNumStatusBanner" class="p-3.5 rounded-xl border flex items-center justify-between gap-3">
           <div class="flex items-center gap-2.5">
