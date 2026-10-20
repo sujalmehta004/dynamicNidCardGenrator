@@ -1382,14 +1382,14 @@
                               oninput="this.value = this.value.replace(/\D/g, '').slice(0, 16); onReqNumInputChanged(this);"
                               onfocus="onReqNumFocus();"
                               onblur="onReqNumBlur();"
-                              onkeydown="if(event.key==='Tab' && !event.shiftKey){event.preventDefault(); document.getElementById('voterNinDobBs')?.focus();} else if(event.key==='Enter'){event.preventDefault(); const v=(this.value||'').trim().replace(/\D/g,''); if(v.length===16){if(isReqNumSearchRunning){stopRequestNumberSearch();}else{handleRequestNumberSearch();}}}"
+                              onkeydown="if(event.key==='Tab' && !event.shiftKey){event.preventDefault(); const el=document.getElementById('voterNinDobBs'); if(el){el.focus(); try{el.select();}catch(_){}}} else if(event.key==='Enter'){event.preventDefault(); const v=(this.value||'').trim().replace(/\D/g,''); if(v.length===16){if(isReqNumSearchRunning){stopRequestNumberSearch();}else{handleRequestNumberSearch();}}}"
                               class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-lg px-2.5 py-1.5 pr-14 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[34px] placeholder:text-slate-400 font-normal disabled:opacity-40 disabled:cursor-not-allowed" />
                             <div class="absolute right-1 flex items-center gap-0.5">
-                              <button type="button" id="btnClearRequestNumber" onclick="clearRequestNumberField()" title="Clear Request Number"
+                              <button type="button" id="btnClearRequestNumber" tabindex="-1" onclick="clearRequestNumberField()" title="Clear Request Number"
                                 class="hidden w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
                                 ✕
                               </button>
-                              <button type="button" id="btnSearchByRequestNumber" onclick="if(isReqNumSearchRunning){stopRequestNumberSearch();}else{const v=(document.getElementById('voterNidRequestNumber').value||'').trim().replace(/\D/g,'');if(v.length===16)handleRequestNumberSearch();}" title="Check Status (Enter) — 16 digits required"
+                              <button type="button" id="btnSearchByRequestNumber" tabindex="-1" onclick="if(isReqNumSearchRunning){stopRequestNumberSearch();}else{const v=(document.getElementById('voterNidRequestNumber').value||'').trim().replace(/\D/g,'');if(v.length===16)handleRequestNumberSearch();}" title="Check Status (Enter) — 16 digits required"
                                 class="w-6 h-6 rounded flex items-center justify-center text-emerald-700 hover:text-emerald-950 hover:bg-emerald-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
                                 ↵
                               </button>
@@ -14601,6 +14601,7 @@
       }
       isReqNumSearchRunning = false;
       _updateReqNumSearchBtn(false);
+      closeRequestNumberResultModal();
       // Hide inline captcha panel if visible
       if (typeof hideReqNumCaptchaPanel === 'function') hideReqNumCaptchaPanel();
     }
@@ -14805,6 +14806,7 @@
       // Start search state
       isReqNumSearchRunning = true;
       reqNumAbortController = new AbortController();
+      const currentAbortCtrl = reqNumAbortController;
       _updateReqNumSearchBtn(true);
 
       // Create a wave controller for the 10 parallel requests
@@ -14812,7 +14814,7 @@
       const outerAbortHandler = () => {
         try { waveController.abort(); } catch (_) {}
       };
-      reqNumAbortController.signal.addEventListener("abort", outerAbortHandler, { once: true });
+      currentAbortCtrl.signal.addEventListener("abort", outerAbortHandler, { once: true });
 
       const parallelCount = 10;
       let lastErrorData = null;
@@ -14863,8 +14865,15 @@
         waveController.abort();
       } catch (aggErr) {
         waveController.abort();
-        if (reqNumAbortController && reqNumAbortController.signal.aborted) {
-          return; // Aborted by user / refresh / clear
+        // If aborted by user / Ctrl+R refresh / clear, exit silently without showing any modal
+        if (currentAbortCtrl.signal.aborted || (reqNumAbortController && reqNumAbortController.signal.aborted) || !isReqNumSearchRunning) {
+          return;
+        }
+
+        const isAborted = aggErr.name === 'AbortError' ||
+          (Array.isArray(aggErr.errors) && aggErr.errors.some(e => e.name === 'AbortError'));
+        if (isAborted) {
+          return;
         }
 
         const isCapErr = Boolean(
@@ -14904,9 +14913,16 @@
         });
         return;
       } finally {
-        isReqNumSearchRunning = false;
-        _updateReqNumSearchBtn(false);
-        reqNumAbortController = null;
+        if (reqNumAbortController === currentAbortCtrl) {
+          isReqNumSearchRunning = false;
+          _updateReqNumSearchBtn(false);
+          reqNumAbortController = null;
+        }
+      }
+
+      // Check if search was stopped while resolving
+      if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
+        return;
       }
 
       // Success — persist captcha since it worked
