@@ -1336,6 +1336,18 @@
                         </svg>
                         <span id="btnPortalProceedText">Proceed</span>
                       </button>
+
+                      <!-- Saved Captcha Auto-Reuse Status Badge -->
+                      <div id="savedCaptchaBadge" class="hidden flex items-center justify-between bg-amber-100/70 border border-amber-200/90 px-2.5 py-1 rounded-xl text-xs text-amber-900 mt-2 shadow-2xs">
+                        <span class="flex items-center gap-1.5 font-medium text-[11px]">
+                          <span>⚡</span>
+                          <span>Saved Captcha: <strong id="savedCaptchaCodeText" class="font-mono font-bold tracking-wider"></strong> <span class="text-[9px] text-amber-700">(Auto-reused)</span></span>
+                        </span>
+                        <button type="button" onclick="clearSavedPortalCaptcha()" title="Clear and enter fresh captcha"
+                          class="text-[10px] text-amber-700 hover:text-amber-950 font-bold underline cursor-pointer ml-2">
+                          Change
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -3102,6 +3114,9 @@
       loadSavedBordersAndBackgrounds();
       generateVoterCaptcha();
       initConverterFontSize();
+      if (typeof updateSavedCaptchaIndicator === "function") {
+        updateSavedCaptchaIndicator();
+      }
     });
 
     // ─── Real-time portal autocomplete (in-memory, instant) ────────────────────
@@ -7852,19 +7867,46 @@
       if (el) el.style.display = 'none';
     }
 
-    async function rdModalLoadCaptcha() {
+    async function rdModalLoadCaptcha(forceReload = false) {
       rdModal_txId = '';
       rdModal_dlToken = '';
       rdModal_lastPdfBlob = null;
       rdModalHideErr(1);
-      const captchaCode = document.getElementById('rdCaptchaCode');
-      if (captchaCode) captchaCode.value = '';
       const otpCode = document.getElementById('rdOtpCode');
       if (otpCode) otpCode.value = '';
       const tokenInput = document.getElementById('rdTokenInput');
       if (tokenInput) tokenInput.value = '';
 
       rdModalGotoStep(1);
+
+      // ── Try to reuse saved captcha first (skip fetch if not forced) ──
+      if (!forceReload) {
+        const savedCode = (localStorage.getItem('portal_saved_captcha_code') || '').trim();
+        if (savedCode) {
+          const captchaCodeEl = document.getElementById('rdCaptchaCode');
+          if (captchaCodeEl) captchaCodeEl.value = savedCode;
+          const img = document.getElementById('rdCaptchaImg');
+          if (img) img.src = '';
+          // Show a subtle indicator that saved captcha is being reused
+          const errEl = document.getElementById('rdStep1Err');
+          if (errEl) {
+            errEl.style.color = '#059669';
+            errEl.style.background = '#ecfdf5';
+            errEl.style.borderColor = '#6ee7b7';
+            errEl.textContent = '✓ Using saved captcha: ' + savedCode + ' — Click "Validate Captcha & Send OTP" to proceed.';
+            errEl.style.display = 'block';
+          }
+          const btn = document.getElementById('rdBtnStart');
+          if (btn) btn.textContent = 'Check — Start Verification';
+          // Auto-submit immediately with saved captcha
+          setTimeout(() => rdModalRequestOtp(), 200);
+          return;
+        }
+      }
+
+      // No saved captcha — fetch a fresh one
+      const captchaCode = document.getElementById('rdCaptchaCode');
+      if (captchaCode) captchaCode.value = '';
       const img = document.getElementById('rdCaptchaImg');
       if (img) img.src = '';
       const btn = document.getElementById('rdBtnStart');
@@ -7876,6 +7918,8 @@
         const data = await res.json();
         if (!data.image) throw new Error('Invalid captcha response from server.');
         if (img) img.src = 'data:image/png;base64,' + data.image;
+        // Store session if available
+        if (data.captchaSession) window._currentCaptchaSession = data.captchaSession;
         setTimeout(() => document.getElementById('rdCaptchaCode')?.focus(), 50);
       } catch (err) {
         rdModalShowErr(1, 'Failed to load captcha: ' + err.message);
@@ -7884,9 +7928,25 @@
       }
     }
 
+    // Detect if error message indicates invalid/expired captcha
+    function rdIsInvalidCaptchaError(msg) {
+      if (!msg) return false;
+      const m = String(msg).toLowerCase();
+      return m.includes('captcha') || m.includes('invalid code') || m.includes('session expired') || m.includes('session_expired') || m.includes('invalid_captcha');
+    }
+
     async function rdModalRequestOtp() {
       rdModalHideErr(1);
-      const captchaCode = (document.getElementById('rdCaptchaCode')?.value || '').trim();
+
+      // Auto-fill from saved captcha if input is empty
+      let captchaCode = (document.getElementById('rdCaptchaCode')?.value || '').trim();
+      if (!captchaCode) {
+        captchaCode = (localStorage.getItem('portal_saved_captcha_code') || '').trim();
+        if (captchaCode) {
+          const cEl = document.getElementById('rdCaptchaCode');
+          if (cEl) cEl.value = captchaCode;
+        }
+      }
       if (!captchaCode) { rdModalShowErr(1, 'Please enter the captcha code.'); return; }
 
       const fullName    = (document.getElementById('rdModal_fullNameEn')?.value || '').trim().toUpperCase();
@@ -7902,10 +7962,14 @@
       const btn = document.getElementById('rdBtnSendOtp');
       if (btn) { btn.disabled = true; btn.textContent = 'Validating & Sending OTP…'; }
 
+      const sessionToSend = window._currentCaptchaSession || localStorage.getItem('portal_saved_captcha_session') || '';
+      const reqHeaders = { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode };
+      if (sessionToSend) reqHeaders['x-captcha-session'] = sessionToSend;
+
       try {
         const res = await fetch(`${API_BASE}/api/request-otp`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode },
+          headers: reqHeaders,
           body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc: citLoc })
         });
         let body = {};
@@ -7913,13 +7977,36 @@
 
         if (!res.ok) {
           const errMsg = body.error || body.message || body.code || res.statusText;
-          rdModalShowErr(1, 'OTP request failed: ' + errMsg);
+          // If captcha is invalid — clear saved captcha, force fresh reload
+          if (rdIsInvalidCaptchaError(errMsg)) {
+            try { localStorage.removeItem('portal_saved_captcha_code'); localStorage.removeItem('portal_saved_captcha_session'); } catch(_) {}
+            if (typeof updateSavedCaptchaIndicator === 'function') updateSavedCaptchaIndicator();
+            rdModalShowErr(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
+            setTimeout(() => rdModalLoadCaptcha(true), 800);
+          } else {
+            rdModalShowErr(1, 'OTP request failed: ' + errMsg);
+          }
           return;
         }
 
         if (body.code && body.code !== 'OTP_SENT' && body.code !== 'SUCCESS') {
-          rdModalShowErr(1, 'OTP request failed: ' + (body.message || body.code));
+          const codeMsg = body.message || body.code;
+          if (rdIsInvalidCaptchaError(codeMsg)) {
+            try { localStorage.removeItem('portal_saved_captcha_code'); localStorage.removeItem('portal_saved_captcha_session'); } catch(_) {}
+            if (typeof updateSavedCaptchaIndicator === 'function') updateSavedCaptchaIndicator();
+            rdModalShowErr(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
+            setTimeout(() => rdModalLoadCaptcha(true), 800);
+          } else {
+            rdModalShowErr(1, 'OTP request failed: ' + codeMsg);
+          }
           return;
+        }
+
+        // Success — save captcha for future reuse
+        if (typeof savePortalCaptcha === 'function') {
+          savePortalCaptcha(captchaCode, sessionToSend);
+        } else {
+          try { localStorage.setItem('portal_saved_captcha_code', captchaCode); } catch(_) {}
         }
 
         rdModal_txId = body.transactionId || '';
@@ -9402,6 +9489,46 @@
       return "";
     }
 
+    // ── Saved Captcha Management for Search by Name ──
+    const SAVED_CAPTCHA_CODE_KEY = 'portal_saved_captcha_code';
+    const SAVED_CAPTCHA_SESSION_KEY = 'portal_saved_captcha_session';
+    window._currentCaptchaSession = '';
+
+    function savePortalCaptcha(code, session) {
+      if (!code) return;
+      try {
+        localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, code.trim());
+        if (session) {
+          localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, session);
+        }
+      } catch (e) {}
+      updateSavedCaptchaIndicator();
+    }
+
+    function clearSavedPortalCaptcha() {
+      try {
+        localStorage.removeItem(SAVED_CAPTCHA_CODE_KEY);
+        localStorage.removeItem(SAVED_CAPTCHA_SESSION_KEY);
+      } catch (e) {}
+      window._currentCaptchaSession = '';
+      const cc = document.getElementById('portalCaptchaCode');
+      if (cc) cc.value = '';
+      updateSavedCaptchaIndicator();
+      loadPortalCaptcha(false);
+    }
+
+    function updateSavedCaptchaIndicator() {
+      const saved = localStorage.getItem(SAVED_CAPTCHA_CODE_KEY);
+      const badge = document.getElementById('savedCaptchaBadge');
+      const text = document.getElementById('savedCaptchaCodeText');
+      if (saved && badge && text) {
+        text.textContent = saved;
+        badge.classList.remove('hidden');
+      } else if (badge) {
+        badge.classList.add('hidden');
+      }
+    }
+
     async function loadPortalCaptcha(bulkMode = null) {
       if (typeof bulkMode === "boolean") {
         isBulkMode = bulkMode;
@@ -9447,6 +9574,9 @@
           throw new Error(`Captcha load failed: ${res.statusText}`);
         }
         const data = await res.json();
+        if (data.captchaSession) {
+          window._currentCaptchaSession = data.captchaSession;
+        }
         if (data.image) {
           img.src = "data:image/png;base64," + data.image;
           document.getElementById("portalCaptchaContainer").classList.remove("hidden");
@@ -9509,6 +9639,10 @@
         "Content-Type": "application/json",
         "Captcha-Code": captchaCode
       };
+      const sessionToSend = window._currentCaptchaSession || localStorage.getItem(SAVED_CAPTCHA_SESSION_KEY);
+      if (sessionToSend) {
+        headers["x-captcha-session"] = sessionToSend;
+      }
 
       let lastError = null;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -9552,7 +9686,15 @@
       }
       const dobLocRaw = document.getElementById("portalDobLoc").value.trim();
       const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc").value.trim();
-      const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
+      let captchaCode = document.getElementById("portalCaptchaCode").value.trim();
+
+      // If input is empty, fallback to saved captcha if present
+      if (!captchaCode) {
+        captchaCode = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+        if (captchaCode) {
+          document.getElementById("portalCaptchaCode").value = captchaCode;
+        }
+      }
 
       const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
       const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
@@ -9568,6 +9710,9 @@
         alert("Please fill all required fields:\n• " + missingFields.join("\n• "));
         return;
       }
+
+      // Save valid captcha code & session for subsequent automatic reuses
+      savePortalCaptcha(captchaCode, window._currentCaptchaSession);
 
       const btn = document.getElementById("btnPortalRequestOtp");
       const originalText = btn.innerHTML;
@@ -9598,6 +9743,13 @@
         const _rawText = typeof responseBody === "string" ? responseBody : extractOtpResponseMessage(responseBody);
         const _parsedCode = parseOtpErrorCodeFromText(_rawText);
         const _resolvedCode = _respCode || _parsedCode;
+
+        // If captcha specifically failed, clear saved captcha and prompt fresh captcha
+        if (_resolvedCode === "CAPTCHA_INVALID" || (typeof _rawText === 'string' && /captcha/i.test(_rawText) && /invalid|expire|मिल्दैन|गलत/i.test(_rawText))) {
+          clearSavedPortalCaptcha();
+          alert("Captcha expired or invalid. Please type the fresh captcha code.");
+          return;
+        }
 
         if (_resolvedCode === "MOBILE_NOT_REGISTERED" || (_rawText && _rawText.includes("MOBILE_NOT_REGISTERED")) ||
           _resolvedCode === "DATA_NOT_FOUND" || (_rawText && _rawText.includes("DATA_NOT_FOUND"))) {
@@ -9644,18 +9796,25 @@
 
         if (!res.ok) {
           const errMsg = _rawText || res.statusText || "OTP request failed";
-          loadPortalCaptcha(false);
+          // Check if captcha failed
+          if (/captcha/i.test(errMsg)) {
+            clearSavedPortalCaptcha();
+          }
+          alert(errMsg);
           return;
         }
 
         if (typeof responseBody === "string") {
-          loadPortalCaptcha(false);
+          alert(responseBody);
           return;
         }
 
         const responseMsg = extractOtpResponseMessage(responseBody);
         if (responseMsg) {
-          loadPortalCaptcha(false);
+          if (/captcha/i.test(responseMsg)) {
+            clearSavedPortalCaptcha();
+          }
+          alert(responseMsg);
           return;
         }
 
@@ -10013,6 +10172,19 @@
     async function handlePortalProceedClick() {
       const combos = generatePortalPermutations();
 
+      // Check if we have a saved captcha code to automatically use
+      const savedCaptcha = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+      if (savedCaptcha) {
+        const cInput = document.getElementById('portalCaptchaCode');
+        if (cInput) cInput.value = savedCaptcha;
+
+        if (combos.length <= 1) {
+          return requestPortalOtp();
+        } else {
+          return dispatchPortalPermutations(combos, savedCaptcha);
+        }
+      }
+
       if (combos.length <= 1) {
         // Single mode — fall through to existing captcha flow
         return loadPortalCaptcha(false);
@@ -10051,6 +10223,10 @@
     async function dispatchPortalPermutations(combos, captchaCode) {
       if (!combos || !combos.length) return;
 
+      if (captchaCode) {
+        savePortalCaptcha(captchaCode, window._currentCaptchaSession);
+      }
+
       // Panel always stays hidden — we only track state silently
       _initPermState(combos);
       _renderPermCards(combos);
@@ -10071,10 +10247,16 @@
         const dobLoc      = translateDigits(combo.dob, englishToNepaliDigits);
         const citLoc      = translateDigits(combo.citDate, englishToNepaliDigits);
 
+        const reqHeaders = { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode };
+        const sessionToSend = window._currentCaptchaSession || localStorage.getItem(SAVED_CAPTCHA_SESSION_KEY);
+        if (sessionToSend) {
+          reqHeaders['x-captcha-session'] = sessionToSend;
+        }
+
         try {
           const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode },
+            headers: reqHeaders,
             body: JSON.stringify({ fullName, fullNameLoc: fullNameLoc, dobLoc, ccnIssuingDateLoc: citLoc })
           });
           const body = await parseResponseBody(res);
@@ -10188,6 +10370,20 @@
       const namePanel = document.getElementById("nidGatewayMainFormContainer");
       if (namePanel) namePanel.classList.remove("hidden");
 
+      // ── If saved captcha exists, skip captcha UI and go straight to bulk OTP ──
+      const savedCaptchaForBulk = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+      if (savedCaptchaForBulk) {
+        const cInput = document.getElementById("portalCaptchaCode");
+        if (cInput) cInput.value = savedCaptchaForBulk;
+        // Update button
+        const btn = document.getElementById("btnPortalRequestOtp");
+        if (btn) {
+          btn.innerText = "Send Bulk OTP Requests";
+          btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+        }
+        return requestPortalBulkOtp();
+      }
+
       // If captcha is already visible and user has already entered a code, submit bulk verification immediately
       const captchaVal = (document.getElementById("portalCaptchaCode")?.value || "").trim();
       const captchaRowVisible = !document.getElementById("portalCaptchaInputRow")?.classList.contains("hidden");
@@ -10195,7 +10391,7 @@
         return requestPortalBulkOtp();
       }
 
-      // Update button label to indicate bulk mode immediately
+      // No saved captcha — show captcha UI
       const btn = document.getElementById("btnPortalRequestOtp");
       if (btn) {
         btn.innerText = "Send Bulk OTP Requests";
@@ -10945,7 +11141,15 @@
     }
 
     async function requestPortalBulkOtp() {
-      const captchaCode = document.getElementById("portalCaptchaCode").value.trim();
+      // Use saved captcha if input is empty
+      let captchaCode = (document.getElementById("portalCaptchaCode")?.value || '').trim();
+      if (!captchaCode) {
+        captchaCode = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
+        if (captchaCode) {
+          const cEl = document.getElementById("portalCaptchaCode");
+          if (cEl) cEl.value = captchaCode;
+        }
+      }
       if (!captchaCode) {
         alert("Please enter the captcha code first.");
         return;
@@ -11953,10 +12157,24 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 20, maxWaves = 4, waveDelayMs = 600) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 2, maxWaves = 3, waveDelayMs = 250) {
       const normalizedNin = String(nin || "").trim();
       const dobValue     = String(dob || "").trim();
       const firstnameVal = String(firstname || "").trim();
+
+      // Instant cache check: if record already loaded in cached database, return immediately!
+      const digitsOnly = normalizedNin.replace(/\D/g, "");
+      if (Array.isArray(allCachedRecords)) {
+        const found = allCachedRecords.find(r => {
+          if (!r) return false;
+          const rNin = String(r.ninEn || r.Nidno || r.nin || "").replace(/\D/g, "");
+          return rNin && rNin === digitsOnly;
+        });
+        if (found && (found.VoterNo || found.voterListNumber || found.voterNo)) {
+          return { data: found };
+        }
+      }
+
       const body = JSON.stringify({ nin: normalizedNin, dob: dobValue, firstname: firstnameVal, parallelCount });
       const TRANSIENT_RE = /NID सर्भरबाट डेटा प्राप्त हुन सकेन|NID सर्भर/i;
       let lastError = "Failed to query the official voter portal.";
@@ -11974,7 +12192,7 @@
           signal.addEventListener("abort", outerAbortHandler, { once: true });
         }
 
-        // Build N parallel fetch promises
+        // Build parallel fetch promises (raced with Promise.any)
         const requests = Array.from({ length: parallelCount }, (_, i) => {
           return fetch(`${API_BASE}/api/voter-search`, {
             method: "POST",
@@ -11985,39 +12203,34 @@
           .then(async (res) => {
             const json = await res.json();
             if (res.ok && json.success && json.data) {
-              return json.data;      // ← success value
+              return json.data;      // ← first success resolves immediately
             }
             const errMsg = json.error || "No data found from official voter portal.";
-            // Non-transient errors should stop the wave immediately too
             if (!TRANSIENT_RE.test(errMsg)) {
               lastError = errMsg;
             }
-            throw new Error(errMsg); // ← causes Promise.any to keep trying others
+            throw new Error(errMsg);
           })
           .catch((err) => {
-            if (err.name === "AbortError") throw err; // propagate abort
+            if (err.name === "AbortError") throw err;
             if (err.message) lastError = err.message;
             throw err;
           });
         });
 
         try {
-          // Promise.any resolves with the first non-rejected promise
+          // Promise.any resolves with the fastest success
           const successData = await Promise.any(requests);
-          // Cancel remaining in-flight requests
           waveController.abort();
           if (signal && outerAbortHandler) signal.removeEventListener("abort", outerAbortHandler);
           return { data: successData };
         } catch (aggErr) {
-          // All N requests failed (AggregateError) or outer abort
           if (signal && outerAbortHandler) signal.removeEventListener("abort", outerAbortHandler);
           if (signal && signal.aborted) return { aborted: true, error: "Search stopped by user." };
           if (waveController.signal.aborted && !(signal && signal.aborted)) {
-            // Self-aborted (e.g. outer abort) but not by user — treat as final error
             return { error: lastError };
           }
 
-          // Check if the errors were all transient (portal busy) — if so, retry wave
           const allErrors = (aggErr instanceof AggregateError ? aggErr.errors : [aggErr])
             .filter(e => e && e.name !== "AbortError");
           const anyTransient = allErrors.some(e => TRANSIENT_RE.test(e.message || ""));
@@ -12025,7 +12238,7 @@
             return { error: lastError };
           }
 
-          // Wait between waves (allow user abort during wait)
+          // Wait between waves
           await new Promise((resolve) => {
             const t = setTimeout(resolve, waveDelayMs * wave);
             if (signal) signal.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
@@ -13926,12 +14139,14 @@
         }
 
         if (data) {
-          // Save successful NIN search result to local DB
+          // Open result modal IMMEDIATELY for instant UI responsiveness
+          openNinResultModal(true, data, null);
+
+          // Save successful NIN search result to local DB in background (non-blocking)
           try {
             const vlNum = data.VoterNo || data.voterListNumber || data.voterNo || "";
-            await persistVoterListRecordToSecondaryDb(nin, data, "active", vlNum, "");
+            persistVoterListRecordToSecondaryDb(nin, data, "active", vlNum, "").catch(() => {});
           } catch (_saveErr) { /* non-critical */ }
-          openNinResultModal(true, data, null);
         } else {
           const errMsg = error || "";
           if (getVoterActiveStateFromMessage(errMsg).isActive) {

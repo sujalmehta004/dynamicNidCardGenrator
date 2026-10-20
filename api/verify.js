@@ -957,18 +957,53 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       }, 150);
     }
 
+    // Saved captcha key (shared with main app)
+    const VERIFY_SAVED_CAPTCHA_KEY = 'portal_saved_captcha_code';
+    const VERIFY_SAVED_SESSION_KEY = 'portal_saved_captcha_session';
+
+    function isInvalidCaptchaError(msg) {
+      if (!msg) return false;
+      const m = String(msg).toLowerCase();
+      return m.includes('captcha') || m.includes('invalid code') || m.includes('session expired') || m.includes('session_expired') || m.includes('invalid_captcha');
+    }
+
     function startVerifyFlow() {
       const btn = document.getElementById('startVerifyBtn');
+      openVerifyFlowModal();
+
+      // Try to reuse saved captcha — skip API fetch if available
+      const savedCode = (localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || '').trim();
+      if (savedCode) {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.add('opacity-70');
+          btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Sending OTP...';
+        }
+        showStep(1);
+        hideError(1);
+        const captchaInputEl = document.getElementById('captchaInput');
+        if (captchaInputEl) captchaInputEl.value = savedCode;
+        document.getElementById('captchaImg').src = '';
+        // Show saved captcha notice
+        showError(1, '\u2713 Using saved captcha: ' + savedCode);
+        const errEl = document.getElementById('step1Error');
+        if (errEl) { errEl.classList.remove('hidden'); errEl.style.color = '#059669'; errEl.style.background = '#ecfdf5'; errEl.style.borderColor = '#6ee7b7'; }
+        resetStartVerifyButton();
+        // Auto-submit immediately
+        setTimeout(() => requestOtp(), 300);
+        return;
+      }
+
+      // No saved captcha — load fresh
       if (btn) {
         btn.disabled = false;
         btn.classList.add('opacity-70');
         btn.innerHTML = '<svg class="w-4 h-4 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89"/></svg> Loading captcha...';
       }
-      openVerifyFlowModal();
-      loadCaptcha();
+      loadCaptcha(false);
     }
 
-    async function loadCaptcha() {
+    async function loadCaptcha(forceReload = true) {
       // Reset to step 1
       document.getElementById('captchaInput').value = '';
       document.getElementById('captchaImg').src = '';
@@ -983,6 +1018,9 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         const data = await res.json();
         if (!data.image) throw new Error('Invalid captcha format');
         document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.image;
+        if (data.captchaSession) {
+          try { localStorage.setItem(VERIFY_SAVED_SESSION_KEY, data.captchaSession); } catch(_) {}
+        }
         resetStartVerifyButton();
       } catch (err) {
         showError(1, 'Could not load captcha: ' + err.message);
@@ -994,7 +1032,15 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
     async function requestOtp() {
       const sessionId = currentVerifyFlowSession;
       hideError(1);
-      const captchaCode = document.getElementById('captchaInput').value.trim();
+
+      // Auto-fill saved captcha if input is empty
+      let captchaCode = document.getElementById('captchaInput').value.trim();
+      if (!captchaCode) {
+        captchaCode = (localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || '').trim();
+        if (captchaCode) {
+          document.getElementById('captchaInput').value = captchaCode;
+        }
+      }
       if (!captchaCode) { showError(1, 'Please enter the captcha code.'); return; }
 
       const btn = document.getElementById('btnRequestOtp');
@@ -1004,10 +1050,14 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       const dobLoc = translateDigits(PERSON_DOB_LOC, enToNep);
       const ccnIssuingDateLoc = translateDigits(PERSON_CIT_DATE_LOC, enToNep);
 
+      const savedSession = localStorage.getItem(VERIFY_SAVED_SESSION_KEY) || '';
+      const reqHeaders = { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode };
+      if (savedSession) reqHeaders['x-captcha-session'] = savedSession;
+
       try {
         const res = await fetch('/api/request-otp', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Captcha-Code': captchaCode },
+          headers: reqHeaders,
           body: JSON.stringify({
             fullName: PERSON_FULL_NAME.trim().toUpperCase(),
             fullNameLoc: PERSON_FULL_NAME_NP.trim(),
@@ -1036,10 +1086,25 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
           } else if (errMsg.includes("DATA_NOT_FOUND")) {
             errMsg = "Citizen data is not found on the NID portal.";
           }
-          showError(1, 'OTP request failed: ' + errMsg);
-          loadCaptcha();
+
+          // If captcha invalid — clear saved and reload fresh
+          if (isInvalidCaptchaError(errMsg)) {
+            try { localStorage.removeItem(VERIFY_SAVED_CAPTCHA_KEY); localStorage.removeItem(VERIFY_SAVED_SESSION_KEY); } catch(_) {}
+            showError(1, '⚠️ Captcha expired or invalid. Loading fresh captcha...');
+            const errEl = document.getElementById('step1Error');
+            if (errEl) { errEl.style.color = '#dc2626'; errEl.style.background = '#fef2f2'; errEl.style.borderColor = '#fecaca'; }
+            setTimeout(() => loadCaptcha(true), 800);
+          } else {
+            showError(1, 'OTP request failed: ' + errMsg);
+          }
           return;
         }
+
+        // Success — persist captcha for next time
+        try {
+          localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, captchaCode);
+        } catch(_) {}
+
         verifyTransactionId = data.transactionId || '';
         verifyNin = data.nin || PERSON_NIN;
         document.getElementById('maskedMobileDisplay').textContent = data.maskedMobile || '—';

@@ -84,14 +84,23 @@ module.exports = async function handler(req, res) {
     });
 
     const rawCookies = result.headers['set-cookie'];
+    let cookieValue = '';
     if (rawCookies && Array.isArray(rawCookies) && rawCookies.length) {
-      const cookieValue = Buffer.from(rawCookies.join('; '), 'utf8').toString('base64');
+      cookieValue = Buffer.from(rawCookies.join('; '), 'utf8').toString('base64');
       res.setHeader('Set-Cookie', `captcha-session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax`);
     }
 
     res.status(result.status);
     res.setHeader("Content-Type", "application/json");
-    return res.send(result.body);
+    try {
+      const parsed = JSON.parse(result.body.toString('utf8'));
+      if (cookieValue) {
+        parsed.captchaSession = cookieValue;
+      }
+      return res.json(parsed);
+    } catch (e) {
+      return res.send(result.body);
+    }
   } catch (error) {
     console.error("Captcha fetch error:", error);
     return res.status(500).json({ error: `Failed to fetch captcha: ${error.message}` });
