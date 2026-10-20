@@ -35,7 +35,11 @@
     },
     {
       "source": "/api/captcha-store",
-      "destination": "/api/captcha-store.js"
+      "destination": "/api/captcha.js?action=store"
+    },
+    {
+      "source": "/api/hostname",
+      "destination": "/api/config.js?action=hostname"
     },
     {
       "source": "/api/search-by-request-number",

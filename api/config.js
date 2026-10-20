@@ -13,16 +13,8 @@ module.exports = async (req, res) => {
     };
   }
 
-  try {
-    await connectToDatabase();
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return res.status(500).json({ error: 'Database connection failed' });
-  }
+  const method = req.method;
 
-  const { method } = req;
-
-  // Headers
   res.setHeader('Content-Type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -30,6 +22,27 @@ module.exports = async (req, res) => {
 
   if (method === "OPTIONS") {
     return res.status(200).end();
+  }
+
+  const url = req.url || '';
+  if (req.query?.action === 'hostname' || url.includes('/api/hostname')) {
+    const os = require('os');
+    const { execFile } = require('child_process');
+    const fallbackHostname = os.hostname() || '';
+    return new Promise((resolve) => {
+      execFile('hostname', (error, stdout, stderr) => {
+        const hostname = (stdout || '').toString().trim() || (stderr || '').toString().trim() || fallbackHostname;
+        res.status(200).json({ hostname, source: error ? 'fallback' : 'hostname' });
+        resolve();
+      });
+    });
+  }
+
+  try {
+    await connectToDatabase();
+  } catch (error) {
+    console.error('Database connection error:', error);
+    return res.status(500).json({ error: 'Database connection failed' });
   }
 
   if (method === 'GET') {
