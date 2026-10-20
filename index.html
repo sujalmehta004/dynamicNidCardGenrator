@@ -47,6 +47,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <!-- face-api.js for smart portrait cropping in Form Design Studio -->
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Mukta:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
@@ -89,29 +91,24 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.45) !important;
     }
 
-    /* Nepali converter pill hover magnify: normal at rest, magnifies box & font on hover */
+    /* Nepali converter pill: 2 per row in grid with large readable font */
     .quick-conv-pill {
       transform-origin: center center;
-      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-                  box-shadow 0.2s ease,
+      transition: transform 0.15s ease,
+                  box-shadow 0.15s ease,
                   background-color 0.15s ease,
                   border-color 0.15s ease;
       position: relative;
       z-index: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
     }
     .quick-conv-pill:hover {
-      transform: scale(1.35) translateY(-2px);
-      z-index: 50;
-      box-shadow: 0 10px 25px -2px rgba(14, 165, 233, 0.35), 0 2px 5px -1px rgba(14, 165, 233, 0.12);
+      transform: translateY(-2px);
+      z-index: 10;
+      box-shadow: 0 6px 16px -2px rgba(14, 165, 233, 0.28), 0 2px 6px -1px rgba(14, 165, 233, 0.12);
       border-color: #0284c7 !important;
       background-color: #f0f9ff !important;
     }
     .quick-conv-pill:hover span {
-      font-size: 17px !important;
-      font-weight: 400 !important;
       color: #0284c7 !important;
     }
 
@@ -1138,11 +1135,11 @@
                     <div class="flex-1 flex flex-col min-h-0">
                       <div class="flex items-center justify-between mb-1.5 shrink-0">
                         <label class="block text-xs font-normal text-slate-600">Nepali Suggestions</label>
-                        <span class="text-[10px] text-slate-400 font-normal">Hover pill to magnify</span>
+                        <span class="text-[10px] text-slate-400 font-normal">Click to fill</span>
                       </div>
-                      <!-- Suggestion pills container: flex-1, taking full height of 90vh column -->
-                      <div id="quickConverterPills" class="flex-1 w-full flex flex-wrap gap-2.5 items-start content-start bg-white/80 border border-sky-100 rounded-xl p-3 overflow-y-auto shadow-2xs">
-                        <span class="text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali transliterations...</span>
+                      <!-- Suggestion pills container: 2 per row, flex-1, taking full height of 90vh column -->
+                      <div id="quickConverterPills" class="flex-1 w-full grid grid-cols-2 gap-2.5 auto-rows-max items-start content-start bg-white/80 border border-sky-100 rounded-xl p-3 overflow-y-auto shadow-2xs">
+                        <span class="col-span-2 text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali transliterations...</span>
                       </div>
                     </div>
                   </div>
@@ -1150,7 +1147,7 @@
                   <div class="pt-2 shrink-0">
                     <div class="text-xs text-sky-800/80 font-normal flex items-center gap-1.5 bg-sky-100/50 px-2.5 py-1.5 rounded-lg border border-sky-200/50">
                       <span class="text-sky-600">💡</span>
-                      <span>Hover any pill to magnify, click to auto-fill into Nepali Name.</span>
+                      <span>Click any suggestion to auto-fill into Nepali Name.</span>
                     </div>
                   </div>
                 </div>
@@ -3901,7 +3898,7 @@
       if (!val) {
         _currentConverterSuggestions = [];
         _activeConverterIndex = -1;
-        pillsContainer.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">Type an English name above to see Nepali writings...</span>';
+        pillsContainer.innerHTML = '<span class="col-span-2 text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali writings...</span>';
         return;
       }
 
@@ -3916,20 +3913,20 @@
       if (!pillsContainer) return;
 
       if (!_currentConverterSuggestions || !_currentConverterSuggestions.length) {
-        pillsContainer.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">No transliteration matches found.</span>';
+        pillsContainer.innerHTML = '<span class="col-span-2 text-xs text-sky-700/60 italic p-1">No transliteration matches found.</span>';
         return;
       }
 
       pillsContainer.innerHTML = _currentConverterSuggestions.map((s, idx) => {
         const isActive = idx === _activeConverterIndex;
         const stateClasses = isActive
-          ? 'bg-sky-600 text-white border-sky-600 shadow-sm'
-          : 'bg-white text-slate-700 border-sky-200 hover:border-sky-400 shadow-2xs';
+          ? 'bg-sky-600 text-white border-sky-600 shadow-md ring-2 ring-sky-300'
+          : 'bg-white text-slate-800 border-sky-200 hover:border-sky-400 shadow-2xs';
         return `
           <button type="button" tabindex="-1" onclick="selectConverterSuggestion('${escapeHtml(s.text)}', this)"
-            class="quick-conv-pill px-2.5 py-1 rounded-lg border font-normal cursor-pointer flex items-center justify-center transform-gpu ${stateClasses}"
+            class="quick-conv-pill w-full py-2.5 px-3 rounded-xl border text-center font-normal cursor-pointer flex items-center justify-center transition-all duration-150 ${stateClasses}"
             title="${escapeHtml(s.text)}">
-            <span class="text-sm transition-all duration-200 font-normal">${escapeHtml(s.text)}</span>
+            <span class="nepali-font text-[19px] leading-tight font-medium tracking-wide truncate">${escapeHtml(s.text)}</span>
           </button>
         `;
       }).join('');
@@ -4933,21 +4930,581 @@
       }
     }
 
+    // ── Smart portrait face-detection cropper ──────────────────────────────
+    const FACE_API_MODELS_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+    let _faceApiModelsLoaded = false;
+    let _faceApiLoading = false;
+
+    async function ensureFaceApiModels() {
+      if (_faceApiModelsLoaded) return true;
+      if (typeof faceapi === 'undefined') return false;
+      if (_faceApiLoading) {
+        // Wait for it to finish
+        await new Promise(resolve => {
+          const interval = setInterval(() => {
+            if (!_faceApiLoading) { clearInterval(interval); resolve(); }
+          }, 100);
+        });
+        return _faceApiModelsLoaded;
+      }
+      _faceApiLoading = true;
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_API_MODELS_URL);
+        _faceApiModelsLoaded = true;
+      } catch (err) {
+        console.warn('face-api.js model load failed:', err);
+        _faceApiModelsLoaded = false;
+      }
+      _faceApiLoading = false;
+      return _faceApiModelsLoaded;
+    }
+
+    // Photo Adjustment Modal State
+    const photoAdjustState = {
+      originalDataUrl: '',
+      aiDataUrl: '',
+      aiCropBox: null,     // { cropX, cropY, cropW, cropH }
+      faceDetected: false,
+      selectedMode: 'ai',  // 'ai' | 'manual' | 'original'
+      srcImg: null,
+      targetRatio: 1.75 / 2.2, // ~0.7954545
+      // Manual cropper parameters (in source image coordinates)
+      zoom: 1.0,
+      baseW: 0,
+      baseH: 0,
+      cropW: 0,
+      cropH: 0,
+      cropX: 0,
+      cropY: 0,
+      centerX: 0,
+      centerY: 0,
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      dragStartCenterX: 0,
+      dragStartCenterY: 0
+    };
+
+    /**
+     * Compute AI framing for ID portrait:
+     * - Preserves full hair (~0.80 * fh above eyebrows)
+     * - Frames face + hair covering ~80% of height, ~20% collar below chin
+     */
+    function computePortraitCropBox(srcImg, fBox, targetRatio) {
+      const sw = srcImg.naturalWidth;
+      const sh = srcImg.naturalHeight;
+
+      if (!fBox) {
+        let cropW, cropH, cropX, cropY;
+        if (sw / sh > targetRatio) {
+          cropH = sh;
+          cropW = Math.round(sh * targetRatio);
+          cropX = Math.round((sw - cropW) / 2);
+          cropY = 0;
+        } else {
+          cropW = sw;
+          cropH = Math.round(sw / targetRatio);
+          cropX = 0;
+          cropY = 0;
+        }
+        return { cropX, cropY, cropW, cropH, faceDetected: false };
+      }
+
+      const fx = fBox.x, fy = fBox.y, fw = fBox.width, fh = fBox.height;
+      const fCx = fx + fw / 2;
+      const chinY = fy + fh;
+
+      const desiredAbove = Math.round(fh * 0.80);
+      const desiredBelow = Math.round(fh * 0.45);
+
+      let idealH = desiredAbove + fh + desiredBelow; // ~2.25 * fh
+      let idealTop = fy - desiredAbove;
+
+      if (idealTop < 0) {
+        idealTop = 0;
+        idealH = Math.round(chinY / 0.80);
+      }
+
+      let cropH = idealH;
+      let cropW = Math.round(cropH * targetRatio);
+
+      if (cropW > sw) {
+        cropW = sw;
+        cropH = Math.round(cropW / targetRatio);
+      }
+      if (cropH > sh) {
+        cropH = sh;
+        cropW = Math.round(cropH * targetRatio);
+      }
+
+      let cropX = Math.round(fCx - cropW / 2);
+      cropX = Math.max(0, Math.min(cropX, sw - cropW));
+
+      let cropY;
+      if (fy < desiredAbove) {
+        cropY = 0;
+      } else {
+        cropY = Math.round(fy - desiredAbove);
+      }
+
+      if (cropY + cropH > sh) {
+        cropY = Math.max(0, sh - cropH);
+      }
+
+      return { cropX, cropY, cropW, cropH, faceDetected: true };
+    }
+
+    /**
+     * Render a cropBox from srcImg to an image/jpeg data-url at targetW x targetH
+     */
+    function renderCropToDataUrl(srcImg, cropBox, targetW, targetH, quality = 0.95) {
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(
+        srcImg,
+        cropBox.cropX, cropBox.cropY, cropBox.cropW, cropBox.cropH,
+        0, 0, targetW, targetH
+      );
+      return canvas.toDataURL('image/jpeg', quality);
+    }
+
+    function openPhotoAdjustModal(dataUrl) {
+      photoAdjustState.originalDataUrl = dataUrl;
+      photoAdjustState.aiDataUrl = '';
+      photoAdjustState.aiCropBox = null;
+      photoAdjustState.faceDetected = false;
+      photoAdjustState.selectedMode = 'ai';
+
+      const modal = document.getElementById('photoAdjustModal');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Reset UI elements
+      const origImg = document.getElementById('optOriginalImg');
+      if (origImg) origImg.src = dataUrl;
+      
+      const aiLoading = document.getElementById('optAiLoading');
+      if (aiLoading) aiLoading.classList.remove('hidden');
+
+      const aiImg = document.getElementById('optAiImg');
+      if (aiImg) aiImg.classList.add('hidden');
+
+      const aiFailed = document.getElementById('optAiFailed');
+      if (aiFailed) aiFailed.classList.add('hidden');
+
+      const aiBadge = document.getElementById('optAiBadge');
+      if (aiBadge) {
+        aiBadge.textContent = 'Recommended';
+        aiBadge.className = 'text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold';
+      }
+
+      const aiDesc = document.getElementById('optAiDesc');
+      if (aiDesc) aiDesc.textContent = '80% head & hair coverage, auto-centered with breathing margin.';
+
+      const alertBanner = document.getElementById('photoAdjustAlertBanner');
+      if (alertBanner) alertBanner.classList.add('hidden');
+
+      const srcImg = new Image();
+      photoAdjustState.srcImg = srcImg;
+      srcImg.onload = async () => {
+        const sw = srcImg.naturalWidth;
+        const sh = srcImg.naturalHeight;
+        const targetRatio = photoAdjustState.targetRatio;
+
+        // Base crop dimensions at zoom = 1.0 (largest fit within source)
+        if (sw / sh > targetRatio) {
+          photoAdjustState.baseH = sh;
+          photoAdjustState.baseW = Math.round(sh * targetRatio);
+        } else {
+          photoAdjustState.baseW = sw;
+          photoAdjustState.baseH = Math.round(sw / targetRatio);
+        }
+
+        // Center by default
+        photoAdjustState.centerX = sw / 2;
+        photoAdjustState.centerY = sh / 2;
+        photoAdjustState.zoom = 1.0;
+
+        // Run face detection
+        let detectionSuccessful = false;
+        try {
+          const modelsOk = await ensureFaceApiModels();
+          if (modelsOk) {
+            const detections = await faceapi.detectAllFaces(
+              srcImg,
+              new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.25 })
+            );
+
+            if (detections && detections.length > 0) {
+              const largest = detections.reduce((best, d) => {
+                const area = d.box.width * d.box.height;
+                const bestArea = best.box.width * best.box.height;
+                return area > bestArea ? d : best;
+              }, detections[0]);
+
+              const cropBox = computePortraitCropBox(srcImg, largest.box, targetRatio);
+              photoAdjustState.aiCropBox = cropBox;
+              photoAdjustState.faceDetected = true;
+
+              // Generate high quality AI preview (target 500x628)
+              const aiDataUrl = renderCropToDataUrl(srcImg, cropBox, 500, Math.round(500 / targetRatio));
+              photoAdjustState.aiDataUrl = aiDataUrl;
+
+              // Display AI result
+              if (aiImg) {
+                aiImg.src = aiDataUrl;
+                aiImg.classList.remove('hidden');
+              }
+              if (aiLoading) aiLoading.classList.add('hidden');
+
+              const btnResetAi = document.getElementById('btnResetToAi');
+              if (btnResetAi) btnResetAi.classList.remove('opacity-40', 'pointer-events-none');
+
+              // Initialize manual adjuster to match AI crop
+              photoAdjustState.centerX = cropBox.cropX + cropBox.cropW / 2;
+              photoAdjustState.centerY = cropBox.cropY + cropBox.cropH / 2;
+              photoAdjustState.zoom = Math.max(0.8, Math.min(4.0, +(photoAdjustState.baseW / cropBox.cropW).toFixed(2)));
+
+              detectionSuccessful = true;
+              selectPhotoOption('ai');
+            }
+          }
+        } catch (err) {
+          console.warn('Face detection error:', err);
+        }
+
+        if (!detectionSuccessful) {
+          // AI detection failed or no face detected
+          if (aiLoading) aiLoading.classList.add('hidden');
+          if (aiFailed) aiFailed.classList.remove('hidden');
+          if (aiBadge) {
+            aiBadge.textContent = 'Not Detected';
+            aiBadge.className = 'text-[9px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold';
+          }
+          if (aiDesc) aiDesc.textContent = 'Could not detect a clear face. Select Original or adjust manually.';
+          if (alertBanner) alertBanner.classList.remove('hidden');
+
+          const btnResetAi = document.getElementById('btnResetToAi');
+          if (btnResetAi) btnResetAi.classList.add('opacity-40', 'pointer-events-none');
+
+          // Fallback manual crop to center top
+          photoAdjustState.centerX = sw / 2;
+          photoAdjustState.centerY = photoAdjustState.baseH / 2;
+          photoAdjustState.zoom = 1.0;
+
+          // Default selection to original
+          selectPhotoOption('original');
+        }
+
+        updateManualCrop();
+      };
+      srcImg.src = dataUrl;
+    }
+
+    function selectPhotoOption(mode) {
+      photoAdjustState.selectedMode = mode;
+
+      const optAi = document.getElementById('optCardAi');
+      const optManual = document.getElementById('optCardManual');
+      const optOriginal = document.getElementById('optCardOriginal');
+      const label = document.getElementById('selectedOptionLabel');
+
+      const resetCard = (card) => {
+        if (!card) return;
+        card.classList.remove('border-blue-500', 'bg-blue-50/30', 'border-purple-500', 'bg-purple-50/30', 'border-emerald-500', 'bg-emerald-50/30');
+        card.classList.add('border-slate-200', 'bg-white');
+        const check = card.querySelector('.opt-check-indicator');
+        if (check) {
+          check.classList.remove('border-blue-500', 'bg-blue-500', 'border-purple-500', 'bg-purple-500', 'border-emerald-500', 'bg-emerald-500');
+          check.classList.add('border-slate-300', 'bg-white', 'text-transparent');
+        }
+      };
+
+      const activateCard = (card, color) => {
+        if (!card) return;
+        card.classList.remove('border-slate-200', 'bg-white');
+        card.classList.add(`border-${color}-500`, `bg-${color}-50/30`);
+        const check = card.querySelector('.opt-check-indicator');
+        if (check) {
+          check.classList.remove('border-slate-300', 'bg-white', 'text-transparent');
+          check.classList.add(`border-${color}-500`, `bg-${color}-500`, 'text-white');
+        }
+      };
+
+      resetCard(optAi);
+      resetCard(optManual);
+      resetCard(optOriginal);
+
+      if (mode === 'ai') {
+        if (!photoAdjustState.faceDetected) {
+          selectPhotoOption('original');
+          return;
+        }
+        activateCard(optAi, 'blue');
+        if (label) {
+          label.textContent = '✨ AI Smart Crop (Face & Hair)';
+          label.className = 'text-xs font-bold text-blue-600';
+        }
+      } else if (mode === 'manual') {
+        activateCard(optManual, 'purple');
+        if (label) {
+          label.textContent = '🎨 Manual Custom Crop';
+          label.className = 'text-xs font-bold text-purple-600';
+        }
+      } else {
+        activateCard(optOriginal, 'emerald');
+        if (label) {
+          label.textContent = '🖼️ Original Photo (Uncropped)';
+          label.className = 'text-xs font-bold text-emerald-600';
+        }
+      }
+    }
+
+    function updateManualCrop() {
+      const srcImg = photoAdjustState.srcImg;
+      if (!srcImg) return;
+
+      const sw = srcImg.naturalWidth;
+      const sh = srcImg.naturalHeight;
+      const zoom = photoAdjustState.zoom;
+      const targetRatio = photoAdjustState.targetRatio;
+
+      let cropW = Math.round(photoAdjustState.baseW / zoom);
+      let cropH = Math.round(photoAdjustState.baseH / zoom);
+
+      if (cropW > sw) { cropW = sw; cropH = Math.round(cropW / targetRatio); }
+      if (cropH > sh) { cropH = sh; cropW = Math.round(cropH * targetRatio); }
+
+      photoAdjustState.cropW = cropW;
+      photoAdjustState.cropH = cropH;
+
+      const minX = cropW / 2;
+      const maxX = sw - cropW / 2;
+      const minY = cropH / 2;
+      const maxY = sh - cropH / 2;
+
+      if (maxX >= minX) {
+        photoAdjustState.centerX = Math.max(minX, Math.min(maxX, photoAdjustState.centerX));
+      } else {
+        photoAdjustState.centerX = sw / 2;
+      }
+
+      if (maxY >= minY) {
+        photoAdjustState.centerY = Math.max(minY, Math.min(maxY, photoAdjustState.centerY));
+      } else {
+        photoAdjustState.centerY = sh / 2;
+      }
+
+      const cropX = Math.max(0, Math.min(sw - cropW, Math.round(photoAdjustState.centerX - cropW / 2)));
+      const cropY = Math.max(0, Math.min(sh - cropH, Math.round(photoAdjustState.centerY - cropH / 2)));
+
+      photoAdjustState.cropX = cropX;
+      photoAdjustState.cropY = cropY;
+
+      // Draw onto the interactive viewport canvas (210 x 264)
+      const canvas = document.getElementById('cropInteractiveCanvas');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(srcImg, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+      }
+
+      // Draw onto manual option thumbnail canvas (64 x 80)
+      const thumbCanvas = document.getElementById('optManualThumbCanvas');
+      if (thumbCanvas) {
+        thumbCanvas.width = 64;
+        thumbCanvas.height = 80;
+        const tCtx = thumbCanvas.getContext('2d');
+        tCtx.drawImage(srcImg, cropX, cropY, cropW, cropH, 0, 0, 64, 80);
+      }
+
+      // Update slider & zoom badge
+      const slider = document.getElementById('cropZoomSlider');
+      if (slider && Math.abs(parseFloat(slider.value) - zoom) > 0.01) {
+        slider.value = zoom;
+      }
+      const badge = document.getElementById('zoomPercentBadge');
+      if (badge) {
+        badge.textContent = `${Math.round(zoom * 100)}%`;
+      }
+    }
+
+    function stepZoom(delta) {
+      const newZoom = Math.max(0.8, Math.min(4.0, +(photoAdjustState.zoom + delta).toFixed(2)));
+      photoAdjustState.zoom = newZoom;
+      selectPhotoOption('manual');
+      updateManualCrop();
+    }
+
+    function resetCropToAi() {
+      if (photoAdjustState.aiCropBox && photoAdjustState.faceDetected) {
+        const cb = photoAdjustState.aiCropBox;
+        photoAdjustState.centerX = cb.cropX + cb.cropW / 2;
+        photoAdjustState.centerY = cb.cropY + cb.cropH / 2;
+        photoAdjustState.zoom = Math.max(0.8, Math.min(4.0, +(photoAdjustState.baseW / cb.cropW).toFixed(2)));
+        selectPhotoOption('ai');
+        updateManualCrop();
+      }
+    }
+
+    function resetCropToCenter() {
+      const srcImg = photoAdjustState.srcImg;
+      if (!srcImg) return;
+      photoAdjustState.centerX = srcImg.naturalWidth / 2;
+      photoAdjustState.centerY = srcImg.naturalHeight / 2;
+      photoAdjustState.zoom = 1.0;
+      selectPhotoOption('manual');
+      updateManualCrop();
+    }
+
+    function closePhotoAdjustModal() {
+      const modal = document.getElementById('photoAdjustModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+      const fileInput = document.getElementById('uploadPhoto');
+      if (fileInput) fileInput.value = '';
+    }
+
+    function applyPhotoToCard() {
+      const mode = photoAdjustState.selectedMode;
+      const srcImg = photoAdjustState.srcImg;
+      if (!srcImg) {
+        closePhotoAdjustModal();
+        return;
+      }
+
+      const img = document.getElementById('cardPhoto');
+      const photoContainer = img ? img.parentElement : null;
+      const containerW = (photoContainer && photoContainer.offsetWidth) || 67;
+      const targetW = Math.max(containerW * 6, 600);
+      const targetH = Math.round(targetW / photoAdjustState.targetRatio);
+
+      let finalDataUrl = '';
+
+      if (mode === 'ai' && photoAdjustState.aiCropBox) {
+        finalDataUrl = renderCropToDataUrl(srcImg, photoAdjustState.aiCropBox, targetW, targetH, 0.95);
+      } else if (mode === 'manual') {
+        const cropBox = {
+          cropX: photoAdjustState.cropX,
+          cropY: photoAdjustState.cropY,
+          cropW: photoAdjustState.cropW,
+          cropH: photoAdjustState.cropH
+        };
+        finalDataUrl = renderCropToDataUrl(srcImg, cropBox, targetW, targetH, 0.95);
+      } else {
+        // Original image
+        finalDataUrl = photoAdjustState.originalDataUrl;
+      }
+
+      if (img && finalDataUrl) {
+        img.src = finalDataUrl;
+        img.classList.remove('hidden');
+        const cardPhotoTxt = document.getElementById('cardPhotoTxt');
+        if (cardPhotoTxt) cardPhotoTxt.classList.add('hidden');
+      }
+
+      closePhotoAdjustModal();
+    }
+
+    let _cropInteractionsInitialized = false;
+    function initCropInteractions() {
+      if (_cropInteractionsInitialized) return;
+      _cropInteractionsInitialized = true;
+
+      const viewport = document.getElementById('cropViewport');
+      const slider = document.getElementById('cropZoomSlider');
+
+      if (slider) {
+        slider.addEventListener('input', (e) => {
+          photoAdjustState.zoom = parseFloat(e.target.value);
+          selectPhotoOption('manual');
+          updateManualCrop();
+        });
+      }
+
+      if (viewport) {
+        const onDragStart = (e) => {
+          if (!photoAdjustState.srcImg) return;
+          photoAdjustState.isDragging = true;
+          const point = e.touches ? e.touches[0] : e;
+          photoAdjustState.dragStartX = point.clientX;
+          photoAdjustState.dragStartY = point.clientY;
+          photoAdjustState.dragStartCenterX = photoAdjustState.centerX;
+          photoAdjustState.dragStartCenterY = photoAdjustState.centerY;
+          viewport.classList.add('cursor-grabbing');
+          viewport.classList.remove('cursor-grab');
+        };
+
+        viewport.addEventListener('mousedown', onDragStart);
+        viewport.addEventListener('touchstart', onDragStart, { passive: true });
+
+        viewport.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 0.08 : -0.08;
+          stepZoom(delta);
+        }, { passive: false });
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        if (!photoAdjustState.isDragging || !photoAdjustState.srcImg) return;
+        const dx = e.clientX - photoAdjustState.dragStartX;
+        const dy = e.clientY - photoAdjustState.dragStartY;
+        const scaleX = photoAdjustState.cropW / 210;
+        const scaleY = photoAdjustState.cropH / 264;
+        photoAdjustState.centerX = photoAdjustState.dragStartCenterX - dx * scaleX;
+        photoAdjustState.centerY = photoAdjustState.dragStartCenterY - dy * scaleY;
+        selectPhotoOption('manual');
+        updateManualCrop();
+      });
+
+      window.addEventListener('touchmove', (e) => {
+        if (!photoAdjustState.isDragging || !photoAdjustState.srcImg || !e.touches) return;
+        const point = e.touches[0];
+        const dx = point.clientX - photoAdjustState.dragStartX;
+        const dy = point.clientY - photoAdjustState.dragStartY;
+        const scaleX = photoAdjustState.cropW / 210;
+        const scaleY = photoAdjustState.cropH / 264;
+        photoAdjustState.centerX = photoAdjustState.dragStartCenterX - dx * scaleX;
+        photoAdjustState.centerY = photoAdjustState.dragStartCenterY - dy * scaleY;
+        selectPhotoOption('manual');
+        updateManualCrop();
+      });
+
+      const onDragEnd = () => {
+        if (photoAdjustState.isDragging) {
+          photoAdjustState.isDragging = false;
+          const vp = document.getElementById('cropViewport');
+          if (vp) {
+            vp.classList.remove('cursor-grabbing');
+            vp.classList.add('cursor-grab');
+          }
+        }
+      };
+
+      window.addEventListener('mouseup', onDragEnd);
+      window.addEventListener('touchend', onDragEnd);
+    }
+
     function attachLocalImageReaders() {
+      initCropInteractions();
+
       document
         .getElementById("uploadPhoto")
         .addEventListener("change", function (e) {
           const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-              const img = document.getElementById("cardPhoto");
-              img.src = evt.target.result;
-              img.classList.remove("hidden");
-              document.getElementById("cardPhotoTxt").classList.add("hidden");
-            };
-            reader.readAsDataURL(file);
-          }
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            openPhotoAdjustModal(evt.target.result);
+          };
+          reader.readAsDataURL(file);
+          e.target.value = '';
         });
 
       document
@@ -6136,7 +6693,7 @@
       const qInput = document.getElementById("quickConverterInput");
       if (qInput) qInput.value = "";
       const qPills = document.getElementById("quickConverterPills");
-      if (qPills) qPills.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">Type an English name above to see Nepali writings...</span>';
+      if (qPills) qPills.innerHTML = '<span class="col-span-2 text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali writings...</span>';
       const qNotice = document.getElementById("quickConverterCopyNotice");
       if (qNotice) qNotice.classList.add("hidden");
 
@@ -8625,7 +9182,7 @@
       _activeConverterIndex = -1;
       _currentConverterSuggestions = [];
       const qPills = document.getElementById("quickConverterPills");
-      if (qPills) qPills.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">Type an English name above to see Nepali writings...</span>';
+      if (qPills) qPills.innerHTML = '<span class="col-span-2 text-xs text-slate-400 italic p-1 font-normal">Type an English name above to see Nepali writings...</span>';
       const qNotice = document.getElementById("quickConverterCopyNotice");
       if (qNotice) qNotice.classList.add("hidden");
 
@@ -17677,6 +18234,203 @@ Your details were incorrect and have been changed/updated, but the update has no
       </div>
       <!-- Body -->
       <div id="nepaliCharInfoBody" class="flex-1 overflow-y-auto p-5 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- ===== PORTRAIT PHOTO ADJUSTMENT MODAL ===== -->
+  <div id="photoAdjustModal"
+    class="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[99999] hidden items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[92vh] overflow-hidden border border-slate-200">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/70">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">Portrait Photo Setup</h3>
+            <p class="text-[11px] text-slate-500">Choose AI auto-adjusted framing, manual crop & zoom, or original photo</p>
+          </div>
+        </div>
+        <button type="button" onclick="closePhotoAdjustModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Alert Banner (shown if face detection fails) -->
+      <div id="photoAdjustAlertBanner" class="hidden mx-5 mt-3.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-base">⚠️</span>
+          <span id="photoAdjustAlertMsg">Face could not be detected. You can select the original image or manually crop below.</span>
+        </div>
+        <button type="button" onclick="selectPhotoOption('original')" class="text-[11px] font-bold underline hover:text-amber-950">Select Original</button>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-5">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+          
+          <!-- Left Column: Selection Cards (md:col-span-5) -->
+          <div class="md:col-span-5 flex flex-col gap-3">
+            <p class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Select Photo Framing</span>
+            </p>
+
+            <!-- Card 1: AI Adjusted -->
+            <div id="optCardAi" onclick="selectPhotoOption('ai')"
+              class="photo-opt-card relative border-2 border-blue-500 bg-blue-50/30 rounded-xl p-3 cursor-pointer transition-all hover:shadow-md flex items-center gap-3">
+              <div class="w-16 h-20 rounded-md border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-sm">
+                <img id="optAiImg" src="" class="w-full h-full object-cover hidden" alt="AI Cropped" />
+                <div id="optAiLoading" class="text-center p-1">
+                  <span class="animate-spin inline-block text-blue-600 text-sm">⏳</span>
+                  <p class="text-[9px] text-blue-600 font-medium">Detecting...</p>
+                </div>
+                <div id="optAiFailed" class="hidden text-center p-1">
+                  <span class="text-amber-500 text-sm">⚠️</span>
+                  <p class="text-[8px] text-amber-600 font-medium leading-tight">Failed</p>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-800">AI Smart Crop</span>
+                  <span id="optAiBadge" class="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">Recommended</span>
+                </div>
+                <p id="optAiDesc" class="text-[11px] text-slate-500 mt-0.5">80% head & hair coverage, auto-centered with breathing margin.</p>
+              </div>
+              <div class="opt-check-indicator w-5 h-5 rounded-full border-2 border-blue-500 bg-blue-500 flex items-center justify-center text-white text-[10px] flex-shrink-0 font-bold">
+                ✓
+              </div>
+            </div>
+
+            <!-- Card 2: Manual Custom Crop -->
+            <div id="optCardManual" onclick="selectPhotoOption('manual')"
+              class="photo-opt-card relative border-2 border-slate-200 bg-white rounded-xl p-3 cursor-pointer transition-all hover:border-slate-300 hover:shadow-md flex items-center gap-3">
+              <div class="w-16 h-20 rounded-md border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-sm">
+                <canvas id="optManualThumbCanvas" class="w-full h-full object-cover"></canvas>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-800">Manual Crop & Zoom</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-semibold">Custom</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Fine-tune with zoom slider and drag pan on the right.</p>
+              </div>
+              <div class="opt-check-indicator w-5 h-5 rounded-full border-2 border-slate-300 bg-white flex items-center justify-center text-transparent text-[10px] flex-shrink-0 font-bold">
+                ✓
+              </div>
+            </div>
+
+            <!-- Card 3: Original Uploaded Image -->
+            <div id="optCardOriginal" onclick="selectPhotoOption('original')"
+              class="photo-opt-card relative border-2 border-slate-200 bg-white rounded-xl p-3 cursor-pointer transition-all hover:border-slate-300 hover:shadow-md flex items-center gap-3">
+              <div class="w-16 h-20 rounded-md border border-slate-300 bg-slate-100 overflow-hidden flex items-center justify-center flex-shrink-0 relative shadow-sm">
+                <img id="optOriginalImg" src="" class="w-full h-full object-cover" alt="Original" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-800">Original Photo</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">Uncropped</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Keep the exact original photo without auto-cropping.</p>
+              </div>
+              <div class="opt-check-indicator w-5 h-5 rounded-full border-2 border-slate-300 bg-white flex items-center justify-center text-transparent text-[10px] flex-shrink-0 font-bold">
+                ✓
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Interactive Crop & Zoom Studio (md:col-span-7) -->
+          <div class="md:col-span-7 flex flex-col items-center bg-slate-50/80 rounded-2xl border border-slate-200 p-4">
+            <div class="w-full flex items-center justify-between mb-2">
+              <div>
+                <span class="text-xs font-bold text-slate-800">Interactive Crop & Zoom</span>
+                <p class="text-[10px] text-slate-500">Drag to position • Scroll or slider to zoom</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="resetCropToAi()" id="btnResetToAi" title="Reset to AI detected face"
+                  class="text-[11px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors">
+                  ✨ AI Fit
+                </button>
+                <button type="button" onclick="resetCropToCenter()" title="Reset to center"
+                  class="text-[11px] font-semibold text-slate-600 bg-white hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors">
+                  ↺ Center
+                </button>
+              </div>
+            </div>
+
+            <!-- Interactive Viewport Frame (Exact 1.75 : 2.2 ratio, e.g. 210px x 264px) -->
+            <div class="relative my-2 select-none">
+              <div id="cropViewport"
+                class="relative w-[210px] h-[264px] bg-slate-900 rounded-lg shadow-inner overflow-hidden cursor-grab active:cursor-grabbing border-2 border-blue-500 ring-4 ring-blue-500/10">
+                
+                <canvas id="cropInteractiveCanvas" width="210" height="264" class="w-full h-full block pointer-events-none"></canvas>
+
+                <!-- Guideline Overlay (Rule of thirds + Head guide) -->
+                <div id="cropGuides" class="absolute inset-0 pointer-events-none opacity-40">
+                  <div class="absolute inset-x-0 top-[12%] h-[68%] border-y border-dashed border-white/60"></div>
+                  <div class="absolute inset-y-0 left-[20%] w-[60%] border-x border-dashed border-white/40"></div>
+                </div>
+
+                <!-- Drag hint badge -->
+                <div class="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none">
+                  <span class="bg-black/60 backdrop-blur-sm text-white/90 text-[9px] font-medium px-2 py-0.5 rounded-full">
+                    ✋ Drag to pan
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div class="w-full max-w-xs mt-2 space-y-1">
+              <div class="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                <span>Zoom</span>
+                <span id="zoomPercentBadge" class="font-bold text-blue-600 font-mono">100%</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="stepZoom(-0.15)"
+                  class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 flex items-center justify-center transition-colors text-sm">
+                  −
+                </button>
+                <input type="range" id="cropZoomSlider" min="0.8" max="4.0" step="0.05" value="1.0"
+                  class="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                <button type="button" onclick="stepZoom(0.15)"
+                  class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-100 flex items-center justify-center transition-colors text-sm">
+                  +
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/70">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-500">Selected:</span>
+          <span id="selectedOptionLabel" class="text-xs font-bold text-blue-600">✨ AI Smart Crop (Face & Hair)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closePhotoAdjustModal()"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
+            Cancel
+          </button>
+          <button type="button" onclick="applyPhotoToCard()"
+            class="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Apply to Card</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
