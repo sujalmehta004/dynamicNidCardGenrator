@@ -212,14 +212,14 @@
     /* Strict requirement mapping for row color assignments */
     .status-row-done,
     .status-row-done td {
-      background-color: #e2fcd4 !important;
-      /* Light green — keep as-is */
+      background-color: #dcfce7 !important;
+      /* Light green */
     }
 
     .status-row-pending,
     .status-row-pending td {
-      background-color: #fef9c3 !important;
-      /* Light yellow — keep as-is */
+      background-color: #f0fdfa !important;
+      /* Light teal */
     }
 
     .status-row-inprogress,
@@ -1575,16 +1575,16 @@
 
         <!-- Pending -->
         <div id="cardStatPending" onclick="filterDatabaseByCard('pending')"
-          class="db-stat-card cursor-pointer bg-white border border-amber-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-amber-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          class="db-stat-card cursor-pointer bg-white border border-teal-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-teal-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
           title="Click to filter: Pending Records">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-amber-700 block leading-tight truncate">Pending</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-teal-700 block leading-tight truncate">Pending</span>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h3 id="statsPendingVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-amber-600 leading-tight">0</h3>
-              <span class="text-[9px] text-amber-600/70 font-medium">queued</span>
+              <h3 id="statsPendingVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-teal-600 leading-tight">0</h3>
+              <span class="text-[9px] text-teal-600/70 font-medium">queued</span>
             </div>
           </div>
-          <div class="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">⏳</div>
+          <div class="w-6 h-6 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">⏳</div>
         </div>
 
         <!-- Mobile Number Update -->
@@ -1645,16 +1645,16 @@
 
         <!-- Done / Issued -->
         <div id="cardStatDone" onclick="filterDatabaseByCard('done')"
-          class="db-stat-card cursor-pointer bg-white border border-emerald-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-emerald-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
+          class="db-stat-card cursor-pointer bg-white border border-green-200/90 rounded-xl px-3 py-2 shadow-xs flex items-center justify-between hover:border-green-300 hover:scale-[1.02] active:scale-[0.98] transition-all select-none"
           title="Click to filter: Done / Issued">
           <div class="min-w-0">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-700 block leading-tight truncate">Done</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider text-green-700 block leading-tight truncate">Done</span>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h3 id="statsDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-emerald-600 leading-tight">0</h3>
-              <span class="text-[9px] text-emerald-600/70 font-medium">issued</span>
+              <h3 id="statsDoneVal" class="text-base sm:text-lg font-black font-mono tracking-tight text-green-600 leading-tight">0</h3>
+              <span class="text-[9px] text-green-600/70 font-medium">issued</span>
             </div>
           </div>
-          <div class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">✅</div>
+          <div class="w-6 h-6 rounded-lg bg-green-50 text-green-600 flex items-center justify-center text-xs shrink-0 font-bold ml-1.5">✅</div>
         </div>
 
         <!-- Hidden compat elements -->
@@ -1955,7 +1955,7 @@
     function getNinStatusBadgeClass(status) {
       if (status === "active") return "bg-emerald-50 text-emerald-700 border-emerald-200";
       if (status === "not online") return "bg-slate-100 text-slate-700 border-slate-200";
-      if (status === "pending") return "bg-amber-50 text-amber-700 border-amber-200";
+      if (status === "pending") return "bg-teal-50 text-teal-700 border-teal-200";
       if (status === "scanning") return "bg-blue-50 text-blue-700 border-blue-200";
       return "bg-slate-50 text-slate-700 border-slate-200";
     }
@@ -5252,21 +5252,21 @@
       const allCards = [
         { id: "cardStatTotal", active: currentStatus === "all", ring: "ring-2 ring-blue-500 border-blue-400" },
         { id: "cardStatNotDone", active: currentStatus === "not_done", ring: "ring-2 ring-indigo-500 border-indigo-400 bg-indigo-50/40" },
-        { id: "cardStatPending", active: currentStatus === "pending", ring: "ring-2 ring-amber-500 border-amber-400 bg-amber-50/40" },
+        { id: "cardStatPending", active: currentStatus === "pending", ring: "ring-2 ring-teal-500 border-teal-400 bg-teal-50/40" },
         { id: "cardStatMobile", active: currentStatus === "inprogress", ring: "ring-2 ring-sky-500 border-sky-400 bg-sky-50/40" },
         { id: "cardStatDataUpdate", active: currentStatus === "data_update" || currentStatus === "data update", ring: "ring-2 ring-purple-500 border-purple-400 bg-purple-50/40" },
         { id: "cardStatCardError", active: currentStatus === "card_error" || currentStatus === "card error", ring: "ring-2 ring-rose-500 border-rose-400 bg-rose-50/40" },
         { id: "cardStatNotOnline", active: currentStatus === "not online", ring: "ring-2 ring-slate-500 border-slate-400 bg-slate-50/40" },
-        { id: "cardStatDone", active: currentStatus === "done", ring: "ring-2 ring-emerald-500 border-emerald-400 bg-emerald-50/40" },
+        { id: "cardStatDone", active: currentStatus === "done", ring: "ring-2 ring-green-500 border-green-400 bg-green-50/40" },
       ];
 
       allCards.forEach(c => {
         const el = document.getElementById(c.id);
         if (!el) return;
         el.classList.remove(
-          "ring-2", "ring-blue-500", "ring-indigo-500", "ring-amber-500", "ring-sky-500", "ring-purple-500", "ring-rose-500", "ring-slate-500", "ring-emerald-500",
-          "border-blue-400", "border-indigo-400", "border-amber-400", "border-sky-400", "border-purple-400", "border-rose-400", "border-slate-400", "border-emerald-400",
-          "bg-indigo-50/40", "bg-amber-50/40", "bg-sky-50/40", "bg-purple-50/40", "bg-rose-50/40", "bg-slate-50/40", "bg-emerald-50/40", "shadow-md", "scale-[1.02]"
+          "ring-2", "ring-blue-500", "ring-indigo-500", "ring-amber-500", "ring-pink-500", "ring-orange-500", "ring-teal-500", "ring-sky-500", "ring-purple-500", "ring-rose-500", "ring-slate-500", "ring-emerald-500", "ring-green-500",
+          "border-blue-400", "border-indigo-400", "border-amber-400", "border-pink-400", "border-orange-400", "border-teal-400", "border-sky-400", "border-purple-400", "border-rose-400", "border-slate-400", "border-emerald-400", "border-green-400",
+          "bg-indigo-50/40", "bg-amber-50/40", "bg-pink-50/40", "bg-orange-50/40", "bg-teal-50/40", "bg-sky-50/40", "bg-purple-50/40", "bg-rose-50/40", "bg-slate-50/40", "bg-emerald-50/40", "bg-green-50/40", "shadow-md", "scale-[1.02]"
         );
         if (c.active) {
           c.ring.split(" ").forEach(cls => { if (cls) el.classList.add(cls); });
@@ -5882,8 +5882,8 @@
     }
 
     function getStatusAccentColor(status) {
-      if (status === "done") return { left: "#22c55e", badge_bg: "#dcfce7", badge_text: "#166534", badge_border: "#bbf7d0" };
-      if (status === "pending") return { left: "#f59e0b", badge_bg: "#fef3c7", badge_text: "#92400e", badge_border: "#fde68a" };
+      if (status === "done") return { left: "#16a34a", badge_bg: "#dcfce7", badge_text: "#14532d", badge_border: "#86efac" };
+      if (status === "pending") return { left: "#0d9488", badge_bg: "#ccfbf1", badge_text: "#115e59", badge_border: "#99f6e4" };
       if (status === "inprogress") return { left: "#0284c7", badge_bg: "#e0f2fe", badge_text: "#0369a1", badge_border: "#bae6fd" };
       if (status === "data_update" || status === "data update") return { left: "#8b5cf6", badge_bg: "#f3e8ff", badge_text: "#6b21a8", badge_border: "#d8b4fe" };
       if (status === "card_error" || status === "card error") return { left: "#ef4444", badge_bg: "#fee2e2", badge_text: "#991b1b", badge_border: "#fca5a5" };
