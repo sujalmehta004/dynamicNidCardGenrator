@@ -476,6 +476,134 @@
       </svg>
     </button>
   </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- DATABASE TOP TOOLBAR (Aligned in the same line with floating nav) -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="dbTopToolbar" class="hidden fixed top-2 left-3 sm:left-6 right-[290px] sm:right-[310px] z-[9998] flex items-center gap-2 select-none overflow-visible">
+    <!-- Search Bar -->
+    <div class="relative min-w-[200px] max-w-xs xl:max-w-md flex-1">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <input type="text" id="searchQueryBar" placeholder="Search by Citizen Name, NID (10 digits), or Address..."
+        oninput="onSearchQueryInput()"
+        class="w-full h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-full pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-xs transition-all font-medium" />
+    </div>
+
+    <!-- Action Buttons Group -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <!-- Show/Hide Count Button -->
+      <button type="button" id="btnToggleDbStats" onclick="toggleDbStatsSection()"
+        class="h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+        title="Show or hide count statistics (Cmd+G / Ctrl+G)">
+        <span id="btnToggleDbStatsIcon">📊</span>
+        <span id="btnToggleDbStatsText">Hide Count</span>
+      </button>
+
+      <!-- Force Sync Database -->
+      <button type="button" id="btnSyncDatabase" onclick="fetchDatabase(true)" title="Force sync latest records from database (Cmd+R / Ctrl+R)"
+        class="h-8 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+        <svg id="iconSyncDatabase" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span id="btnSyncDatabaseText">Sync DB</span>
+      </button>
+
+      <!-- Column Visibility Settings -->
+      <div class="relative inline-block text-left">
+        <button data-col-toggle="true" onclick="document.getElementById('colDropdownMenu').classList.toggle('hidden')"
+          class="h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Columns</span>
+        </button>
+        <div id="colDropdownMenu"
+          class="absolute left-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200 shadow-2xl z-[10000] p-3 hidden space-y-2">
+          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1.5">
+            Toggle Columns
+          </p>
+          <div class="flex flex-col gap-2 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-nin" checked onchange="toggleColumn('nin', this.checked)" class="accent-blue-600 rounded" />
+              NID Number
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-voterDb" checked onchange="toggleColumn('voterDb', this.checked)" class="accent-blue-600 rounded" />
+              NIN Status VL
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-name" checked onchange="toggleColumn('name', this.checked)" class="accent-blue-600 rounded" />
+              Full Name
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-token" checked onchange="toggleColumn('token', this.checked)" class="accent-blue-600 rounded" />
+              Secure Token
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-dob" checked onchange="toggleColumn('dob', this.checked)" class="accent-blue-600 rounded" />
+              DOB
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-citDate" checked onchange="toggleColumn('citDate', this.checked)" class="accent-blue-600 rounded" />
+              Cit Date
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-address" checked onchange="toggleColumn('address', this.checked)" class="accent-blue-600 rounded" />
+              Address
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-regDate" checked onchange="toggleColumn('regDate', this.checked)" class="accent-blue-600 rounded" />
+              Reg Date
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-updateDate" checked onchange="toggleColumn('updateDate', this.checked)" class="accent-blue-600 rounded" />
+              Update Date
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-status" checked onchange="toggleColumn('status', this.checked)" class="accent-blue-600 rounded" />
+              Status
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-cardDesign" checked onchange="toggleColumn('cardDesign', this.checked)" class="accent-blue-600 rounded" />
+              Card Design
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-mobile" checked onchange="toggleColumn('mobile', this.checked)" class="accent-blue-600 rounded" />
+              Mobile Number
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+              <input type="checkbox" id="colCheckbox-device" onchange="toggleColumn('device', this.checked)" class="accent-blue-600 rounded" />
+              Device / Nickname
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Backup DB -->
+      <button onclick="backupDatabase()"
+        class="h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+        <span>💾</span> <span>Backup</span>
+      </button>
+
+      <!-- Update NIN Status -->
+      <button id="btnUpdateNinStatus" onclick="updateNinStatusAll()"
+        class="h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+        <span>🔄</span> <span>NIN Status</span>
+      </button>
+
+      <!-- Print Records -->
+      <button onclick="openPrintModal()"
+        class="h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+        <span>🖨️</span> <span>Print</span>
+      </button>
+
+      <!-- Full Screen -->
+      <button id="btnToggleDbFullscreen" onclick="toggleDatabaseFullscreen()"
+        title="Toggle Full Screen View (Cmd+F / Ctrl+F)"
+        class="h-8 bg-white/95 backdrop-blur-md border border-slate-200/90 hover:bg-slate-50 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+        <span>⛶ Full Screen</span>
+        <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>
+      </button>
+    </div>
+  </div>
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!-- MAIN WORKSPACE CONTAINER                                    -->
   <!-- ═══════════════════════════════════════════════════════════ -->
@@ -1536,133 +1664,6 @@
 
       <!-- ── Main Database Ledger & Filtering Card ──────────────── -->
       <div id="dbTableContainerCard" class="bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden relative">
-        
-        <!-- Top Toolbar: Search + Action Buttons -->
-        <div class="p-3.5 sm:px-5 border-b border-slate-100 flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-white shrink-0">
-          
-          <!-- Search Bar -->
-          <div class="relative flex-1 min-w-[280px]">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </div>
-            <input type="text" id="searchQueryBar" placeholder="Search by Citizen Name, NID (10 digits), or Address..."
-              oninput="onSearchQueryInput()"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
-          </div>
-
-          <!-- Action Buttons Group -->
-          <div class="flex flex-wrap items-center gap-2 shrink-0">
-            <!-- Show/Hide Count Button -->
-            <button type="button" id="btnToggleDbStats" onclick="toggleDbStatsSection()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Show or hide count statistics (Cmd+G / Ctrl+G)">
-              <span id="btnToggleDbStatsIcon">📊</span>
-              <span id="btnToggleDbStatsText">Hide Count</span>
-            </button>
-
-            <!-- Force Sync Database -->
-            <button type="button" id="btnSyncDatabase" onclick="fetchDatabase(true)" title="Force sync latest records from database (Cmd+R / Ctrl+R)"
-              class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer">
-              <svg id="iconSyncDatabase" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span id="btnSyncDatabaseText">Sync DB</span>
-            </button>
-
-            <!-- Column Visibility Settings -->
-            <div class="relative inline-block text-left">
-              <button onclick="document.getElementById('colDropdownMenu').classList.toggle('hidden')"
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
-                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span>Columns</span>
-              </button>
-              <div id="colDropdownMenu"
-                class="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200 shadow-2xl z-50 p-3 hidden space-y-2">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-100 pb-1.5">
-                  Toggle Columns
-                </p>
-                <div class="flex flex-col gap-2 text-xs">
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-nin" checked onchange="toggleColumn('nin', this.checked)" class="accent-blue-600 rounded" />
-                    NID Number
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-voterDb" checked onchange="toggleColumn('voterDb', this.checked)" class="accent-blue-600 rounded" />
-                    NIN Status VL
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-name" checked onchange="toggleColumn('name', this.checked)" class="accent-blue-600 rounded" />
-                    Full Name
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-token" checked onchange="toggleColumn('token', this.checked)" class="accent-blue-600 rounded" />
-                    Secure Token
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-dob" checked onchange="toggleColumn('dob', this.checked)" class="accent-blue-600 rounded" />
-                    DOB
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-citDate" checked onchange="toggleColumn('citDate', this.checked)" class="accent-blue-600 rounded" />
-                    Cit Date
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-address" checked onchange="toggleColumn('address', this.checked)" class="accent-blue-600 rounded" />
-                    Address
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-regDate" checked onchange="toggleColumn('regDate', this.checked)" class="accent-blue-600 rounded" />
-                    Reg Date
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-updateDate" checked onchange="toggleColumn('updateDate', this.checked)" class="accent-blue-600 rounded" />
-                    Update Date
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-status" checked onchange="toggleColumn('status', this.checked)" class="accent-blue-600 rounded" />
-                    Status
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-cardDesign" checked onchange="toggleColumn('cardDesign', this.checked)" class="accent-blue-600 rounded" />
-                    Card Design
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-mobile" checked onchange="toggleColumn('mobile', this.checked)" class="accent-blue-600 rounded" />
-                    Mobile Number
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer font-medium text-slate-700">
-                    <input type="checkbox" id="colCheckbox-device" onchange="toggleColumn('device', this.checked)" class="accent-blue-600 rounded" />
-                    Device / Nickname
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Backup DB -->
-            <button onclick="backupDatabase()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
-              <span>💾</span> Backup
-            </button>
-
-            <!-- Update NIN Status -->
-            <button id="btnUpdateNinStatus" onclick="updateNinStatusAll()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
-              <span>🔄</span> NIN Status
-            </button>
-
-            <!-- Print Records -->
-            <button onclick="openPrintModal()"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
-              <span>🖨️</span> Print
-            </button>
-
-            <!-- Full Screen -->
-            <button id="btnToggleDbFullscreen" onclick="toggleDatabaseFullscreen()"
-              title="Toggle Full Screen View (Cmd+F / Ctrl+F)"
-              class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all">
-              <span>⛶ Full Screen</span>
-              <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>
-            </button>
-          </div>
-        </div>
 
         <!-- Filter Controls Bar -->
         <div class="px-4 sm:px-5 py-3 border-b border-slate-100 bg-slate-50/70 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 text-xs shrink-0 items-center">
@@ -4070,6 +4071,15 @@
         }
       });
 
+      const dbTopToolbar = document.getElementById("dbTopToolbar");
+      if (dbTopToolbar) {
+        if (targetViewTab === "database" && isDashboardUnlocked) {
+          dbTopToolbar.classList.remove("hidden");
+        } else {
+          dbTopToolbar.classList.add("hidden");
+        }
+      }
+
       applySidebarState();
 
       if (targetViewTab === "form") {
@@ -5665,6 +5675,16 @@
         if (!isModalOpen) {
           e.preventDefault();
           exitWorkspaceFullscreen();
+        }
+      }
+    });
+
+    window.addEventListener("click", (e) => {
+      const colMenu = document.getElementById("colDropdownMenu");
+      if (colMenu && !colMenu.classList.contains("hidden")) {
+        const toggleBtn = e.target.closest("[data-col-toggle]");
+        if (!colMenu.contains(e.target) && !toggleBtn) {
+          colMenu.classList.add("hidden");
         }
       }
     });
@@ -11353,6 +11373,8 @@
       document.getElementById("paneWorkspaceForm").classList.add("hidden");
       document.getElementById("paneWorkspacePortal").classList.add("hidden");
       document.getElementById("paneWorkspaceDb").classList.add("hidden");
+      const dbTopToolbar = document.getElementById("dbTopToolbar");
+      if (dbTopToolbar) dbTopToolbar.classList.add("hidden");
       document.getElementById("rightLayoutPreviewColumn").classList.add("hidden");
 
       // Show admin workspace pane
