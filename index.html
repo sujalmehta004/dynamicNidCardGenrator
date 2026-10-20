@@ -424,6 +424,7 @@
       box-shadow: inset 0 -3px 4px -2px rgba(15, 23, 42, 0.08);
       vertical-align: middle;
       font-size: 11.5px;
+      font-weight: 400;
       transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease;
     }
     .db-row-clickable:hover .db-td {
@@ -471,7 +472,7 @@
     .db-table-header-th {
       padding: 11px 14px;
       font-size: 9.5px;
-      font-weight: 800;
+      font-weight: 500;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -7547,12 +7548,12 @@
               const pSrc = (saved.portraitImage.startsWith('data:') || saved.portraitImage.startsWith('http')) ? saved.portraitImage : `data:image/jpeg;base64,${saved.portraitImage}`;
               tdDb.innerHTML = `<div style="width:52px; margin:0 auto; position:relative;"><img src="${pSrc}" style="width:52px; height:64px; object-fit:cover; border-radius:7px; border:1.5px solid #cbd5e1; box-shadow:0 2px 7px rgba(15,23,42,0.12);" class="hover:scale-105 transition-all duration-150 hover:shadow-md" alt="Photo"/></div>`;
             } else if (isActiveRecord) {
-              tdDb.innerHTML = `<div style="display:inline-flex; align-items:center; gap:4.5px; font-size:10px; font-weight:800; color:#15803d; background:#dcfce7; border:1px solid #86efac; border-radius:9999px; padding:3px 9.5px; box-shadow:0 1.5px 3px rgba(22,163,74,0.18), inset 0 1px 0 rgba(255,255,255,0.85);"><span class="db-dot-pulse" style="width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 4px #22c55e;"></span>Active</div>`;
+              tdDb.innerHTML = `<div style="display:inline-flex; align-items:center; gap:4.5px; font-size:10px; font-weight:500; color:#15803d; background:#dcfce7; border:1px solid #86efac; border-radius:9999px; padding:3px 9.5px; box-shadow:0 1.5px 3px rgba(22,163,74,0.18), inset 0 1px 0 rgba(255,255,255,0.85);"><span class="db-dot-pulse" style="width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 4px #22c55e;"></span>Active</div>`;
             } else {
-              tdDb.innerHTML = `<div style="display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:#64748b; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:9999px; padding:3px 9px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><span style="width:5px; height:5px; border-radius:50%; background:#94a3b8;"></span>Not Active</div>`;
+              tdDb.innerHTML = `<div style="display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:400; color:#64748b; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:9999px; padding:3px 9px; box-shadow:0 1px 2px rgba(0,0,0,0.05);"><span style="width:5px; height:5px; border-radius:50%; background:#94a3b8;"></span>Not Active</div>`;
             }
           } catch (e) {
-            tdDb.innerHTML = `<div style="display:inline-flex; align-items:center; gap:3px; font-size:9.5px; font-weight:600; color:#94a3b8; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:9999px; padding:2px 8px;">— Not Found</div>`;
+            tdDb.innerHTML = `<div style="display:inline-flex; align-items:center; gap:3px; font-size:9.5px; font-weight:400; color:#94a3b8; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:9999px; padding:2px 8px;">— Not Found</div>`;
           }
           tr.appendChild(tdDb);
         }
@@ -7569,7 +7570,7 @@
               ? `<span style="display:inline-flex;align-items:center;margin-left:6px;font-size:9.5px;padding:2px 7px;border-radius:9999px;background:#fef3c7;border:1px solid #fde047;color:#92400e;font-weight:700;box-shadow:0 1.5px 3px rgba(217,119,6,0.16);" title="Alert: Usage Allowed">🔔 Alert</span>`
               : `<span style="display:inline-flex;align-items:center;margin-left:6px;font-size:9.5px;padding:2px 7px;border-radius:9999px;background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;font-weight:700;box-shadow:0 1.5px 3px rgba(185,28,28,0.16);" title="Alert: Card Blocked">🚫 Blocked</span>`;
           }
-          td.innerHTML = `<div class="font-mono font-bold text-blue-700 text-[12px] flex items-center tracking-wide">${escapeHtml(row.ninEn || '')} ${alertBadge}</div><div class="text-[10px] text-slate-400 font-normal mt-0.5 font-mono">${escapeHtml(row.ninNp || "—")}</div>`;
+          td.innerHTML = `<div class="font-mono font-normal text-blue-700 text-[12px] flex items-center tracking-wide">${escapeHtml(row.ninEn || '')} ${alertBadge}</div><div class="text-[10px] text-slate-400 font-normal mt-0.5 font-mono">${escapeHtml(row.ninNp || "—")}</div>`;
           tr.appendChild(td);
         }
 
@@ -7579,7 +7580,7 @@
           td.className = "db-td";
           td.style.minWidth = "160px";
           markFirstCol(td);
-          td.innerHTML = `<div class="font-bold text-slate-900 text-[12.5px] tracking-tight leading-snug">${escapeHtml(row.givenEn || "")} ${escapeHtml(row.surnameEn || "")}</div><div class="text-[10.5px] text-slate-500 font-normal nepali-font mt-0.5 leading-snug">${escapeHtml(row.givenNp || "")} ${escapeHtml(row.surnameNp || "")}</div>`;
+          td.innerHTML = `<div class="font-normal text-slate-900 text-[12.5px] tracking-tight leading-snug">${escapeHtml(row.givenEn || "")} ${escapeHtml(row.surnameEn || "")}</div><div class="text-[10.5px] text-slate-500 font-normal nepali-font mt-0.5 leading-snug">${escapeHtml(row.givenNp || "")} ${escapeHtml(row.surnameNp || "")}</div>`;
           tr.appendChild(td);
         }
 
@@ -7604,7 +7605,7 @@
           td.className = "db-td";
           td.style.whiteSpace = "nowrap";
           markFirstCol(td);
-          td.innerHTML = `<div class="font-mono text-xs font-semibold text-slate-700">${escapeHtml(row.dobEn || "—")}</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">${escapeHtml(row.dobNp || "")}</div>`;
+          td.innerHTML = `<div class="font-mono text-xs font-normal text-slate-700">${escapeHtml(row.dobEn || "—")}</div><div class="text-[10px] text-slate-400 font-mono mt-0.5">${escapeHtml(row.dobNp || "")}</div>`;
           tr.appendChild(td);
         }
 
@@ -7630,7 +7631,7 @@
           markFirstCol(td);
           const addrEn = row.addressEn || "—";
           const addrNp = row.addressNp || "";
-          td.innerHTML = `<div class="text-xs text-slate-700 font-medium truncate" title="${escapeHtml(addrEn)}">${escapeHtml(addrEn)}</div><div class="text-[10px] text-slate-400 nepali-font truncate mt-0.5" title="${escapeHtml(addrNp)}">${escapeHtml(addrNp)}</div>`;
+          td.innerHTML = `<div class="text-xs text-slate-700 font-normal truncate" title="${escapeHtml(addrEn)}">${escapeHtml(addrEn)}</div><div class="text-[10px] text-slate-400 nepali-font truncate mt-0.5" title="${escapeHtml(addrNp)}">${escapeHtml(addrNp)}</div>`;
           tr.appendChild(td);
         }
 
@@ -7669,7 +7670,7 @@
           td.style.textAlign = "center";
           td.style.whiteSpace = "nowrap";
           markFirstCol(td);
-          td.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:800; padding:3.5px 10px; border-radius:9999px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; text-transform:uppercase; letter-spacing:.06em; box-shadow:0 1.5px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);"><span style="width:6px; height:6px; border-radius:50%; background:${sc.left}; box-shadow:0 0 5px ${sc.left};"></span>${statusLabel}</span>`;
+          td.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px; font-size:9.5px; font-weight:500; padding:3.5px 10px; border-radius:9999px; border:1px solid ${sc.badge_border}; background:${sc.badge_bg}; color:${sc.badge_text}; text-transform:uppercase; letter-spacing:.06em; box-shadow:0 1.5px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.85);"><span style="width:6px; height:6px; border-radius:50%; background:${sc.left}; box-shadow:0 0 5px ${sc.left};"></span>${statusLabel}</span>`;
           tr.appendChild(td);
         }
 
@@ -7681,7 +7682,7 @@
           td.style.whiteSpace = "nowrap";
           markFirstCol(td);
           const isWhite = row.cardDesign === "white card";
-          td.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4.5px; font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:9999px; border:1px solid ${isWhite ? "#cbd5e1" : "#c4b5fd"}; background:${isWhite ? "#ffffff" : "#f5f3ff"}; color:${isWhite ? "#475569" : "#6d28d9"}; text-transform:uppercase; letter-spacing:.05em; box-shadow:0 1.5px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85);"><span style="width:5px; height:5px; border-radius:50%; background:${isWhite ? "#94a3b8" : "#8b5cf6"};"></span>${isWhite ? "White" : "Smart"}</span>`;
+          td.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4.5px; font-size:9.5px; font-weight:500; padding:3px 9px; border-radius:9999px; border:1px solid ${isWhite ? "#cbd5e1" : "#c4b5fd"}; background:${isWhite ? "#ffffff" : "#f5f3ff"}; color:${isWhite ? "#475569" : "#6d28d9"}; text-transform:uppercase; letter-spacing:.05em; box-shadow:0 1.5px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.85);"><span style="width:5px; height:5px; border-radius:50%; background:${isWhite ? "#94a3b8" : "#8b5cf6"};"></span>${isWhite ? "White" : "Smart"}</span>`;
           tr.appendChild(td);
         }
 
@@ -7693,7 +7694,7 @@
           markFirstCol(td);
           td.style.fontFamily = "monospace";
           td.style.fontSize = "11px";
-          td.style.fontWeight = "500";
+          td.style.fontWeight = "400";
           td.style.color = "#334155";
           td.innerText = row.mobile || "—";
           tr.appendChild(td);
@@ -7710,9 +7711,9 @@
           const devNick = (row.updatedNickname || row.nickname || "").trim();
           const devComp = (row.updatedComputerName || row.computerName || "").trim();
           if (devNick && devComp) {
-            td.innerHTML = `<span class="inline-flex items-center gap-1 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md db-chip-shadow"><span class="font-bold text-slate-700">${escapeHtml(devNick)}</span><span class="text-[10px] text-slate-400 font-mono">(${escapeHtml(devComp)})</span></span>`;
+            td.innerHTML = `<span class="inline-flex items-center gap-1 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md db-chip-shadow"><span class="font-normal text-slate-700">${escapeHtml(devNick)}</span><span class="text-[10px] text-slate-400 font-mono">(${escapeHtml(devComp)})</span></span>`;
           } else if (devNick || devComp) {
-            td.innerHTML = `<span class="inline-flex items-center bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md font-bold text-slate-700 db-chip-shadow">${escapeHtml(devNick || devComp)}</span>`;
+            td.innerHTML = `<span class="inline-flex items-center bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md font-normal text-slate-700 db-chip-shadow">${escapeHtml(devNick || devComp)}</span>`;
           } else {
             td.innerText = "—";
           }
@@ -7727,7 +7728,7 @@
           td.style.whiteSpace = "nowrap";
           td.style.borderRight = "none";
           markFirstCol(td);
-          td.innerHTML = `<button onclick="event.stopPropagation(); pullRowIntoWorkspace('${row.ninEn}')" class="inline-flex items-center gap-1.5 bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-400 px-3 py-1 rounded-lg font-bold shadow-xs hover:shadow-md transition-all duration-150 text-[10.5px] cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>Edit</button>`;
+          td.innerHTML = `<button onclick="event.stopPropagation(); pullRowIntoWorkspace('${row.ninEn}')" class="inline-flex items-center gap-1.5 bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-400 px-3 py-1 rounded-lg font-normal shadow-xs hover:shadow-md transition-all duration-150 text-[10.5px] cursor-pointer"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>Edit</button>`;
           tr.appendChild(td);
         }
 
