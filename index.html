@@ -110,7 +110,7 @@
       background-color: #f0f9ff !important;
     }
     .quick-conv-pill:hover span {
-      font-size: 15px !important;
+      font-size: 17px !important;
       font-weight: 400 !important;
       color: #0284c7 !important;
     }
@@ -743,7 +743,7 @@
   <!-- ═══════════════════════════════════════════════════════════ -->
   <!-- DATABASE TOP TOOLBAR (Aligned in the same line with floating nav) -->
   <!-- ═══════════════════════════════════════════════════════════ -->
-  <div id="dbTopToolbar" class="hidden fixed top-2 left-3 sm:left-6 right-[290px] sm:right-[310px] z-[9998] flex items-center gap-2 select-none overflow-visible">
+  <div id="dbTopToolbar" class="hidden fixed top-2 left-3 sm:left-6 right-[290px] sm:right-[310px] z-[9998] flex items-center gap-2 select-none overflow-visible py-0.5">
     <!-- Search Bar -->
     <div class="relative min-w-[200px] max-w-xs xl:max-w-md flex-1">
       <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -1543,87 +1543,91 @@
 
         <!-- ===== BULK VERIFICATION MODAL ===== -->
         <div id="portalBulkModal" class="fixed inset-0 z-50 items-center justify-center p-4"
-          style="display:none; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);">
-          <div class="bg-white rounded-2xl shadow-2xl w-[90vw] max-w-[90vw] max-h-[90vh] flex flex-col overflow-hidden">
-            <!-- Modal Header -->
-            <div
-              class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-600 to-purple-700 rounded-t-2xl">
-              <div>
-                <h2 class="text-white font-bold text-base tracking-wide">⚡ Bulk Verification</h2>
-                <p id="bulkModalSubtitle" class="text-violet-200 text-xs mt-0.5">Sending OTP requests to all pending
-                  records...</p>
-              </div>
+          style="display:none; background:rgba(15,23,42,0.55); backdrop-filter:blur(6px);">
+          <div class="bg-white rounded-2xl shadow-2xl w-[92vw] max-w-[92vw] max-h-[92vh] flex flex-col overflow-hidden border border-slate-200/80">
+
+            <!-- Modal Header: clean slate style matching DB tab -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-slate-100/60 rounded-t-2xl shrink-0">
               <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-xs">
+                  <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                  <h2 class="text-sm font-medium text-slate-900 tracking-tight">Bulk Verification</h2>
+                  <p id="bulkModalSubtitle" class="text-[11px] text-slate-400 mt-0.5">Sending OTP requests to all pending records...</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
                 <button id="btnBulkVoterRetry" onclick="triggerBulkVoterSearch()"
-                  class="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 border border-amber-400 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider transition-all shadow-md">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  class="flex items-center gap-1.5 bg-white hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-slate-600 hover:text-amber-700 font-normal px-3 py-1.5 rounded-lg text-[11px] transition-all shadow-xs">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  Retry NIN Status List Check
+                  Retry NIN Status Check
                 </button>
-                <button onclick="closeBulkModal()" class="text-white hover:text-violet-200 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                <button onclick="closeBulkModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
             </div>
 
-            <!-- Modal Body: Stats Row + Record List -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-3 pb-20">
-              <!-- Summary Stats -->
-              <div class="grid grid-cols-6 gap-2 text-center text-xs">
+            <!-- Modal Body: Stats + Record List -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+
+              <!-- Summary Stats: clean card style like DB stat counters -->
+              <div class="grid grid-cols-6 gap-2">
                 <div id="bulkCard_all"
-                  class="bg-slate-50 border-2 border-slate-200 rounded-xl p-2.5 cursor-pointer hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  class="bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:bg-slate-50 hover:border-slate-300 hover:shadow-sm active:scale-[0.98] transition-all text-center"
                   onclick="filterBulkRecords('all')">
-                  <div id="bulkStatTotal" class="text-xl font-bold text-slate-800">0</div>
-                  <div class="text-slate-500 font-bold mt-0.5">Total</div>
+                  <div id="bulkStatTotal" class="text-lg font-medium text-slate-800">0</div>
+                  <div class="text-[10px] text-slate-400 font-normal mt-0.5 uppercase tracking-wider">Total</div>
                 </div>
                 <div id="bulkCard_sending"
-                  class="bg-amber-50 border-2 border-amber-250 rounded-xl p-2.5 cursor-pointer hover:bg-amber-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  class="bg-white border border-amber-200 rounded-xl p-3 cursor-pointer hover:bg-amber-50/50 hover:border-amber-300 hover:shadow-sm active:scale-[0.98] transition-all text-center"
                   onclick="filterBulkRecords('sending')">
-                  <div id="bulkStatPending" class="text-xl font-bold text-amber-600">0</div>
-                  <div class="text-amber-600 font-bold mt-0.5">Sending</div>
+                  <div id="bulkStatPending" class="text-lg font-medium text-amber-600">0</div>
+                  <div class="text-[10px] text-amber-500 font-normal mt-0.5 uppercase tracking-wider">Sending</div>
                 </div>
                 <div id="bulkCard_success"
-                  class="bg-emerald-50 border-2 border-emerald-250 rounded-xl p-2.5 cursor-pointer hover:bg-emerald-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  class="bg-white border border-emerald-200 rounded-xl p-3 cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-300 hover:shadow-sm active:scale-[0.98] transition-all text-center"
                   onclick="filterBulkRecords('success')">
-                  <div id="bulkStatSuccess" class="text-xl font-bold text-emerald-600">0</div>
-                  <div class="text-emerald-600 font-bold mt-0.5">OTP Sent</div>
+                  <div id="bulkStatSuccess" class="text-lg font-medium text-emerald-600">0</div>
+                  <div class="text-[10px] text-emerald-500 font-normal mt-0.5 uppercase tracking-wider">OTP Sent</div>
                 </div>
                 <div id="bulkCard_failed"
-                  class="bg-rose-50 border-2 border-rose-250 rounded-xl p-2.5 cursor-pointer hover:bg-rose-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  class="bg-white border border-rose-200 rounded-xl p-3 cursor-pointer hover:bg-rose-50/50 hover:border-rose-300 hover:shadow-sm active:scale-[0.98] transition-all text-center"
                   onclick="filterBulkRecords('failed')">
-                  <div id="bulkStatFailed" class="text-xl font-bold text-rose-600">0</div>
-                  <div class="text-rose-600 font-bold mt-0.5">Failed</div>
+                  <div id="bulkStatFailed" class="text-lg font-medium text-rose-500">0</div>
+                  <div class="text-[10px] text-rose-400 font-normal mt-0.5 uppercase tracking-wider">Failed</div>
                 </div>
                 <div id="bulkCard_mobile_not_registered"
-                  class="bg-violet-50 border-2 border-violet-250 rounded-xl p-2.5 cursor-pointer hover:bg-violet-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  class="bg-white border border-violet-200 rounded-xl p-3 cursor-pointer hover:bg-violet-50/50 hover:border-violet-300 hover:shadow-sm active:scale-[0.98] transition-all text-center"
                   onclick="filterBulkRecords('mobile_not_registered')">
-                  <div id="bulkStatMobileNotRegistered" class="text-xl font-bold text-violet-600">0</div>
-                  <div class="text-violet-600 font-bold mt-0.5">Mobile Unregistered</div>
+                  <div id="bulkStatMobileNotRegistered" class="text-lg font-medium text-violet-500">0</div>
+                  <div class="text-[10px] text-violet-400 font-normal mt-0.5 uppercase tracking-wider">No Mobile</div>
                 </div>
                 <div id="bulkCard_data_not_found"
-                  class="bg-sky-50 border-2 border-sky-250 rounded-xl p-2.5 cursor-pointer hover:bg-sky-100/50 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  class="bg-white border border-sky-200 rounded-xl p-3 cursor-pointer hover:bg-sky-50/50 hover:border-sky-300 hover:shadow-sm active:scale-[0.98] transition-all text-center"
                   onclick="filterBulkRecords('data_not_found')">
-                  <div id="bulkStatDataNotFound" class="text-xl font-bold text-sky-600">0</div>
-                  <div class="text-sky-600 font-bold mt-0.5">Data Not Found</div>
+                  <div id="bulkStatDataNotFound" class="text-lg font-medium text-sky-500">0</div>
+                  <div class="text-[10px] text-sky-400 font-normal mt-0.5 uppercase tracking-wider">Not Found</div>
                 </div>
               </div>
 
               <!-- Record Rows List -->
-              <div id="bulkRecordList" class="space-y-2">
+              <div id="bulkRecordList">
                 <!-- Rows injected by JS -->
               </div>
             </div>
 
             <!-- Modal Footer -->
-            <div
-              class="px-6 py-3 border-t border-slate-100 flex gap-2 justify-end items-center bg-slate-50 rounded-b-2xl">
-              <span id="bulkFooterStatus" class="text-xs text-slate-500 flex-1"></span>
+            <div class="px-6 py-3 border-t border-slate-100 flex gap-2 justify-end items-center bg-slate-50/60 rounded-b-2xl shrink-0">
+              <span id="bulkFooterStatus" class="text-[11px] text-slate-400 flex-1"></span>
               <button onclick="closeBulkModal()"
-                class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-5 py-2 rounded-xl text-xs transition-all">
+                class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 font-normal px-5 py-2 rounded-xl text-xs transition-all shadow-xs">
                 Close
               </button>
             </div>
@@ -2146,6 +2150,32 @@
     // Cached voter-list records saved in secondary DB keyed by nidNumber
     let voterListIndex = {};
     let nepalAdminData = { districts: [], local_levels: [] };
+
+    // Global AbortControllers & Background Task Management
+    const activeAppAbortControllers = new Set();
+    function createAppAbortController() {
+      const ctrl = new AbortController();
+      activeAppAbortControllers.add(ctrl);
+      return ctrl;
+    }
+    function releaseAppAbortController(ctrl) {
+      if (ctrl) activeAppAbortControllers.delete(ctrl);
+    }
+    function abortAllAppRequests() {
+      activeAppAbortControllers.forEach(ctrl => {
+        try {
+          ctrl.abort();
+        } catch (e) {}
+      });
+      activeAppAbortControllers.clear();
+    }
+
+    let ninStatusAbortController = null;
+    let bulkVerifyAbortController = null;
+    let isBulkVerifyRunning = false;
+    let voterBulkAbortController = null;
+    let isVoterBulkRunning = false;
+
     let ninStatusScanState = {
       isRunning: false,
       mode: null,
@@ -2231,6 +2261,38 @@
       renderNinStatusPendingPanel();
       renderNinStatusSelectionList();
       openNinStatusModal();
+    }
+
+    function stopNinStatusScan() {
+      if (ninStatusAbortController) {
+        try { ninStatusAbortController.abort(); } catch (e) {}
+        ninStatusAbortController = null;
+      }
+      ninStatusScanState.isRunning = false;
+      ninStatusScanState.mode = null;
+      ninStatusScanState.total = 0;
+      ninStatusScanState.processed = 0;
+      ninStatusScanState.logs = [];
+      ninStatusScanState.results = [];
+      ninStatusScanState.activeRecord = null;
+      ninStatusScanState.selectedNins = [];
+      ninStatusScanState.pendingRecords = [];
+
+      const selectionPanel = document.getElementById("ninStatusModeSelection");
+      const logPanel = document.getElementById("ninStatusLiveLogPanel");
+      const progressLabel = document.getElementById("ninStatusProgressLabel");
+      const scanBtn = document.getElementById("btnUpdateNinStatus");
+      if (selectionPanel) selectionPanel.classList.remove("hidden");
+      if (logPanel) logPanel.classList.add("hidden");
+      if (progressLabel) progressLabel.textContent = "Choose a scan scope to begin.";
+      if (scanBtn) {
+        scanBtn.disabled = false;
+        scanBtn.textContent = "🔄 Update NIN Status";
+      }
+
+      const modal = document.getElementById("ninStatusActionModal");
+      if (modal) modal.style.display = "none";
+      closeNinStatusDetailModal();
     }
 
     function openNinStatusModal() {
@@ -2625,6 +2687,11 @@
       }
 
       ninStatusScanState.isRunning = true;
+      if (ninStatusAbortController) {
+        try { ninStatusAbortController.abort(); } catch (e) {}
+      }
+      ninStatusAbortController = createAppAbortController();
+
       ninStatusScanState.mode = mode;
       ninStatusScanState.total = candidateRecords.length;
       ninStatusScanState.processed = 0;
@@ -2638,174 +2705,213 @@
       appendNinStatusLog(`Starting NIN status scan for ${scopeLabel}.`, "info");
       updateNinStatusProgressLabel();
 
-      const processRecord = async (rec, index) => {
-        const nin = String(rec?.ninEn || rec?.nin || "").trim();
-        const dob = String(rec?.dobEn || rec?.dob || "").trim();
-        const firstname = String(rec?.givenEn || rec?.given || "").trim().split(/\s+/)[0].toLowerCase();
-        const name = `${rec?.givenEn || ""} ${rec?.surnameEn || ""}`.trim() || rec?.ninEn || rec?.nin || "";
-        const recordResult = {
-          nin,
-          name,
-          status: "scanning",
-          attempts: 0,
-          lastMessage: "",
-          events: []
-        };
-        ninStatusScanState.results[index] = recordResult;
-        renderNinStatusScanTable();
+      try {
+        const processRecord = async (rec, index) => {
+          if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+            return null;
+          }
 
-        if (!nin || !dob || !firstname) {
-          recordResult.status = "pending";
-          recordResult.lastMessage = "Missing identity details";
-          appendNinStatusLog(`Skipping record without complete identity data: ${nin || "unknown"}`, "error", recordResult);
-          ninStatusScanState.processed += 1;
-          updateNinStatusProgressLabel();
-          renderNinStatusPendingPanel();
-          return recordResult;
-        }
+          const nin = String(rec?.ninEn || rec?.nin || "").trim();
+          const dob = String(rec?.dobEn || rec?.dob || "").trim();
+          const firstname = String(rec?.givenEn || rec?.given || "").trim().split(/\s+/)[0].toLowerCase();
+          const name = `${rec?.givenEn || ""} ${rec?.surnameEn || ""}`.trim() || rec?.ninEn || rec?.nin || "";
+          const recordResult = {
+            nin,
+            name,
+            status: "scanning",
+            attempts: 0,
+            lastMessage: "",
+            events: []
+          };
+          ninStatusScanState.results[index] = recordResult;
+          renderNinStatusScanTable();
 
-        let attempts = 0;
-        const maxAttempts = 6;
-        let finalOutcome = null;
-        let lastResponseText = "";
-        let lastMessage = "";
+          if (!nin || !dob || !firstname) {
+            recordResult.status = "pending";
+            recordResult.lastMessage = "Missing identity details";
+            appendNinStatusLog(`Skipping record without complete identity data: ${nin || "unknown"}`, "error", recordResult);
+            ninStatusScanState.processed += 1;
+            updateNinStatusProgressLabel();
+            renderNinStatusPendingPanel();
+            return recordResult;
+          }
 
-        while (attempts < maxAttempts) {
-          attempts += 1;
-          recordResult.attempts = attempts;
-          const payload = { nin, dob, firstname };
-          appendNinStatusLog(`Request #${attempts} for ${nin}: ${JSON.stringify(payload)}`, "request", recordResult);
+          let attempts = 0;
+          const maxAttempts = 6;
+          let finalOutcome = null;
+          let lastResponseText = "";
+          let lastMessage = "";
 
-          try {
-            const response = await fetch(`${API_BASE}/api/voter-search`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-            let responseData = {};
-            let rawText = "";
+          while (attempts < maxAttempts) {
+            if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+              return null;
+            }
+            attempts += 1;
+            recordResult.attempts = attempts;
+            const payload = { nin, dob, firstname };
+            appendNinStatusLog(`Request #${attempts} for ${nin}: ${JSON.stringify(payload)}`, "request", recordResult);
+
             try {
-              rawText = await response.text();
-              responseData = rawText ? JSON.parse(rawText) : {};
+              const response = await fetch(`${API_BASE}/api/voter-search`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                signal: ninStatusAbortController ? ninStatusAbortController.signal : undefined
+              });
+              if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+                return null;
+              }
+              let responseData = {};
+              let rawText = "";
+              try {
+                rawText = await response.text();
+                responseData = rawText ? JSON.parse(rawText) : {};
+              } catch (e) {
+                responseData = { error: rawText || "Invalid response" };
+              }
+              const message = String(responseData.error || responseData.message || responseData.ApprovalMessage || "").trim();
+              lastResponseText = message || rawText || "";
+              lastMessage = lastResponseText;
+              recordResult.lastMessage = lastResponseText;
+              appendNinStatusLog(`Response #${attempts} for ${nin}: ${lastResponseText || rawText || "No body"}`, "response", recordResult);
+
+              if (responseData && responseData.success && responseData.data) {
+                finalOutcome = getNinStatusOutcome(message, responseData);
+                finalOutcome.data = responseData.data;
+                recordResult.status = "active";
+                recordResult.lastMessage = "Active on voter list";
+                recordResult.voterListNumber = finalOutcome.voterListNumber || "";
+                appendNinStatusLog(`Success for ${nin}: record found and active.`, "success", recordResult);
+                break;
+              }
+
+              if (shouldRetryNinStatusRequest(message, responseData)) {
+                if (attempts < maxAttempts) {
+                  appendNinStatusLog(`Retrying because the response was not conclusive.`, "retry", recordResult);
+                  await new Promise((resolve) => setTimeout(resolve, 1200));
+                  if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+                    return null;
+                  }
+                  continue;
+                }
+                const fallbackOutcome = getLocalFallbackOutcome(nin, lastResponseText, responseData);
+                finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastResponseText || rawText };
+              } else {
+                finalOutcome = getNinStatusOutcome(message, responseData);
+              }
             } catch (e) {
-              responseData = { error: rawText || "Invalid response" };
-            }
-            const message = String(responseData.error || responseData.message || responseData.ApprovalMessage || "").trim();
-            lastResponseText = message || rawText || "";
-            lastMessage = lastResponseText;
-            recordResult.lastMessage = lastResponseText;
-            appendNinStatusLog(`Response #${attempts} for ${nin}: ${lastResponseText || rawText || "No body"}`, "response", recordResult);
-
-            if (responseData && responseData.success && responseData.data) {
-              finalOutcome = getNinStatusOutcome(message, responseData);
-              finalOutcome.data = responseData.data;
-              recordResult.status = "active";
-              recordResult.lastMessage = "Active on voter list";
-              recordResult.voterListNumber = finalOutcome.voterListNumber || "";
-              appendNinStatusLog(`Success for ${nin}: record found and active.`, "success", recordResult);
-              break;
-            }
-
-            if (shouldRetryNinStatusRequest(message, responseData)) {
+              if (e?.name === "AbortError" || !ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+                return null;
+              }
+              lastResponseText = e?.message || "Network error";
+              lastMessage = lastResponseText;
+              recordResult.lastMessage = lastResponseText;
+              appendNinStatusLog(`Network error for ${nin}: ${lastResponseText}`, "error", recordResult);
               if (attempts < maxAttempts) {
-                appendNinStatusLog(`Retrying because the response was not conclusive.`, "retry", recordResult);
+                appendNinStatusLog(`Retrying in 1.2 seconds...`, "retry", recordResult);
                 await new Promise((resolve) => setTimeout(resolve, 1200));
+                if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+                  return null;
+                }
                 continue;
               }
-              const fallbackOutcome = getLocalFallbackOutcome(nin, lastResponseText, responseData);
-              finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastResponseText || rawText };
+              const fallbackOutcome = getLocalFallbackOutcome(nin, lastResponseText, null);
+              finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastResponseText };
+            }
+            break;
+          }
+
+          if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+            return null;
+          }
+
+          if (!finalOutcome) {
+            const fallbackOutcome = getLocalFallbackOutcome(nin, lastMessage, null);
+            finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastMessage || lastResponseText };
+          }
+
+          recordResult.status = finalOutcome.status;
+          recordResult.lastMessage = finalOutcome.sourceMessage || lastResponseText;
+          recordResult.voterListNumber = finalOutcome.voterListNumber || "";
+
+          if (finalOutcome.status === "active") {
+            const voterDataToSave = finalOutcome.data || {
+              error: finalOutcome.sourceMessage,
+              ApprovalMessage: finalOutcome.sourceMessage,
+              VoterNo: finalOutcome.voterListNumber
+            };
+            const cleanNin = String(nin).trim();
+            const existingSaved = voterListIndex[cleanNin];
+            const alreadySaved = Boolean(
+              existingSaved &&
+              existingSaved.portraitImage &&
+              existingSaved.profileData &&
+              (existingSaved.profileData.VoterFirstNameEn || existingSaved.profileData.FirstName)
+            );
+
+            if (!alreadySaved) {
+              await persistVoterListRecordToSecondaryDb(nin, voterDataToSave, "active", finalOutcome.voterListNumber, finalOutcome.sourceMessage);
+              appendNinStatusLog(`Saved ${nin} to voterlist database.`, "success", recordResult);
             } else {
-              finalOutcome = getNinStatusOutcome(message, responseData);
+              appendNinStatusLog(`${nin} is active (already exists in voterlist database).`, "info", recordResult);
             }
-          } catch (e) {
-            lastResponseText = e?.message || "Network error";
-            lastMessage = lastResponseText;
-            recordResult.lastMessage = lastResponseText;
-            appendNinStatusLog(`Network error for ${nin}: ${lastResponseText}`, "error", recordResult);
-            if (attempts < maxAttempts) {
-              appendNinStatusLog(`Retrying in 1.2 seconds...`, "retry", recordResult);
-              await new Promise((resolve) => setTimeout(resolve, 1200));
-              continue;
+          } else {
+            const cleanNin = String(nin).trim();
+            const existingSaved = voterListIndex[cleanNin];
+            const hasExistingActive = Boolean(
+              existingSaved && (existingSaved.status === "active" || existingSaved.portraitImage)
+            );
+            if (!hasExistingActive) {
+              await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage }, "not online", "", finalOutcome.sourceMessage);
+              appendNinStatusLog(`Saved ${nin} as not online.`, "info", recordResult);
+            } else {
+              appendNinStatusLog(`Preserved existing active record for ${nin}.`, "info", recordResult);
             }
-            const fallbackOutcome = getLocalFallbackOutcome(nin, lastResponseText, null);
-            finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastResponseText };
           }
-          break;
+
+          if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+            return null;
+          }
+
+          ninStatusScanState.processed += 1;
+          updateNinStatusProgressLabel();
+          renderNinStatusScanTable();
+          ninStatusScanState.pendingRecords = ninStatusScanState.results.filter((result) => String(result?.status || "").trim().toLowerCase() !== "active");
+          renderNinStatusPendingPanel();
+          return recordResult;
+        };
+
+        const completedResults = await Promise.all(candidateRecords.map((rec, index) => processRecord(rec, index)));
+        if (!ninStatusScanState.isRunning || (ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+          return;
         }
 
-        if (!finalOutcome) {
-          const fallbackOutcome = getLocalFallbackOutcome(nin, lastMessage, null);
-          finalOutcome = fallbackOutcome || { status: "pending", voterListNumber: "", sourceMessage: lastMessage || lastResponseText };
-        }
-
-        recordResult.status = finalOutcome.status;
-        recordResult.lastMessage = finalOutcome.sourceMessage || lastResponseText;
-        recordResult.voterListNumber = finalOutcome.voterListNumber || "";
-
-        if (finalOutcome.status === "active") {
-          const voterDataToSave = finalOutcome.data || {
-            error: finalOutcome.sourceMessage,
-            ApprovalMessage: finalOutcome.sourceMessage,
-            VoterNo: finalOutcome.voterListNumber
-          };
-          const cleanNin = String(nin).trim();
-          const existingSaved = voterListIndex[cleanNin];
-          const alreadySaved = Boolean(
-            existingSaved &&
-            existingSaved.portraitImage &&
-            existingSaved.profileData &&
-            (existingSaved.profileData.VoterFirstNameEn || existingSaved.profileData.FirstName)
-          );
-
-          if (!alreadySaved) {
-            await persistVoterListRecordToSecondaryDb(nin, voterDataToSave, "active", finalOutcome.voterListNumber, finalOutcome.sourceMessage);
-            appendNinStatusLog(`Saved ${nin} to voterlist database.`, "success", recordResult);
-          } else {
-            appendNinStatusLog(`${nin} is active (already exists in voterlist database).`, "info", recordResult);
-          }
-        } else {
-          const cleanNin = String(nin).trim();
-          const existingSaved = voterListIndex[cleanNin];
-          const hasExistingActive = Boolean(
-            existingSaved && (existingSaved.status === "active" || existingSaved.portraitImage)
-          );
-          if (!hasExistingActive) {
-            await persistVoterListRecordToSecondaryDb(nin, { error: finalOutcome.sourceMessage }, "not online", "", finalOutcome.sourceMessage);
-            appendNinStatusLog(`Saved ${nin} as not online.`, "info", recordResult);
-          } else {
-            appendNinStatusLog(`Preserved existing active record for ${nin}.`, "info", recordResult);
-          }
-        }
-
-        ninStatusScanState.processed += 1;
-        updateNinStatusProgressLabel();
-        renderNinStatusScanTable();
+        ninStatusScanState.results = completedResults.map((result, index) => ({ ...result, ...(ninStatusScanState.results[index] || {}) }));
         ninStatusScanState.pendingRecords = ninStatusScanState.results.filter((result) => String(result?.status || "").trim().toLowerCase() !== "active");
+        renderNinStatusScanTable();
         renderNinStatusPendingPanel();
-        return recordResult;
-      };
 
-      const completedResults = await Promise.all(candidateRecords.map((rec, index) => processRecord(rec, index)));
-      ninStatusScanState.results = completedResults.map((result, index) => ({ ...result, ...(ninStatusScanState.results[index] || {}) }));
-      ninStatusScanState.pendingRecords = ninStatusScanState.results.filter((result) => String(result?.status || "").trim().toLowerCase() !== "active");
-      renderNinStatusScanTable();
-      renderNinStatusPendingPanel();
+        try {
+          await loadSavedVoterListRecords();
+          await fetchDatabase(true);
+        } catch (e) {
+          console.warn("Failed to refresh after NIN status scan", e);
+        }
 
-      try {
-        await loadSavedVoterListRecords();
-        await fetchDatabase(true);
-      } catch (e) {
-        console.warn("Failed to refresh after NIN status scan", e);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "🔄 Update NIN Status";
+        }
+        if (ninStatusScanState.isRunning && !(ninStatusAbortController && ninStatusAbortController.signal.aborted)) {
+          ninStatusScanState.isRunning = false;
+          appendNinStatusLog("NIN status scan complete.", "success");
+          openNinStatusModal();
+          showCustomAlert("NIN scan complete", `Finished scanning ${ninStatusScanState.total} record(s).`, "success");
+        }
+      } finally {
+        releaseAppAbortController(ninStatusAbortController);
+        ninStatusAbortController = null;
       }
-
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "🔄 Update NIN Status";
-      }
-      ninStatusScanState.isRunning = false;
-      appendNinStatusLog("NIN status scan complete.", "success");
-      openNinStatusModal();
-      showCustomAlert("NIN scan complete", `Finished scanning ${ninStatusScanState.total} record(s).`, "success");
     }
 
     window.updateNinStatusAll = function () {
@@ -3809,7 +3915,7 @@
           <button type="button" tabindex="-1" onclick="selectConverterSuggestion('${escapeHtml(s.text)}', this)"
             class="quick-conv-pill px-2.5 py-1 rounded-lg border font-normal cursor-pointer flex items-center justify-center transform-gpu ${stateClasses}"
             title="${escapeHtml(s.text)}">
-            <span class="text-xs transition-all duration-200 font-normal">${escapeHtml(s.text)}</span>
+            <span class="text-sm transition-all duration-200 font-normal">${escapeHtml(s.text)}</span>
           </button>
         `;
       }).join('');
@@ -5901,26 +6007,167 @@
       toggleWorkspaceFullscreen("form");
     }
 
-    function handleWorkspaceTabRefresh() {
-      if (currentWorkspaceTab === "database") {
-        // In database tab: refresh the table data only and animate the sync button
-        fetchDatabase(true);
-      } else {
-        // In all tabs (outside database tab): refresh UI components, clear form datas and make it as newly refreshed page
-        if (typeof clearFormCanvas === "function") {
-          clearFormCanvas();
-        }
-        if (typeof clearPortalAllFields === "function") {
-          clearPortalAllFields();
-        }
-        if (typeof clearPortalSearchForm === "function") {
-          clearPortalSearchForm();
-        }
-        if (typeof resetPortalToInitial === "function") {
-          resetPortalToInitial();
-        }
+    function stopBulkVerifyTask() {
+      if (bulkVerifyAbortController) {
+        try { bulkVerifyAbortController.abort(); } catch (e) {}
+        bulkVerifyAbortController = null;
+      }
+      isBulkVerifyRunning = false;
+      isBulkMode = false;
+      bulkResults = null;
+      bulkTargetRecords = null;
+      const modal = document.getElementById("portalBulkModal");
+      if (modal) modal.style.display = "none";
+      const btn = document.getElementById("btnPortalRequestOtp");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "Request OTP";
+        btn.className = "bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
       }
     }
+
+    function stopVoterListTasks() {
+      if (voterBulkAbortController) {
+        try { voterBulkAbortController.abort(); } catch (e) {}
+        voterBulkAbortController = null;
+      }
+      isVoterBulkRunning = false;
+      voterBulkSearchCache = [];
+      const modal = document.getElementById("voterBulkResultsModal");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+      if (ninSearchAbortController) {
+        try { ninSearchAbortController.abort(); } catch (e) {}
+        ninSearchAbortController = null;
+      }
+      if (typeof closeVoterDetailPopup === "function") closeVoterDetailPopup();
+      if (typeof closeNidVoterModal === "function") closeNidVoterModal();
+      if (typeof closeNinResultModal === "function") closeNinResultModal();
+      const voterQuickModal = document.getElementById("voterQuickSearchModal");
+      if (voterQuickModal) voterQuickModal.classList.add("hidden");
+    }
+
+    function stopAllRunningTasksAndRequests() {
+      // 1. Abort all active fetch requests
+      abortAllAppRequests();
+
+      // 2. Stop Update NIN Status task
+      if (typeof stopNinStatusScan === "function") {
+        stopNinStatusScan();
+      }
+
+      // 3. Stop Verify All / Bulk Verification task
+      stopBulkVerifyTask();
+
+      // 4. Stop Voterlist tasks (bulk search, single search, popups)
+      stopVoterListTasks();
+
+      // 5. Hide all task and transient modals
+      const modalIds = [
+        "portalBulkModal",
+        "ninStatusActionModal",
+        "ninStatusDetailModal",
+        "voterBulkResultsModal",
+        "voterDetailPopupModal",
+        "nidVoterModal",
+        "ninSearchResultModal",
+        "nidFlowModal",
+        "tokenVerifyingModal",
+        "paperDownloadOptionsModal",
+        "rdModal",
+        "customAlertModal",
+        "entryModal",
+        "bulkActionModal",
+        "updateConfirmModal",
+        "rowDetailModal",
+        "updateHistoryModal",
+        "setAlertModal",
+        "updateRecordBriefModal",
+        "embeddedPdfModal",
+        "printRecordsModal"
+      ];
+      modalIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.display = "none";
+          el.classList.add("hidden");
+          el.classList.remove("flex");
+        }
+      });
+    }
+
+    function resetAllTabsToInitial() {
+      // 1. Immediately terminate all running tasks and network requests
+      stopAllRunningTasksAndRequests();
+
+      // 2. Reset Download Portal Tab
+      if (typeof clearPortalAllFields === "function") {
+        clearPortalAllFields();
+      }
+      if (typeof clearPortalSearchForm === "function") {
+        clearPortalSearchForm();
+      }
+      if (typeof resetPortalToInitial === "function") {
+        resetPortalToInitial();
+      }
+      ["voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      const qInput = document.getElementById("quickConverterInput");
+      if (qInput) qInput.value = "";
+      const qPills = document.getElementById("quickConverterPills");
+      if (qPills) qPills.innerHTML = '<span class="text-[10px] text-sky-700/60 italic">Type an English name above to see Nepali writings...</span>';
+      const qNotice = document.getElementById("quickConverterCopyNotice");
+      if (qNotice) qNotice.classList.add("hidden");
+
+      const cardContainer = document.getElementById("cardContainer");
+      if (cardContainer) cardContainer.classList.add("hidden");
+      const portalResultsPanel = document.getElementById("portalResultsPanel");
+      if (portalResultsPanel) portalResultsPanel.classList.add("hidden");
+      const portalStatusNotice = document.getElementById("portalStatusNotice");
+      if (portalStatusNotice) portalStatusNotice.classList.add("hidden");
+
+      // 3. Reset Form Studio Tab
+      if (typeof clearFormCanvas === "function") {
+        clearFormCanvas();
+      }
+
+      // 4. Reset Database Tab
+      const searchBar = document.getElementById("searchQueryBar");
+      if (searchBar) searchBar.value = "";
+      const fStatus = document.getElementById("filterStatus");
+      if (fStatus) fStatus.value = "all";
+      const fRegStart = document.getElementById("filterRegStart");
+      if (fRegStart) fRegStart.value = "";
+      const fRegPeriod = document.getElementById("filterRegPeriod");
+      if (fRegPeriod) fRegPeriod.value = "all";
+
+      const selectAllChk = document.getElementById("selectAllChk");
+      if (selectAllChk) selectAllChk.checked = false;
+      document.querySelectorAll(".db-row-chk, input[name='dbRowSelect']").forEach((chk) => {
+        chk.checked = false;
+      });
+
+      if (typeof applyFiltersClientSide === "function") {
+        applyFiltersClientSide();
+      }
+
+      // Re-fetch fresh database records
+      if (typeof fetchDatabase === "function") {
+        fetchDatabase(true);
+      }
+    }
+
+    function handleWorkspaceTabRefresh() {
+      resetAllTabsToInitial();
+    }
+
+    window.addEventListener("beforeunload", () => {
+      stopAllRunningTasksAndRequests();
+    });
 
     // Global Keyboard Shortcuts:
     // Cmd+R / Ctrl+R or F5 -> In database tab, refresh table data only & animate sync button; in other tabs, refresh UI / clear form datas
@@ -9319,28 +9566,28 @@
 
       displayRows.sort((a, b) => getPriority(a) - getPriority(b));
 
-      // Build Table HTML
+      // Build Table HTML — styled to match the DB tab table
       let html = `
-        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xs">
           <table class="w-full text-left text-xs" style="border-collapse: collapse; table-layout: fixed;">
             <colgroup>
-              <col style="width: 44px;" />
+              <col style="width: 36px;" />
               <col style="width: 52px;" />
-              <col style="width: 190px;" />
-              <col style="width: 230px;" />
-              <col style="width: 100px;" />
-              <col style="width: 145px;" />
+              <col style="width: 185px;" />
+              <col style="width: 220px;" />
+              <col style="width: 105px;" />
+              <col style="width: 130px;" />
               <col style="min-width: 260px;" />
             </colgroup>
             <thead>
-              <tr style="background:#f8f9fb; border-bottom: 2px solid #e2e8f0;">
-                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">#</th>
-                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Photo</th>
-                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">NID Number</th>
-                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Full Name</th>
-                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Status</th>
-                <th style="padding:10px 14px; text-align:center; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; border-right:1px solid #e2e8f0;">Verification</th>
-                <th style="padding:10px 14px; font-size:9px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em;">NID Response</th>
+              <tr style="background:linear-gradient(180deg,#f8fafc 0%,#f1f5f9 100%); border-bottom:2px solid #cbd5e1; position:sticky; top:0; z-index:10;">
+                <th style="padding:11px 14px; text-align:center; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">#</th>
+                <th style="padding:11px 14px; text-align:center; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">Photo</th>
+                <th style="padding:11px 14px; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">NID Number</th>
+                <th style="padding:11px 14px; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">Full Name</th>
+                <th style="padding:11px 14px; text-align:center; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">DB Status</th>
+                <th style="padding:11px 14px; text-align:center; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">Verification</th>
+                <th style="padding:11px 14px; font-size:9.5px; font-weight:500; color:#64748b; text-transform:uppercase; letter-spacing:.08em; border-right:none; white-space:nowrap;">NID Response</th>
               </tr>
             </thead>
             <tbody>
@@ -9349,7 +9596,7 @@
       if (displayRows.length === 0) {
         html += `
           <tr>
-            <td colspan="7" style="padding:36px 16px; text-align:center; color:#94a3b8; font-style:italic; border-top:1px solid #f1f5f9;">No records match the active filter.</td>
+            <td colspan="7" style="padding:48px 16px; text-align:center; color:#94a3b8; font-size:12px;">No records match the active filter.</td>
           </tr>
         `;
       } else {
@@ -9359,25 +9606,23 @@
           const nameNp = `${rec.givenNp || ""} ${rec.surnameNp || ""}`.trim();
           const nin = rec.ninEn;
 
-          // New first column: fetch voterlist DB info and render portrait / messages / not-found
-              // Portrait image column (small photo column)
+          // Portrait photo
           let photoHtml = "";
           if (row.voterSearchResult && row.voterSearchResult.success && row.voterSearchResult.data && row.voterSearchResult.data.PortraitImage) {
-            photoHtml = `<img src="data:image/jpeg;base64,${row.voterSearchResult.data.PortraitImage}" class="w-8 h-10 object-cover rounded mx-auto border border-slate-200" />`;
+            photoHtml = `<img src="data:image/jpeg;base64,${row.voterSearchResult.data.PortraitImage}" style="width:38px; height:48px; object-fit:cover; border-radius:6px; border:1.5px solid #cbd5e1; box-shadow:0 2px 6px rgba(15,23,42,0.10); display:block; margin:0 auto;" />`;
           } else {
-            photoHtml = `<svg class="w-5 h-5 text-slate-350 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>`;
+            photoHtml = `<div style="width:38px; height:48px; border-radius:6px; border:1px dashed #cbd5e1; background:#f8fafc; display:flex; align-items:center; justify-content:center; margin:0 auto;"><svg style="width:16px; height:16px; color:#cbd5e1;" fill="none" stroke="#cbd5e1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg></div>`;
           }
 
-
-          // Left-accent border color only — minimal row tinting
-          let accentColor = "#e2e8f0"; // default slate
+          // Left-accent border color
+          let accentColor = "#e2e8f0";
           if (row.state === "success") accentColor = "#10b981";
           else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") accentColor = "#8b5cf6";
           else if (row.resolvedCode === "DATA_NOT_FOUND") accentColor = "#0ea5e9";
           else if (row.state === "failed") accentColor = "#f43f5e";
           else if (row.state === "sending") accentColor = "#f59e0b";
 
-          // Row bg: very faint
+          // Row bg — very faint tint like DB rows
           let rowBg = "#ffffff";
           if (row.state === "success") rowBg = "#f0fdf8";
           else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") rowBg = "#faf5ff";
@@ -9385,9 +9630,9 @@
           else if (row.state === "failed") rowBg = "#fff1f2";
           else if (row.state === "sending") rowBg = "#fffbeb";
 
-          // Original DB status badge
+          // DB status badge (same as DB tab)
           const scAcc = getStatusAccentColor(rec.status);
-          const sc = { bg: scAcc.badge_bg, text: scAcc.badge_text, border: scAcc.badge_border };
+          const sc = { bg: scAcc.badge_bg, text: scAcc.badge_text, border: scAcc.badge_border, dot: scAcc.left };
           const statusBadgeText =
             rec.status === "inprogress" ? "Mobile Update" :
             (rec.status === "data_update" || rec.status === "data update") ? "Data Update" :
@@ -9397,66 +9642,72 @@
             rec.status === "done" ? "Done" : (rec.status || "—");
 
           // Verification badge
-          let verifLabel = ""; let verifBg = ""; let verifText = ""; let verifBorder = "";
+          let verifLabel = ""; let verifBg = ""; let verifText = ""; let verifBorder = ""; let verifDot = "";
           if (row.state === "sending") {
-            verifLabel = "Sending…"; verifBg = "#fef3c7"; verifText = "#92400e"; verifBorder = "#fde68a";
+            verifLabel = "Sending…"; verifBg = "#fef3c7"; verifText = "#92400e"; verifBorder = "#fde68a"; verifDot = "#f59e0b";
           } else if (row.state === "success") {
-            verifLabel = "OTP Sent ✓"; verifBg = "#d1fae5"; verifText = "#065f46"; verifBorder = "#a7f3d0";
+            verifLabel = "OTP Sent ✓"; verifBg = "#d1fae5"; verifText = "#065f46"; verifBorder = "#a7f3d0"; verifDot = "#10b981";
           } else if (row.state === "verified") {
-            verifLabel = "Verified ✓"; verifBg = "#d1fae5"; verifText = "#047857"; verifBorder = "#34d399";
+            verifLabel = "Verified ✓"; verifBg = "#d1fae5"; verifText = "#047857"; verifBorder = "#34d399"; verifDot = "#10b981";
           } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
-            verifLabel = "Not Registered ✗"; verifBg = "#ede9fe"; verifText = "#5b21b6"; verifBorder = "#ddd6fe";
+            verifLabel = "Not Registered"; verifBg = "#ede9fe"; verifText = "#5b21b6"; verifBorder = "#ddd6fe"; verifDot = "#8b5cf6";
           } else if (row.resolvedCode === "DATA_NOT_FOUND") {
-            verifLabel = "Data Not Found ✗"; verifBg = "#e0f2fe"; verifText = "#0c4a6e"; verifBorder = "#bae6fd";
+            verifLabel = "Data Not Found"; verifBg = "#e0f2fe"; verifText = "#0c4a6e"; verifBorder = "#bae6fd"; verifDot = "#0ea5e9";
           } else {
-            verifLabel = "Failed ✗"; verifBg = "#ffe4e6"; verifText = "#9f1239"; verifBorder = "#fecdd3";
+            verifLabel = "Failed"; verifBg = "#ffe4e6"; verifText = "#9f1239"; verifBorder = "#fecdd3"; verifDot = "#f43f5e";
           }
 
-          // Details / response text — clean, no prefix
+          // Response / details cell content
           let detailsHtml = "";
           if (row.state === "sending") {
-            detailsHtml = `<span style="color:#94a3b8; font-style:italic;">Waiting for response…</span>`;
+            detailsHtml = `<span style="color:#94a3b8; font-style:italic; font-size:11px;">Waiting for response…</span>`;
           } else if (row.state === "success") {
             const mobileStr = row.responseData && row.responseData.maskedMobile ? row.responseData.maskedMobile : "—";
             detailsHtml = `
-              <div style="display: flex; align-items: center; gap: 8px;" onclick="event.stopPropagation();">
-                <span style="color:#059669; font-weight:600; white-space:nowrap;">Mobile: ${mobileStr}</span>
-                <input type="text" id="bulkOtp_${row.record.ninEn}" placeholder="OTP" maxlength="6" style="width: 55px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace; font-size: 11px; text-align: center; height: 22px;" autocomplete="off" />
-                <button id="btnBulkVerify_${row.record.ninEn}" onclick="verifyAndDownloadBulkRow('${row.record.ninEn}')" style="background:#10b981; color:#ffffff; font-weight:700; padding: 2px 8px; border: none; border-radius: 6px; font-size: 10px; cursor: pointer; height: 22px; transition: background 0.15s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+              <div style="display:flex; align-items:center; gap:8px;" onclick="event.stopPropagation();">
+                <span style="color:#059669; font-size:11px; white-space:nowrap;">Mobile: ${mobileStr}</span>
+                <input type="text" id="bulkOtp_${row.record.ninEn}" placeholder="OTP" maxlength="6" style="width:56px; padding:3px 6px; border:1px solid #e2e8f0; border-radius:8px; font-family:monospace; font-size:11px; text-align:center; height:24px; background:#f8fafc; outline:none; transition:border .15s;" onfocus="this.style.border='1px solid #94a3b8'" onblur="this.style.border='1px solid #e2e8f0'" autocomplete="off" />
+                <button id="btnBulkVerify_${row.record.ninEn}" onclick="verifyAndDownloadBulkRow('${row.record.ninEn}')" style="background:#10b981; color:#fff; font-weight:400; padding:3px 10px; border:none; border-radius:8px; font-size:10px; cursor:pointer; height:24px; transition:background .15s; font-family:inherit;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
                   Verify
                 </button>
               </div>
             `;
           } else if (row.state === "verified") {
-            detailsHtml = `<span style="color:#059669; font-weight:700;">NID card successfully verified &amp; saved!</span>`;
+            detailsHtml = `<span style="color:#059669; font-size:11px;">NID card successfully verified &amp; saved!</span>`;
           } else if (row.resolvedCode === "MOBILE_NOT_REGISTERED") {
-            detailsHtml = `<span style="color:#7c3aed; font-weight:500;">Mobile number not registered on NID portal</span>`;
+            detailsHtml = `<span style="color:#7c3aed; font-size:11px;">Mobile number not registered on NID portal</span>`;
           } else if (row.resolvedCode === "DATA_NOT_FOUND") {
-            detailsHtml = `<span style="color:#0284c7; font-weight:500;">Citizen data not found on NID portal</span>`;
+            detailsHtml = `<span style="color:#0284c7; font-size:11px;">Citizen data not found on NID portal</span>`;
           } else {
             const rawMsg = row.errorMsg || (row.responseData ? (typeof row.responseData === "string" ? row.responseData : JSON.stringify(row.responseData)) : "Unknown error");
             const cleanMsg = rawMsg.replace(/^Response\s*code:\s*/i, "").replace(/^Error:\s*/i, "");
-            detailsHtml = `<span style="color:#be123c; font-weight:500;">${cleanMsg}</span>`;
+            detailsHtml = `<span style="color:#be123c; font-size:11px;">${cleanMsg}</span>`;
           }
 
           const pulseCss = row.state === "sending" ? "animation:pulse 1.5s infinite;" : "";
 
           html += `
-            <tr onclick="openBulkRowVoterDetails('${nin}')" style="background:${rowBg}; border-top:1px solid #f1f5f9; border-left:3px solid ${accentColor}; transition:background .15s; cursor:pointer;" class="hover:bg-slate-100/70">
-              <td style="padding:10px 14px; text-align:center; color:#94a3b8; font-weight:600; border-right:1px solid #f1f5f9; white-space:nowrap;">${idx + 1}</td>
-              <td style="padding:4px 6px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">${photoHtml}</td>
-              <td style="padding:10px 14px; font-family:monospace; color:#2563eb; font-weight:700; font-size:11px; border-right:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nin}</td>
-              <td style="padding:10px 14px; border-right:1px solid #f1f5f9;">
-                <div style="font-weight:700; color:#1e293b; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fullName}</div>
-                <div style="font-size:10px; color:#64748b; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="nepali-font">${nameNp || "—"}</div>
+            <tr onclick="openBulkRowVoterDetails('${nin}')" style="background:${rowBg}; border-top:1px solid rgba(203,213,225,0.45); border-left:4px solid ${accentColor}; cursor:pointer; transition:background .15s;" class="hover:brightness-[0.98]">
+              <td style="padding:10.5px 14px; text-align:center; color:#94a3b8; font-size:11px; white-space:nowrap; border-bottom:1px solid rgba(203,213,225,0.45); vertical-align:middle;">${idx + 1}</td>
+              <td style="padding:5px 8px; text-align:center; border-bottom:1px solid rgba(203,213,225,0.45); vertical-align:middle;">${photoHtml}</td>
+              <td style="padding:10.5px 14px; font-family:monospace; color:#2563eb; font-size:11.5px; font-weight:400; border-bottom:1px solid rgba(203,213,225,0.45); white-space:nowrap; vertical-align:middle; overflow:hidden; text-overflow:ellipsis;">${nin}</td>
+              <td style="padding:10.5px 14px; border-bottom:1px solid rgba(203,213,225,0.45); vertical-align:middle;">
+                <div style="font-size:12px; font-weight:400; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${fullName}</div>
+                <div style="font-size:10px; color:#94a3b8; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" class="nepali-font">${nameNp || "—"}</div>
               </td>
-              <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
-                <span style="font-size:9px; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid ${sc.border}; background:${sc.bg}; color:${sc.text}; text-transform:uppercase; letter-spacing:.04em;">${statusBadgeText}</span>
+              <td style="padding:10.5px 14px; text-align:center; border-bottom:1px solid rgba(203,213,225,0.45); white-space:nowrap; vertical-align:middle;">
+                <span style="display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:500; padding:3px 8px; border-radius:9999px; border:1px solid ${sc.border}; background:${sc.bg}; color:${sc.text}; text-transform:uppercase; letter-spacing:.05em;">
+                  <span style="width:5px; height:5px; border-radius:50%; background:${sc.dot};"></span>
+                  ${statusBadgeText}
+                </span>
               </td>
-              <td style="padding:10px 14px; text-align:center; border-right:1px solid #f1f5f9; white-space:nowrap;">
-                <span style="font-size:9px; font-weight:700; padding:2px 8px; border-radius:20px; border:1px solid ${verifBorder}; background:${verifBg}; color:${verifText}; white-space:nowrap; ${pulseCss}">${verifLabel}</span>
+              <td style="padding:10.5px 14px; text-align:center; border-bottom:1px solid rgba(203,213,225,0.45); white-space:nowrap; vertical-align:middle;">
+                <span style="display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:500; padding:3px 8px; border-radius:9999px; border:1px solid ${verifBorder}; background:${verifBg}; color:${verifText}; white-space:nowrap; ${pulseCss}">
+                  <span style="width:5px; height:5px; border-radius:50%; background:${verifDot};"></span>
+                  ${verifLabel}
+                </span>
               </td>
-              <td style="padding:10px 14px; font-size:11px; border-right:none;">${detailsHtml}</td>
+              <td style="padding:10.5px 14px; border-bottom:1px solid rgba(203,213,225,0.45); vertical-align:middle;">${detailsHtml}</td>
             </tr>
           `;
         });
@@ -9701,6 +9952,10 @@
       const total = bulkResults.length;
 
       const promises = bulkResults.map(async (rowObj) => {
+        if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+          return;
+        }
+
         const rec = rowObj.record;
         rowObj.voterSearchState = "searching";
         renderBulkTable();
@@ -9714,12 +9969,20 @@
         const maxAttempts = 5;
 
         while (shouldRetry && attempt < maxAttempts) {
+          if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+            return;
+          }
+
           try {
             const res = await fetch(`${API_BASE}/api/voter-search`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ nin, dob, firstname })
+              body: JSON.stringify({ nin, dob, firstname }),
+              signal: bulkVerifyAbortController ? bulkVerifyAbortController.signal : undefined
             });
+            if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+              return;
+            }
             const data = await res.json();
 
             if (res.ok && data.success && data.data) {
@@ -9735,6 +9998,9 @@
                 rowObj.voterSearchState = `searching (retry ${attempt})`;
                 renderBulkTable();
                 await new Promise(r => setTimeout(r, 1200));
+                if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+                  return;
+                }
               } else if (/(no record found|record not found|data not found|not found|not active|unregistered|failed|फेला\s*परेन|भेटिएन|दर्ता\s*भएको\s*छैन|छैन)/i.test(errMsg)) {
                 // Record not found → not active
                 rowObj.voterSearchResult = { success: false, error: errMsg };
@@ -9754,10 +10020,16 @@
               }
             }
           } catch (err) {
+            if (err?.name === "AbortError" || !isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+              return;
+            }
             attempt++;
             rowObj.voterSearchState = `searching (retry ${attempt})`;
             renderBulkTable();
             await new Promise(r => setTimeout(r, 1500));
+            if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+              return;
+            }
             if (attempt >= maxAttempts) {
               rowObj.voterSearchResult = { success: false, error: err.message };
               await persistVoterListRecordToSecondaryDb(nin, { error: err.message }, "not online", "", err.message);
@@ -9773,6 +10045,9 @@
       });
 
       await Promise.allSettled(promises);
+      if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+        return;
+      }
 
       // Refresh voterListIndex and re-render DB table VL column
       try {
@@ -9938,11 +10213,18 @@
       btn.innerText = "Fetching records... (Click to view)";
       btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase cursor-pointer ring-2 ring-violet-400";
 
+      if (bulkVerifyAbortController) {
+        try { bulkVerifyAbortController.abort(); } catch (e) {}
+      }
+      bulkVerifyAbortController = createAppAbortController();
+      isBulkVerifyRunning = true;
+
       try {
         // 1. Fetch all non-done records from database
-        const dbRes = await fetch(`${API_BASE}/api/people`);
+        const dbRes = await fetch(`${API_BASE}/api/people`, { signal: bulkVerifyAbortController.signal });
         if (!dbRes.ok) throw new Error("Failed to fetch database records.");
         const allRecords = await dbRes.json();
+        if (!isBulkVerifyRunning || bulkVerifyAbortController.signal.aborted) return;
 
         const targets = allRecords.filter(r => r.status !== "done");
         if (targets.length === 0) {
@@ -9975,6 +10257,10 @@
 
         // 2. Send all requests in parallel
         const requests = bulkResults.map(async (rowObj) => {
+          if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+            return;
+          }
+
           const rec = rowObj.record;
           const nin = rec.ninEn;
 
@@ -9990,8 +10276,13 @@
                 "Content-Type": "application/json",
                 "Captcha-Code": captchaCode
               },
-              body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc })
+              body: JSON.stringify({ fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc }),
+              signal: bulkVerifyAbortController ? bulkVerifyAbortController.signal : undefined
             });
+
+            if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+              return;
+            }
 
             const responseBody = await parseResponseBody(res);
             const responseCode = getOtpErrorCode(responseBody);
@@ -10035,6 +10326,9 @@
               }
             }
           } catch (err) {
+            if (err?.name === "AbortError" || !isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+              return;
+            }
             rowObj.state = "failed";
             rowObj.errorMsg = err.message;
             bulkStats.sending--;
@@ -10042,20 +10336,31 @@
           }
 
           // Render live status updates
-          updateBulkStats();
-          renderBulkTable();
+          if (isBulkVerifyRunning && !(bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+            updateBulkStats();
+            renderBulkTable();
+          }
         });
 
         // Await all parallel requests
         await Promise.allSettled(requests);
+        if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+          return;
+        }
 
         // Await bulk voter list check so VL column updates before DB refresh
         await triggerBulkVoterSearch();
+        if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+          return;
+        }
 
         // Auto-update workflow status based on OTP response
         const autoUpdatePromises = bulkResults
           .filter(rowObj => rowObj.state !== "sending")
           .map(async rowObj => {
+            if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+              return;
+            }
             const rec = rowObj.record;
             const currentStatus = String(rec.status || "").trim().toLowerCase();
             const isMobileUpdate = currentStatus === "inprogress" || currentStatus === "mobile_updated" || currentStatus.includes("mobile");
@@ -10066,17 +10371,14 @@
             let targetStatus = null;
 
             if (isMobileUpdate) {
-              // 1. Mobile Update: never change to pending — keep as usual mobile update status
               targetStatus = null;
             } else if (isDataUpdate || isCardError) {
-              // 2. Data Update & Card Error: if successful, change to pending; else keep as-is
               if (rowObj.state === "success") {
                 targetStatus = "pending";
               } else {
                 targetStatus = null;
               }
             } else if (isNotOnline) {
-              // 3. Not Online: if successful, change to pending; else keep system as usual
               if (rowObj.state === "success") {
                 targetStatus = "pending";
               } else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") {
@@ -10085,7 +10387,6 @@
                 targetStatus = "not online";
               }
             } else {
-              // Other statuses (e.g. pending)
               if (rowObj.state === "success") {
                 targetStatus = "pending";
               } else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") {
@@ -10095,7 +10396,6 @@
               }
             }
 
-            // Only update if there's a targetStatus and current status differs
             if (targetStatus && rec.status !== targetStatus) {
               try {
                 const devInfo = getCurrentClientDeviceInfo();
@@ -10113,15 +10413,21 @@
                     updateNote: `Auto status update from Bulk OTP verification`,
                     computerName: devInfo.computerName,
                     nickname: devInfo.nickname,
-                  })
+                  }),
+                  signal: bulkVerifyAbortController ? bulkVerifyAbortController.signal : undefined
                 });
                 rec.status = targetStatus;
               } catch (e) {
+                if (e?.name === "AbortError" || !isBulkVerifyRunning) return;
                 console.warn("Auto-status update failed for", rec.ninEn, e);
               }
             }
           });
         await Promise.allSettled(autoUpdatePromises);
+        if (!isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+          return;
+        }
+
         // Refresh local DB table after status updates
         fetchDatabase(true);
 
@@ -10133,16 +10439,30 @@
         document.getElementById("bulkFooterStatus").innerText = finalStatus;
 
       } catch (err) {
+        if (err?.name === "AbortError" || !isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted)) {
+          return;
+        }
         alert("Bulk request error: " + err.message);
       } finally {
-        btn.disabled = false;
-        if (bulkResults && bulkResults.length > 0) {
-          btn.innerText = `View Bulk Results (${bulkStats.total})`;
-          btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase cursor-pointer ring-2 ring-violet-400";
-        } else {
-          btn.innerText = "Send Bulk OTP Requests";
-          // Reset to initial state behind the modal
-          resetPortalToInitial();
+        const wasAborted = !isBulkVerifyRunning || (bulkVerifyAbortController && bulkVerifyAbortController.signal.aborted);
+        releaseAppAbortController(bulkVerifyAbortController);
+        bulkVerifyAbortController = null;
+        isBulkVerifyRunning = false;
+
+        if (btn) {
+          btn.disabled = false;
+          if (!wasAborted && bulkResults && bulkResults.length > 0) {
+            btn.innerText = `View Bulk Results (${bulkStats.total})`;
+            btn.className = "bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase cursor-pointer ring-2 ring-violet-400";
+          } else {
+            btn.innerText = "Request OTP";
+            btn.className = "bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-sm shrink-0 uppercase";
+            if (wasAborted) {
+              const modal = document.getElementById("portalBulkModal");
+              if (modal) modal.style.display = "none";
+              resetPortalToInitial();
+            }
+          }
         }
       }
     }
@@ -13544,10 +13864,18 @@
       modal.classList.add("flex");
       generateVoterCaptcha();
 
+      if (voterBulkAbortController) {
+        try { voterBulkAbortController.abort(); } catch (e) {}
+      }
+      voterBulkAbortController = createAppAbortController();
+      isVoterBulkRunning = true;
+
       try {
-        const res = await fetch(`${API_BASE}/api/people`);
+        const res = await fetch(`${API_BASE}/api/people`, { signal: voterBulkAbortController.signal });
         if (!res.ok) throw new Error("Failed to fetch database records.");
         const allRecords = await res.json();
+        if (!isVoterBulkRunning || voterBulkAbortController.signal.aborted) return;
+
         const targets = allRecords.filter(r => r.status !== "done");
 
         if (targets.length === 0) {
@@ -13584,6 +13912,10 @@
 
         // Fire all requests in parallel
         const promises = targets.map(async (rec) => {
+          if (!isVoterBulkRunning || (voterBulkAbortController && voterBulkAbortController.signal.aborted)) {
+            return;
+          }
+
           const cleanNid = (rec.ninEn || "").replace(/[^0-9]/g, "");
           const trEl = document.getElementById(`vbmRow_${cleanNid}`);
           const picEl = document.getElementById(`vbmPic_${cleanNid}`);
@@ -13601,8 +13933,14 @@
             const queryRes = await fetch(`${API_BASE}/api/voter-search`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ nin: rec.ninEn, dob: dobFormatted, firstname: firstnameVal })
+              body: JSON.stringify({ nin: rec.ninEn, dob: dobFormatted, firstname: firstnameVal }),
+              signal: voterBulkAbortController ? voterBulkAbortController.signal : undefined
             });
+
+            if (!isVoterBulkRunning || (voterBulkAbortController && voterBulkAbortController.signal.aborted)) {
+              return;
+            }
+
             const queryData = await queryRes.json();
 
             if (queryRes.ok && queryData.success && queryData.data) {
@@ -13661,6 +13999,9 @@
               }
             }
           } catch (err) {
+            if (err?.name === "AbortError" || !isVoterBulkRunning || (voterBulkAbortController && voterBulkAbortController.signal.aborted)) {
+              return;
+            }
             if (statusEl) { statusEl.className = "px-3 py-2.5 border-r border-slate-200 text-center font-bold text-rose-600"; statusEl.innerText = "Error"; }
             if (respEl) { respEl.innerText = err.message || "Connection error"; respEl.className = "px-3 py-2.5 text-rose-500 font-semibold"; }
           }
@@ -13668,9 +14009,19 @@
         });
 
         await Promise.all(promises);
+        if (!isVoterBulkRunning || (voterBulkAbortController && voterBulkAbortController.signal.aborted)) {
+          return;
+        }
 
       } catch (err) {
+        if (err?.name === "AbortError" || !isVoterBulkRunning || (voterBulkAbortController && voterBulkAbortController.signal.aborted)) {
+          return;
+        }
         tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-rose-600 font-bold">Bulk Search Error: ${err.message}</td></tr>`;
+      } finally {
+        releaseAppAbortController(voterBulkAbortController);
+        voterBulkAbortController = null;
+        isVoterBulkRunning = false;
       }
     }
 
