@@ -12157,7 +12157,7 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 2, maxWaves = 3, waveDelayMs = 250) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 10, maxWaves = 1, waveDelayMs = 0) {
       const normalizedNin = String(nin || "").trim();
       const dobValue     = String(dob || "").trim();
       const firstnameVal = String(firstname || "").trim();
