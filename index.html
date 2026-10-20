@@ -136,6 +136,7 @@
 
     body {
       font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 400;
     }
 
     .nepali-font {
@@ -144,6 +145,110 @@
 
     .code-font {
       font-family: "JetBrains Mono", monospace;
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       GLOBAL TYPOGRAPHY NORMALISATION
+       Match the clean, light, regular-weight style of the Download tab.
+       Applies to ALL UI panels. Card renderer (.card-spec) is excluded.
+       ══════════════════════════════════════════════════════════════ */
+
+    /* ── All labels, spans, paragraphs in workspace panels ── */
+    #paneWorkspaceForm label,
+    #paneWorkspacePortal label,
+    #paneWorkspaceAdmin label,
+    #paneWorkspaceDb label,
+    #paneWorkspaceForm p,
+    #paneWorkspacePortal p,
+    #paneWorkspaceAdmin p,
+    #paneWorkspaceDb p,
+    #paneWorkspaceForm span:not(.badge):not(.status-pill),
+    #paneWorkspaceAdmin span:not(.badge):not(.status-pill) {
+      font-weight: 400 !important;
+    }
+
+    /* ── Section headings: allow a touch of medium only ── */
+    #paneWorkspaceForm h3,
+    #paneWorkspacePortal h3,
+    #paneWorkspaceAdmin h3,
+    #paneWorkspaceAdmin h4,
+    #paneWorkspaceDb h3 {
+      font-weight: 500 !important;
+    }
+
+    /* ── Inputs & selects everywhere in workspace ── */
+    #paneWorkspaceForm input:not([type=hidden]),
+    #paneWorkspaceForm select,
+    #paneWorkspaceAdmin input:not([type=hidden]),
+    #paneWorkspaceAdmin select,
+    #paneWorkspacePortal input:not([type=hidden]),
+    #paneWorkspacePortal select {
+      font-weight: 400 !important;
+    }
+
+    /* ── Buttons: light medium — not heavy bold ── */
+    #paneWorkspaceForm button,
+    #paneWorkspacePortal button,
+    #paneWorkspaceAdmin button {
+      font-weight: 500 !important;
+    }
+
+    /* ── DB top toolbar: regular weight ── */
+    #dbTopToolbar button,
+    #dbTopToolbar input,
+    #dbTopToolbar span,
+    #dbTopToolbar label {
+      font-weight: 400 !important;
+    }
+
+    /* ── Nav workspace tab buttons ── */
+    nav button,
+    nav span {
+      font-weight: 400 !important;
+    }
+
+    /* ── Column dropdown ── */
+    #colDropdownMenu label,
+    #colDropdownMenu input {
+      font-weight: 400 !important;
+    }
+    #colDropdownMenu p {
+      font-weight: 500 !important;
+    }
+
+    /* ── Bulk verification modal: light weight ── */
+    #portalBulkModal label,
+    #portalBulkModal p,
+    #portalBulkModal span:not([id*="Stat"]) {
+      font-weight: 400 !important;
+    }
+    #portalBulkModal button {
+      font-weight: 500 !important;
+    }
+    #portalBulkModal h2 {
+      font-weight: 500 !important;
+    }
+
+    /* ── Any generic modal / alert overlays ── */
+    [id*="Modal"] label,
+    [id*="Modal"] p {
+      font-weight: 400 !important;
+    }
+    [id*="Modal"] button {
+      font-weight: 500 !important;
+    }
+
+    /* ── History section badges: keep a tiny bit of weight ── */
+    #formWorkspaceHistorySection .font-bold {
+      font-weight: 500 !important;
+    }
+
+    /* ── Admin table ── */
+    #adminIpTableRows td {
+      font-weight: 400 !important;
+    }
+    #paneWorkspaceAdmin thead th {
+      font-weight: 500 !important;
     }
 
     .card-spec {
@@ -777,7 +882,7 @@
           class="bg-white border border-slate-200/80 rounded-2xl p-8 shadow-sm space-y-6 hidden">
           <div class="flex justify-between items-center border-b border-slate-100 pb-4">
             <div>
-              <h3 class="text-base font-bold tracking-tight text-slate-900">
+              <h3 class="text-base font-medium tracking-tight text-slate-900">
                 Identity Variable Configuration Studio
               </h3>
               <p class="text-sm text-slate-500 mt-1">
@@ -786,13 +891,13 @@
             </div>
             <div class="flex items-center gap-2">
               <button type="button" id="btnToggleFormFullscreen" onclick="toggleWorkspaceFullscreen('form')" title="Toggle Full Screen (Cmd+D / Ctrl+D)"
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-normal shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
                 <span>⛶</span>
                 <span class="hidden sm:inline">Full Screen</span>
                 <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘D</kbd>
               </button>
               <span id="formBadgeMode"
-                class="text-xs bg-slate-100 text-slate-655 border border-slate-200 px-3 py-1.5 rounded-md font-mono font-medium">MODE:
+                class="text-xs bg-slate-100 text-slate-655 border border-slate-200 px-3 py-1.5 rounded-md font-mono font-normal">MODE:
                 NEW ENTRY</span>
             </div>
           </div>
@@ -801,12 +906,12 @@
             onsubmit="event.preventDefault()">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label class="block text-slate-700 font-bold mb-2 text-[13px]">NIN / NID Number (English) *</label>
+                <label class="block text-slate-700 font-normal mb-2 text-[13px]">NIN / NID Number (English) *</label>
                 <input type="text" id="formNinEn" placeholder="" required
-                  class="w-full bg-white border border-slate-200 rounded-xl p-3 font-mono text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all font-bold" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 font-mono text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all font-normal" />
               </div>
               <div>
-                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">राष्ट्रिय परिचय नम्बर (नेपाली)</label>
+                <label class="block text-slate-700 font-normal mb-2 text-[13px]">राष्ट्रिय परिचय नम्बर (नेपाली)</label>
                 <input type="text" id="formNinNp" placeholder="" readonly
                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
@@ -864,7 +969,7 @@
               <div>
                 <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Identity Status Mode</label>
                 <select id="formStatus"
-                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-bold focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-normal focus:outline-none focus:border-blue-500 transition-all">
                   <option value="pending">Pending</option>
                   <option value="done">Done</option>
                   <option value="inprogress">Mobile Number Update</option>
@@ -874,9 +979,9 @@
                 </select>
               </div>
               <div>
-                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Card Design</label>
+                <label class="block text-slate-700 font-normal mb-2 text-[13px]">Card Design</label>
                 <select id="formCardDesign"
-                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-bold focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-normal focus:outline-none focus:border-blue-500 transition-all">
                   <option value="smart card" selected>Smart Card</option>
                   <option value="white card">White Card</option>
                 </select>
@@ -971,11 +1076,11 @@
 
             <div class="pt-5 flex justify-end gap-3 border-t border-slate-100">
               <button type="button" onclick="clearFormCanvas()"
-                class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-semibold text-[13px] px-6 py-3 rounded-xl transition-all">
+                class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-normal text-[13px] px-6 py-3 rounded-xl transition-all">
                 New Entry
               </button>
               <button type="button" id="btnDynamicSubmit" onclick="handleFormActionCommit()"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[13px] px-8 py-3 rounded-xl shadow-md transition-all">
+                class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-[13px] px-8 py-3 rounded-xl shadow-md transition-all">
                 Submit Record
               </button>
             </div>
@@ -1431,35 +1536,6 @@
 
               </div>
             </div>
-          </form>              </div>
-
-              <!-- ── PERMUTATION: Hidden legacy (kept for JS compatibility) ── -->
-              <div id="portalPermutationPanel" class="hidden">
-                <span id="portalPermutationSubtitle"></span>
-                <span id="portalPermutationBadge"></span>
-                <div id="portalPermutationProgressContainer"><span id="portalPermutationProgressText"></span><div id="portalPermutationProgressBar"></div></div>
-                <div id="portalPermutationStatsRow"><div id="permStatTotal"></div><div id="permStatActive"></div><div id="permStatSuccess"></div><div id="permStatFailed"></div></div>
-                <div id="portalPermutationNotice"></div>
-                <div id="portalPermutationCardsList"></div>
-              </div>
-
-              <!-- ── RESPONSE ALERT: shows result info after a successful search/verify ── -->
-              <div id="portalResponseAlert" class="hidden animate-fade-in">
-                <!-- filled dynamically by showPortalResponseAlert() -->
-              </div>
-
-              <!-- Hidden legacy elements -->
-              <div class="hidden">
-                <span id="captchaQuestion">8 - 6 = ?</span>
-                <input type="number" id="captchaInput" />
-                <div id="portalNpSuggestionsContainer"></div>
-                <div id="portalNpSuggestionsPills"></div>
-                <input type="hidden" id="portalSearchNin" />
-                <div id="voterQuickSearchDropdown"></div>
-                <input type="hidden" id="voterQuickSearch" />
-                <div id="portalInitialActionBtnRow"></div>
-              </div>
-            </div>
           </form>
 
         </section>
@@ -1566,7 +1642,7 @@
         <section id="paneWorkspaceAdmin"
           class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5">
           <div class="border-b border-slate-100 pb-3">
-            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <h3 class="text-sm font-medium text-slate-900 flex items-center gap-2">
               <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
@@ -1598,7 +1674,7 @@
           <!-- STATE 2: Whitelist Registration -->
           <div id="adminRegisterDeviceBox" class="space-y-4 hidden border-t border-slate-100 pt-4">
             <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-800 space-y-1">
-              <div class="font-bold flex items-center gap-1">
+              <div class="font-medium flex items-center gap-1">
                 <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
@@ -1615,7 +1691,7 @@
             <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
               <p class="text-[11px] text-slate-600">This device is not registered yet. Register the current computer name to unlock the dashboard.</p>
               <button type="button" onclick="openAddDeviceModal()"
-                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs shadow-sm transition-all uppercase tracking-wider">
+                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-xs shadow-sm transition-all uppercase tracking-wider">
                 Register This Device
               </button>
             </div>
@@ -1624,11 +1700,11 @@
           <!-- STATE 3: Allowed IP Whitelist Console -->
           <div id="adminWhitelistConsole" class="space-y-4 hidden border-t border-slate-100 pt-4">
             <div class="flex justify-between items-center">
-              <h4 class="text-xs font-bold text-slate-800">
+              <h4 class="text-xs font-medium text-slate-800">
                 Registered Computer Devices
               </h4>
               <button onclick="openListedDevicesModal()"
-                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition-all shadow-sm">
+                class="bg-emerald-600 hover:bg-emerald-700 text-white font-normal px-3 py-1.5 rounded-lg text-[10px] transition-all shadow-sm">
                 Manage Devices
               </button>
             </div>
@@ -1637,11 +1713,11 @@
               <table class="min-w-full divide-y divide-slate-200 text-left">
                 <thead class="bg-slate-50 text-slate-505 font-mono text-[9px] uppercase tracking-wider bg-slate-50">
                   <tr>
-                    <th class="px-4 py-2.5 font-bold">Computer Name</th>
-                    <th class="px-4 py-2.5 font-bold">Added Date</th>
+                    <th class="px-4 py-2.5 font-medium">Computer Name</th>
+                    <th class="px-4 py-2.5 font-medium">Added Date</th>
                   </tr>
                 </thead>
-                <tbody id="adminIpTableRows" class="divide-y divide-slate-100 text-slate-700 font-medium bg-white">
+                <tbody id="adminIpTableRows" class="divide-y divide-slate-100 text-slate-700 font-normal bg-white">
                   <!-- Loaded device names go here -->
                 </tbody>
               </table>
