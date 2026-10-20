@@ -1380,14 +1380,16 @@
                               maxlength="16" inputmode="numeric"
                               autocomplete="off"
                               oninput="this.value = this.value.replace(/\D/g, '').slice(0, 16); onReqNumInputChanged(this);"
-                              onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestNumberSearch();}"
-                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-lg px-2.5 py-1.5 pr-14 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[34px] placeholder:text-slate-400 font-normal" />
+                              onfocus="onReqNumFocus();"
+                              onblur="onReqNumBlur();"
+                              onkeydown="if(event.key==='Tab' && !event.shiftKey){event.preventDefault(); document.getElementById('voterNinDobBs')?.focus();} else if(event.key==='Enter'){event.preventDefault(); const v=(this.value||'').trim().replace(/\D/g,''); if(v.length===16){if(isReqNumSearchRunning){stopRequestNumberSearch();}else{handleRequestNumberSearch();}}}"
+                              class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-lg px-2.5 py-1.5 pr-14 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[34px] placeholder:text-slate-400 font-normal disabled:opacity-40 disabled:cursor-not-allowed" />
                             <div class="absolute right-1 flex items-center gap-0.5">
                               <button type="button" id="btnClearRequestNumber" onclick="clearRequestNumberField()" title="Clear Request Number"
                                 class="hidden w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
                                 ✕
                               </button>
-                              <button type="button" id="btnSearchByRequestNumber" onclick="handleRequestNumberSearch()" title="Check Status (Enter)"
+                              <button type="button" id="btnSearchByRequestNumber" onclick="if(isReqNumSearchRunning){stopRequestNumberSearch();}else{const v=(document.getElementById('voterNidRequestNumber').value||'').trim().replace(/\D/g,'');if(v.length===16)handleRequestNumberSearch();}" title="Check Status (Enter) — 16 digits required"
                                 class="w-6 h-6 rounded flex items-center justify-center text-emerald-700 hover:text-emerald-950 hover:bg-emerald-100/80 active:scale-95 transition-all text-xs font-bold leading-none cursor-pointer">
                                 ↵
                               </button>
@@ -1408,8 +1410,10 @@
                           <input type="text" id="voterNidNin" placeholder="e.g. 615-385-908-6" maxlength="13"
                             autocomplete="off"
                             oninput="onNinInputChanged(this);"
+                            onfocus="onNinFocus();"
+                            onblur="onNinBlur();"
                             onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
-                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                            class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 font-mono text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal disabled:opacity-40 disabled:cursor-not-allowed" />
                         </div>
 
                         <!-- Field 2 & 3: Date of Birth (BS & AD) -->
@@ -1498,7 +1502,8 @@
                     <!-- Captcha Code Input -->
                     <div class="flex-1 relative">
                       <input type="text" id="portalCaptchaCode" placeholder="Enter captcha code" autocomplete="off"
-                        onkeydown="if(event.key==='Enter'){event.preventDefault();handleRequestOtpClick();}"
+                        oninput="if(this.value.trim().length >= 4) savePortalCaptcha(this.value.trim(), window._currentCaptchaSession);"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault(); const c=this.value.trim(); if(c) savePortalCaptcha(c, window._currentCaptchaSession); const reqVal=(document.getElementById('voterNidRequestNumber')?.value||'').trim().replace(/\D/g,''); if(reqVal.length===16 && !document.getElementById('portalFullNameEn')?.value.trim()){handleRequestNumberSearch();}else{handleRequestOtpClick();}}"
                         class="w-full bg-white border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 rounded-xl py-3 px-4 text-slate-900 font-mono text-base tracking-widest transition-all shadow-2xs h-[48px] placeholder:font-normal placeholder:tracking-normal placeholder:text-xs" />
                     </div>
 
@@ -1604,6 +1609,54 @@
                     </svg>
                     <span>Verify All (Bulk)</span>
                   </button>
+                </div>
+
+                <!-- ── Dedicated Big Captcha Station (Shown below Clear All & Verify All) ── -->
+                <div id="mainPortalCaptchaSection" class="hidden fade-in bg-white border-2 border-emerald-300 rounded-2xl p-4 shadow-md space-y-3 mt-3">
+                  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span class="text-xs font-bold text-slate-800 uppercase tracking-wide">Security Verification Captcha</span>
+                      <span id="mainPortalCaptchaReason" class="text-[11px] font-medium text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200 ml-1"></span>
+                    </div>
+                    <button type="button" onclick="hideMainPortalCaptchaSection()" title="Close Captcha Box"
+                      class="text-slate-400 hover:text-slate-600 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-slate-100 transition-all cursor-pointer">
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <!-- Enlarged Captcha image and refresh button (Big Size like proceed operation) -->
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 shadow-2xs shrink-0">
+                      <img id="mainPortalCaptchaImg" src="" alt="Captcha" class="h-20 sm:h-24 w-56 sm:w-72 object-contain rounded-lg bg-white border border-slate-200" />
+                      <button type="button" onclick="refreshMainPortalCaptcha()" title="Refresh Captcha Image"
+                        class="bg-white hover:bg-slate-100 active:scale-95 text-slate-700 p-2.5 rounded-lg transition-all border border-slate-300 cursor-pointer h-12 w-12 flex items-center justify-center shrink-0 shadow-2xs">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- Captcha Code Input -->
+                    <div class="flex-1 relative flex flex-col justify-center gap-1">
+                      <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Enter Captcha Code</label>
+                      <input type="text" id="mainPortalCaptchaInput" placeholder="Enter captcha code..." autocomplete="off"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();submitMainPortalCaptcha();}"
+                        class="w-full bg-white border-2 border-emerald-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 rounded-xl py-2.5 px-3.5 text-slate-900 font-mono text-base font-bold tracking-widest transition-all shadow-2xs h-[48px] placeholder:font-normal placeholder:tracking-normal placeholder:text-xs" />
+                    </div>
+
+                    <!-- Save & Submit Button -->
+                    <div class="shrink-0 flex items-end">
+                      <button type="button" id="btnSubmitMainPortalCaptcha" onclick="submitMainPortalCaptcha()"
+                        class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold px-6 py-2.5 rounded-xl border border-emerald-700 transition-all shadow-sm uppercase text-xs flex items-center justify-center gap-2 cursor-pointer h-[48px]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span id="btnSubmitMainPortalCaptchaText">Save &amp; Continue</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- ── PERMUTATION: Hidden legacy (kept for JS compatibility) ── -->
@@ -4287,6 +4340,7 @@
       const dobAdEl   = document.getElementById('voterNinDob');
       const dobBsEl   = document.getElementById('voterNinDobBs');
       if (ninEl)   ninEl.value   = rec.ninEn || '';
+      if (rec.ninEn && typeof clearRequestNumberField === 'function') clearRequestNumberField();
       if (firstEl) firstEl.value = (rec.givenEn || '').split(' ')[0].toUpperCase();
       if (dobAdEl) dobAdEl.value = (rec.dobEn || '').replace(/\//g, '-');
       if (dobBsEl) dobBsEl.value = rec.dobNp || '';
@@ -4310,7 +4364,10 @@
       if (el('portalSearchDropdown'))    el('portalSearchDropdown').classList.add('hidden');
 
       // Also populate Search by NIN inputs
-      if (el('voterNidNin'))             el('voterNidNin').value = rec.ninEn || '';
+      if (el('voterNidNin')) {
+        el('voterNidNin').value = rec.ninEn || '';
+        if (rec.ninEn && typeof clearRequestNumberField === 'function') clearRequestNumberField();
+      }
       if (el('voterNinDobBs'))           el('voterNinDobBs').value = rec.dobNp || '';
       if (el('voterNinDob'))             el('voterNinDob').value = (rec.dobEn || '').replace(/\//g, '-');
       if (el('voterNinFirstname'))       el('voterNinFirstname').value = (rec.givenEn || '').split(' ')[0].toUpperCase();
@@ -6791,6 +6848,11 @@
       // 1. Abort all active fetch requests
       abortAllAppRequests();
 
+      // 1b. Stop Request Number search
+      if (typeof stopRequestNumberSearch === "function") {
+        stopRequestNumberSearch();
+      }
+
       // 2. Stop Update NIN Status task
       if (typeof stopNinStatusScan === "function") {
         stopNinStatusScan();
@@ -6811,6 +6873,7 @@
         "voterDetailPopupModal",
         "nidVoterModal",
         "ninSearchResultModal",
+        "requestNumberResultModal",
         "nidFlowModal",
         "tokenVerifyingModal",
         "paperDownloadOptionsModal",
@@ -6829,7 +6892,7 @@
       modalIds.forEach((id) => {
         const el = document.getElementById(id);
         if (el) {
-          el.style.display = "none";
+          el.style.display = "";
           el.classList.add("hidden");
           el.classList.remove("flex");
         }
@@ -6839,6 +6902,14 @@
     function resetAllTabsToInitial() {
       // 1. Immediately terminate all running tasks and network requests
       stopAllRunningTasksAndRequests();
+      if (typeof stopRequestNumberSearch === "function") stopRequestNumberSearch();
+      isReqNumSearchRunning = false;
+      isNinSearchRunning = false;
+      reqNumAbortController = null;
+      ninSearchAbortController = null;
+      if (typeof _updateReqNumSearchBtn === "function") _updateReqNumSearchBtn(false);
+      if (typeof resetNinSearchButton === "function") resetNinSearchButton();
+      if (typeof hideMainPortalCaptchaSection === "function") hideMainPortalCaptchaSection();
 
       // 2. Reset Download Portal Tab
       if (typeof clearPortalAllFields === "function") {
@@ -6852,8 +6923,16 @@
       }
       ["voterNidRequestNumber", "voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
         const el = document.getElementById(id);
-        if (el) el.value = "";
+        if (el) {
+          el.value = "";
+          el.disabled = false;
+          el.style.opacity = "";
+          el.style.cursor = "";
+        }
       });
+      if (typeof syncNinAndRequestNumberDisabling === "function") {
+        syncNinAndRequestNumberDisabling();
+      }
       const btnClearReq = document.getElementById("btnClearRequestNumber");
       if (btnClearReq) btnClearReq.classList.add("hidden");
       const qInput = document.getElementById("quickConverterInput");
@@ -9362,13 +9441,28 @@
     }
 
     function clearRequestNumberField() {
+      if (typeof stopRequestNumberSearch === "function") {
+        stopRequestNumberSearch();
+      }
       const el = document.getElementById("voterNidRequestNumber");
-      if (el) { el.value = ""; el.focus(); }
+      if (el) {
+        el.value = "";
+        el.disabled = false;
+        el.style.opacity = "";
+        el.style.cursor = "";
+        el.focus();
+      }
       const btn = document.getElementById("btnClearRequestNumber");
       if (btn) btn.classList.add("hidden");
+      if (typeof syncNinAndRequestNumberDisabling === "function") {
+        syncNinAndRequestNumberDisabling();
+      }
     }
 
     function clearPortalSearchForm() {
+      if (typeof stopRequestNumberSearch === "function") {
+        stopRequestNumberSearch();
+      }
       resetPortalToInitial();
 
       const fieldsToClear = [
@@ -9383,10 +9477,16 @@
         const el = document.getElementById(id);
         if (el) {
           el.value = "";
+          el.disabled = false;
+          el.style.opacity = "";
+          el.style.cursor = "";
         }
       });
       const btnClearReq = document.getElementById("btnClearRequestNumber");
       if (btnClearReq) btnClearReq.classList.add("hidden");
+      if (typeof syncNinAndRequestNumberDisabling === "function") {
+        syncNinAndRequestNumberDisabling();
+      }
 
       const portalSearchDropdown = document.getElementById("portalSearchDropdown");
       if (portalSearchDropdown) {
@@ -9412,15 +9512,26 @@
     }
 
     function clearPortalAllFields() {
+      if (typeof stopRequestNumberSearch === "function") {
+        stopRequestNumberSearch();
+      }
       resetPortalToInitial();
 
       // Clear NIN Search inputs
       ["voterNidRequestNumber", "voterNidNin", "voterNinDobBs", "voterNinDob", "voterNinFirstname"].forEach((id) => {
         const el = document.getElementById(id);
-        if (el) el.value = "";
+        if (el) {
+          el.value = "";
+          el.disabled = false;
+          el.style.opacity = "";
+          el.style.cursor = "";
+        }
       });
       const btnClearReq = document.getElementById("btnClearRequestNumber");
       if (btnClearReq) btnClearReq.classList.add("hidden");
+      if (typeof syncNinAndRequestNumberDisabling === "function") {
+        syncNinAndRequestNumberDisabling();
+      }
 
       // Clear Name Search inputs
       ["portalFullNameEn", "portalFullNameNp", "portalDobLoc", "portalCcnIssuingDateLoc"].forEach((id) => {
@@ -14301,6 +14412,7 @@
       if (currentVoterSearchMode === "nin") {
         // Fill only NIN Search form fields
         document.getElementById("voterNidNin").value = rec.ninEn || "";
+        if (rec.ninEn && typeof clearRequestNumberField === 'function') clearRequestNumberField();
         document.getElementById("voterNinFirstname").value = (rec.givenEn || "").split(" ")[0].toUpperCase();
         
         // Convert dobEn format (assuming format like YYYY-MM-DD or YYYY/MM/DD)
@@ -14340,43 +14452,342 @@
 
     // ── Search by Request Number Handler & Modal Logic ──
     let _currentApprovedNin = '';
+    let isReqNumSearchRunning = false;
+    let reqNumAbortController = null;
 
-    function onReqNumInputChanged(el) {
-      document.getElementById('btnClearRequestNumber')?.classList.toggle('hidden', !el.value.trim());
-      if (el.value.trim().length > 0) {
-        const ninInp = document.getElementById('voterNidNin');
-        if (ninInp && ninInp.value) {
-          ninInp.value = '';
+    // ─── Field mutual-exclusivity: only ONE input box can be filled ───────────
+    function clearRequestNumberField() {
+      const reqInp = document.getElementById('voterNidRequestNumber');
+      if (reqInp) {
+        reqInp.value = '';
+        reqInp.disabled = false;
+        reqInp.style.opacity = '';
+        reqInp.style.cursor = '';
+      }
+      const clearBtn = document.getElementById('btnClearRequestNumber');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      if (typeof hideReqNumCaptchaPanel === 'function') hideReqNumCaptchaPanel();
+    }
+
+    function clearNinField() {
+      const ninInp = document.getElementById('voterNidNin');
+      if (ninInp) {
+        ninInp.value = '';
+        ninInp.disabled = false;
+        ninInp.style.opacity = '';
+        ninInp.style.cursor = '';
+      }
+    }
+
+    function syncNinAndRequestNumberDisabling() {
+      const ninInp = document.getElementById('voterNidNin');
+      const reqInp = document.getElementById('voterNidRequestNumber');
+      if (!ninInp || !reqInp) return;
+
+      // Ensure neither field is disabled
+      ninInp.disabled = false;
+      ninInp.style.opacity = '';
+      ninInp.style.cursor = '';
+      reqInp.disabled = false;
+      reqInp.style.opacity = '';
+      reqInp.style.cursor = '';
+
+      // Mutual exclusivity: only one can have content
+      if (ninInp.value.trim() && reqInp.value.trim()) {
+        if (document.activeElement === reqInp) {
+          clearNinField();
+        } else {
+          clearRequestNumberField();
         }
       }
     }
 
+    function onReqNumFocus() {
+      // When entering request field, if NIN number exists, clear that NIN input box
+      const ninInp = document.getElementById('voterNidNin');
+      if (ninInp && ninInp.value.trim()) {
+        clearNinField();
+      }
+      const reqInp = document.getElementById('voterNidRequestNumber');
+      if (reqInp) {
+        reqInp.disabled = false;
+        reqInp.style.opacity = '';
+        reqInp.style.cursor = '';
+      }
+    }
+
+    function onReqNumBlur() {
+      syncNinAndRequestNumberDisabling();
+    }
+
+    function onNinFocus() {
+      // When entering NIN field, if request number exists, clear that request number input box
+      const reqInp = document.getElementById('voterNidRequestNumber');
+      if (reqInp && reqInp.value.trim()) {
+        clearRequestNumberField();
+      }
+      const ninInp = document.getElementById('voterNidNin');
+      if (ninInp) {
+        ninInp.disabled = false;
+        ninInp.style.opacity = '';
+        ninInp.style.cursor = '';
+      }
+    }
+
+    function onNinBlur() {
+      syncNinAndRequestNumberDisabling();
+    }
+
+    function onReqNumInputChanged(el) {
+      document.getElementById('btnClearRequestNumber')?.classList.toggle('hidden', !el.value.trim());
+      if (el.value.trim()) {
+        clearNinField();
+      }
+    }
+
     function onNinInputChanged(el) {
-      if (el.value.trim().length > 0) {
-        const reqInp = document.getElementById('voterNidRequestNumber');
-        if (reqInp && reqInp.value) {
-          reqInp.value = '';
-          document.getElementById('btnClearRequestNumber')?.classList.add('hidden');
+      if (el.value.trim()) {
+        clearRequestNumberField();
+      }
+    }
+
+    // Attach listeners to ensure mutual exclusivity on all user interactions
+    function _setupNinAndReqNumExclusivityListeners() {
+      const reqInp = document.getElementById('voterNidRequestNumber');
+      const ninInp = document.getElementById('voterNidNin');
+      if (reqInp) {
+        ['pointerdown', 'focus', 'input', 'paste'].forEach(evt => {
+          reqInp.addEventListener(evt, () => {
+            const curNin = document.getElementById('voterNidNin');
+            if (curNin && curNin.value.trim()) {
+              clearNinField();
+            }
+          });
+        });
+      }
+      if (ninInp) {
+        ['pointerdown', 'focus', 'input', 'paste'].forEach(evt => {
+          ninInp.addEventListener(evt, () => {
+            const curReq = document.getElementById('voterNidRequestNumber');
+            if (curReq && curReq.value.trim()) {
+              clearRequestNumberField();
+            }
+          });
+        });
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', _setupNinAndReqNumExclusivityListeners);
+    } else {
+      _setupNinAndReqNumExclusivityListeners();
+    }
+
+    function _updateReqNumSearchBtn(running) {
+      const btn = document.getElementById('btnSearchByRequestNumber');
+      if (!btn) return;
+      if (running) {
+        btn.title = 'Stop search';
+        btn.innerHTML = '<span class="inline-block animate-spin text-rose-600">⟳</span>';
+      } else {
+        btn.title = 'Check Status (Enter) — 16 digits required';
+        btn.innerHTML = '↵';
+      }
+    }
+
+    function stopRequestNumberSearch() {
+      if (reqNumAbortController) {
+        try { reqNumAbortController.abort(); } catch (_) {}
+        reqNumAbortController = null;
+      }
+      isReqNumSearchRunning = false;
+      _updateReqNumSearchBtn(false);
+      // Hide inline captcha panel if visible
+      if (typeof hideReqNumCaptchaPanel === 'function') hideReqNumCaptchaPanel();
+    }
+
+    // ── In-Modal Captcha Resolver for Request Number Search Result Modal ───────
+    async function loadReqNumModalCaptcha() {
+      const img = document.getElementById('reqNumModalCaptchaImg');
+      if (!img) return;
+      img.src = '';
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha`);
+        if (!res.ok) throw new Error('Captcha request failed');
+        const data = await res.json();
+        if (data.captchaSession) {
+          window._currentCaptchaSession = data.captchaSession;
         }
+        if (data.image) {
+          img.src = 'data:image/png;base64,' + data.image;
+          // Sync with main portal and inline image
+          const mainImg = document.getElementById('portalCaptchaImg');
+          if (mainImg) mainImg.src = img.src;
+          const inlineImg = document.getElementById('reqNumCaptchaImg');
+          if (inlineImg) inlineImg.src = img.src;
+        }
+      } catch (err) {
+        console.warn('[reqNumModal captcha] load failed:', err);
+      }
+    }
+
+    async function saveReqNumModalCaptchaAndRetry() {
+      const inp = document.getElementById('reqNumModalCaptchaInput');
+      const val = (inp?.value || '').trim();
+      if (!val) {
+        inp?.focus();
+        return;
+      }
+
+      const btnText = document.getElementById('btnSaveReqNumModalCaptchaText');
+      if (btnText) btnText.textContent = 'Saving...';
+
+      // 1. Save captcha exactly as used in proceed buttons (localStorage + DB)
+      await savePortalCaptcha(val, window._currentCaptchaSession);
+
+      // 2. Sync to main portal input and inline input
+      const mainInput = document.getElementById('portalCaptchaCode');
+      if (mainInput) mainInput.value = val;
+      const inlineInput = document.getElementById('reqNumCaptchaInput');
+      if (inlineInput) inlineInput.value = val;
+
+      if (btnText) btnText.textContent = 'Retrying...';
+
+      // 3. Close modal
+      closeRequestNumberResultModal();
+
+      // 4. Retry the request number search immediately with newly saved captcha
+      await handleRequestNumberSearch();
+    }
+
+    // ── Dedicated Big Captcha Section (Shown below Clear All & Verify All) ──
+    let _pendingCaptchaCallback = null;
+
+    async function showMainPortalCaptchaSection(opts = {}) {
+      _pendingCaptchaCallback = opts.onSolved || null;
+      const section = document.getElementById('mainPortalCaptchaSection');
+      if (!section) return;
+
+      const reasonEl = document.getElementById('mainPortalCaptchaReason');
+      if (reasonEl) {
+        reasonEl.textContent = opts.reason || 'Verification Required';
+      }
+
+      section.classList.remove('hidden');
+      section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      await refreshMainPortalCaptcha();
+
+      const inp = document.getElementById('mainPortalCaptchaInput');
+      if (inp) {
+        inp.value = '';
+        setTimeout(() => inp.focus(), 150);
+      }
+    }
+
+    function hideMainPortalCaptchaSection() {
+      const section = document.getElementById('mainPortalCaptchaSection');
+      if (section) section.classList.add('hidden');
+      _pendingCaptchaCallback = null;
+      const btnText = document.getElementById('btnSubmitMainPortalCaptchaText');
+      if (btnText) btnText.textContent = 'Save & Continue';
+    }
+
+    async function refreshMainPortalCaptcha() {
+      const img = document.getElementById('mainPortalCaptchaImg');
+      if (!img) return;
+      img.src = '';
+      try {
+        const res = await fetch(`${API_BASE}/api/captcha`);
+        if (!res.ok) throw new Error('Failed to load captcha');
+        const data = await res.json();
+        if (data.captchaSession) {
+          window._currentCaptchaSession = data.captchaSession;
+        }
+        if (data.image) {
+          img.src = 'data:image/png;base64,' + data.image;
+          // Also sync the portalCaptchaImg if visible
+          const mainImg = document.getElementById('portalCaptchaImg');
+          if (mainImg) mainImg.src = img.src;
+        }
+      } catch (err) {
+        console.warn('[mainPortalCaptcha] Failed to load fresh captcha:', err.message);
+      }
+    }
+
+    async function submitMainPortalCaptcha() {
+      const inp = document.getElementById('mainPortalCaptchaInput');
+      const val = (inp?.value || '').trim();
+      if (!val) {
+        inp?.focus();
+        return;
+      }
+
+      const btnText = document.getElementById('btnSubmitMainPortalCaptchaText');
+      if (btnText) btnText.textContent = 'Saving...';
+
+      // 1. Save captcha exactly as used in proceed buttons (localStorage + DB)
+      await savePortalCaptcha(val, window._currentCaptchaSession);
+
+      // 2. Sync to other inputs
+      const portalCapInput = document.getElementById('portalCaptchaCode');
+      if (portalCapInput) portalCapInput.value = val;
+
+      if (btnText) btnText.textContent = 'Continuing...';
+
+      // 3. Hide the captcha section
+      hideMainPortalCaptchaSection();
+
+      // 4. Continue flow:
+      if (typeof _pendingCaptchaCallback === 'function') {
+        const cb = _pendingCaptchaCallback;
+        _pendingCaptchaCallback = null;
+        await cb(val);
+        return;
+      }
+
+      // Contextual auto-action if no explicit callback:
+      const reqVal = (document.getElementById('voterNidRequestNumber')?.value || '').trim().replace(/\D/g, '');
+      const ninVal = (document.getElementById('voterNidNin')?.value || '').trim();
+      if (reqVal.length === 16 && !ninVal) {
+        await handleRequestNumberSearch();
+      } else if (ninVal) {
+        await handleNinSearchClick();
+      } else if (document.getElementById('portalFullNameEn')?.value.trim()) {
+        await handleRequestOtpClick();
       }
     }
 
     async function handleRequestNumberSearch() {
       const reqNumInput = document.getElementById('voterNidRequestNumber');
       const reqNum = (reqNumInput?.value || '').trim().replace(/[^0-9]/g, '');
+
+      // 1. Silent gate: if not exactly 16 digits, enter button doesn't work, don't send request
       if (reqNum.length !== 16) {
-        alert('Please enter a valid 16-digit Request Number (exactly 16 digits).');
-        reqNumInput?.focus();
         return;
       }
 
-      const btn = document.getElementById('btnSearchByRequestNumber');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="inline-block animate-spin">⟳</span>';
+      // If already running, toggle to stop
+      if (isReqNumSearchRunning) {
+        stopRequestNumberSearch();
+        return;
       }
 
-      // Check if DOB and First Name are also filled
+      // 2. Captcha verification: check stored captcha or main portal input
+      const stored = await getSavedPortalCaptcha();
+      const mainCaptcha = (document.getElementById('portalCaptchaCode')?.value || '').trim();
+      let captchaCode = mainCaptcha || (stored.code || '').trim();
+      let session = stored.session || window._currentCaptchaSession || '';
+
+      if (!captchaCode) {
+        // No captcha anywhere — show big captcha station below Clear & Verify All, do NOT show modal
+        showMainPortalCaptchaSection({
+          reason: 'Captcha required for Request Number status',
+          onSolved: () => handleRequestNumberSearch()
+        });
+        return;
+      }
+
+      // Check if DOB and First Name are also filled for auto NIN search
       let dobAd = document.getElementById("voterNinDob") ? document.getElementById("voterNinDob").value.trim() : "";
       const dobBs = document.getElementById("voterNinDobBs") ? document.getElementById("voterNinDobBs").value.trim() : "";
       const firstname = document.getElementById("voterNinFirstname") ? document.getElementById("voterNinFirstname").value.trim() : "";
@@ -14391,91 +14802,142 @@
 
       const hasDobAndName = Boolean(dobAd && firstname);
 
-      // 1. Get stored captcha
-      const stored = await getSavedPortalCaptcha();
-      let captchaCode = (stored.code || '').trim();
-      let session = stored.session || window._currentCaptchaSession || '';
+      // Start search state
+      isReqNumSearchRunning = true;
+      reqNumAbortController = new AbortController();
+      _updateReqNumSearchBtn(true);
 
-      if (!captchaCode) {
-        alert('No captcha found. Loading fresh captcha...');
-        if (btn) { btn.disabled = false; btn.innerHTML = '↵'; }
-        loadPortalCaptcha(false);
-        return;
-      }
+      // Create a wave controller for the 10 parallel requests
+      const waveController = new AbortController();
+      const outerAbortHandler = () => {
+        try { waveController.abort(); } catch (_) {}
+      };
+      reqNumAbortController.signal.addEventListener("abort", outerAbortHandler, { once: true });
 
-      try {
-        const res = await fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
+      const parallelCount = 10;
+      let lastErrorData = null;
+      let lastErrorMsg = '';
+      let captchaInvalidDetected = false;
+
+      // Send 10 requests in parallel
+      const requests = Array.from({ length: parallelCount }, (_, i) => {
+        return fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
           method: 'GET',
           headers: {
             'Captcha-Code': captchaCode,
             'x-captcha-session': session,
+          },
+          signal: waveController.signal
+        })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          const errMsg = data.error || data.message || '';
+          const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
+            rdIsInvalidCaptchaError(errMsg) :
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(errMsg);
+
+          if (isCapErr) {
+            captchaInvalidDetected = true;
+            throw new Error('CAPTCHA_INVALID');
           }
+
+          if (res.ok) {
+            // First success wins!
+            return { res, data };
+          }
+
+          lastErrorData = data;
+          lastErrorMsg = errMsg || `HTTP ${res.status}`;
+          throw new Error(lastErrorMsg);
+        })
+        .catch((err) => {
+          if (err.name === 'AbortError') throw err;
+          throw err;
         });
+      });
 
-        const data = await res.json().catch(() => ({}));
+      let winner = null;
+      try {
+        winner = await Promise.any(requests);
+        // Successful response received first — halt all other in-flight parallel requests
+        waveController.abort();
+      } catch (aggErr) {
+        waveController.abort();
+        if (reqNumAbortController && reqNumAbortController.signal.aborted) {
+          return; // Aborted by user / refresh / clear
+        }
 
-        // Check if error is related to captcha
-        const errMsg = data.error || data.message || '';
-        const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
-          rdIsInvalidCaptchaError(errMsg) :
-          /captcha|invalid code|expire|session_expired/i.test(errMsg);
+        const isCapErr = Boolean(
+          captchaInvalidDetected ||
+          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
+          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
+          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
+        );
 
+        // If captcha failed / invalid, show captcha below Clear All & Verify All, do NOT show the modal
         if (isCapErr) {
           handleInvalidCaptchaFlow({
             failedCode: captchaCode,
             onFoundNewInDb: (newCode, newSession) => {
+              const cInp = document.getElementById('portalCaptchaCode');
+              if (cInp) cInp.value = newCode;
+              window._currentCaptchaSession = newSession;
               handleRequestNumberSearch();
             },
             onNeedNewCaptcha: () => {
-              alert('⚠️ Captcha expired or invalid. Please solve the fresh captcha below.');
-              loadPortalCaptcha(false);
+              // Show big captcha station below Clear & Verify All, do NOT show modal
+              showMainPortalCaptchaSection({
+                reason: 'Captcha expired or invalid. Please solve fresh captcha below.',
+                onSolved: () => handleRequestNumberSearch()
+              });
             }
           });
           return;
         }
 
-        if (!res.ok) {
-          showRequestNumberResultModal({
-            success: false,
-            requestNumber: reqNum,
-            error: data.message || data.error || 'Request Not Found',
-            raw: data
-          });
-          return;
-        }
-
-        // Success — persist captcha since it worked!
-        savePortalCaptcha(captchaCode, session);
-
-        const reqInfo = {
-          success: true,
+        const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
+        showRequestNumberResultModal({
+          success: false,
           requestNumber: reqNum,
-          nin: data.nin || '',
-          applicationStatus: data.applicationStatus || '',
-          ninStatus: data.ninStatus || '',
-          message: data.message || '',
-          messageLoc: data.messageLoc || '',
-          raw: data
-        };
-
-        // If DOB and First Name are filled and NIN was returned:
-        // Automatically make search by NIN!
-        if (hasDobAndName && data.nin) {
-          const ninInp = document.getElementById('voterNidNin');
-          if (ninInp) ninInp.value = data.nin;
-
-          await runNinSearchForRequestNumber(data.nin, dobAd, firstname, reqInfo);
-        } else {
-          showRequestNumberResultModal(reqInfo);
-        }
-
-      } catch (err) {
-        alert('Network error searching request number: ' + err.message);
+          error: displayErr,
+          raw: lastErrorData || {}
+        });
+        return;
       } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '↵';
+        isReqNumSearchRunning = false;
+        _updateReqNumSearchBtn(false);
+        reqNumAbortController = null;
+      }
+
+      // Success — persist captcha since it worked
+      savePortalCaptcha(captchaCode, session);
+      // Hide main captcha section (it was shown on prior failure, if any)
+      hideMainPortalCaptchaSection();
+
+      const data = winner.data || {};
+      const reqInfo = {
+        success: Boolean(data.nin || data.applicationStatus || data.ninStatus),
+        requestNumber: reqNum,
+        nin: data.nin || '',
+        applicationStatus: data.applicationStatus || '',
+        ninStatus: data.ninStatus || '',
+        message: data.message || '',
+        messageLoc: data.messageLoc || '',
+        raw: data
+      };
+
+      // If DOB and First Name are filled and NIN was returned:
+      // Automatically make search by NIN!
+      if (hasDobAndName && data.nin) {
+        const ninInp = document.getElementById('voterNidNin');
+        if (ninInp) {
+          ninInp.value = data.nin;
+          clearRequestNumberField();
         }
+
+        await runNinSearchForRequestNumber(data.nin, dobAd, firstname, reqInfo);
+      } else {
+        showRequestNumberResultModal(reqInfo);
       }
     }
 
@@ -14562,14 +15024,50 @@
       const printedBadge = document.getElementById('reqNumCardPrintedBadge');
       const ninHeroBox = document.getElementById('reqNumNinHeroBox');
       const ninValEl = document.getElementById('reqNumApprovedNinVal');
+      const cardDetailsBox = document.getElementById('reqNumCardDetailsBox');
       const statusTag = document.getElementById('reqNumNinStatusTag');
       const printedText = document.getElementById('reqNumCardPrintedText');
       const msgEnText = document.getElementById('reqNumMsgEnText');
       const msgNpText = document.getElementById('reqNumMsgNpText');
       const useNinBtn = document.getElementById('btnUseNinInSearch');
+      const captchaBox = document.getElementById('reqNumModalCaptchaBox');
 
-      if (!info.success) {
-        // Error state (e.g. 404 Request Not Found)
+      const isCapErr = Boolean(
+        info.isCaptchaError ||
+        /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info.error || '') ||
+        /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info.raw?.message || '') ||
+        /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info.raw?.error || '')
+      );
+
+      if (isCapErr) {
+        // Captcha validation failed / required state
+        banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-amber-50 border-amber-300 text-amber-950 shadow-2xs';
+        icon.textContent = '🔐';
+        appStatusText.textContent = 'Captcha Validation Required';
+        printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300';
+        printedBadge.textContent = 'CAPTCHA INVALID';
+        ninHeroBox.classList.add('hidden');
+        if (cardDetailsBox) cardDetailsBox.classList.add('hidden');
+        statusTag.textContent = 'CAPTCHA_REQUIRED';
+        printedText.textContent = '—';
+        msgEnText.innerHTML = info.raw?.message || info.error || 'Captcha validation failed. Please enter the new captcha below to save and continue.';
+        document.getElementById('reqNumMsgNpBox')?.classList.add('hidden');
+        useNinBtn.classList.add('hidden');
+
+        // Reveal the in-modal captcha input & load fresh captcha
+        if (captchaBox) {
+          captchaBox.classList.remove('hidden');
+          loadReqNumModalCaptcha();
+          const cInp = document.getElementById('reqNumModalCaptchaInput');
+          if (cInp) {
+            cInp.value = '';
+            setTimeout(() => cInp.focus(), 150);
+          }
+        }
+      } else if (!info.success) {
+        // Normal error state (e.g. 404 Request Not Found)
+        if (captchaBox) captchaBox.classList.add('hidden');
+        if (cardDetailsBox) cardDetailsBox.classList.remove('hidden');
         banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-50 border-rose-200 text-rose-900';
         icon.textContent = '✕';
         appStatusText.textContent = info.error || 'Request Not Found';
@@ -14583,6 +15081,8 @@
         useNinBtn.classList.add('hidden');
       } else {
         // Success state
+        if (captchaBox) captchaBox.classList.add('hidden');
+        if (cardDetailsBox) cardDetailsBox.classList.remove('hidden');
         _currentApprovedNin = info.nin || '';
         const statusUpper = (info.ninStatus || '').toUpperCase();
         const appUpper = (info.applicationStatus || '').toUpperCase();
@@ -14634,6 +15134,7 @@
       const copyBtnText = document.getElementById('btnCopyReqNumNinText');
       if (copyBtnText) copyBtnText.textContent = 'Copy Number';
 
+      modal.style.display = 'flex';
       modal.classList.remove('hidden');
       modal.classList.add('flex');
     }
@@ -14641,9 +15142,12 @@
     function closeRequestNumberResultModal() {
       const modal = document.getElementById('requestNumberResultModal');
       if (modal) {
+        modal.style.display = 'none';
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       }
+      const captchaBox = document.getElementById('reqNumModalCaptchaBox');
+      if (captchaBox) captchaBox.classList.add('hidden');
     }
 
     function copyReqNumApprovedNin() {
@@ -14662,6 +15166,7 @@
     function useApprovedNinInSearch() {
       if (!_currentApprovedNin) return;
       closeRequestNumberResultModal();
+      clearRequestNumberField();
       const ninInp = document.getElementById('voterNidNin');
       if (ninInp) {
         ninInp.value = _currentApprovedNin;
@@ -14919,6 +15424,7 @@
         document.getElementById("ninResultErrorMsg").innerText = errorMsg;
       }
 
+      modal.style.display = "flex";
       modal.classList.remove("hidden");
       modal.classList.add("flex");
     }
@@ -14947,8 +15453,11 @@
       document.getElementById("ninResultErrorMsg").innerText = "";
       
       // Hide modal
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
     }
 
     // Open/Close NID Flow Modal
@@ -18996,7 +19505,7 @@ Your details were incorrect and have been changed/updated, but the update has no
         </div>
 
         <!-- Card Printing Status Details -->
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
+        <div id="reqNumCardDetailsBox" class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1.5">
           <div class="flex items-center justify-between">
             <span class="text-slate-500 font-medium">Card Production Status:</span>
             <span id="reqNumNinStatusTag" class="font-mono font-bold text-slate-800">PLANNED_FOR_PRODUCTION</span>
@@ -19007,8 +19516,57 @@ Your details were incorrect and have been changed/updated, but the update has no
           </div>
         </div>
 
+        <!-- In-Modal Captcha Resolver Box (shown when captcha is invalid / required) -->
+        <div id="reqNumModalCaptchaBox" class="hidden bg-gradient-to-br from-amber-50/90 to-rose-50/80 border-2 border-amber-300 rounded-2xl p-4 space-y-3 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🔐</span>
+              <div>
+                <h4 class="text-xs font-bold text-amber-950 uppercase tracking-wider">Captcha Validation Required</h4>
+                <p class="text-[11px] text-amber-800">Enter new captcha to verify Request # & continue</p>
+              </div>
+            </div>
+            <span class="text-[10px] bg-amber-200/80 text-amber-900 font-bold px-2 py-0.5 rounded-full border border-amber-300 font-mono">
+              Portal Captcha
+            </span>
+          </div>
+
+          <!-- Captcha Image Row -->
+          <div class="flex items-center gap-2 bg-white border border-amber-200/90 rounded-xl p-2 shadow-2xs">
+            <div class="flex-1 flex items-center justify-center bg-slate-50 rounded-lg p-1 min-h-[46px]">
+              <img id="reqNumModalCaptchaImg" src="" alt="Captcha" class="h-10 max-w-full object-contain" />
+            </div>
+            <button type="button" onclick="loadReqNumModalCaptcha()" title="Fetch fresh captcha"
+              class="shrink-0 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 px-3 py-2 rounded-lg border border-slate-300 transition-all font-semibold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"></path>
+              </svg>
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          <!-- Captcha Input and Save & Retry Button Row -->
+          <div class="flex items-center gap-2">
+            <input type="text" id="reqNumModalCaptchaInput" placeholder="Enter captcha characters…"
+              autocomplete="off"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();saveReqNumModalCaptchaAndRetry();}"
+              class="flex-1 bg-white border-2 border-amber-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold text-sm h-[40px] placeholder:text-slate-400 placeholder:font-normal transition-all shadow-2xs" />
+            
+            <button type="button" id="btnSaveReqNumModalCaptcha" onclick="saveReqNumModalCaptchaAndRetry()"
+              class="shrink-0 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow cursor-pointer h-[40px] flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span id="btnSaveReqNumModalCaptchaText">Save & Retry</span>
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500 text-center">
+            Saved captcha will automatically sync with Portal proceed buttons & OTP downloads.
+          </p>
+        </div>
+
         <!-- Official Messages -->
-        <div class="space-y-2">
+        <div id="reqNumOfficialMsgWrap" class="space-y-2">
           <!-- English Message -->
           <div id="reqNumMsgEnBox" class="bg-blue-50/60 border border-blue-200 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
             <p class="text-[10px] font-bold text-blue-700 uppercase tracking-wider mb-1">Official Notice</p>
