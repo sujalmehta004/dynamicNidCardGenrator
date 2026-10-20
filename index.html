@@ -77,6 +77,18 @@
       to   { opacity: 0; transform: translateY(24px) scale(0.97); }
     }
 
+    @keyframes spinSync {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .animate-spin-sync {
+      animation: spinSync 0.7s linear infinite !important;
+      transform-origin: center center;
+    }
+    .btn-sync-active {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.45) !important;
+    }
+
     /* Nepali converter pill hover magnify */
     .quick-conv-pill {
       transform-origin: left center;
@@ -1543,16 +1555,16 @@
             <!-- Show/Hide Count Button -->
             <button type="button" id="btnToggleDbStats" onclick="toggleDbStatsSection()"
               class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Show or hide count statistics">
+              title="Show or hide count statistics (Cmd+G / Ctrl+G)">
               <span id="btnToggleDbStatsIcon">📊</span>
               <span id="btnToggleDbStatsText">Hide Count</span>
             </button>
 
             <!-- Force Sync Database -->
-            <button type="button" onclick="fetchDatabase(true)" title="Force sync latest records from database"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>Sync DB</span>
+            <button type="button" id="btnSyncDatabase" onclick="fetchDatabase(true)" title="Force sync latest records from database (Cmd+R / Ctrl+R)"
+              class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-2 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer">
+              <svg id="iconSyncDatabase" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span id="btnSyncDatabaseText">Sync DB</span>
             </button>
 
             <!-- Column Visibility Settings -->
@@ -5253,8 +5265,29 @@
       });
     }
 
+    let isDbSyncing = false;
+    function setSyncButtonLoading(loading) {
+      isDbSyncing = Boolean(loading);
+      const btn = document.getElementById("btnSyncDatabase");
+      const icon = document.getElementById("iconSyncDatabase");
+      const text = document.getElementById("btnSyncDatabaseText");
+      if (!btn) return;
+
+      if (loading) {
+        if (icon) icon.classList.add("animate-spin-sync");
+        if (text) text.innerText = "Syncing...";
+        btn.classList.add("btn-sync-active", "opacity-90");
+      } else {
+        if (icon) icon.classList.remove("animate-spin-sync");
+        if (text) text.innerText = "Sync DB";
+        btn.classList.remove("btn-sync-active", "opacity-90");
+      }
+    }
+
     async function fetchDatabase(forceRefresh = false) {
       if (forceRefresh || allCachedRecords.length === 0) {
+        setSyncButtonLoading(true);
+        const startTime = Date.now();
         try {
           const res = await fetch(`${API_BASE}/api/people`);
           if (!res.ok) throw new Error("Failed to load database records");
@@ -5263,6 +5296,12 @@
         } catch (err) {
           console.error("Error fetching database records:", err);
           return;
+        } finally {
+          const elapsed = Date.now() - startTime;
+          const remainingDelay = Math.max(0, 500 - elapsed);
+          setTimeout(() => {
+            setSyncButtonLoading(false);
+          }, remainingDelay);
         }
       }
       applyFiltersClientSide();
@@ -5535,7 +5574,30 @@
       toggleWorkspaceFullscreen("form");
     }
 
+    function handleWorkspaceTabRefresh() {
+      if (currentWorkspaceTab === "database") {
+        // In database tab: refresh the table data only and animate the sync button
+        fetchDatabase(true);
+      } else {
+        // In all tabs (outside database tab): refresh UI components, clear form datas and make it as newly refreshed page
+        if (typeof clearFormCanvas === "function") {
+          clearFormCanvas();
+        }
+        if (typeof clearPortalAllFields === "function") {
+          clearPortalAllFields();
+        }
+        if (typeof clearPortalSearchForm === "function") {
+          clearPortalSearchForm();
+        }
+        if (typeof resetPortalToInitial === "function") {
+          resetPortalToInitial();
+        }
+      }
+    }
+
     // Global Keyboard Shortcuts:
+    // Cmd+R / Ctrl+R or F5 -> In database tab, refresh table data only & animate sync button; in other tabs, refresh UI / clear form datas
+    // Cmd+G / Ctrl+G -> In database tab, toggle hide/show count cards
     // Cmd+F / Ctrl+F -> From ANY page or tab, open Database table & toggle full screen
     // Cmd+S / Ctrl+S -> From ANY page or tab, open Download Portal & toggle full screen
     // Cmd+D / Ctrl+D -> From ANY page or tab, open Form Design Studio & toggle full screen
@@ -5545,6 +5607,22 @@
       if (!e.key) return;
       const key = e.key.toLowerCase();
       const isCmdOrCtrl = Boolean(e.metaKey || e.ctrlKey);
+
+      // Cmd+R / Ctrl+R or F5: Tab-specific refresh, prevent complete browser page reload
+      if ((isCmdOrCtrl && key === "r") || e.key === "F5") {
+        e.preventDefault();
+        handleWorkspaceTabRefresh();
+        return;
+      }
+
+      // Cmd+G or Ctrl+G: In database tab, toggle hide/show count button
+      if (isCmdOrCtrl && key === "g") {
+        e.preventDefault();
+        if (currentWorkspaceTab === "database") {
+          toggleDbStatsSection();
+        }
+        return;
+      }
 
       // F11: Full screen like native browser F11 across all tabs
       if (e.key === "F11") {
@@ -10657,10 +10735,13 @@
     }
 
     function clearFormCanvas() {
-      document.getElementById("clientForm").reset();
+      const clientForm = document.getElementById("clientForm");
+      if (clientForm) clientForm.reset();
       selectedRecordId = null;
-      document.getElementById("formBadgeMode").innerText = "MODE: NEW ENTRY";
-      document.getElementById("btnDynamicSubmit").innerText = "Submit Record";
+      const badgeMode = document.getElementById("formBadgeMode");
+      if (badgeMode) badgeMode.innerText = "MODE: NEW ENTRY";
+      const btnSubmit = document.getElementById("btnDynamicSubmit");
+      if (btnSubmit) btnSubmit.innerText = "Submit Record";
 
       const formPane = document.getElementById("paneWorkspaceForm");
       if (formPane) {
@@ -10676,6 +10757,26 @@
       if (histSection) histSection.classList.add("hidden");
       if (histList) histList.innerHTML = "";
       if (histCount) histCount.innerText = "0";
+
+      // Reset card photo and placeholder
+      const cardPhoto = document.getElementById("cardPhoto");
+      if (cardPhoto) {
+        cardPhoto.src = "";
+        cardPhoto.classList.add("hidden");
+      }
+      const cardPhotoTxt = document.getElementById("cardPhotoTxt");
+      if (cardPhotoTxt) {
+        cardPhotoTxt.classList.remove("hidden");
+      }
+      const uploadPhoto = document.getElementById("uploadPhoto");
+      if (uploadPhoto) {
+        uploadPhoto.value = "";
+      }
+
+      const formAddressEn = document.getElementById("formAddressEn");
+      if (formAddressEn) formAddressEn.value = "";
+      const formAddressNp = document.getElementById("formAddressNp");
+      if (formAddressNp) formAddressNp.value = "";
 
       initializeDateFieldsDefaults();
       processFormMetricsSync();
