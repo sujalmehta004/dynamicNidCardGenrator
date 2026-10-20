@@ -105,6 +105,25 @@
       box-shadow: 0 4px 18px rgba(14,165,233,0.18);
     }
 
+    /* Form Studio layout: 70% left form column, 30% right preview column */
+    @media (min-width: 1024px) {
+      .form-active-grid {
+        display: grid !important;
+        grid-template-columns: minmax(0, 7fr) minmax(320px, 3fr) !important;
+        gap: 1.5rem !important;
+      }
+      .form-active-left {
+        grid-column: span 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .form-active-right {
+        grid-column: span 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+    }
+
     body {
       font-family: "Plus Jakarta Sans", sans-serif;
     }
@@ -745,97 +764,97 @@
     <div id="mainGridLayoutGrid" class="flex justify-center items-center py-4 w-full flex-1 lg:overflow-hidden">
       <div id="leftLayoutConsoleColumn" class="w-full max-w-md mx-auto space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2">
         <section id="paneWorkspaceForm"
-          class="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-5 hidden">
-          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+          class="bg-white border border-slate-200/80 rounded-2xl p-8 shadow-sm space-y-6 hidden">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-4">
             <div>
-              <h3 class="text-sm font-bold tracking-tight text-slate-900">
+              <h3 class="text-base font-bold tracking-tight text-slate-900">
                 Identity Variable Configuration Studio
               </h3>
-              <p class="text-xs text-slate-500 mt-0.5">
+              <p class="text-sm text-slate-500 mt-1">
                 Modify parameters dynamically.
               </p>
             </div>
             <div class="flex items-center gap-2">
               <button type="button" id="btnToggleFormFullscreen" onclick="toggleWorkspaceFullscreen('form')" title="Toggle Full Screen (Cmd+D / Ctrl+D)"
-                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
                 <span>⛶</span>
                 <span class="hidden sm:inline">Full Screen</span>
-                <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘D</kbd>
+                <kbd class="text-[10px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘D</kbd>
               </button>
               <span id="formBadgeMode"
-                class="text-[10px] bg-slate-100 text-slate-655 border border-slate-200 px-2.5 py-1 rounded-md font-mono font-medium">MODE:
+                class="text-xs bg-slate-100 text-slate-655 border border-slate-200 px-3 py-1.5 rounded-md font-mono font-medium">MODE:
                 NEW ENTRY</span>
             </div>
           </div>
 
-          <form id="clientForm" oninput="processFormMetricsSync()" class="space-y-4 text-xs"
+          <form id="clientForm" oninput="processFormMetricsSync()" class="space-y-5 text-[13px]"
             onsubmit="event.preventDefault()">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5 font-bold">NIN / NID Number (English) *</label>
+                <label class="block text-slate-700 font-bold mb-2 text-[13px]">NIN / NID Number (English) *</label>
                 <input type="text" id="formNinEn" placeholder="" required
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 font-mono text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-bold" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 font-mono text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all font-bold" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">राष्ट्रिय परिचय नम्बर (नेपाली)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">राष्ट्रिय परिचय नम्बर (नेपाली)</label>
                 <input type="text" id="formNinNp" placeholder="" readonly
-                  class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Given Name (English)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Given Name (English)</label>
                 <input type="text" id="formGivenEn" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] uppercase focus:outline-none focus:border-blue-500 transition-all" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Surname (English)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Surname (English)</label>
                 <input type="text" id="formSurnameEn" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 uppercase focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] uppercase focus:outline-none focus:border-blue-500 transition-all" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">नाम (नेपाली)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">नाम (नेपाली)</label>
                 <input type="text" id="formGivenNp" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
 
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">थर (नेपाली)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">थर (नेपाली)</label>
                 <input type="text" id="formSurnameNp" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">जन्म मिति (नेपाली)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">जन्म मिति (नेपाली)</label>
                 <input type="text" id="formDobNp" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Date of Birth (AD)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Date of Birth (AD)</label>
                 <input type="text" id="formDobEn" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
 
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Nationality / राष्ट्रियता</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Nationality / राष्ट्रियता</label>
                 <input type="text" id="formNationality" value="NEPALI" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Citizenship Issue Date</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Citizenship Issue Date</label>
                 <input type="text" id="formCitDate" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Identity Status Mode</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Identity Status Mode</label>
                 <select id="formStatus"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-bold focus:outline-none focus:border-blue-500 transition-all">
                   <option value="pending">Pending</option>
                   <option value="done">Done</option>
                   <option value="inprogress">Mobile Number Update</option>
@@ -845,48 +864,48 @@
                 </select>
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Card Design</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Card Design</label>
                 <select id="formCardDesign"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-bold focus:outline-none focus:border-blue-500 transition-all">
                   <option value="smart card" selected>Smart Card</option>
                   <option value="white card">White Card</option>
                 </select>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="display: none">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5" style="display: none">
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Registered Date</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Registered Date</label>
                 <input type="date" id="formRegDate" readonly
-                  class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-500 focus:outline-none cursor-not-allowed" />
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-500 text-[13px] focus:outline-none cursor-not-allowed" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Updated Date</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Updated Date</label>
                 <input type="date" id="formUpdateDate" readonly
-                  class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-slate-500 focus:outline-none cursor-not-allowed" />
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-500 text-[13px] focus:outline-none cursor-not-allowed" />
               </div>
             </div>
 
             <!-- Nepal Administrative Selection Fields -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-5 bg-slate-50 p-4 rounded-xl border border-slate-200/60">
               <div>
-                <label class="block text-slate-600 font-bold mb-1.5">District / जिल्ला</label>
+                <label class="block text-slate-700 font-bold mb-2 text-[13px]">District / जिल्ला</label>
                 <select id="formDistrictSelect" onchange="onDistrictChange()"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all">
                   <option value="">Select District</option>
                 </select>
               </div>
               <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Municipality / Local Level</label>
+                <label class="block text-slate-700 font-bold mb-2 text-[13px]">Municipality / Local Level</label>
                 <select id="formMunicipalitySelect" onchange="onMunicipalityChange()"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all">
                   <option value="">Select Municipality</option>
                 </select>
               </div>
               <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Type / प्रकार</label>
+                <label class="block text-slate-700 font-bold mb-2 text-[13px]">Type / प्रकार</label>
                 <select id="formMuniTypeSelect" onchange="onMunicipalityOrWardChange()"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all">
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all">
                   <option value="">Select Type</option>
                   <option value="1">Metropolitan City (महानगरपालिका)</option>
                   <option value="2">
@@ -897,56 +916,56 @@
                 </select>
               </div>
               <div>
-                <label class="block text-slate-600 font-bold mb-1.5">Ward / वडा नम्बर</label>
+                <label class="block text-slate-700 font-bold mb-2 text-[13px]">Ward / वडा नम्बर</label>
                 <input type="number" id="formWardInput" min="1" placeholder="" oninput="onMunicipalityOrWardChange()"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 hidden">
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Permanent Address (English)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Permanent Address (English)</label>
                 <input type="text" id="formAddressEn" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">स्थायी ठेगाना (नेपाली)</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">स्थायी ठेगाना (नेपाली)</label>
                 <input type="text" id="formAddressNp" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
               <input type="hidden" id="formBaseUrl" />
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Secure Token</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Secure Token</label>
                 <input type="text" id="formToken" placeholder=""
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 font-mono focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] font-mono focus:outline-none focus:border-blue-500 transition-all" />
               </div>
               <div>
-                <label class="block text-slate-600 font-semibold mb-1.5">Mobile Number</label>
+                <label class="block text-slate-700 font-semibold mb-2 text-[13px]">Mobile Number</label>
                 <input type="text" id="formMobile" placeholder="e.g. 98XXXXX374"
-                  class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                  class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-900 text-[13px] focus:outline-none focus:border-blue-500 transition-all" />
               </div>
             </div>
 
-            <div id="formWorkspaceHistorySection" class="mt-4 pt-3 border-t border-slate-200 hidden">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <div id="formWorkspaceHistorySection" class="mt-4 pt-4 border-t border-slate-200 hidden">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-[13px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                   📜 Previous Updates History
-                  <span id="formWorkspaceHistoryCount" class="bg-blue-100 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
+                  <span id="formWorkspaceHistoryCount" class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
                 </span>
               </div>
               <div id="formWorkspaceHistoryList"></div>
             </div>
 
-            <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+            <div class="pt-5 flex justify-end gap-3 border-t border-slate-100">
               <button type="button" onclick="clearFormCanvas()"
-                class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-semibold px-5 py-2.5 rounded-xl transition-all">
+                class="bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-semibold text-[13px] px-6 py-3 rounded-xl transition-all">
                 New Entry
               </button>
               <button type="button" id="btnDynamicSubmit" onclick="handleFormActionCommit()"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition-all">
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-[13px] px-8 py-3 rounded-xl shadow-md transition-all">
                 Submit Record
               </button>
             </div>
@@ -1545,13 +1564,7 @@
               class="card-spec pt-[6px] px-[14px] pb-[14px] flex flex-col justify-between text-slate-955 bg-white shadow-sm cursor-pointer select-none">
               <img id="cardFrontBgImg" src="" class="absolute inset-0 w-full h-full pointer-events-none hidden"
                 style="z-index: 0" />
-              <div class="text-center w-full mt-[2px] mb-[18px] space-y-0.5 pointer-events-none relative z-10">
-                <h1 class="font-normal c-text-10 text-slate-900 leading-none font-serif tracking-wide">
-                  नेपाल सरकार
-                </h1>
-                <h2 class="font-normal c-text-8 text-red-700 uppercase tracking-tight leading-none">
-                  GOVERNMENT OF NEPAL
-                </h2>
+              <div id="cardFrontHeaderBlock" class="text-center w-full mt-[2px] mb-[14px] space-y-0.5 pointer-events-none relative z-10">
                 <p class="font-normal nepali-font c-text-10-5 text-blue-900 leading-none pt-0.5">
                   राष्ट्रिय परिचयपत्र
                 </p>
@@ -1661,6 +1674,11 @@
           <button onclick="exportSheetAsPngImage()"
             class="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-indigo-500 to-violet-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition-all hover:from-indigo-600 hover:to-violet-700">
             Save 4x6 Sheet
+          </button>
+
+          <button type="button" onclick="exportSheetWithHeading()"
+            class="inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition-all hover:from-emerald-600 hover:to-teal-700 gap-1">
+            🏷️ Save Sheet with Heading
           </button>
         </div>
       </div>
@@ -4212,11 +4230,11 @@
 
       if (targetViewTab === "form") {
         mainGrid.className =
-          "grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-1 lg:overflow-hidden w-full";
+          "form-active-grid items-start flex-1 lg:overflow-hidden w-full";
         leftColumn.className =
-          "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
+          "form-active-left space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
         rightColumn.className =
-          "lg:col-span-6 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-2";
+          "form-active-right space-y-4 lg:h-full lg:overflow-y-auto";
         if (portalSideCol) portalSideCol.classList.add("hidden");
       } else if (targetViewTab === "portal") {
         mainGrid.className =
@@ -11336,6 +11354,50 @@
         a.download = `NID_4x6_Sheet_${nin}_${Date.now()}.png`;
         a.href = canvas.toDataURL("image/png");
         a.click();
+      });
+    }
+
+    // Save sheet with full government heading (नेपाल सरकार / GOVERNMENT OF NEPAL)
+    // temporarily injects heading, captures PNG, then restores the preview
+    function exportSheetWithHeading() {
+      const nin = document.getElementById("formNinEn").value || "NID";
+      const headerBlock = document.getElementById("cardFrontHeaderBlock");
+      if (!headerBlock) {
+        exportSheetAsPngImage();
+        return;
+      }
+
+      // Remember original content so we can restore it
+      const originalHTML = headerBlock.innerHTML;
+      const originalClass = headerBlock.className;
+
+      // Inject full heading
+      headerBlock.className = "text-center w-full mt-[2px] mb-[18px] space-y-0.5 pointer-events-none relative z-10";
+      headerBlock.innerHTML = `
+        <h1 class="font-normal c-text-10 text-slate-900 leading-none font-serif tracking-wide">नेपाल सरकार</h1>
+        <h2 class="font-normal c-text-8 text-red-700 uppercase tracking-tight leading-none">GOVERNMENT OF NEPAL</h2>
+        <p class="font-normal nepali-font c-text-10-5 text-blue-900 leading-none pt-0.5">राष्ट्रिय परिचयपत्र</p>
+        <p class="font-normal c-text-7-5 text-red-600 uppercase tracking-widest leading-none">NATIONAL IDENTITY CARD</p>
+      `;
+
+      // Give browser one frame to re-render, then capture
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          html2canvas(document.getElementById("photoPaperPrintCanvas"), {
+            scale: 6,
+            useCORS: true,
+            allowTaint: true,
+          }).then((canvas) => {
+            const a = document.createElement("a");
+            a.download = `NID_4x6_WithHeading_${nin}_${Date.now()}.png`;
+            a.href = canvas.toDataURL("image/png");
+            a.click();
+          }).finally(() => {
+            // Always restore original card state
+            headerBlock.className = originalClass;
+            headerBlock.innerHTML = originalHTML;
+          });
+        });
       });
     }
 
