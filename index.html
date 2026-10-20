@@ -2992,9 +2992,23 @@
       if (localStorage.getItem("db_stats_visible") === "false" && typeof toggleDbStatsSection === "function") {
         toggleDbStatsSection();
       }
-      // Set initial landing page to portal (Download Tab)
+      // Ensure database filters default to "All Not Done" and others are cleared
+      const initDbStatus = document.getElementById("filterStatus");
+      if (initDbStatus) initDbStatus.value = "not_done";
+      const initDbSearch = document.getElementById("searchQueryBar");
+      if (initDbSearch) initDbSearch.value = "";
+      const initDbRegStart = document.getElementById("filterRegStart");
+      if (initDbRegStart) initDbRegStart.value = "";
+      const initDbRegPeriod = document.getElementById("filterRegPeriod");
+      if (initDbRegPeriod) initDbRegPeriod.value = "all";
+
+      // Set initial landing page to last active workspace tab (or portal)
       if (typeof shiftWorkspace === "function" && isDashboardUnlocked) {
-        shiftWorkspace("portal");
+        let savedTab = "portal";
+        try {
+          savedTab = localStorage.getItem("active_workspace_tab") || "portal";
+        } catch (e) {}
+        shiftWorkspace(savedTab);
       }
       // Listen for scanned token from the secure PDF viewer page
       window.addEventListener("message", (event) => {
@@ -4471,6 +4485,9 @@
 
     function shiftWorkspace(targetViewTab) {
       currentWorkspaceTab = targetViewTab;
+      try {
+        if (targetViewTab) localStorage.setItem("active_workspace_tab", targetViewTab);
+      } catch (e) {}
       const panes = {
         form: "paneWorkspaceForm",
         portal: "paneWorkspacePortal",
@@ -6135,15 +6152,18 @@
         clearFormCanvas();
       }
 
-      // 4. Reset Database Tab
+      // 4. Reset Database Tab: keep status filter to "All Not Done" and clear all others
       const searchBar = document.getElementById("searchQueryBar");
       if (searchBar) searchBar.value = "";
       const fStatus = document.getElementById("filterStatus");
-      if (fStatus) fStatus.value = "all";
+      if (fStatus) fStatus.value = "not_done";
       const fRegStart = document.getElementById("filterRegStart");
       if (fRegStart) fRegStart.value = "";
       const fRegPeriod = document.getElementById("filterRegPeriod");
       if (fRegPeriod) fRegPeriod.value = "all";
+
+      currentSortBy = "";
+      currentSortOrder = "asc";
 
       const selectAllChk = document.getElementById("selectAllChk");
       if (selectAllChk) selectAllChk.checked = false;
@@ -6794,14 +6814,33 @@
     let rdModal_lastPdfPassword = '';
 
     function openRowDetailPopup(ninEn) {
-      const row = documentIdentityDb.find(r => r.ninEn === ninEn);
-      if (!row) return;
-      rdModal_nin = ninEn;
-      rdModal_row = row;
-      rdModal_txId = '';
-      rdModal_dlToken = '';
-      rdModal_lastPdfBlob = null;
-      rdModal_lastPdfPassword = '';
+      try {
+        const targetNin = String(ninEn || '').trim();
+        let row = null;
+        if (Array.isArray(documentIdentityDb) && documentIdentityDb.length > 0) {
+          row = documentIdentityDb.find(r => 
+            String(r.ninEn || '').trim() === targetNin ||
+            String(r._id || '').trim() === targetNin ||
+            String(r.ninNp || '').trim() === targetNin
+          );
+        }
+        if (!row && typeof allCachedRecords !== 'undefined' && Array.isArray(allCachedRecords) && allCachedRecords.length > 0) {
+          row = allCachedRecords.find(r => 
+            String(r.ninEn || '').trim() === targetNin ||
+            String(r._id || '').trim() === targetNin ||
+            String(r.ninNp || '').trim() === targetNin
+          );
+        }
+        if (!row) {
+          console.warn("openRowDetailPopup: could not find record for:", ninEn);
+          return;
+        }
+        rdModal_nin = row.ninEn || targetNin;
+        rdModal_row = row;
+        rdModal_txId = '';
+        rdModal_dlToken = '';
+        rdModal_lastPdfBlob = null;
+        rdModal_lastPdfPassword = '';
 
       const savedPortrait = getSavedVoterRecord(row.ninEn);
       const sc = getStatusAccentColor(row.status);
@@ -7098,9 +7137,20 @@
       if (stepInd) stepInd.style.display = 'none';
 
       const modal = document.getElementById('rowDetailModal');
-      modal.classList.remove('hidden');
-      setTimeout(() => modal.firstElementChild.classList.add('scale-100'), 10);
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+          if (modal.firstElementChild) {
+            modal.firstElementChild.classList.add('scale-100');
+          }
+        }, 10);
+      }
+    } catch (err) {
+      console.error("Error in openRowDetailPopup:", err);
     }
+  }
 
     // ── Row Detail Verification Flow Helpers ─────────────────────────────────
     function rdModalSetStep(stepNum, active) {
@@ -7557,6 +7607,7 @@
         else btnRemove.classList.add("hidden");
       }
 
+      modal.style.display = "flex";
       modal.classList.remove("hidden");
       modal.classList.add("flex");
     }
@@ -7566,6 +7617,7 @@
       if (!modal) return;
       modal.classList.add("hidden");
       modal.classList.remove("flex");
+      modal.style.display = "none";
     }
 
     function appendAlertTemplate(templateText) {
@@ -7684,16 +7736,33 @@
     function closeRowDetailModal() {
       const modal = document.getElementById("rowDetailModal");
       if (!modal) return;
-      modal.firstElementChild.classList.remove("scale-100");
-      setTimeout(() => modal.classList.add("hidden"), 150);
+      if (modal.firstElementChild) {
+        modal.firstElementChild.classList.remove("scale-100");
+      }
+      setTimeout(() => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        modal.style.display = "none";
+      }, 150);
     }
 
     function openUpdateHistoryModal(ninEn) {
       const modal = document.getElementById('updateHistoryModal');
       if (!modal) return;
 
-      // Find the row in the db
-      const row = documentIdentityDb.find(r => String(r.ninEn || '').trim() === String(ninEn || '').trim());
+      const targetNin = String(ninEn || '').trim();
+      let row = Array.isArray(documentIdentityDb) ? documentIdentityDb.find(r => 
+        String(r.ninEn || '').trim() === targetNin ||
+        String(r._id || '').trim() === targetNin ||
+        String(r.ninNp || '').trim() === targetNin
+      ) : null;
+      if (!row && typeof allCachedRecords !== 'undefined' && Array.isArray(allCachedRecords)) {
+        row = allCachedRecords.find(r => 
+          String(r.ninEn || '').trim() === targetNin ||
+          String(r._id || '').trim() === targetNin ||
+          String(r.ninNp || '').trim() === targetNin
+        );
+      }
       const historyList = (row && Array.isArray(row.updateHistory)) ? row.updateHistory : [];
 
       // Populate header count
@@ -7702,7 +7771,7 @@
 
       // Populate NIN in header
       const ninEl = document.getElementById('uhModalNin');
-      if (ninEl) ninEl.textContent = ninEn || '';
+      if (ninEl) ninEl.textContent = (row && row.ninEn) || ninEn || '';
 
       // Render history into the modal body
       const bodyEl = document.getElementById('uhModalBody');
@@ -7710,6 +7779,7 @@
         bodyEl.innerHTML = renderUpdateHistoryHtml(historyList, 'uhm_' + String(ninEn).replace(/[^a-z0-9]/gi, '_'), ninEn);
       }
 
+      modal.style.display = 'flex';
       modal.classList.remove('hidden');
       modal.classList.add('flex');
       setTimeout(() => {
@@ -7726,6 +7796,7 @@
       setTimeout(() => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        modal.style.display = 'none';
       }, 150);
     }
 
@@ -7758,8 +7829,8 @@
         const hasVoterNo = Boolean(voterNo);
 
         tr.onclick = (e) => {
-          if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON" || e.target.tagName === "INPUT") return;
-          openRowDetailPopup(row.ninEn);
+          if (e.target.closest("select, button, input, textarea, a, label, .nin-select-checkbox, [onclick*='openVoterDbDirectDetail']")) return;
+          openRowDetailPopup(row.ninEn || row._id);
         };
 
         let isFirstCol = true;
@@ -8048,10 +8119,16 @@
       }
     }
     function clearAdvancedFiltersConsole() {
-      document.getElementById("searchQueryBar").value = "";
-      document.getElementById("filterStatus").value = "all";
-      document.getElementById("filterRegStart").value = "";
-      document.getElementById("filterRegPeriod").value = "all";
+      const searchBar = document.getElementById("searchQueryBar");
+      if (searchBar) searchBar.value = "";
+      const fStatus = document.getElementById("filterStatus");
+      if (fStatus) fStatus.value = "not_done";
+      const fRegStart = document.getElementById("filterRegStart");
+      if (fRegStart) fRegStart.value = "";
+      const fRegPeriod = document.getElementById("filterRegPeriod");
+      if (fRegPeriod) fRegPeriod.value = "all";
+      currentSortBy = "";
+      currentSortOrder = "asc";
       fetchDatabase();
     }
     async function handleFormActionCommit() {
@@ -14233,6 +14310,7 @@
       footerEl.innerHTML = `<span class="text-[11px] text-slate-500 font-medium">Checking local database registration status...</span>`;
 
       const modalPopup = document.getElementById("voterDetailPopupModal");
+      modalPopup.style.display = "flex";
       modalPopup.classList.remove("hidden");
       modalPopup.classList.add("flex");
 
@@ -14723,7 +14801,11 @@
 
     function closeVoterDetailPopup() {
       const m = document.getElementById("voterDetailPopupModal");
-      if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
+      if (m) {
+        m.classList.add("hidden");
+        m.classList.remove("flex");
+        m.style.display = "none";
+      }
     }
 
     let currentPaperDownloadSerialized = null;
