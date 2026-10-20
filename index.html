@@ -91,6 +91,10 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.45) !important;
     }
 
+    :root {
+      --converter-pill-font-size: 19px;
+    }
+
     /* Nepali converter pill: 2 per row in grid with large readable font */
     .quick-conv-pill {
       transform-origin: center center;
@@ -110,6 +114,9 @@
     }
     .quick-conv-pill:hover span {
       color: #0284c7 !important;
+    }
+    .quick-conv-pill span {
+      font-size: var(--converter-pill-font-size, 19px);
     }
 
     /* Form Studio layout: 70% left form column, 30% right preview column */
@@ -1144,7 +1151,49 @@
                     </div>
                   </div>
 
-                  <div class="pt-2 shrink-0">
+                  <!-- ── Font Size Inserter Control ── -->
+                  <div class="shrink-0 bg-white/95 border border-sky-100 rounded-xl p-2.5 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <div class="w-6 h-6 rounded-lg bg-sky-100/80 text-sky-600 flex items-center justify-center font-bold text-[11px] select-none shadow-3xs">
+                        Aa
+                      </div>
+                      <span class="text-xs font-medium text-slate-700">Font Size:</span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                      <!-- Stepper Minus -->
+                      <button type="button" onclick="stepConverterFontSize(-1)" title="Decrease font size"
+                        class="w-7 h-7 rounded-lg bg-slate-50 hover:bg-sky-50 active:scale-95 border border-slate-200 hover:border-sky-300 text-slate-600 hover:text-sky-600 font-bold flex items-center justify-center transition-all text-sm select-none">
+                        −
+                      </button>
+
+                      <!-- Numeric Input with px -->
+                      <div class="relative flex items-center">
+                        <input type="number" id="converterFontSizeInput" min="12" max="36" value="19"
+                          oninput="handleConverterFontSizeChange(this.value)"
+                          class="w-14 h-7 text-center bg-white border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-lg text-xs font-bold text-slate-800 outline-none transition-all pr-4 pl-1" />
+                        <span class="absolute right-1 text-[10px] text-slate-400 font-medium pointer-events-none select-none">px</span>
+                      </div>
+
+                      <!-- Stepper Plus -->
+                      <button type="button" onclick="stepConverterFontSize(1)" title="Increase font size"
+                        class="w-7 h-7 rounded-lg bg-slate-50 hover:bg-sky-50 active:scale-95 border border-slate-200 hover:border-sky-300 text-slate-600 hover:text-sky-600 font-bold flex items-center justify-center transition-all text-sm select-none">
+                        +
+                      </button>
+
+                      <!-- Quick Presets -->
+                      <div class="flex items-center gap-1 ml-1 pl-1.5 border-l border-slate-200">
+                        <button type="button" onclick="setConverterFontSize(16)" title="Small (16px)"
+                          class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 transition-colors">16</button>
+                        <button type="button" onclick="setConverterFontSize(19)" title="Medium (19px)"
+                          class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 transition-colors">19</button>
+                        <button type="button" onclick="setConverterFontSize(22)" title="Large (22px)"
+                          class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 transition-colors">22</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="pt-0.5 shrink-0">
                     <div class="text-xs text-sky-800/80 font-normal flex items-center gap-1.5 bg-sky-100/50 px-2.5 py-1.5 rounded-lg border border-sky-200/50">
                       <span class="text-sky-600">💡</span>
                       <span>Click any suggestion to auto-fill into Nepali Name.</span>
@@ -3052,6 +3101,7 @@
       checkIpAccessControl();
       loadSavedBordersAndBackgrounds();
       generateVoterCaptcha();
+      initConverterFontSize();
     });
 
     // ─── Real-time portal autocomplete (in-memory, instant) ────────────────────
@@ -3885,6 +3935,63 @@
       }
     }
 
+    // ── Nepali Converter Font Size Management (persisted in localStorage) ──
+    const CONVERTER_FONT_SIZE_KEY = 'nid_converter_font_size';
+    const DEFAULT_CONVERTER_FONT_SIZE = 19;
+
+    function getConverterFontSize() {
+      try {
+        const saved = localStorage.getItem(CONVERTER_FONT_SIZE_KEY);
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 10 && parsed <= 40) {
+          return parsed;
+        }
+      } catch (e) {}
+      return DEFAULT_CONVERTER_FONT_SIZE;
+    }
+
+    function setConverterFontSize(newSize) {
+      const parsed = parseInt(newSize, 10);
+      const size = Math.max(12, Math.min(36, isNaN(parsed) ? DEFAULT_CONVERTER_FONT_SIZE : parsed));
+      try {
+        localStorage.setItem(CONVERTER_FONT_SIZE_KEY, size.toString());
+      } catch (e) {}
+
+      const input = document.getElementById('converterFontSizeInput');
+      if (input && parseInt(input.value, 10) !== size) {
+        input.value = size;
+      }
+
+      document.documentElement.style.setProperty('--converter-pill-font-size', `${size}px`);
+
+      // Dynamically update any rendered suggestion pills in real time
+      const spans = document.querySelectorAll('#quickConverterPills .quick-conv-pill span');
+      spans.forEach(s => {
+        s.style.fontSize = `${size}px`;
+      });
+    }
+
+    function stepConverterFontSize(delta) {
+      const current = getConverterFontSize();
+      setConverterFontSize(current + delta);
+    }
+
+    function handleConverterFontSizeChange(val) {
+      if (!val) return;
+      const parsed = parseInt(val, 10);
+      if (!isNaN(parsed) && parsed >= 10 && parsed <= 40) {
+        setConverterFontSize(parsed);
+      }
+    }
+
+    function initConverterFontSize() {
+      const size = getConverterFontSize();
+      const input = document.getElementById('converterFontSizeInput');
+      if (input) input.value = size;
+      document.documentElement.style.setProperty('--converter-pill-font-size', `${size}px`);
+    }
+    initConverterFontSize();
+
     let _activeConverterIndex = -1;
     let _currentConverterSuggestions = [];
 
@@ -3917,6 +4024,8 @@
         return;
       }
 
+      const currentFontSize = getConverterFontSize();
+
       pillsContainer.innerHTML = _currentConverterSuggestions.map((s, idx) => {
         const isActive = idx === _activeConverterIndex;
         const stateClasses = isActive
@@ -3926,7 +4035,7 @@
           <button type="button" tabindex="-1" onclick="selectConverterSuggestion('${escapeHtml(s.text)}', this)"
             class="quick-conv-pill w-full py-2.5 px-3 rounded-xl border text-center font-normal cursor-pointer flex items-center justify-center transition-all duration-150 ${stateClasses}"
             title="${escapeHtml(s.text)}">
-            <span class="nepali-font text-[19px] leading-tight font-medium tracking-wide truncate">${escapeHtml(s.text)}</span>
+            <span class="nepali-font leading-tight font-medium tracking-wide truncate" style="font-size: ${currentFontSize}px;">${escapeHtml(s.text)}</span>
           </button>
         `;
       }).join('');
