@@ -650,6 +650,8 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
     let currentVerifyFlowSession = 0;
     let verifyFlowActive = false;
     let verifySuccessTimer = null;
+    let _verifyTimerInterval = null;
+    let verifyTimerInterval = null;
 
     function getPortraitImageFromRecord(record) {
       if (!record) return '';
@@ -963,11 +965,17 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
 
     function showError(stepNum, msg) {
       const el = document.getElementById('step' + stepNum + 'Error');
-      el.textContent = msg;
+      if (!el) return;
+      if (typeof msg === 'string' && (msg.includes('<') || msg.includes('&'))) {
+        el.innerHTML = msg;
+      } else {
+        el.textContent = msg || '';
+      }
       el.classList.remove('hidden');
     }
     function hideError(stepNum) {
-      document.getElementById('step' + stepNum + 'Error').classList.add('hidden');
+      const el = document.getElementById('step' + stepNum + 'Error');
+      if (el) el.classList.add('hidden');
     }
 
     function openVerifyFlowModal() {
@@ -1001,6 +1009,10 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         clearInterval(verifySuccessTimer);
         verifySuccessTimer = null;
       }
+      if (typeof _verifyTimerInterval !== 'undefined' && _verifyTimerInterval) {
+        clearInterval(_verifyTimerInterval);
+        _verifyTimerInterval = null;
+      }
       const dialog = modal.querySelector('div > div');
       if (dialog) dialog.classList.add('scale-95');
       setTimeout(() => {
@@ -1021,7 +1033,17 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
     function isInvalidCaptchaError(msg) {
       if (!msg) return false;
       const m = String(msg).toLowerCase();
-      return m.includes('captcha') || m.includes('invalid code') || m.includes('session expired') || m.includes('session_expired') || m.includes('invalid_captcha');
+      return m.includes('captcha') ||
+             m.includes('invalid code') ||
+             m.includes('session expired') ||
+             m.includes('session_expired') ||
+             m.includes('invalid_captcha') ||
+             m.includes('captcha_invalid') ||
+             m.includes('expired_captcha') ||
+             m.includes('expire') ||
+             m.includes('मिल्दैन') ||
+             m.includes('म्याद') ||
+             m.includes('गलत');
     }
 
     function _verifyFormatAge(ms) {
@@ -1041,7 +1063,10 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
     }
 
     function _updateVerifySavedNotice(code, savedTime) {
-      if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
+      if (typeof _verifyTimerInterval !== 'undefined' && _verifyTimerInterval) {
+        clearInterval(_verifyTimerInterval);
+        _verifyTimerInterval = null;
+      }
       const tick = () => {
         const elapsed = savedTime ? _verifyFormatAge(Date.now() - savedTime) : '00:00';
         const notice = '\u2713 Using saved captcha from database: <strong style="font-family:monospace;letter-spacing:1px;">' + code + '</strong>' + 
@@ -1053,6 +1078,7 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       };
       tick();
       _verifyTimerInterval = setInterval(tick, 1000);
+      verifyTimerInterval = _verifyTimerInterval;
     }
 
     async function startVerifyFlow() {
@@ -1181,7 +1207,10 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
     }
 
     async function loadCaptcha(forceReload = true, keepError = false) {
-      if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
+      if (typeof _verifyTimerInterval !== 'undefined' && _verifyTimerInterval) {
+        clearInterval(_verifyTimerInterval);
+        _verifyTimerInterval = null;
+      }
       // Reset to step 1
       const cInput = document.getElementById('captchaInput');
       if (cInput) cInput.value = '';
@@ -1208,6 +1237,11 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
           cInput.focus();
         }
         resetStartVerifyButton();
+        if (keepError) {
+          showError(1, '⚠️ Previous captcha was invalid or expired. Please enter the new captcha shown above.');
+          const errEl = document.getElementById('step1Error');
+          if (errEl) { errEl.style.color = '#dc2626'; errEl.style.background = '#fef2f2'; errEl.style.borderColor = '#fecaca'; }
+        }
       } catch (err) {
         showError(1, 'Could not load captcha: ' + err.message);
         // Re-enable button if captcha failed to load
@@ -1280,7 +1314,7 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         if (!res.ok) {
           let errMsg = "";
           if (typeof data === "object" && data !== null) {
-            errMsg = data.error || data.message || JSON.stringify(data);
+            errMsg = [data.error, data.message, data.code, data.msg].filter(Boolean).join(" ") || JSON.stringify(data);
           } else {
             errMsg = String(data);
           }
@@ -1315,7 +1349,10 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
             } catch (_) {}
 
             // Same captcha found in database (or DB empty) — clear everywhere and automatically load fresh captcha
-            if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
+            if (typeof _verifyTimerInterval !== 'undefined' && _verifyTimerInterval) {
+              clearInterval(_verifyTimerInterval);
+              _verifyTimerInterval = null;
+            }
             try {
               localStorage.removeItem(VERIFY_SAVED_CAPTCHA_KEY);
               localStorage.removeItem(VERIFY_SAVED_SESSION_KEY);
