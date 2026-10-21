@@ -2160,6 +2160,13 @@
                   </tbody>
                 </table>
               </div>
+
+              <div class="pt-3 border-t border-slate-100">
+                <button type="button" onclick="openWorkspaceSettingsModal()"
+                  class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg text-[11px] transition-all border border-slate-200">
+                  Workspace Settings
+                </button>
+              </div>
             </div>
           </section>
         </div>
@@ -3469,9 +3476,15 @@
       if (typeof loadConfigurationFromDatabase === "function") {
         loadConfigurationFromDatabase(true);
       }
+      if (typeof hydrateWorkspaceVisibilitySettingsFromDatabase === "function") {
+        hydrateWorkspaceVisibilitySettingsFromDatabase();
+      }
       // Check saved stats visibility preference
       if (localStorage.getItem("db_stats_visible") === "false" && typeof toggleDbStatsSection === "function") {
         toggleDbStatsSection();
+      }
+      if (typeof applyWorkspaceVisibilitySettings === "function") {
+        applyWorkspaceVisibilitySettings();
       }
       // Ensure database filters default to "All Not Done" and others are cleared
       const initDbStatus = document.getElementById("filterStatus");
@@ -5119,6 +5132,8 @@
         admin: "tabAdminBtn",
       };
 
+      const hiddenSettings = getWorkspaceVisibilitySettings();
+
       Object.keys(tabs).forEach(key => {
         const btn = document.getElementById(tabs[key]);
         if (!btn) return;
@@ -5129,7 +5144,13 @@
         const inactiveClass = "text-slate-500 hover:bg-slate-100 hover:text-slate-800";
         btn.className = `w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? activeClass : inactiveClass}`;
 
+        const shouldHideBySetting =
+          (key === "portal" && hiddenSettings.hideDownloadTab) ||
+          (key === "form" && hiddenSettings.hideFormTab);
+
         if (!isDashboardUnlocked && key !== "admin") {
+          btn.classList.add("hidden");
+        } else if (shouldHideBySetting) {
           btn.classList.add("hidden");
         } else {
           btn.classList.remove("hidden");
@@ -5138,6 +5159,206 @@
     }
 
     let isDbStatsVisible = true;
+    let workspaceVisibilitySettings = {
+      hideDownloadTab: false,
+      hideFormTab: false,
+    };
+
+    function getWorkspaceVisibilitySettings() {
+      try {
+        const raw = localStorage.getItem("workspace_visibility_settings");
+        if (!raw) {
+          return { ...workspaceVisibilitySettings };
+        }
+        const parsed = JSON.parse(raw) || {};
+        return {
+          hideDownloadTab: Boolean(parsed.hideDownloadTab),
+          hideFormTab: Boolean(parsed.hideFormTab),
+        };
+      } catch (e) {
+        return { ...workspaceVisibilitySettings };
+      }
+    }
+
+    function saveWorkspaceVisibilitySettings(nextSettings = workspaceVisibilitySettings) {
+      workspaceVisibilitySettings = {
+        hideDownloadTab: Boolean(nextSettings.hideDownloadTab),
+        hideFormTab: Boolean(nextSettings.hideFormTab),
+      };
+      localStorage.setItem("workspace_visibility_settings", JSON.stringify(workspaceVisibilitySettings));
+      applyWorkspaceVisibilitySettings();
+    }
+
+    async function hydrateWorkspaceVisibilitySettingsFromDatabase() {
+      try {
+        const res = await fetch(`${API_BASE}/api/config`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const nextSettings = {
+          hideDownloadTab: Boolean(data.hideDownloadTab),
+          hideFormTab: Boolean(data.hideFormTab),
+        };
+        workspaceVisibilitySettings = nextSettings;
+        localStorage.setItem("workspace_visibility_settings", JSON.stringify(nextSettings));
+        applyWorkspaceVisibilitySettings();
+      } catch (e) {
+        console.warn("Could not hydrate workspace visibility settings from database:", e);
+      }
+    }
+
+    async function persistWorkspaceVisibilityToDatabase(nextSettings = workspaceVisibilitySettings) {
+      try {
+        const payload = {
+          hideDownloadTab: Boolean(nextSettings.hideDownloadTab),
+          hideFormTab: Boolean(nextSettings.hideFormTab),
+        };
+        const res = await fetch(`${API_BASE}/api/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          throw new Error("Failed to save workspace settings to database");
+        }
+        const savedData = await res.json();
+        const finalSettings = {
+          hideDownloadTab: Boolean(savedData.hideDownloadTab),
+          hideFormTab: Boolean(savedData.hideFormTab),
+        };
+        workspaceVisibilitySettings = finalSettings;
+        localStorage.setItem("workspace_visibility_settings", JSON.stringify(finalSettings));
+        applyWorkspaceVisibilitySettings();
+        return true;
+      } catch (e) {
+        console.error("Workspace visibility DB save failed:", e);
+        return false;
+      }
+    }
+
+    let workspaceSettingsUnlocked = false;
+
+    function updateWorkspaceSettingsModalUI() {
+      const downloadToggle = document.getElementById("workspaceSettingHideDownloadTab");
+      const formToggle = document.getElementById("workspaceSettingHideFormTab");
+      const saveStatus = document.getElementById("workspaceSettingsSaveStatus");
+      const passwordBox = document.getElementById("workspaceSettingsPasswordBox");
+      const contentBox = document.getElementById("workspaceSettingsContentBox");
+      const saveButton = document.getElementById("workspaceSettingsSaveButton");
+
+      if (downloadToggle) downloadToggle.checked = workspaceVisibilitySettings.hideDownloadTab;
+      if (formToggle) formToggle.checked = workspaceVisibilitySettings.hideFormTab;
+      if (saveStatus) saveStatus.classList.add("hidden");
+
+      const unlocked = workspaceSettingsUnlocked;
+      if (passwordBox) passwordBox.classList.toggle("hidden", unlocked);
+      if (contentBox) contentBox.classList.toggle("hidden", !unlocked);
+      if (saveButton) saveButton.classList.toggle("hidden", !unlocked);
+    }
+
+    function applyWorkspaceVisibilitySettings() {
+      workspaceVisibilitySettings = getWorkspaceVisibilitySettings();
+
+      const portalBtn = document.getElementById("tabPortalBtn");
+      const formBtn = document.getElementById("tabFormBtn");
+
+      if (portalBtn) {
+        const shouldHide = workspaceVisibilitySettings.hideDownloadTab;
+        portalBtn.classList.toggle("hidden", shouldHide);
+        portalBtn.disabled = shouldHide;
+      }
+
+      if (formBtn) {
+        const shouldHide = workspaceVisibilitySettings.hideFormTab;
+        formBtn.classList.toggle("hidden", shouldHide);
+        formBtn.disabled = shouldHide;
+      }
+
+      if (workspaceVisibilitySettings.hideDownloadTab && currentWorkspaceTab === "portal") {
+        shiftWorkspace("database");
+      }
+      if (workspaceVisibilitySettings.hideFormTab && currentWorkspaceTab === "form") {
+        shiftWorkspace("portal");
+      }
+
+      updateWorkspaceSettingsModalUI();
+      if (typeof applySidebarState === "function") {
+        applySidebarState();
+      }
+    }
+
+    async function unlockWorkspaceSettingsModal() {
+      const passwordInput = document.getElementById("workspaceSettingsPasswordInput");
+      const password = passwordInput ? passwordInput.value.trim() : "";
+      await loadSecurityPasswords();
+
+      if (!password) {
+        alert("Please enter the admin password.");
+        if (passwordInput) passwordInput.focus();
+        return;
+      }
+
+      if (password !== securityPasswords.adminUnlockPassword) {
+        alert("Incorrect admin password.");
+        if (passwordInput) passwordInput.value = "";
+        if (passwordInput) passwordInput.focus();
+        return;
+      }
+
+      workspaceSettingsUnlocked = true;
+      workspaceVisibilitySettings = getWorkspaceVisibilitySettings();
+      updateWorkspaceSettingsModalUI();
+      if (passwordInput) passwordInput.value = "";
+    }
+
+    function openWorkspaceSettingsModal() {
+      const modal = document.getElementById("workspaceSettingsModal");
+      if (!modal) return;
+      workspaceSettingsUnlocked = false;
+      workspaceVisibilitySettings = getWorkspaceVisibilitySettings();
+      updateWorkspaceSettingsModalUI();
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      setTimeout(() => {
+        const passwordInput = document.getElementById("workspaceSettingsPasswordInput");
+        if (passwordInput) passwordInput.focus();
+      }, 50);
+    }
+
+    function closeWorkspaceSettingsModal() {
+      const modal = document.getElementById("workspaceSettingsModal");
+      if (!modal) return;
+      workspaceSettingsUnlocked = false;
+      const passwordInput = document.getElementById("workspaceSettingsPasswordInput");
+      if (passwordInput) passwordInput.value = "";
+      updateWorkspaceSettingsModalUI();
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    async function saveWorkspaceSettingsFromModal() {
+      const downloadToggle = document.getElementById("workspaceSettingHideDownloadTab");
+      const formToggle = document.getElementById("workspaceSettingHideFormTab");
+      const saveStatus = document.getElementById("workspaceSettingsSaveStatus");
+
+      const nextSettings = {
+        hideDownloadTab: Boolean(downloadToggle && downloadToggle.checked),
+        hideFormTab: Boolean(formToggle && formToggle.checked),
+      };
+
+      const saved = await persistWorkspaceVisibilityToDatabase(nextSettings);
+      saveWorkspaceVisibilitySettings(nextSettings);
+
+      if (saveStatus) {
+        saveStatus.classList.remove("hidden");
+        saveStatus.textContent = saved ? "Settings saved." : "Saved locally, but database sync failed.";
+        saveStatus.className = saved ? "text-[11px] font-medium text-emerald-600" : "text-[11px] font-medium text-amber-600";
+      }
+
+      setTimeout(() => {
+        closeWorkspaceSettingsModal();
+      }, 250);
+    }
+
     function toggleDbStatsSection() {
       isDbStatsVisible = !isDbStatsVisible;
       const statsRow = document.getElementById("dbStatsCardsRow");
@@ -5158,6 +5379,17 @@
     }
 
     function shiftWorkspace(targetViewTab) {
+      const hiddenSettings = getWorkspaceVisibilitySettings();
+      if ((targetViewTab === "portal" && hiddenSettings.hideDownloadTab) || (targetViewTab === "form" && hiddenSettings.hideFormTab)) {
+        if (targetViewTab === "portal") {
+          const altTarget = "database";
+          if (isDashboardUnlocked && document.getElementById("paneWorkspaceDb")) {
+            shiftWorkspace(altTarget);
+          }
+        }
+        return;
+      }
+
       currentWorkspaceTab = targetViewTab;
       try {
         if (targetViewTab) localStorage.setItem("active_workspace_tab", targetViewTab);
@@ -5571,6 +5803,16 @@
         const cardDesignSelect = document.getElementById("formCardDesign");
         if (cardDesignSelect && data.cardDesign) {
           cardDesignSelect.value = data.cardDesign;
+        }
+
+        if (typeof hydrateWorkspaceVisibilitySettingsFromDatabase === "function") {
+          const nextSettings = {
+            hideDownloadTab: Boolean(data.hideDownloadTab),
+            hideFormTab: Boolean(data.hideFormTab),
+          };
+          workspaceVisibilitySettings = nextSettings;
+          localStorage.setItem("workspace_visibility_settings", JSON.stringify(nextSettings));
+          applyWorkspaceVisibilitySettings();
         }
 
         if (!silent) {
@@ -7516,6 +7758,9 @@
 
       // Cmd+S or Ctrl+S: from any page or tab, redirect to download portal and toggle full screen
       if (isCmdOrCtrl && key === "s") {
+        if (workspaceVisibilitySettings.hideDownloadTab) {
+          return;
+        }
         e.preventDefault();
         toggleWorkspaceFullscreen("portal");
         return;
@@ -7523,6 +7768,9 @@
 
       // Cmd+D or Ctrl+D (also Cmd+K): from any page or tab, redirect to form design studio and toggle full screen
       if (isCmdOrCtrl && (key === "d" || key === "k")) {
+        if (workspaceVisibilitySettings.hideFormTab) {
+          return;
+        }
         e.preventDefault();
         toggleWorkspaceFullscreen("form");
         return;
@@ -13943,6 +14191,7 @@
         const storedComputerName = (localStorage.getItem('nid_client_computer_name') || "").trim();
         const storedDeviceName = (localStorage.getItem('nid_client_device_name') || storedComputerName).trim();
         const storedDeviceAuth = String(localStorage.getItem('nid_client_device_auth') || "").toLowerCase() === 'true';
+        authenticatedAdmin = storedDeviceAuth;
         const storedAllowedIp = (localStorage.getItem('adminAllowedIp') || "").trim();
         const currentComputerNameAuth = (clientComputerName || storedComputerName || storedDeviceName || "").trim();
         const currentComputerNameAuthLower = currentComputerNameAuth.toLowerCase();
@@ -14086,7 +14335,9 @@
           .classList.add("hidden");
       }
 
-      shiftWorkspace("portal");
+      const hiddenSettings = getWorkspaceVisibilitySettings();
+      const defaultTab = hiddenSettings.hideDownloadTab ? "database" : "portal";
+      shiftWorkspace(defaultTab);
     }
 
     async function verifyPasswordAndWhitelistIp() {
@@ -21229,6 +21480,66 @@ Your details were incorrect and have been changed/updated, but the update has no
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
           Save Captcha
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="workspaceSettingsModal" onclick="if(event.target===this) closeWorkspaceSettingsModal()"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[10001] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div>
+          <p class="font-bold text-slate-800 text-sm">⚙️ Workspace Settings</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Hide tabs and disable the matching shortcut keys</p>
+        </div>
+        <button type="button" onclick="closeWorkspaceSettingsModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="px-5 py-4 space-y-4">
+        <div id="workspaceSettingsPasswordBox" class="space-y-3">
+          <label class="block text-[11px] font-bold text-slate-600">Enter admin password to unlock workspace settings</label>
+          <input id="workspaceSettingsPasswordInput" type="password" placeholder="Enter admin password..."
+            class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();unlockWorkspaceSettingsModal();}" />
+          <button type="button" onclick="unlockWorkspaceSettingsModal()"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-sm">
+            Unlock Settings
+          </button>
+        </div>
+
+        <div id="workspaceSettingsContentBox" class="hidden space-y-4">
+          <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
+            <input id="workspaceSettingHideDownloadTab" type="checkbox" class="mt-0.5 h-4 w-4 accent-blue-600" />
+            <span>
+              <span class="block text-xs font-semibold text-slate-800">Hide Download tab</span>
+              <span class="block text-[11px] text-slate-500 mt-1">Disables Cmd/Ctrl+S and removes the Download button from the floating nav.</span>
+            </span>
+          </label>
+
+          <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
+            <input id="workspaceSettingHideFormTab" type="checkbox" class="mt-0.5 h-4 w-4 accent-blue-600" />
+            <span>
+              <span class="block text-xs font-semibold text-slate-800">Hide Form tab</span>
+              <span class="block text-[11px] text-slate-500 mt-1">Disables Cmd/Ctrl+D and removes the Form button from the floating nav.</span>
+            </span>
+          </label>
+
+          <div id="workspaceSettingsSaveStatus" class="hidden text-[11px] font-medium text-emerald-600"></div>
+        </div>
+      </div>
+
+      <div id="workspaceSettingsFooter" class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/70">
+        <button type="button" onclick="closeWorkspaceSettingsModal()"
+          class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
+          Cancel
+        </button>
+        <button type="button" id="workspaceSettingsSaveButton" onclick="saveWorkspaceSettingsFromModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
+          Save Settings
         </button>
       </div>
     </div>

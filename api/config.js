@@ -57,7 +57,9 @@ module.exports = async (req, res) => {
           verticalGap: 6,
           fontWidth: 0,
           backgroundFit: '100% 100%',
-          cardDesign: 'smart card'
+          cardDesign: 'smart card',
+          hideDownloadTab: false,
+          hideFormTab: false
         });
         await config.save();
       }
@@ -78,7 +80,9 @@ module.exports = async (req, res) => {
           verticalGap: data.verticalGap ?? 6,
           fontWidth: data.fontWidth ?? 0,
           backgroundFit: data.backgroundFit ?? '100% 100%',
-          cardDesign: data.cardDesign ?? 'smart card'
+          cardDesign: data.cardDesign ?? 'smart card',
+          hideDownloadTab: data.hideDownloadTab ?? false,
+          hideFormTab: data.hideFormTab ?? false
         },
         { new: true, upsert: true }
       );
