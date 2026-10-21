@@ -472,45 +472,65 @@
       background-color: #f8fafc !important;
     }
 
-    /* ── Database Table: Row Hover, Lift & Transition ────────────────── */
+    /* ── Database Table: Modern Refined Row Hover & Ambient Light Spread ── */
     .db-row-clickable {
       cursor: pointer;
       position: relative;
-      box-shadow: 0 2px 5px -1px rgba(15, 23, 42, 0.06);
-      transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: none;
+      transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .db-row-clickable:hover {
-      box-shadow: 0 8px 24px -3px rgba(15, 23, 42, 0.14), 0 3px 8px -2px rgba(15, 23, 42, 0.08);
-      z-index: 20;
+      z-index: 10;
+      /* Very light, clean ambient luminance that softly radiates onto adjacent rows */
+      box-shadow: 0 0 22px 3px rgba(59, 130, 246, 0.09), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+      transform: translateY(-0.5px);
     }
 
     .db-row-clickable:active {
       transform: scale(0.999);
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
     }
 
-    /* ── Database Table: No Box Borders in Normal View, Bottom Shadows Between Rows ── */
+    /* ── Database Table: Crisp Modern Dividers (No Murky Inset Shadows) ── */
     .db-td {
-      padding: 10.5px 14px;
+      padding: 10px 14px;
       border-right: none !important;
       border-left: none !important;
       border-top: none !important;
-      border-bottom: 1px solid rgba(203, 213, 225, 0.45) !important;
-      box-shadow: inset 0 -3px 4px -2px rgba(15, 23, 42, 0.08);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.65) !important;
+      box-shadow: none;
       vertical-align: middle;
       font-size: 11.5px;
       font-weight: 400;
-      transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, border-color 0.18s ease;
+      transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease, box-shadow 0.18s ease;
     }
 
     .db-row-clickable:hover .db-td {
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 5px -2px rgba(15, 23, 42, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
-      border-bottom-color: rgba(148, 163, 184, 0.55) !important;
+      /* Clean, refined specular highlight on top edge and subtle border glow */
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      border-bottom-color: rgba(147, 197, 253, 0.45) !important;
     }
 
     .db-row-clickable:hover .db-td:first-child {
-      border-left-width: 4.5px !important;
+      border-left-width: 4px !important;
+    }
+
+    /* ── Ambient Light Diffusion Across Adjacent & Surrounding Rows ── */
+    tbody:has(tr.db-row-clickable:hover) tr.db-row-clickable:not(:hover) {
+      opacity: 0.90;
+      transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Row immediately below hovered row catches a gentle upper light sheen */
+    tr.db-row-clickable:hover + tr.db-row-clickable .db-td {
+      box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.22);
+    }
+
+    /* Row immediately above hovered row catches a gentle lower light sheen */
+    tr.db-row-clickable:has(+ tr.db-row-clickable:hover) .db-td {
+      border-bottom-color: rgba(147, 197, 253, 0.32) !important;
+      box-shadow: inset 0 -1px 0 rgba(147, 197, 253, 0.18);
     }
 
     /* ── Database Table: Pulse Dot & Chip Shadow Effects ─────────────── */

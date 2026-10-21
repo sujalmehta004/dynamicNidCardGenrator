@@ -442,9 +442,7 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
                 <div class="flex gap-2">
                   <input id="captchaInput" type="text" placeholder="Enter captcha code"
                     autocomplete="off"
-                    oninput="_onVerifyCaptchaFilled(this.value)"
-                    onchange="if(typeof saveVerifyCaptcha==='function')saveVerifyCaptcha(this.value)"
-                    onkeydown="if(event.key==='Enter'){event.preventDefault();const c=this.value.trim();if(c&&typeof saveVerifyCaptcha==='function')saveVerifyCaptcha(c);requestOtp();}"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();requestOtp();}"
                     class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono tracking-wider" />
                   <button onclick="requestOtp()" id="btnRequestOtp"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
@@ -718,7 +716,7 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
               // Auto-fill captchaInput and automatically trigger Send OTP if on Step 1
               const cInput = document.getElementById('captchaInput');
               const step1 = document.getElementById('step1');
-              if (cInput && step1 && !step1.classList.contains('hidden')) {
+              if (cInput && step1 && !step1.classList.contains('hidden') && !cInput.value.trim()) {
                 cInput.value = code;
                 if (typeof requestOtp === 'function') {
                   setTimeout(() => requestOtp(), 250);
@@ -1249,21 +1247,8 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       }
     }
 
-    let _autoSendOtpDebounceTimer = null;
     function _onVerifyCaptchaFilled(val) {
-      const code = (val || '').trim();
-      if (!code) return;
-      // When new captcha is entered, update that in DB as well
-      if (code.length >= 4) {
-        saveVerifyCaptcha(code);
-        if (_autoSendOtpDebounceTimer) clearTimeout(_autoSendOtpDebounceTimer);
-        _autoSendOtpDebounceTimer = setTimeout(() => {
-          const btn = document.getElementById('btnRequestOtp');
-          if (btn && !btn.disabled) {
-            requestOtp();
-          }
-        }, 300);
-      }
+      // Intentionally no-op to allow user to type peacefully without premature auto-submitting or refreshing
     }
 
     async function requestOtp() {
@@ -1388,7 +1373,6 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         showStep(2);
       } catch (err) {
         showError(1, 'Network error: ' + err.message);
-        loadCaptcha();
       } finally {
         btn.disabled = false;
         btn.textContent = 'Send OTP';
