@@ -1349,7 +1349,7 @@
                             <span class="text-[9px] text-amber-600 ml-1" id="captchaAgeTimer"></span>
                           </span>
                         </span>
-                        <button type="button" onclick="clearSavedPortalCaptcha()" title="Clear and enter fresh captcha"
+                        <button type="button" onclick="openUpdateCaptchaOnlyModal()" title="Update captcha without resetting form fields"
                           class="text-[10px] text-amber-700 hover:text-amber-950 font-bold underline cursor-pointer ml-2">
                           Refresh
                         </button>
@@ -6992,7 +6992,7 @@
       resetAllTabsToInitial();
       // Ctrl+R / Cmd+R: also re-sync captcha from DB so timer and code stay current
       if (typeof syncCaptchaFromDb === 'function') {
-        syncCaptchaFromDb();
+        syncCaptchaFromDb(true);
       }
     }
 
@@ -9705,7 +9705,7 @@
     }
 
     // Sync captcha from MongoDB database
-    async function syncCaptchaFromDb() {
+    async function syncCaptchaFromDb(force = false) {
       try {
         const res = await fetch(`${API_BASE}/api/captcha-store`);
         if (res.ok) {
@@ -9713,10 +9713,16 @@
           if (data && data.code) {
             const dbTs = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
             const localTs = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
-            if (!localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || dbTs >= localTs) {
-              localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, data.code.trim());
+            if (force || !localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || dbTs >= localTs) {
+              const code = data.code.trim();
+              localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, code);
               localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(dbTs));
-              if (data.session) localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, data.session);
+              if (data.session) {
+                localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, data.session);
+                window._currentCaptchaSession = data.session;
+              }
+              const pInp = document.getElementById('portalCaptchaCode');
+              if (pInp) pInp.value = code;
               updateSavedCaptchaIndicator();
             }
           }
@@ -14800,10 +14806,12 @@
       let session = stored.session || window._currentCaptchaSession || '';
 
       if (!captchaCode) {
-        // No captcha anywhere — show big captcha station below Clear & Verify All, do NOT show modal
-        showMainPortalCaptchaSection({
-          reason: 'Captcha required for Request Number status',
-          onSolved: () => handleRequestNumberSearch()
+        // Show usual modal with in-modal captcha solver
+        showRequestNumberResultModal({
+          success: false,
+          isCaptchaError: true,
+          requestNumber: reqNum,
+          error: 'Captcha required for Request Number status'
         });
         return;
       }
@@ -14885,14 +14893,8 @@
         waveController.abort();
       } catch (aggErr) {
         waveController.abort();
-        // If aborted by user / Ctrl+R refresh / clear, exit silently without showing any modal
-        if (currentAbortCtrl.signal.aborted || (reqNumAbortController && reqNumAbortController.signal.aborted) || !isReqNumSearchRunning) {
-          return;
-        }
-
-        const isAborted = aggErr.name === 'AbortError' ||
-          (Array.isArray(aggErr.errors) && aggErr.errors.some(e => e.name === 'AbortError'));
-        if (isAborted) {
+        // If aborted by user explicitly stopping search, exit silently
+        if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
           return;
         }
 
@@ -14903,23 +14905,13 @@
           /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
         );
 
-        // If captcha failed / invalid, show captcha below Clear All & Verify All, do NOT show the modal
         if (isCapErr) {
-          handleInvalidCaptchaFlow({
-            failedCode: captchaCode,
-            onFoundNewInDb: (newCode, newSession) => {
-              const cInp = document.getElementById('portalCaptchaCode');
-              if (cInp) cInp.value = newCode;
-              window._currentCaptchaSession = newSession;
-              handleRequestNumberSearch();
-            },
-            onNeedNewCaptcha: () => {
-              // Show big captcha station below Clear & Verify All, do NOT show modal
-              showMainPortalCaptchaSection({
-                reason: 'Captcha expired or invalid. Please solve fresh captcha below.',
-                onSolved: () => handleRequestNumberSearch()
-              });
-            }
+          showRequestNumberResultModal({
+            success: false,
+            isCaptchaError: true,
+            requestNumber: reqNum,
+            error: 'Captcha expired or invalid. Please solve fresh captcha below.',
+            raw: lastErrorData || {}
           });
           return;
         }
@@ -15040,135 +15032,147 @@
       const modal = document.getElementById('requestNumberResultModal');
       if (!modal) return;
 
-      document.getElementById('reqNumModalSubtitle').textContent = `Request #: ${info.requestNumber || '—'}`;
+      try {
+        const sub = document.getElementById('reqNumModalSubtitle');
+        if (sub) sub.textContent = `Request #: ${info?.requestNumber || '—'}`;
 
-      const voterNoticeBox = document.getElementById('reqNumVoterNoticeBox');
-      const voterNoticeText = document.getElementById('reqNumVoterNoticeText');
-      if (voterNoticeBox && voterNoticeText) {
-        if (info.voterNotice) {
-          voterNoticeText.textContent = info.voterNotice;
-          voterNoticeBox.classList.remove('hidden');
-        } else {
-          voterNoticeBox.classList.add('hidden');
-          voterNoticeText.textContent = '';
-        }
-      }
-
-      const banner = document.getElementById('reqNumStatusBanner');
-      const icon = document.getElementById('reqNumStatusIcon');
-      const appStatusText = document.getElementById('reqNumApplicationStatusText');
-      const printedBadge = document.getElementById('reqNumCardPrintedBadge');
-      const ninHeroBox = document.getElementById('reqNumNinHeroBox');
-      const ninValEl = document.getElementById('reqNumApprovedNinVal');
-      const cardDetailsBox = document.getElementById('reqNumCardDetailsBox');
-      const statusTag = document.getElementById('reqNumNinStatusTag');
-      const printedText = document.getElementById('reqNumCardPrintedText');
-      const msgEnText = document.getElementById('reqNumMsgEnText');
-      const msgNpText = document.getElementById('reqNumMsgNpText');
-      const useNinBtn = document.getElementById('btnUseNinInSearch');
-      const captchaBox = document.getElementById('reqNumModalCaptchaBox');
-
-      const isCapErr = Boolean(
-        info.isCaptchaError ||
-        /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info.error || '') ||
-        /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info.raw?.message || '') ||
-        /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info.raw?.error || '')
-      );
-
-      if (isCapErr) {
-        // Captcha validation failed / required state
-        banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-amber-50 border-amber-300 text-amber-950 shadow-2xs';
-        icon.textContent = '🔐';
-        appStatusText.textContent = 'Captcha Validation Required';
-        printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300';
-        printedBadge.textContent = 'CAPTCHA INVALID';
-        ninHeroBox.classList.add('hidden');
-        if (cardDetailsBox) cardDetailsBox.classList.add('hidden');
-        statusTag.textContent = 'CAPTCHA_REQUIRED';
-        printedText.textContent = '—';
-        msgEnText.innerHTML = info.raw?.message || info.error || 'Captcha validation failed. Please enter the new captcha below to save and continue.';
-        document.getElementById('reqNumMsgNpBox')?.classList.add('hidden');
-        useNinBtn.classList.add('hidden');
-
-        // Reveal the in-modal captcha input & load fresh captcha
-        if (captchaBox) {
-          captchaBox.classList.remove('hidden');
-          loadReqNumModalCaptcha();
-          const cInp = document.getElementById('reqNumModalCaptchaInput');
-          if (cInp) {
-            cInp.value = '';
-            setTimeout(() => cInp.focus(), 150);
+        const voterNoticeBox = document.getElementById('reqNumVoterNoticeBox');
+        const voterNoticeText = document.getElementById('reqNumVoterNoticeText');
+        if (voterNoticeBox && voterNoticeText) {
+          if (info && info.voterNotice) {
+            voterNoticeText.textContent = info.voterNotice;
+            voterNoticeBox.classList.remove('hidden');
+          } else {
+            voterNoticeBox.classList.add('hidden');
+            voterNoticeText.textContent = '';
           }
         }
-      } else if (!info.success) {
-        // Normal error state (e.g. 404 Request Not Found)
-        if (captchaBox) captchaBox.classList.add('hidden');
-        if (cardDetailsBox) cardDetailsBox.classList.remove('hidden');
-        banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-50 border-rose-200 text-rose-900';
-        icon.textContent = '✕';
-        appStatusText.textContent = info.error || 'Request Not Found';
-        printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200';
-        printedBadge.textContent = 'NOT FOUND';
-        ninHeroBox.classList.add('hidden');
-        statusTag.textContent = 'NOT_FOUND';
-        printedText.textContent = '—';
-        msgEnText.innerHTML = info.raw?.message || info.error || 'The requested application could not be found.';
-        document.getElementById('reqNumMsgNpBox').classList.add('hidden');
-        useNinBtn.classList.add('hidden');
-      } else {
-        // Success state
-        if (captchaBox) captchaBox.classList.add('hidden');
-        if (cardDetailsBox) cardDetailsBox.classList.remove('hidden');
-        _currentApprovedNin = info.nin || '';
-        const statusUpper = (info.ninStatus || '').toUpperCase();
-        const appUpper = (info.applicationStatus || '').toUpperCase();
-        const isApproved = appUpper === 'APPROVED';
 
-        // Determine if card is printed or not
-        const isPrinted = statusUpper === 'PRINTED' ||
-                          statusUpper === 'CARD_PRINTED' ||
-                          statusUpper === 'DISPATCHED' ||
-                          statusUpper === 'DELIVERED';
+        const banner = document.getElementById('reqNumStatusBanner');
+        const icon = document.getElementById('reqNumStatusIcon');
+        const appStatusText = document.getElementById('reqNumApplicationStatusText');
+        const printedBadge = document.getElementById('reqNumCardPrintedBadge');
+        const ninHeroBox = document.getElementById('reqNumNinHeroBox');
+        const ninValEl = document.getElementById('reqNumApprovedNinVal');
+        const cardDetailsBox = document.getElementById('reqNumCardDetailsBox');
+        const statusTag = document.getElementById('reqNumNinStatusTag');
+        const printedText = document.getElementById('reqNumCardPrintedText');
+        const msgEnText = document.getElementById('reqNumMsgEnText');
+        const msgNpText = document.getElementById('reqNumMsgNpText');
+        const msgNpBox = document.getElementById('reqNumMsgNpBox');
+        const useNinBtn = document.getElementById('btnUseNinInSearch');
+        const captchaBox = document.getElementById('reqNumModalCaptchaBox');
 
-        banner.className = isApproved ?
-          'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-emerald-50 border-emerald-200' :
-          'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-blue-50 border-blue-200';
-        icon.textContent = isApproved ? '✅' : 'ℹ️';
-        appStatusText.textContent = info.applicationStatus || 'PROCESSED';
+        const isCapErr = Boolean(
+          info?.isCaptchaError ||
+          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info?.error || '') ||
+          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info?.raw?.message || '') ||
+          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(info?.raw?.error || '')
+        );
 
-        if (isPrinted) {
-          printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
-          printedBadge.textContent = '✅ Card Printed';
-          printedText.className = 'font-bold text-emerald-700';
-          printedText.textContent = 'Card Printed';
+        if (isCapErr) {
+          if (banner) banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-amber-50 border-amber-300 text-amber-950 shadow-2xs';
+          if (icon) icon.textContent = '🔐';
+          if (appStatusText) appStatusText.textContent = 'Captcha Validation Required';
+          if (printedBadge) {
+            printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300';
+            printedBadge.textContent = 'CAPTCHA INVALID';
+          }
+          if (ninHeroBox) ninHeroBox.classList.add('hidden');
+          if (cardDetailsBox) cardDetailsBox.classList.add('hidden');
+          if (statusTag) statusTag.textContent = 'CAPTCHA_REQUIRED';
+          if (printedText) printedText.textContent = '—';
+          if (msgEnText) msgEnText.innerHTML = info?.raw?.message || info?.error || 'Captcha validation failed. Please enter the new captcha below to save and continue.';
+          if (msgNpBox) msgNpBox.classList.add('hidden');
+          if (useNinBtn) useNinBtn.classList.add('hidden');
+
+          // Reveal the in-modal captcha input & load fresh captcha
+          if (captchaBox) {
+            captchaBox.classList.remove('hidden');
+            loadReqNumModalCaptcha();
+            const cInp = document.getElementById('reqNumModalCaptchaInput');
+            if (cInp) {
+              cInp.value = '';
+              setTimeout(() => cInp.focus(), 150);
+            }
+          }
+        } else if (!info?.success) {
+          // Normal error state (e.g. 404 Request Not Found)
+          if (captchaBox) captchaBox.classList.add('hidden');
+          if (cardDetailsBox) cardDetailsBox.classList.remove('hidden');
+          if (banner) banner.className = 'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-rose-50 border-rose-200 text-rose-900';
+          if (icon) icon.textContent = '✕';
+          if (appStatusText) appStatusText.textContent = info?.error || 'Request Not Found';
+          if (printedBadge) {
+            printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200';
+            printedBadge.textContent = 'NOT FOUND';
+          }
+          if (ninHeroBox) ninHeroBox.classList.add('hidden');
+          if (statusTag) statusTag.textContent = 'NOT_FOUND';
+          if (printedText) printedText.textContent = '—';
+          if (msgEnText) msgEnText.innerHTML = info?.raw?.message || info?.error || 'The requested application could not be found.';
+          if (msgNpBox) msgNpBox.classList.add('hidden');
+          if (useNinBtn) useNinBtn.classList.add('hidden');
         } else {
-          printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300';
-          printedBadge.textContent = '⏳ Not Printed';
-          printedText.className = 'font-bold text-amber-700';
-          printedText.textContent = 'Not Printed';
+          // Success state
+          if (captchaBox) captchaBox.classList.add('hidden');
+          if (cardDetailsBox) cardDetailsBox.classList.remove('hidden');
+          _currentApprovedNin = info?.nin || '';
+          const statusUpper = (info?.ninStatus || '').toUpperCase();
+          const appUpper = (info?.applicationStatus || '').toUpperCase();
+          const isApproved = appUpper === 'APPROVED';
+
+          const isPrinted = statusUpper === 'PRINTED' ||
+                            statusUpper === 'CARD_PRINTED' ||
+                            statusUpper === 'DISPATCHED' ||
+                            statusUpper === 'DELIVERED';
+
+          if (banner) {
+            banner.className = isApproved ?
+              'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-emerald-50 border-emerald-200' :
+              'p-3.5 rounded-xl border flex items-center justify-between gap-3 bg-blue-50 border-blue-200';
+          }
+          if (icon) icon.textContent = isApproved ? '✅' : 'ℹ️';
+          if (appStatusText) appStatusText.textContent = info?.applicationStatus || 'PROCESSED';
+
+          if (printedBadge) {
+            if (isPrinted) {
+              printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+              printedBadge.textContent = '✅ Card Printed';
+            } else {
+              printedBadge.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300';
+              printedBadge.textContent = '⏳ Not Printed';
+            }
+          }
+          if (printedText) {
+            printedText.className = isPrinted ? 'font-bold text-emerald-700' : 'font-bold text-amber-700';
+            printedText.textContent = isPrinted ? 'Card Printed' : 'Not Printed';
+          }
+
+          if (info?.nin) {
+            if (ninHeroBox) ninHeroBox.classList.remove('hidden');
+            if (ninValEl) ninValEl.textContent = info.nin;
+            if (useNinBtn) useNinBtn.classList.remove('hidden');
+          } else {
+            if (ninHeroBox) ninHeroBox.classList.add('hidden');
+            if (useNinBtn) useNinBtn.classList.add('hidden');
+          }
+
+          if (statusTag) statusTag.textContent = info?.ninStatus || '—';
+          if (msgEnText) msgEnText.innerHTML = info?.message || 'No official message provided.';
+          if (info?.messageLoc) {
+            if (msgNpBox) msgNpBox.classList.remove('hidden');
+            if (msgNpText) msgNpText.innerHTML = info.messageLoc;
+          } else {
+            if (msgNpBox) msgNpBox.classList.add('hidden');
+          }
         }
 
-        if (info.nin) {
-          ninHeroBox.classList.remove('hidden');
-          ninValEl.textContent = info.nin;
-          useNinBtn.classList.remove('hidden');
-        } else {
-          ninHeroBox.classList.add('hidden');
-          useNinBtn.classList.add('hidden');
-        }
-
-        statusTag.textContent = info.ninStatus || '—';
-        msgEnText.innerHTML = info.message || 'No official message provided.';
-        if (info.messageLoc) {
-          document.getElementById('reqNumMsgNpBox').classList.remove('hidden');
-          msgNpText.innerHTML = info.messageLoc;
-        } else {
-          document.getElementById('reqNumMsgNpBox').classList.add('hidden');
-        }
+        const copyBtnText = document.getElementById('btnCopyReqNumNinText');
+        if (copyBtnText) copyBtnText.textContent = 'Copy Number';
+      } catch (err) {
+        console.warn('[showRequestNumberResultModal] Error populating details:', err);
       }
-
-      const copyBtnText = document.getElementById('btnCopyReqNumNinText');
-      if (copyBtnText) copyBtnText.textContent = 'Copy Number';
 
       modal.style.display = 'flex';
       modal.classList.remove('hidden');
@@ -15382,82 +15386,98 @@
       const modal = document.getElementById("ninSearchResultModal");
       const successDiv = document.getElementById("ninResultSuccess");
       const errorDiv = document.getElementById("ninResultError");
+      if (!modal) return;
 
-      currentNinVoterData = data;
-      if (success) {
-        populatePortalFieldsFromVoterData(data);
-
-        // Clear any previous info divs
-        const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
-        oldInfoDivs.forEach(div => div.remove());
-        
-        successDiv.classList.remove("hidden");
-        errorDiv.classList.add("hidden");
-
-        const givenEn = [data.VoterFirstNameEn, data.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
-        const surnameEn = (data.VoterLastNameEn || "").toUpperCase();
-        const nameEn = `${givenEn} ${surnameEn}`.trim() || "N/A";
-        const nameNp = [
-          data.VoterFirstName || data.FirstNameNp || "",
-          data.VoterMiddleName || data.MiddleNameNp || "",
-          data.VoterLastName || data.LastNameNp || ""
-        ].filter(Boolean).join(" ").trim();
-        const dobDisplay = data.dobNp || data.Dob || data.dobEn || "—";
-        document.getElementById("ninResultNameDisplay").innerText = nameEn;
-        document.getElementById("ninResultNidDisplay").innerText = `NID: ${data.Nidno || "—"}`;
-
-        // Populate compact 3-field summary panel
-        const ninResultDetailPanel = document.getElementById("ninResultDetailPanel");
-        if (ninResultDetailPanel) {
-          ninResultDetailPanel.innerHTML = `
-            <div class="grid grid-cols-1 gap-2">
-              <div class="flex items-start gap-2">
-                <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">English Name</span>
-                <span class="font-semibold text-slate-800 text-xs">${nameEn || '—'}</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">Nepali Name</span>
-                <span class="font-semibold text-slate-800 text-xs">${nameNp || '—'}</span>
-              </div>
-              <div class="flex items-start gap-2">
-                <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">Date of Birth</span>
-                <span class="font-semibold text-slate-700 text-xs font-mono">${dobDisplay || '—'}</span>
-              </div>
-            </div>
-          `;
-          ninResultDetailPanel.classList.remove("hidden");
-        }
-
-        const approvalText = String(data?.ApprovalMessage || data?.Approvalmessage || data?.ApprovalMassage || data?.error || data?.message || "").trim();
-        const isAlreadyRegistered = shouldShowApprovalNotice(approvalText);
-        document.getElementById("btnNinResultSaveCard").classList.toggle("hidden", isAlreadyRegistered);
-        document.getElementById("btnNinResultDownloadPaper").classList.toggle("hidden", isAlreadyRegistered);
-        document.getElementById("btnNinResultSeeDetails").classList.toggle("hidden", isAlreadyRegistered);
-        document.getElementById("btnNinResultProceed").classList.toggle("hidden", isAlreadyRegistered);
-
-        // Check if this is an approval message - don't render card, just show the notice
-        if (isAlreadyRegistered) {
-          const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
-          if (whiteCardContainer) {
-            whiteCardContainer.style.display = "none";
+      currentNinVoterData = data || null;
+      try {
+        if (success && data) {
+          if (typeof populatePortalFieldsFromVoterData === "function") {
+            try { populatePortalFieldsFromVoterData(data); } catch (_) {}
           }
-          const infoDiv = document.createElement("div");
-          infoDiv.className = "bg-blue-50 border border-blue-200 p-3 rounded-lg text-blue-800 font-semibold text-[11px] flex items-center gap-2";
-          infoDiv.innerHTML = `<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/></svg><span>Active</span><span class="text-blue-700">• ${data.ApprovalMessage}</span>`;
-          whiteCardContainer.parentElement.insertBefore(infoDiv, whiteCardContainer.nextSibling);
+
+          if (successDiv) {
+            const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
+            oldInfoDivs.forEach(div => div.remove());
+            successDiv.classList.remove("hidden");
+          }
+          if (errorDiv) errorDiv.classList.add("hidden");
+
+          const givenEn = [data.VoterFirstNameEn, data.VoterMiddleNameEn].filter(Boolean).join(" ").toUpperCase();
+          const surnameEn = (data.VoterLastNameEn || "").toUpperCase();
+          const nameEn = `${givenEn} ${surnameEn}`.trim() || "N/A";
+          const nameNp = [
+            data.VoterFirstName || data.FirstNameNp || "",
+            data.VoterMiddleName || data.MiddleNameNp || "",
+            data.VoterLastName || data.LastNameNp || ""
+          ].filter(Boolean).join(" ").trim();
+          const dobDisplay = data.dobNp || data.Dob || data.dobEn || "—";
+
+          const nameDisp = document.getElementById("ninResultNameDisplay");
+          if (nameDisp) nameDisp.innerText = nameEn;
+          const nidDisp = document.getElementById("ninResultNidDisplay");
+          if (nidDisp) nidDisp.innerText = `NID: ${data.Nidno || "—"}`;
+
+          // Populate compact 3-field summary panel
+          const ninResultDetailPanel = document.getElementById("ninResultDetailPanel");
+          if (ninResultDetailPanel) {
+            ninResultDetailPanel.innerHTML = `
+              <div class="grid grid-cols-1 gap-2">
+                <div class="flex items-start gap-2">
+                  <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">English Name</span>
+                  <span class="font-semibold text-slate-800 text-xs">${nameEn || '—'}</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">Nepali Name</span>
+                  <span class="font-semibold text-slate-800 text-xs">${nameNp || '—'}</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="text-[9px] font-bold uppercase text-slate-400 tracking-wider w-20 shrink-0 mt-0.5">Date of Birth</span>
+                  <span class="font-semibold text-slate-700 text-xs font-mono">${dobDisplay || '—'}</span>
+                </div>
+              </div>
+            `;
+            ninResultDetailPanel.classList.remove("hidden");
+          }
+
+          const approvalText = String(data?.ApprovalMessage || data?.Approvalmessage || data?.ApprovalMassage || data?.error || data?.message || "").trim();
+          const isAlreadyRegistered = (typeof shouldShowApprovalNotice === "function") ? shouldShowApprovalNotice(approvalText) : false;
+
+          const btnSave = document.getElementById("btnNinResultSaveCard");
+          if (btnSave) btnSave.classList.toggle("hidden", isAlreadyRegistered);
+          const btnPaper = document.getElementById("btnNinResultDownloadPaper");
+          if (btnPaper) btnPaper.classList.toggle("hidden", isAlreadyRegistered);
+          const btnDetails = document.getElementById("btnNinResultSeeDetails");
+          if (btnDetails) btnDetails.classList.toggle("hidden", isAlreadyRegistered);
+          const btnProceed = document.getElementById("btnNinResultProceed");
+          if (btnProceed) btnProceed.classList.toggle("hidden", isAlreadyRegistered);
+
+          // Check if this is an approval message - don't render card, just show the notice
+          const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
+          if (isAlreadyRegistered) {
+            if (whiteCardContainer) whiteCardContainer.style.display = "none";
+            const infoDiv = document.createElement("div");
+            infoDiv.className = "bg-blue-50 border border-blue-200 p-3 rounded-lg text-blue-800 font-semibold text-[11px] flex items-center gap-2";
+            infoDiv.innerHTML = `<svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2z" clip-rule="evenodd"/></svg><span>Active</span><span class="text-blue-700">• ${data.ApprovalMessage || approvalText}</span>`;
+            if (whiteCardContainer && whiteCardContainer.parentElement) {
+              whiteCardContainer.parentElement.insertBefore(infoDiv, whiteCardContainer.nextSibling);
+            }
+          } else {
+            if (whiteCardContainer) whiteCardContainer.style.display = "block";
+            if (typeof renderVoterWhiteCardToDataUrl === "function") {
+              renderVoterWhiteCardToDataUrl(data, (dataUrl) => {
+                const img = document.getElementById("ninResultWhiteCardImg");
+                if (img) img.src = dataUrl;
+              });
+            }
+          }
         } else {
-          const whiteCardContainer = document.getElementById("ninResultWhiteCardImg");
-          if (whiteCardContainer) {
-            whiteCardContainer.style.display = "block";
-          }
-          renderVoterWhiteCardToDataUrl(data, (dataUrl) => {
-            document.getElementById("ninResultWhiteCardImg").src = dataUrl;
-          });
+          if (successDiv) successDiv.classList.add("hidden");
+          if (errorDiv) errorDiv.classList.remove("hidden");
+          const errEl = document.getElementById("ninResultErrorMsg");
+          if (errEl) errEl.innerText = errorMsg || "Record not found on voter portal.";
         }
-      } else {
-        successDiv.classList.add("hidden");
-        errorDiv.classList.remove("hidden");
-        document.getElementById("ninResultErrorMsg").innerText = errorMsg;
+      } catch (err) {
+        console.warn('[openNinResultModal] Error populating voter modal:', err);
       }
 
       modal.style.display = "flex";
@@ -15471,8 +15491,10 @@
       const errorDiv = document.getElementById("ninResultError");
       
       // Clear any previous info divs and reset elements
-      const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
-      oldInfoDivs.forEach(div => div.remove());
+      if (successDiv) {
+        const oldInfoDivs = successDiv.querySelectorAll(".bg-blue-50.border.border-blue-200.p-3.rounded-lg");
+        oldInfoDivs.forEach(div => div.remove());
+      }
 
       // Reset detail panel
       const detailPanel = document.getElementById("ninResultDetailPanel");
@@ -15486,7 +15508,8 @@
       }
       
       // Clear error message
-      document.getElementById("ninResultErrorMsg").innerText = "";
+      const errEl = document.getElementById("ninResultErrorMsg");
+      if (errEl) errEl.innerText = "";
       
       // Hide modal
       if (modal) {
@@ -19471,6 +19494,182 @@ Your details were incorrect and have been changed/updated, but the update has no
         await runAddDeviceRegistration();
       };
 
+      // ===== UPDATE CAPTCHA ONLY MODAL CONTROLLERS =====
+      window.openUpdateCaptchaOnlyModal = async function() {
+        const modal = document.getElementById('updateCaptchaOnlyModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        const statusEl = document.getElementById('ucStatusMsg');
+        if (statusEl) {
+          statusEl.classList.add('hidden');
+          statusEl.textContent = '';
+        }
+
+        const input = document.getElementById('ucCaptchaInput');
+        if (input) {
+          input.value = '';
+        }
+
+        // Fetch a fresh captcha image for this update session
+        await window.ucLoadFreshCaptcha();
+
+        if (input) {
+          setTimeout(() => input.focus(), 150);
+        }
+      };
+
+      window.closeUpdateCaptchaOnlyModal = function() {
+        const modal = document.getElementById('updateCaptchaOnlyModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+
+      window.ucLoadFreshCaptcha = async function() {
+        const img = document.getElementById('ucCaptchaImg');
+        if (!img) return;
+        img.src = '';
+        const statusEl = document.getElementById('ucStatusMsg');
+        try {
+          const res = await fetch(`${API_BASE}/api/captcha`);
+          if (!res.ok) throw new Error('Failed to load captcha');
+          const data = await res.json();
+          if (data.captchaSession) {
+            window._currentCaptchaSession = data.captchaSession;
+          }
+          if (data.image) {
+            img.src = 'data:image/png;base64,' + data.image;
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.className = 'text-[11px] font-medium text-red-600 block';
+            statusEl.textContent = 'Failed to load captcha: ' + err.message;
+          }
+        }
+      };
+
+      window.ucSyncFromDb = async function() {
+        const statusEl = document.getElementById('ucStatusMsg');
+        const btn = document.getElementById('ucBtnSync');
+        if (btn) btn.disabled = true;
+        try {
+          const res = await fetch(`${API_BASE}/api/captcha-store`);
+          if (!res.ok) throw new Error('No shared captcha in database');
+          const data = await res.json();
+          if (data && data.code) {
+            const code = data.code.trim();
+            const session = data.session || '';
+            const dbTs = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
+
+            localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, code);
+            localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(dbTs));
+            if (session) {
+              localStorage.setItem(SAVED_CAPTCHA_SESSION_KEY, session);
+              window._currentCaptchaSession = session;
+            }
+
+            const input = document.getElementById('ucCaptchaInput');
+            if (input) input.value = code;
+
+            const pInp = document.getElementById('portalCaptchaCode');
+            if (pInp) pInp.value = code;
+
+            if (typeof updateSavedCaptchaIndicator === 'function') {
+              updateSavedCaptchaIndicator();
+            }
+
+            if (statusEl) {
+              statusEl.className = 'text-[11px] font-semibold text-emerald-600 block';
+              statusEl.textContent = `✓ Synced: "${code}" from DB!`;
+            }
+
+            setTimeout(() => {
+              window.closeUpdateCaptchaOnlyModal();
+            }, 600);
+          } else {
+            throw new Error('Database captcha is empty');
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.className = 'text-[11px] font-medium text-amber-700 block';
+            statusEl.textContent = err.message || 'Could not fetch from database';
+          }
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      };
+
+      window.ucSaveAndClose = async function() {
+        const input = document.getElementById('ucCaptchaInput');
+        const val = (input?.value || '').trim();
+        const statusEl = document.getElementById('ucStatusMsg');
+        if (!val) {
+          if (statusEl) {
+            statusEl.className = 'text-[11px] font-medium text-red-600 block';
+            statusEl.textContent = 'Please enter captcha code first.';
+          }
+          input?.focus();
+          return;
+        }
+
+        const btn = document.getElementById('ucBtnSave');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Saving...';
+        }
+
+        try {
+          if (typeof savePortalCaptcha === 'function') {
+            await savePortalCaptcha(val, window._currentCaptchaSession);
+          } else {
+            const now = Date.now();
+            localStorage.setItem(SAVED_CAPTCHA_CODE_KEY, val);
+            localStorage.setItem(SAVED_CAPTCHA_TIME_KEY, String(now));
+            fetch(`${API_BASE}/api/captcha-store`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: val, session: window._currentCaptchaSession || '', savedAt: new Date(now).toISOString() })
+            }).catch(() => {});
+          }
+
+          // Sync to portal inputs if present (WITHOUT touching other form fields)
+          const pInp = document.getElementById('portalCaptchaCode');
+          if (pInp) pInp.value = val;
+
+          if (typeof updateSavedCaptchaIndicator === 'function') {
+            updateSavedCaptchaIndicator();
+          }
+
+          if (statusEl) {
+            statusEl.className = 'text-[11px] font-semibold text-emerald-600 block';
+            statusEl.textContent = '✓ Saved successfully!';
+          }
+
+          setTimeout(() => {
+            window.closeUpdateCaptchaOnlyModal();
+          }, 300);
+        } catch (err) {
+          if (statusEl) {
+            statusEl.className = 'text-[11px] font-medium text-red-600 block';
+            statusEl.textContent = 'Error: ' + err.message;
+          }
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Save Captcha
+            `;
+          }
+        }
+      };
+
       window.addEventListener('load', () => { startDatabasePolling(0); });
     })();
   </script>
@@ -20159,6 +20358,84 @@ Your details were incorrect and have been changed/updated, but the update has no
         </div>
       </div>
 
+    </div>
+  </div>
+
+
+  <!-- ===== UPDATE-CAPTCHA-ONLY MODAL ===== -->
+  <!-- Opens when user clicks Refresh on the saved-captcha badge.
+       Does NOT reset form fields or start the Proceed flow. -->
+  <div id="updateCaptchaOnlyModal"
+    onclick="if(event.target===this) closeUpdateCaptchaOnlyModal()"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[99999] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+        <div>
+          <p class="font-bold text-slate-800 text-sm">🔄 Update Captcha</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Enter new captcha — form fields stay untouched</p>
+        </div>
+        <button onclick="closeUpdateCaptchaOnlyModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-5 py-4 space-y-4">
+
+        <!-- Sync from DB button -->
+        <button type="button" onclick="ucSyncFromDb()" id="ucBtnSync"
+          class="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-semibold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+          </svg>
+          Sync from Database (use shared captcha)
+        </button>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3">
+          <div class="flex-1 h-px bg-slate-200"></div>
+          <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">or enter fresh captcha</span>
+          <div class="flex-1 h-px bg-slate-200"></div>
+        </div>
+
+        <!-- Captcha image + reload button -->
+        <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <img id="ucCaptchaImg" src="" alt="Captcha"
+            class="h-20 w-56 object-contain rounded-lg bg-white border border-slate-200" />
+          <button type="button" onclick="ucLoadFreshCaptcha()" title="Reload captcha image"
+            class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-2.5 rounded-lg transition-all border border-slate-200 cursor-pointer flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Status message -->
+        <p id="ucStatusMsg" class="text-[11px] font-medium text-slate-500 hidden"></p>
+
+        <!-- Captcha input -->
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Enter Captcha Code</label>
+          <input type="text" id="ucCaptchaInput" placeholder="Type the captcha characters..."
+            autocomplete="off"
+            class="w-full bg-white border border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 rounded-xl py-3 px-4 text-slate-900 font-mono text-base tracking-widest transition-all shadow-sm"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();ucSaveAndClose();}" />
+        </div>
+
+        <!-- Save button -->
+        <button type="button" onclick="ucSaveAndClose()" id="ucBtnSave"
+          class="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow transition-all cursor-pointer flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Save Captcha
+        </button>
+      </div>
     </div>
   </div>
 

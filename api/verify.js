@@ -441,7 +441,10 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
                 </div>
                 <div class="flex gap-2">
                   <input id="captchaInput" type="text" placeholder="Enter captcha code"
-                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all" />
+                    autocomplete="off"
+                    oninput="_onVerifyCaptchaFilled(this.value)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();requestOtp();}"
+                    class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono tracking-wider" />
                   <button onclick="requestOtp()" id="btnRequestOtp"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
                     Send OTP
@@ -695,7 +698,7 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       checkViewDetailsAvailability();
 
       // Sync captcha from DB immediately on load, then every 5 minutes
-      async function _verifySyncCaptchaFromDb() {
+      async function _verifySyncCaptchaFromDb(force = false) {
         try {
           const res = await fetch('/api/captcha-store');
           if (!res.ok) return;
@@ -703,22 +706,46 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
           if (data && data.code) {
             const dbTs = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
             const localTs = parseInt(localStorage.getItem(VERIFY_SAVED_TIME_KEY) || '0', 10);
-            if (!localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || dbTs >= localTs) {
-              localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, data.code.trim());
+            if (force || !localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || dbTs >= localTs) {
+              const code = data.code.trim();
+              localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, code);
               localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(dbTs));
               if (data.session) localStorage.setItem(VERIFY_SAVED_SESSION_KEY, data.session);
+
+              // Auto-fill captchaInput and automatically trigger Send OTP if on Step 1
+              const cInput = document.getElementById('captchaInput');
+              const step1 = document.getElementById('step1');
+              if (cInput && step1 && !step1.classList.contains('hidden')) {
+                cInput.value = code;
+                if (typeof requestOtp === 'function') {
+                  setTimeout(() => requestOtp(), 250);
+                }
+              }
             }
           }
         } catch (_) {}
       }
       _verifySyncCaptchaFromDb();
-      setInterval(_verifySyncCaptchaFromDb, 5 * 60 * 1000);
+      setInterval(() => _verifySyncCaptchaFromDb(false), 5 * 60 * 1000);
 
-      // Ctrl+R / Cmd+R: re-sync captcha from DB instead of full reload
+      // Attach paste listener to captchaInput for auto Send OTP
+      const captchaInpEl = document.getElementById('captchaInput');
+      if (captchaInpEl) {
+        captchaInpEl.addEventListener('paste', () => {
+          setTimeout(() => {
+            const val = (captchaInpEl.value || '').trim();
+            if (val.length >= 4 && typeof requestOtp === 'function') {
+              requestOtp();
+            }
+          }, 60);
+        });
+      }
+
+      // Ctrl+R / Cmd+R: re-sync captcha from DB instead of full reload & auto-send OTP
       window.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'r') {
           e.preventDefault();
-          _verifySyncCaptchaFromDb();
+          _verifySyncCaptchaFromDb(true);
         }
       });
     });
@@ -1109,6 +1136,22 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         showError(1, 'Could not load captcha: ' + err.message);
         // Re-enable button if captcha failed to load
         resetStartVerifyButton();
+      }
+    }
+
+    let _autoSendOtpDebounceTimer = null;
+    function _onVerifyCaptchaFilled(val) {
+      const code = (val || '').trim();
+      if (!code) return;
+      // Auto-trigger Send OTP when captcha gets filled (4 or more chars)
+      if (code.length >= 4) {
+        if (_autoSendOtpDebounceTimer) clearTimeout(_autoSendOtpDebounceTimer);
+        _autoSendOtpDebounceTimer = setTimeout(() => {
+          const btn = document.getElementById('btnRequestOtp');
+          if (btn && !btn.disabled) {
+            requestOtp();
+          }
+        }, 300);
       }
     }
 
