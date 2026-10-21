@@ -1347,6 +1347,14 @@
                           <span>⚡</span>
                           <span>Captcha: <strong id="savedCaptchaCodeText" class="font-mono font-bold tracking-wider"></strong>
                             <span class="text-[9px] text-amber-600 ml-1" id="captchaAgeTimer"></span>
+                            <!-- DB sync loading spinner, shown during Cmd+R sync -->
+                            <span id="captchaDbSyncSpinner" class="hidden items-center gap-1 ml-1">
+                              <svg class="animate-spin w-3 h-3 text-amber-600" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              <span class="text-[9px] font-semibold text-amber-700">Syncing DB...</span>
+                            </span>
                           </span>
                         </span>
                         <button type="button" onclick="openUpdateCaptchaOnlyModal()" title="Update captcha without resetting form fields"
@@ -5930,7 +5938,7 @@
         console.error("NepaliDate library not loaded");
         return "";
       }
-      const parts = bsStr.split("-");
+      const parts = (bsStr || "").trim().replace(/[\/\.]/g, "-").split("-");
       if (parts.length === 3) {
         const y = parseInt(parts[0], 10);
         const m = parseInt(parts[1], 10) - 1;
@@ -6991,8 +6999,9 @@
     function handleWorkspaceTabRefresh() {
       resetAllTabsToInitial();
       // Ctrl+R / Cmd+R: also re-sync captcha from DB so timer and code stay current
+      // Pass showAnim=true so a spinner appears near the captcha timer during the fetch
       if (typeof syncCaptchaFromDb === 'function') {
-        syncCaptchaFromDb(true);
+        syncCaptchaFromDb(true, true);
       }
     }
 
@@ -9705,11 +9714,32 @@
     }
 
     // Sync captcha from MongoDB database
-    async function syncCaptchaFromDb(force = false) {
+    // showAnim: show a "Syncing DB..." spinner near the captcha timer during the request
+    async function syncCaptchaFromDb(force = false, showAnim = false) {
+      const spinner = document.getElementById('captchaDbSyncSpinner');
+      const timer   = document.getElementById('captchaAgeTimer');
+      const badge   = document.getElementById('savedCaptchaBadge');
+      const animStart = Date.now();
+
+      if (showAnim) {
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.classList.add('flex');
+        }
+        if (spinner) {
+          spinner.classList.remove('hidden');
+          spinner.classList.add('inline-flex');
+        }
+        if (timer) timer.classList.add('hidden');
+      }
+
       try {
-        const res = await fetch(`${API_BASE}/api/captcha-store`);
-        if (res.ok) {
-          const data = await res.json();
+        let res = await fetch(`${API_BASE}/api/captcha-store`).catch(() => null);
+        if (!res || !res.ok || res.headers.get('content-type')?.includes('javascript')) {
+          res = await fetch(`${API_BASE}/api/captcha?action=store`).catch(() => null);
+        }
+        if (res && res.ok) {
+          const data = await res.json().catch(() => null);
           if (data && data.code) {
             const dbTs = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
             const localTs = parseInt(localStorage.getItem(SAVED_CAPTCHA_TIME_KEY) || '0', 10);
@@ -9728,6 +9758,20 @@
           }
         }
       } catch (_) {}
+      finally {
+        if (showAnim) {
+          const elapsed = Date.now() - animStart;
+          if (elapsed < 650) {
+            await new Promise(r => setTimeout(r, 650 - elapsed));
+          }
+          if (spinner) {
+            spinner.classList.add('hidden');
+            spinner.classList.remove('inline-flex');
+          }
+          if (timer) timer.classList.remove('hidden');
+          updateSavedCaptchaIndicator();
+        }
+      }
     }
 
     // Retrieve saved captcha (from localStorage, fallback to DB)
@@ -9738,9 +9782,12 @@
 
       if (!code) {
         try {
-          const res = await fetch(`${API_BASE}/api/captcha-store`);
-          if (res.ok) {
-            const data = await res.json();
+          let res = await fetch(`${API_BASE}/api/captcha-store`).catch(() => null);
+          if (!res || !res.ok || res.headers.get('content-type')?.includes('javascript')) {
+            res = await fetch(`${API_BASE}/api/captcha?action=store`).catch(() => null);
+          }
+          if (res && res.ok) {
+            const data = await res.json().catch(() => null);
             if (data && data.code) {
               code = data.code.trim();
               session = data.session || '';
@@ -14886,45 +14933,49 @@
         });
       });
 
+      // Track whether this was a success (used after try/catch to decide what to do)
       let winner = null;
+      let searchSucceeded = false;
+      let searchWasAborted = false;
+
       try {
         winner = await Promise.any(requests);
         // Successful response received first — halt all other in-flight parallel requests
         waveController.abort();
+        searchSucceeded = true;
       } catch (aggErr) {
         waveController.abort();
         // If aborted by user explicitly stopping search, exit silently
         if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
-          return;
+          searchWasAborted = true;
+        } else {
+          const isCapErr = Boolean(
+            captchaInvalidDetected ||
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
+          );
+
+          if (isCapErr) {
+            showRequestNumberResultModal({
+              success: false,
+              isCaptchaError: true,
+              requestNumber: reqNum,
+              error: 'Captcha expired or invalid. Please solve fresh captcha below.',
+              raw: lastErrorData || {}
+            });
+          } else {
+            const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
+            showRequestNumberResultModal({
+              success: false,
+              requestNumber: reqNum,
+              error: displayErr,
+              raw: lastErrorData || {}
+            });
+          }
         }
-
-        const isCapErr = Boolean(
-          captchaInvalidDetected ||
-          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
-          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
-          /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
-        );
-
-        if (isCapErr) {
-          showRequestNumberResultModal({
-            success: false,
-            isCaptchaError: true,
-            requestNumber: reqNum,
-            error: 'Captcha expired or invalid. Please solve fresh captcha below.',
-            raw: lastErrorData || {}
-          });
-          return;
-        }
-
-        const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
-        showRequestNumberResultModal({
-          success: false,
-          requestNumber: reqNum,
-          error: displayErr,
-          raw: lastErrorData || {}
-        });
-        return;
       } finally {
+        // Always reset button/state
         if (reqNumAbortController === currentAbortCtrl) {
           isReqNumSearchRunning = false;
           _updateReqNumSearchBtn(false);
@@ -14932,14 +14983,12 @@
         }
       }
 
-      // Check if search was stopped while resolving
-      if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
-        return;
-      }
+      // If aborted or failed, we're done
+      if (!searchSucceeded || searchWasAborted) return;
 
-      // Success — persist captcha since it worked
+      // ── SUCCESS PATH ──
+      // Persist captcha since it worked
       savePortalCaptcha(captchaCode, session);
-      // Hide main captcha section (it was shown on prior failure, if any)
       hideMainPortalCaptchaSection();
 
       const data = winner.data || {};
@@ -14954,16 +15003,28 @@
         raw: data
       };
 
+      // Re-read current DOB and First Name in case user filled them or auto-conversion occurred:
+      let effectiveDobAd = document.getElementById("voterNinDob")?.value.trim() || "";
+      const effectiveDobBs = document.getElementById("voterNinDobBs")?.value.trim() || "";
+      const effectiveFirstname = document.getElementById("voterNinFirstname")?.value.trim() || "";
+
+      if (!effectiveDobAd && effectiveDobBs) {
+        const englishBsVal = translateDigits(effectiveDobBs.replace(/[\/\.]/g, "-"), nepaliToEnglishDigits);
+        effectiveDobAd = convertBsToAd(englishBsVal) || "";
+        if (effectiveDobAd && document.getElementById("voterNinDob")) {
+          document.getElementById("voterNinDob").value = effectiveDobAd;
+        }
+      }
+
       // If DOB and First Name are filled and NIN was returned:
       // Automatically make search by NIN!
-      if (hasDobAndName && data.nin) {
+      if (effectiveDobAd && effectiveFirstname && data.nin) {
         const ninInp = document.getElementById('voterNidNin');
         if (ninInp) {
           ninInp.value = data.nin;
           clearRequestNumberField();
         }
-
-        await runNinSearchForRequestNumber(data.nin, dobAd, firstname, reqInfo);
+        await runNinSearchForRequestNumber(data.nin, effectiveDobAd, effectiveFirstname, reqInfo);
       } else {
         showRequestNumberResultModal(reqInfo);
       }

@@ -1064,9 +1064,12 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
 
       // 1. Check database first to get the shared captcha
       try {
-        const dbRes = await fetch('/api/captcha-store');
-        if (dbRes.ok) {
-          const dbData = await dbRes.json();
+        let dbRes = await fetch('/api/captcha-store').catch(() => null);
+        if (!dbRes || !dbRes.ok || dbRes.headers.get('content-type')?.includes('javascript')) {
+          dbRes = await fetch('/api/captcha?action=store').catch(() => null);
+        }
+        if (dbRes && dbRes.ok) {
+          const dbData = await dbRes.json().catch(() => null);
           if (dbData && dbData.code) {
             savedCode = dbData.code.trim();
             savedTime = dbData.savedAt ? new Date(dbData.savedAt).getTime() : Date.now();
@@ -1095,12 +1098,37 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         showStep(1);
         hideError(1);
         const captchaInputEl = document.getElementById('captchaInput');
-        if (captchaInputEl) captchaInputEl.value = savedCode;
+        if (captchaInputEl) {
+          captchaInputEl.value = savedCode;
+          try {
+            captchaInputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          } catch (_) {}
+        }
         document.getElementById('captchaImg').src = '';
 
         _updateVerifySavedNotice(savedCode, savedTime);
         resetStartVerifyButton();
-        setTimeout(() => requestOtp(), 300);
+
+        // Automatically trigger Send OTP button click
+        const _triggerSendOtp = () => {
+          const otpBtn = document.getElementById('btnRequestOtp');
+          if (otpBtn) {
+            otpBtn.disabled = false;
+            otpBtn.click();
+          } else if (typeof requestOtp === 'function') {
+            requestOtp();
+          }
+        };
+
+        // Trigger right after modal opens, with a fallback retry
+        setTimeout(_triggerSendOtp, 400);
+        setTimeout(() => {
+          const step1 = document.getElementById('step1');
+          const otpBtn = document.getElementById('btnRequestOtp');
+          if (step1 && !step1.classList.contains('hidden') && otpBtn && !otpBtn.disabled && otpBtn.textContent.trim().includes('Send OTP')) {
+            _triggerSendOtp();
+          }
+        }, 900);
         return;
       }
 
