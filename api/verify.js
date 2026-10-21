@@ -443,7 +443,8 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
                   <input id="captchaInput" type="text" placeholder="Enter captcha code"
                     autocomplete="off"
                     oninput="_onVerifyCaptchaFilled(this.value)"
-                    onkeydown="if(event.key==='Enter'){event.preventDefault();requestOtp();}"
+                    onchange="if(typeof saveVerifyCaptcha==='function')saveVerifyCaptcha(this.value)"
+                    onkeydown="if(event.key==='Enter'){event.preventDefault();const c=this.value.trim();if(c&&typeof saveVerifyCaptcha==='function')saveVerifyCaptcha(c);requestOtp();}"
                     class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-blue-500 transition-all font-mono tracking-wider" />
                   <button onclick="requestOtp()" id="btnRequestOtp"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shrink-0">
@@ -1141,23 +1142,70 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
       loadCaptcha(false);
     }
 
-    async function loadCaptcha(forceReload = true) {
+    async function saveVerifyCaptcha(code, session = null, explicitTime = null) {
+      if (!code) return;
+      const cleanCode = String(code).trim();
+      if (!cleanCode) return;
+      const existingCode = (localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || '').trim();
+      const existingTime = parseInt(localStorage.getItem(VERIFY_SAVED_TIME_KEY) || '0', 10);
+
+      let ts = explicitTime;
+      if (!ts) {
+        if (cleanCode === existingCode && existingTime > 0) {
+          ts = existingTime;
+        } else {
+          ts = Date.now();
+        }
+      }
+
+      const activeSession = session || localStorage.getItem(VERIFY_SAVED_SESSION_KEY) || window._currentCaptchaSession || '';
+
+      try {
+        localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, cleanCode);
+        localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(ts));
+        if (activeSession) localStorage.setItem(VERIFY_SAVED_SESSION_KEY, activeSession);
+      } catch (_) {}
+
+      // Persist to MongoDB database in background
+      try {
+        fetch('/api/captcha-store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: cleanCode,
+            session: activeSession,
+            savedAt: new Date(ts).toISOString()
+          })
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    async function loadCaptcha(forceReload = true, keepError = false) {
+      if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
       // Reset to step 1
-      document.getElementById('captchaInput').value = '';
-      document.getElementById('captchaImg').src = '';
+      const cInput = document.getElementById('captchaInput');
+      if (cInput) cInput.value = '';
+      const cImg = document.getElementById('captchaImg');
+      if (cImg) cImg.src = '';
       verifyNin = '';
       verifyDownloadToken = '';
       showStep(1);
-      hideError(1);
+      if (!keepError) {
+        hideError(1);
+      }
 
       try {
         const res = await fetch('/api/captcha');
         if (!res.ok) throw new Error('Failed to load captcha');
         const data = await res.json();
         if (!data.image) throw new Error('Invalid captcha format');
-        document.getElementById('captchaImg').src = 'data:image/png;base64,' + data.image;
+        if (cImg) cImg.src = 'data:image/png;base64,' + data.image;
         if (data.captchaSession) {
           try { localStorage.setItem(VERIFY_SAVED_SESSION_KEY, data.captchaSession); } catch(_) {}
+          window._currentCaptchaSession = data.captchaSession;
+        }
+        if (cInput) {
+          cInput.focus();
         }
         resetStartVerifyButton();
       } catch (err) {
@@ -1171,8 +1219,9 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
     function _onVerifyCaptchaFilled(val) {
       const code = (val || '').trim();
       if (!code) return;
-      // Auto-trigger Send OTP when captcha gets filled (4 or more chars)
+      // When new captcha is entered, update that in DB as well
       if (code.length >= 4) {
+        saveVerifyCaptcha(code);
         if (_autoSendOtpDebounceTimer) clearTimeout(_autoSendOtpDebounceTimer);
         _autoSendOtpDebounceTimer = setTimeout(() => {
           const btn = document.getElementById('btnRequestOtp');
@@ -1196,6 +1245,7 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
         }
       }
       if (!captchaCode) { showError(1, 'Please enter the captcha code.'); return; }
+      saveVerifyCaptcha(captchaCode);
 
       const btn = document.getElementById('btnRequestOtp');
       btn.disabled = true;
@@ -1264,17 +1314,18 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
               }
             } catch (_) {}
 
-            // Same captcha found in database (or DB empty) — clear everywhere and prompt for new
+            // Same captcha found in database (or DB empty) — clear everywhere and automatically load fresh captcha
+            if (_verifyTimerInterval) { clearInterval(_verifyTimerInterval); _verifyTimerInterval = null; }
             try {
               localStorage.removeItem(VERIFY_SAVED_CAPTCHA_KEY);
               localStorage.removeItem(VERIFY_SAVED_SESSION_KEY);
               localStorage.removeItem(VERIFY_SAVED_TIME_KEY);
             } catch (_) {}
             fetch('/api/captcha-store', { method: 'DELETE' }).catch(() => {});
-            showError(1, '⚠️ Captcha expired or invalid. Please enter the fresh captcha below:');
+            showError(1, '⚠️ Captcha was invalid or expired. Loading a fresh captcha...');
             const errEl = document.getElementById('step1Error');
             if (errEl) { errEl.style.color = '#dc2626'; errEl.style.background = '#fef2f2'; errEl.style.borderColor = '#fecaca'; }
-            setTimeout(() => loadCaptcha(true), 600);
+            await loadCaptcha(true, true);
             return;
           } else {
             showError(1, 'OTP request failed: ' + errMsg);
@@ -1290,14 +1341,8 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
           if (oldCode === captchaCode.trim() && oldTs > 0) {
             currentTs = oldTs;
           }
-          localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, captchaCode);
-          localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(currentTs));
         } catch(_) {}
-        fetch('/api/captcha-store', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: captchaCode, session: savedSession || '', savedAt: new Date(currentTs).toISOString() })
-        }).catch(() => {});
+        saveVerifyCaptcha(captchaCode, savedSession || '', currentTs);
 
         verifyTransactionId = data.transactionId || '';
         verifyNin = data.nin || PERSON_NIN;

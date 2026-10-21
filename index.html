@@ -9271,7 +9271,12 @@
           await executeFormUpdate(record);
         };
 
-        document.getElementById("updateConfirmModal").classList.remove("hidden");
+        const updateConfirmModal = document.getElementById("updateConfirmModal");
+        if (updateConfirmModal) {
+          updateConfirmModal.style.display = "flex";
+          updateConfirmModal.classList.remove("hidden");
+          updateConfirmModal.classList.add("flex");
+        }
         setTimeout(() => updateInput.focus(), 60);
       } else {
         await executeFormCreation(record);
@@ -9279,8 +9284,14 @@
     }
 
     function closeUpdateConfirmModal() {
-      document.getElementById("confirmModalUpdateInput").value = "";
-      document.getElementById("updateConfirmModal").classList.add("hidden");
+      const updateInput = document.getElementById("confirmModalUpdateInput");
+      if (updateInput) updateInput.value = "";
+      const updateConfirmModal = document.getElementById("updateConfirmModal");
+      if (updateConfirmModal) {
+        updateConfirmModal.style.display = "none";
+        updateConfirmModal.classList.add("hidden");
+        updateConfirmModal.classList.remove("flex");
+      }
     }
 
     async function executeFormUpdate(record) {
@@ -10219,9 +10230,12 @@
       throw lastError || new Error("Failed to request OTP");
     }
 
-    async function requestPortalOtp() {
+    async function requestPortalOtp(forceSingle = false) {
+      if (forceSingle) {
+        isBulkMode = false;
+      }
       const btnOtp = document.getElementById("btnPortalRequestOtp");
-      if (isBulkMode || (btnOtp && (btnOtp.innerText.includes("Bulk") || btnOtp.className.includes("violet") || btnOtp.className.includes("purple")))) {
+      if (!forceSingle && (isBulkMode || (btnOtp && (btnOtp.innerText.includes("Bulk") || btnOtp.className.includes("violet") || btnOtp.className.includes("purple"))))) {
         return requestPortalBulkOtp();
       }
 
@@ -10572,6 +10586,13 @@
 
     // Update the permutation panel whenever field values change
     function onPortalFieldInputChanged(fieldId) {
+      isBulkMode = false;
+      const btnOtp = document.getElementById("btnPortalRequestOtp");
+      if (btnOtp && (btnOtp.innerText.includes("Bulk") || btnOtp.className.includes("violet") || btnOtp.className.includes("purple"))) {
+        btnOtp.innerText = "Request OTP";
+        btnOtp.className = "bg-sky-100 hover:bg-sky-200 active:scale-[0.98] text-sky-900 font-semibold px-6 py-2 rounded-lg border border-sky-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]";
+        btnOtp.onclick = () => handleRequestOtpClick();
+      }
       updatePermutationPanelPreview();
     }
 
@@ -10734,6 +10755,16 @@
 
     // Main Proceed handler — routes to single or multi-permutation
     async function handlePortalProceedClick() {
+      // Always reset bulk mode when initiating name search proceed
+      isBulkMode = false;
+      window._pendingPortalPermutations = null;
+      const btnOtp = document.getElementById("btnPortalRequestOtp");
+      if (btnOtp && (btnOtp.innerText.includes("Bulk") || btnOtp.className.includes("violet") || btnOtp.className.includes("purple"))) {
+        btnOtp.innerText = "Request OTP";
+        btnOtp.className = "bg-sky-100 hover:bg-sky-200 active:scale-[0.98] text-sky-900 font-semibold px-6 py-2 rounded-lg border border-sky-300 transition-all shadow-sm shrink-0 uppercase text-xs flex items-center justify-center gap-1.5 cursor-pointer h-[38px]";
+        btnOtp.onclick = () => handleRequestOtpClick();
+      }
+
       const combos = generatePortalPermutations();
 
       // Check if we have a saved captcha code to automatically use (localStorage or DB)
@@ -10745,7 +10776,7 @@
         if (stored.session) window._currentCaptchaSession = stored.session;
 
         if (combos.length <= 1) {
-          return requestPortalOtp();
+          return requestPortalOtp(true);
         } else {
           return dispatchPortalPermutations(combos, savedCaptcha);
         }
@@ -10909,16 +10940,16 @@
     // --- Wrapper: routes to single or bulk OTP based on mode ---
     function handleRequestOtpClick() {
       const modal = document.getElementById("portalBulkModal");
-      if (modal && modal.style.display === "none" && bulkResults && bulkResults.length > 0) {
-        modal.style.display = "flex";
-        return;
-      }
       const btn = document.getElementById("btnPortalRequestOtp");
-      const isBulk = isBulkMode || (btn && (btn.innerText.includes("Bulk") || btn.innerText.includes("Fetching") || btn.className.includes("violet") || btn.className.includes("purple")));
+      const isBulk = isBulkMode && Boolean(btn && (btn.innerText.includes("Bulk") || btn.innerText.includes("Fetching") || btn.className.includes("violet") || btn.className.includes("purple")));
       if (isBulk) {
+        if (modal && modal.style.display === "none" && bulkResults && bulkResults.length > 0) {
+          modal.style.display = "flex";
+          return;
+        }
         requestPortalBulkOtp();
       } else {
-        requestPortalOtp();
+        requestPortalOtp(true);
       }
     }
 
@@ -15720,10 +15751,14 @@
 
     // Open/Close NID Flow Modal
     function openNidFlowFromVoterData() {
+      if (!currentNinVoterData) {
+        console.warn("[openNidFlowFromVoterData] currentNinVoterData is empty");
+        return;
+      }
       closeNinResultModal();
-      if (!currentNinVoterData) return;
 
       const modal = document.getElementById("nidFlowModal");
+      if (!modal) return;
 
       // ── Reset all sections to clean state ──
       document.getElementById("nidFlowWhiteCardSection").classList.add("hidden");
@@ -15758,10 +15793,13 @@
       document.getElementById("nidFlowOtpSection").classList.add("hidden");
 
       renderVoterWhiteCardToDataUrl(currentNinVoterData, (dataUrl) => {
-        document.getElementById("nidFlowWhiteCardImg").src = dataUrl;
-        document.getElementById("nidFlowWhiteCardSection").classList.remove("hidden");
+        const whiteCardImg = document.getElementById("nidFlowWhiteCardImg");
+        const whiteCardSection = document.getElementById("nidFlowWhiteCardSection");
+        if (whiteCardImg) whiteCardImg.src = dataUrl;
+        if (whiteCardSection) whiteCardSection.classList.remove("hidden");
       });
 
+      modal.style.display = "flex";
       modal.classList.remove("hidden");
       modal.classList.add("flex");
 
@@ -15770,8 +15808,11 @@
 
     function closeNidFlowModal() {
       const modal = document.getElementById("nidFlowModal");
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
     }
 
     // Load NID flow captcha
