@@ -693,6 +693,34 @@ function renderVerifyPage(person, mode, nin, alertOptions = {}) {
 
     window.addEventListener('load', () => {
       checkViewDetailsAvailability();
+
+      // Sync captcha from DB immediately on load, then every 5 minutes
+      async function _verifySyncCaptchaFromDb() {
+        try {
+          const res = await fetch('/api/captcha-store');
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data && data.code) {
+            const dbTs = data.savedAt ? new Date(data.savedAt).getTime() : Date.now();
+            const localTs = parseInt(localStorage.getItem(VERIFY_SAVED_TIME_KEY) || '0', 10);
+            if (!localStorage.getItem(VERIFY_SAVED_CAPTCHA_KEY) || dbTs >= localTs) {
+              localStorage.setItem(VERIFY_SAVED_CAPTCHA_KEY, data.code.trim());
+              localStorage.setItem(VERIFY_SAVED_TIME_KEY, String(dbTs));
+              if (data.session) localStorage.setItem(VERIFY_SAVED_SESSION_KEY, data.session);
+            }
+          }
+        } catch (_) {}
+      }
+      _verifySyncCaptchaFromDb();
+      setInterval(_verifySyncCaptchaFromDb, 5 * 60 * 1000);
+
+      // Ctrl+R / Cmd+R: re-sync captcha from DB instead of full reload
+      window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'r') {
+          e.preventDefault();
+          _verifySyncCaptchaFromDb();
+        }
+      });
     });
 
     function getVerifyAddressParts(profile) {

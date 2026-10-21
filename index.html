@@ -3210,6 +3210,11 @@
       if (typeof updateSavedCaptchaIndicator === "function") {
         updateSavedCaptchaIndicator();
       }
+      // Sync captcha from DB immediately on load, then poll every 5 minutes
+      if (typeof syncCaptchaFromDb === "function") {
+        syncCaptchaFromDb();
+        setInterval(syncCaptchaFromDb, 5 * 60 * 1000);
+      }
     });
 
     // ─── Real-time portal autocomplete (in-memory, instant) ────────────────────
@@ -6985,6 +6990,10 @@
 
     function handleWorkspaceTabRefresh() {
       resetAllTabsToInitial();
+      // Ctrl+R / Cmd+R: also re-sync captcha from DB so timer and code stay current
+      if (typeof syncCaptchaFromDb === 'function') {
+        syncCaptchaFromDb();
+      }
     }
 
     window.addEventListener("beforeunload", () => {
@@ -14676,6 +14685,17 @@
       section.classList.remove('hidden');
       section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
+      // Check for a saved captcha first — auto-fill and auto-submit without fetching fresh
+      const stored = await getSavedPortalCaptcha();
+      if (stored && stored.code) {
+        const inp = document.getElementById('mainPortalCaptchaInput');
+        if (inp) inp.value = stored.code;
+        // Auto-submit after a short delay so the user sees the section briefly
+        setTimeout(() => submitMainPortalCaptcha(), 350);
+        return;
+      }
+
+      // No saved captcha — load a fresh one
       await refreshMainPortalCaptcha();
 
       const inp = document.getElementById('mainPortalCaptchaInput');
@@ -15550,6 +15570,7 @@
       if (!forceReload) {
         const stored = await getSavedPortalCaptcha();
         const savedCode = stored.code;
+        const savedTime = stored.time || 0;
         if (savedCode) {
           if (img) img.src = '';
           if (inp) inp.value = savedCode;
@@ -15557,6 +15578,8 @@
           const tickNid = () => {
             const currentSaved = (localStorage.getItem(SAVED_CAPTCHA_CODE_KEY) || '').trim();
             if (!currentSaved) return;
+            // Compute elapsed from actual DB-sourced savedTime
+            const elapsed = savedTime ? _formatCaptchaAge(Date.now() - savedTime) : '00:00';
             if (title) {
               title.innerHTML = `Using saved captcha: <strong class="font-mono text-amber-900">${currentSaved}</strong> <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ml-1">⏱️ ${elapsed}</span> <button type="button" onclick="loadNidFlowCaptcha(true)" class="text-xs text-blue-600 hover:text-blue-800 underline font-semibold ml-2 cursor-pointer">Re-enter</button>`;
             }
