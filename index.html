@@ -40,6 +40,38 @@
       if (twitterTitleTag) twitterTitleTag.content = document.title;
     })();
   </script>
+  <script>
+    // Universal early interception for window.alert so no native top-left browser alert ever displays
+    window.alert = function (message) {
+      let title = "System Notification";
+      let type = "info";
+      const lower = String(message || "").toLowerCase();
+      if (lower.includes("success") || lower.includes("saved") || lower.includes("complete") || lower.includes("registered") || lower.includes("authorized") || lower.includes("copied")) {
+        title = "Action Successful";
+        type = "success";
+      } else if (lower.includes("error") || lower.includes("fail") || lower.includes("invalid") || lower.includes("mismatch") || lower.includes("missing") || lower.includes("required") || lower.includes("failed") || lower.includes("could not") || lower.includes("cannot")) {
+        title = "Action Failed";
+        type = "error";
+      } else if (lower.includes("warning") || lower.includes("attention") || lower.includes("caution") || lower.includes("slow") || lower.includes("timed out") || lower.includes("⚠️") || lower.includes("slow")) {
+        title = "Attention Required";
+        type = "warning";
+      }
+
+      const trigger = () => {
+        if (typeof showCustomAlert === "function") {
+          showCustomAlert(title, message, type);
+        } else {
+          setTimeout(trigger, 40);
+        }
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", trigger, { once: true });
+      } else {
+        trigger();
+      }
+    };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -4544,35 +4576,47 @@
         pendingConfirmResolver = resolve;
 
         const modal = document.getElementById("confirmActionModal");
+        if (!modal) return resolve(false);
+
+        const card = document.getElementById("confirmActionCard") || modal.firstElementChild;
         const titleEl = document.getElementById("confirmActionTitle");
         const messageEl = document.getElementById("confirmActionMessage");
         const confirmBtn = document.getElementById("confirmActionConfirmBtn");
         const cancelBtn = document.getElementById("confirmActionCancelBtn");
 
-        if (titleEl) titleEl.textContent = title;
-        if (messageEl) messageEl.textContent = message;
-        if (confirmBtn) confirmBtn.textContent = confirmLabel;
-        if (cancelBtn) cancelBtn.textContent = cancelLabel;
+        if (titleEl) titleEl.textContent = title || "Confirm Action";
+        if (messageEl) messageEl.innerHTML = String(message || "").replace(/\n/g, "<br>");
+        if (confirmBtn) confirmBtn.textContent = confirmLabel || "Confirm";
+        if (cancelBtn) cancelBtn.textContent = cancelLabel || "Cancel";
 
-        if (modal) {
-          modal.classList.remove("hidden");
-          setTimeout(() => {
-            if (modal.firstElementChild) {
-              modal.firstElementChild.classList.remove("scale-95");
-              modal.firstElementChild.classList.add("scale-100");
-            }
-          }, 10);
-        }
+        modal.style.display = "flex";
+        modal.classList.remove("hidden");
+        modal.classList.add("flex", "items-center", "justify-center");
+
+        requestAnimationFrame(() => {
+          if (card) {
+            card.classList.remove("scale-95", "opacity-0");
+            card.classList.add("scale-100", "opacity-100");
+          }
+          if (confirmBtn) {
+            try { confirmBtn.focus(); } catch (_) {}
+          }
+        });
       });
     }
 
     function closeConfirmModal() {
       const modal = document.getElementById("confirmActionModal");
-      if (!modal || !modal.firstElementChild) return;
-      modal.firstElementChild.classList.remove("scale-100");
-      modal.firstElementChild.classList.add("scale-95");
+      if (!modal) return;
+      const card = document.getElementById("confirmActionCard") || modal.firstElementChild;
+      if (card) {
+        card.classList.remove("scale-100", "opacity-100");
+        card.classList.add("scale-95", "opacity-0");
+      }
       setTimeout(() => {
+        modal.style.display = "none";
         modal.classList.add("hidden");
+        modal.classList.remove("flex");
       }, 150);
     }
 
@@ -4581,46 +4625,99 @@
       pendingConfirmResolver = null;
       closeConfirmModal();
       if (resolver) {
-        resolver(confirmed);
+        resolver(Boolean(confirmed));
       }
     }
 
-    function showCustomAlert(title, message, type = 'info') {
+    function showCustomAlert(title, message, type = "info") {
       const modal = document.getElementById("customAlertModal");
+      if (!modal) return;
+
+      const card = document.getElementById("customAlertCard") || modal.firstElementChild;
       const titleEl = document.getElementById("customAlertTitle");
       const messageEl = document.getElementById("customAlertMessage");
       const okBtn = document.getElementById("customAlertOkBtn");
+      const iconBadge = document.getElementById("customAlertIconBadge");
+      const header = document.getElementById("customAlertHeader");
 
-      let icon = "ℹ️";
-      let btnCls = "bg-blue-600 hover:bg-blue-700";
-      if (type === "success" || type === "ok") {
-        icon = "✅";
-        btnCls = "bg-emerald-600 hover:bg-emerald-700";
-      } else if (type === "error" || type === "danger") {
-        icon = "❌";
-        btnCls = "bg-rose-600 hover:bg-rose-700";
-      } else if (type === "warning") {
-        icon = "⚠️";
-        btnCls = "bg-amber-600 hover:bg-amber-700";
+      const themes = {
+        success: {
+          icon: "✓",
+          badgeBg: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+          headerBg: "bg-emerald-50/70 border-emerald-100",
+          titleColor: "text-emerald-950",
+          btnCls: "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/30",
+        },
+        error: {
+          icon: "✕",
+          badgeBg: "bg-rose-100 text-rose-700 border border-rose-200",
+          headerBg: "bg-rose-50/70 border-rose-100",
+          titleColor: "text-rose-950",
+          btnCls: "bg-rose-600 hover:bg-rose-700 focus:ring-rose-500/30",
+        },
+        warning: {
+          icon: "⚠️",
+          badgeBg: "bg-amber-100 text-amber-800 border border-amber-200",
+          headerBg: "bg-amber-50/70 border-amber-100",
+          titleColor: "text-amber-950",
+          btnCls: "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500/30",
+        },
+        info: {
+          icon: "ℹ️",
+          badgeBg: "bg-sky-100 text-sky-700 border border-sky-200",
+          headerBg: "bg-sky-50/70 border-sky-100",
+          titleColor: "text-slate-900",
+          btnCls: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500/30",
+        },
+      };
+
+      const t = themes[type] || themes.info;
+
+      if (titleEl) {
+        titleEl.textContent = title || "Notification";
+        titleEl.className = `text-sm font-bold tracking-tight ${t.titleColor}`;
+      }
+      if (iconBadge) {
+        iconBadge.textContent = t.icon;
+        iconBadge.className = `w-8 h-8 rounded-full ${t.badgeBg} flex items-center justify-center text-sm font-bold shrink-0 shadow-2xs`;
+      }
+      if (header) {
+        header.className = `flex items-center justify-between px-5 py-3.5 border-b ${t.headerBg}`;
+      }
+      if (messageEl) {
+        messageEl.innerHTML = String(message || "").replace(/\n/g, "<br>");
+      }
+      if (okBtn) {
+        okBtn.className = `${t.btnCls} text-white font-bold px-6 py-2 rounded-xl text-xs shadow transition-all active:scale-95 cursor-pointer focus:outline-none focus:ring-2`;
       }
 
-      titleEl.innerHTML = `<span>${icon}</span> <span>${title}</span>`;
-      messageEl.innerHTML = String(message).replace(/\n/g, "<br>");
-      okBtn.className = `${btnCls} text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all`;
-
+      modal.style.display = "flex";
       modal.classList.remove("hidden");
-      setTimeout(() => {
-        modal.firstElementChild.classList.remove("scale-95");
-        modal.firstElementChild.classList.add("scale-100");
-      }, 10);
+      modal.classList.add("flex", "items-center", "justify-center");
+
+      requestAnimationFrame(() => {
+        if (card) {
+          card.classList.remove("scale-95", "opacity-0");
+          card.classList.add("scale-100", "opacity-100");
+        }
+        if (okBtn) {
+          try { okBtn.focus(); } catch (_) {}
+        }
+      });
     }
 
     function closeCustomAlert() {
       const modal = document.getElementById("customAlertModal");
-      modal.firstElementChild.classList.remove("scale-100");
-      modal.firstElementChild.classList.add("scale-95");
+      if (!modal) return;
+      const card = document.getElementById("customAlertCard") || modal.firstElementChild;
+      if (card) {
+        card.classList.remove("scale-100", "opacity-100");
+        card.classList.add("scale-95", "opacity-0");
+      }
       setTimeout(() => {
+        modal.style.display = "none";
         modal.classList.add("hidden");
+        modal.classList.remove("flex");
       }, 150);
     }
 
@@ -4628,19 +4725,52 @@
     window.alert = function (message) {
       let title = "System Notification";
       let type = "info";
-      const lower = String(message).toLowerCase();
-      if (lower.includes("success") || lower.includes("saved") || lower.includes("complete") || lower.includes("registered") || lower.includes("authorized")) {
+      const lower = String(message || "").toLowerCase();
+      if (lower.includes("success") || lower.includes("saved") || lower.includes("complete") || lower.includes("registered") || lower.includes("authorized") || lower.includes("copied")) {
         title = "Action Successful";
         type = "success";
-      } else if (lower.includes("error") || lower.includes("fail") || lower.includes("invalid") || lower.includes("mismatch") || lower.includes("missing") || lower.includes("required") || lower.includes("failed")) {
+      } else if (lower.includes("error") || lower.includes("fail") || lower.includes("invalid") || lower.includes("mismatch") || lower.includes("missing") || lower.includes("required") || lower.includes("failed") || lower.includes("could not") || lower.includes("cannot")) {
         title = "Action Failed";
         type = "error";
-      } else if (lower.includes("warning") || lower.includes("attention")) {
+      } else if (lower.includes("warning") || lower.includes("attention") || lower.includes("caution") || lower.includes("slow") || lower.includes("timed out") || lower.includes("⚠️")) {
         title = "Attention Required";
         type = "warning";
       }
       showCustomAlert(title, message, type);
     };
+
+    // Global keyboard listener (Enter / Escape) for fast dismiss of custom alert & confirm modals
+    window.addEventListener("keydown", (e) => {
+      const alertModal = document.getElementById("customAlertModal");
+      const confirmModal = document.getElementById("confirmActionModal");
+
+      const isAlertOpen = alertModal && alertModal.style.display !== "none" && !alertModal.classList.contains("hidden");
+      const isConfirmOpen = confirmModal && confirmModal.style.display !== "none" && !confirmModal.classList.contains("hidden");
+
+      if (isAlertOpen) {
+        if (e.key === "Enter" || e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          closeCustomAlert();
+          return;
+        }
+      }
+
+      if (isConfirmOpen) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          handleConfirmModalDecision(false);
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.stopPropagation();
+          handleConfirmModalDecision(true);
+          return;
+        }
+      }
+    }, true);
 
     function initializeDateFieldsDefaults() {
       const today = new Date().toISOString().split("T")[0];
@@ -6905,7 +7035,7 @@
       modalIds.forEach((id) => {
         const el = document.getElementById(id);
         if (el) {
-          el.style.display = "";
+          el.style.display = "none";
           el.classList.add("hidden");
           el.classList.remove("flex");
         }
@@ -8345,7 +8475,7 @@
         throw new Error('Token verification failed with government server.');
       }
       if (!checkData.valid && checkData.serverUnavailable) {
-        const proceed = confirm('⚠️ Government verification server is temporarily slow.\nSave token to database anyway?');
+        const proceed = await showConfirmModal("Server Response Delayed", "⚠️ Government verification server is temporarily slow.\n\nSave token to database anyway?", "Save Anyway", "Cancel");
         if (!proceed) return;
       }
 
@@ -8635,7 +8765,8 @@
 
     async function removeCardAlert() {
       if (!currentAlertNin) return;
-      if (!confirm("Are you sure you want to remove this alert?")) return;
+      const ok = await showConfirmModal("Remove Card Alert", "Are you sure you want to remove this alert banner?", "Remove Alert", "Cancel");
+      if (!ok) return;
       document.getElementById("alertModalEnabled").checked = false;
       await saveCardAlert();
     }
@@ -9338,12 +9469,13 @@
     }
 
     async function deleteRecordInline(ninEn) {
-      if (
-        !confirm(
-          `Are you sure you want to permanently delete the identity record for NIN ${ninEn}?`,
-        )
-      )
-        return;
+      const ok = await showConfirmModal(
+        "Delete Record",
+        `Are you sure you want to permanently delete the identity record for NIN ${ninEn}?`,
+        "Delete Permanently",
+        "Cancel"
+      );
+      if (!ok) return;
       try {
         const res = await fetch(
           `${API_BASE}/api/people?nin=${encodeURIComponent(ninEn)}`,
@@ -12283,7 +12415,12 @@
         
         if (!checkData.valid) {
           if (checkData.serverUnavailable) {
-            const proceed = confirm(`⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?`);
+            const proceed = await showConfirmModal(
+              "Government Server Delay",
+              "⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?",
+              "Save Token Anyway",
+              "Cancel"
+            );
             if (!proceed) {
               return;
             }
@@ -13656,7 +13793,8 @@
     }
 
     async function removeIpWhitelist2(ip) {
-      if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
+      const ok = await showConfirmModal("Remove Whitelisted IP", `Are you sure you want to remove ${ip} from the whitelist?`, "Remove IP", "Cancel");
+      if (!ok) return;
       try {
         const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=${encodeURIComponent('admin12345')}`, {
           method: 'DELETE'
@@ -13675,7 +13813,8 @@
     }
 
     async function removeIpWhitelist3(ip) {
-      if (!confirm(`Are you sure you want to remove ${ip} from the whitelist?`)) return;
+      const ok = await showConfirmModal("Remove Whitelisted IP", `Are you sure you want to remove ${ip} from the whitelist?`, "Remove IP", "Cancel");
+      if (!ok) return;
       try {
         const res = await fetch(`${API_BASE}/api/allowed-ips?ip=${encodeURIComponent(ip)}&password=${encodeURIComponent('admin12345')}`, {
           method: 'DELETE'
@@ -13964,7 +14103,8 @@
 
     async function deleteListedComputerName(computerName) {
       if (!computerName) return;
-      if (!confirm(`Delete ${computerName} from the allowed device list?`)) return;
+      const ok = await showConfirmModal("Delete Allowed Device", `Delete ${computerName} from the allowed device list?`, "Delete Device", "Cancel");
+      if (!ok) return;
 
       try {
         await loadSecurityPasswords();
@@ -14068,10 +14208,8 @@
     }
 
     async function removeIpWhitelist(ip) {
-      if (
-        !confirm(`Are you sure you want to remove ${ip} from the whitelist?`)
-      )
-        return;
+      const ok = await showConfirmModal("Remove Whitelisted IP", `Are you sure you want to remove ${ip} from the whitelist?`, "Remove IP", "Cancel");
+      if (!ok) return;
 
       try {
         await loadSecurityPasswords();
@@ -18445,32 +18583,45 @@ Your details were incorrect and have been changed/updated, but the update has no
 
   <!-- Confirm Action Modal -->
   <div id="confirmActionModal"
-    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
-    <div
-      class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300"
+    style="display: none; position: fixed; inset: 0; z-index: 999999; align-items: center; justify-content: center; padding: 1rem;"
+    class="fixed inset-0 bg-slate-950/65 backdrop-blur-md z-[999999] flex items-center justify-center p-4 transition-opacity duration-200"
+    onclick="if(event.target===this) handleConfirmModalDecision(false)">
+    <div id="confirmActionCard"
+      style="margin: auto; max-width: 440px; width: 100%;"
+      class="bg-white rounded-2xl border border-slate-200/90 shadow-2xl shadow-slate-950/30 w-full max-w-md mx-auto my-auto overflow-hidden transform scale-95 opacity-0 transition-all duration-200"
       onclick="event.stopPropagation()">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 id="confirmActionTitle" class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-          Confirm Action
-        </h3>
-        <button onclick="handleConfirmModalDecision(false)" class="text-slate-400 hover:text-slate-600 transition-colors">
+      <!-- Header -->
+      <div id="confirmActionHeader" class="flex items-center justify-between px-5 py-3.5 border-b border-amber-100 bg-amber-50/70">
+        <div class="flex items-center gap-2.5">
+          <div id="confirmActionIconBadge" class="w-8 h-8 rounded-full bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center text-sm font-bold shrink-0 shadow-2xs">
+            ❓
+          </div>
+          <h3 id="confirmActionTitle" class="text-sm font-bold text-amber-950 tracking-tight">
+            Confirm Action
+          </h3>
+        </div>
+        <button type="button" onclick="handleConfirmModalDecision(false)" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer" title="Cancel (Esc)">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <div id="confirmActionMessage" class="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line">
-        Are you sure you want to continue?
+      <!-- Body -->
+      <div class="p-5 max-h-[60vh] overflow-y-auto">
+        <div id="confirmActionMessage" class="text-[13px] text-slate-700 font-medium leading-relaxed whitespace-pre-line select-text">
+          Are you sure you want to continue?
+        </div>
       </div>
 
-      <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-        <button id="confirmActionCancelBtn" onclick="handleConfirmModalDecision(false)"
-          class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-2.5 px-5 py-3 border-t border-slate-100 bg-slate-50/60">
+        <button id="confirmActionCancelBtn" type="button" onclick="handleConfirmModalDecision(false)"
+          class="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition-all cursor-pointer">
           Cancel
         </button>
-        <button id="confirmActionConfirmBtn" onclick="handleConfirmModalDecision(true)"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+        <button id="confirmActionConfirmBtn" type="button" onclick="handleConfirmModalDecision(true)"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-5 py-2 rounded-xl text-xs shadow transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30">
           Confirm
         </button>
       </div>
@@ -18630,29 +18781,43 @@ Your details were incorrect and have been changed/updated, but the update has no
     </div>
   </div>
 
-  <!-- Custom Beautiful Alert Modal -->
+  <!-- Custom Center Alert Modal -->
   <div id="customAlertModal"
-    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[99999] flex items-center justify-center hidden">
-    <div
-      class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 mx-4 flex flex-col gap-4 transform scale-95 transition-all duration-300">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 id="customAlertTitle" class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-          <!-- Icon + Title dynamically updated -->
-        </h3>
-        <button onclick="closeCustomAlert()" class="text-slate-400 hover:text-slate-600 transition-colors">
+    style="display: none; position: fixed; inset: 0; z-index: 999999; align-items: center; justify-content: center; padding: 1rem;"
+    class="fixed inset-0 bg-slate-950/65 backdrop-blur-md z-[999999] flex items-center justify-center p-4 transition-opacity duration-200"
+    onclick="if(event.target===this) closeCustomAlert()">
+    <div id="customAlertCard"
+      style="margin: auto; max-width: 440px; width: 100%;"
+      class="bg-white rounded-2xl border border-slate-200/90 shadow-2xl shadow-slate-950/30 w-full max-w-md mx-auto my-auto overflow-hidden transform scale-95 opacity-0 transition-all duration-200"
+      onclick="event.stopPropagation()">
+      <!-- Header -->
+      <div id="customAlertHeader" class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/70">
+        <div class="flex items-center gap-2.5">
+          <div id="customAlertIconBadge" class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold shrink-0 shadow-2xs">
+            ℹ️
+          </div>
+          <h3 id="customAlertTitle" class="text-sm font-bold text-slate-900 tracking-tight">
+            Notification
+          </h3>
+        </div>
+        <button type="button" onclick="closeCustomAlert()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer" title="Close (Esc)">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
 
-      <div id="customAlertMessage" class="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-line">
-        <!-- Message dynamically updated -->
+      <!-- Body -->
+      <div class="p-5 max-h-[60vh] overflow-y-auto">
+        <div id="customAlertMessage" class="text-[13px] text-slate-700 font-medium leading-relaxed whitespace-pre-line select-text">
+          <!-- Dynamically populated -->
+        </div>
       </div>
 
-      <div class="flex justify-end border-t border-slate-100 pt-3">
-        <button id="customAlertOkBtn" onclick="closeCustomAlert()"
-          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-[11px] shadow-sm transition-all">
+      <!-- Footer -->
+      <div class="flex items-center justify-end px-5 py-3 border-t border-slate-100 bg-slate-50/60">
+        <button id="customAlertOkBtn" type="button" onclick="closeCustomAlert()"
+          class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-6 py-2 rounded-xl text-xs shadow transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30">
           OK
         </button>
       </div>
@@ -19338,7 +19503,12 @@ Your details were incorrect and have been changed/updated, but the update has no
         const checkData = await checkRes.json();
         if (!checkData.valid) {
           if (checkData.serverUnavailable) {
-            const proceed = confirm(`⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?`);
+            const proceed = await showConfirmModal(
+              "Government Server Delay",
+              "⚠️ Government verification server timed out or is temporarily slow.\n\nDo you want to proceed and save this token to the database anyway?",
+              "Save Token Anyway",
+              "Cancel"
+            );
             if (!proceed) return;
           } else {
             throw new Error(checkData.reason || "Token could not be verified by the government server. Please scan the correct QR code.");
