@@ -58,12 +58,13 @@ module.exports = async (req, res) => {
           fontWidth: 0,
           backgroundFit: '100% 100%',
           cardDesign: 'smart card',
-          hideDownloadTab: false,
           hideFormTab: false
         });
         await config.save();
       }
-      return res.status(200).json(config);
+
+      const sanitizedConfig = config.toObject ? config.toObject() : { ...config };
+      return res.status(200).json(sanitizedConfig);
     } catch (err) {
       return res.status(500).json({ error: 'Failed to retrieve configuration', details: err.message });
     }
@@ -81,12 +82,12 @@ module.exports = async (req, res) => {
           fontWidth: data.fontWidth ?? 0,
           backgroundFit: data.backgroundFit ?? '100% 100%',
           cardDesign: data.cardDesign ?? 'smart card',
-          hideDownloadTab: data.hideDownloadTab ?? false,
           hideFormTab: data.hideFormTab ?? false
         },
         { new: true, upsert: true }
       );
-      return res.status(200).json(config);
+      const sanitizedConfig = config.toObject ? config.toObject() : { ...config };
+      return res.status(200).json(sanitizedConfig);
     } catch (err) {
       return res.status(500).json({ error: 'Failed to update configuration', details: err.message });
     }

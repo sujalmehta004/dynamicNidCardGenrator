@@ -1403,27 +1403,8 @@
                 <!-- ── RIGHT COLUMN (70% width): Search Top Row + Search by Name & Search by NIN + Captcha / Actions ── -->
                 <div class="w-full lg:w-[70%] flex flex-col space-y-3.5">
 
-                  <!-- ── ROW 1: DB Search (full width) + Fullscreen + ℹ button ── -->
-                  <div class="flex items-center gap-2.5">
-                    <!-- DB Search Input (full width flex) with live suggestions -->
-                    <div class="relative flex-1">
-                      <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                      <input type="text" id="portalSearchQuery"
-                        placeholder="Search previously saved in database by name or NIN..." autocomplete="off"
-                        oninput="_onPortalSearchQueryInput(this.value)"
-                        onkeydown="if(event.key==='Enter'){event.preventDefault();}"
-                        class="w-full bg-white hover:bg-slate-50 border border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-300 rounded-xl pl-9 pr-3 py-2 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
-                      <!-- Live Suggestion Dropdown -->
-                      <div id="portalSearchDropdown"
-                        class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
-                      </div>
-                    </div>
-                    <!-- Fullscreen button -->
+                  <!-- ── ROW 1: Fullscreen + ℹ button only for the download tab ── -->
+                  <div class="flex items-center justify-end gap-2.5">
                     <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')"
                       title="Toggle Full Screen (Cmd+S / Ctrl+S)"
                       class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[38px]">
@@ -1435,7 +1416,6 @@
                       <kbd
                         class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200 hidden sm:inline">⌘S</kbd>
                     </button>
-                    <!-- ℹ button -->
                     <button type="button" onclick="openNepaliCharInfo()"
                       title="View collected Nepali characters from voterlist"
                       class="w-[38px] h-[38px] rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex items-center justify-center transition-all shadow-2xs cursor-pointer shrink-0">
@@ -2161,13 +2141,7 @@
                 </table>
               </div>
 
-              <div class="pt-3 border-t border-slate-100">
-                <button type="button" onclick="openWorkspaceSettingsModal()"
-                  class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg text-[11px] transition-all border border-slate-200">
-                  Workspace Settings
-                </button>
               </div>
-            </div>
           </section>
         </div>
 
@@ -3541,11 +3515,6 @@
       // byte-for-byte including ZWJ/ZWNJ; silently rewriting pasted text breaks matching.
 
       loadSavedColumnVisibility();
-      loadNepalAdministrativeData();
-      loadSavedVoterListRecords()
-        .then(() => fetchDatabase())
-        .catch(() => fetchDatabase())
-        .finally(() => initPortalAutocomplete());
       checkIpAccessControl();
       loadSavedBordersAndBackgrounds();
       generateVoterCaptcha();
@@ -3553,7 +3522,7 @@
       if (typeof updateSavedCaptchaIndicator === "function") {
         updateSavedCaptchaIndicator();
       }
-      // Sync captcha from DB immediately on load, then poll every 5 minutes
+      // Minimal startup mode: only load the DB-backed config, captcha store, and allowed-ips data.
       if (typeof syncCaptchaFromDb === "function") {
         syncCaptchaFromDb();
         setInterval(syncCaptchaFromDb, 5 * 60 * 1000);
@@ -5119,6 +5088,7 @@
 
     let isSidebarCollapsed = true;
     let currentWorkspaceTab = "portal";
+    const isMinimalWorkspaceMode = true;
 
     function toggleSidebarCollapse() {
       // No-op: sidebar replaced by floating top nav
@@ -5137,20 +5107,20 @@
       Object.keys(tabs).forEach(key => {
         const btn = document.getElementById(tabs[key]);
         if (!btn) return;
-        const isActive = (key === currentWorkspaceTab);
 
-        // Base floating icon-only button classes (wide & thin pill)
+        const isActive = (key === currentWorkspaceTab);
         const activeClass = "bg-blue-600 text-white shadow-sm shadow-blue-500/30";
         const inactiveClass = "text-slate-500 hover:bg-slate-100 hover:text-slate-800";
         btn.className = `w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? activeClass : inactiveClass}`;
 
         const shouldHideBySetting =
-          (key === "portal" && hiddenSettings.hideDownloadTab) ||
-          (key === "form" && hiddenSettings.hideFormTab);
+          key === "form" && hiddenSettings.hideFormTab;
+
+        const shouldHideInMinimalMode = isMinimalWorkspaceMode && key !== "portal";
 
         if (!isDashboardUnlocked && key !== "admin") {
           btn.classList.add("hidden");
-        } else if (shouldHideBySetting) {
+        } else if (shouldHideBySetting || shouldHideInMinimalMode) {
           btn.classList.add("hidden");
         } else {
           btn.classList.remove("hidden");
@@ -5160,7 +5130,6 @@
 
     let isDbStatsVisible = true;
     let workspaceVisibilitySettings = {
-      hideDownloadTab: false,
       hideFormTab: false,
     };
 
@@ -5168,24 +5137,22 @@
       try {
         const raw = localStorage.getItem("workspace_visibility_settings");
         if (!raw) {
-          return { ...workspaceVisibilitySettings };
+          return { hideFormTab: Boolean(workspaceVisibilitySettings.hideFormTab) };
         }
         const parsed = JSON.parse(raw) || {};
         return {
-          hideDownloadTab: Boolean(parsed.hideDownloadTab),
           hideFormTab: Boolean(parsed.hideFormTab),
         };
       } catch (e) {
-        return { ...workspaceVisibilitySettings };
+        return { hideFormTab: Boolean(workspaceVisibilitySettings.hideFormTab) };
       }
     }
 
     function saveWorkspaceVisibilitySettings(nextSettings = workspaceVisibilitySettings) {
       workspaceVisibilitySettings = {
-        hideDownloadTab: Boolean(nextSettings.hideDownloadTab),
         hideFormTab: Boolean(nextSettings.hideFormTab),
       };
-      localStorage.setItem("workspace_visibility_settings", JSON.stringify(workspaceVisibilitySettings));
+      localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: workspaceVisibilitySettings.hideFormTab }));
       applyWorkspaceVisibilitySettings();
     }
 
@@ -5195,11 +5162,10 @@
         if (!res.ok) return;
         const data = await res.json();
         const nextSettings = {
-          hideDownloadTab: Boolean(data.hideDownloadTab),
           hideFormTab: Boolean(data.hideFormTab),
         };
         workspaceVisibilitySettings = nextSettings;
-        localStorage.setItem("workspace_visibility_settings", JSON.stringify(nextSettings));
+        localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: nextSettings.hideFormTab }));
         applyWorkspaceVisibilitySettings();
       } catch (e) {
         console.warn("Could not hydrate workspace visibility settings from database:", e);
@@ -5209,7 +5175,6 @@
     async function persistWorkspaceVisibilityToDatabase(nextSettings = workspaceVisibilitySettings) {
       try {
         const payload = {
-          hideDownloadTab: Boolean(nextSettings.hideDownloadTab),
           hideFormTab: Boolean(nextSettings.hideFormTab),
         };
         const res = await fetch(`${API_BASE}/api/config`, {
@@ -5222,11 +5187,10 @@
         }
         const savedData = await res.json();
         const finalSettings = {
-          hideDownloadTab: Boolean(savedData.hideDownloadTab),
           hideFormTab: Boolean(savedData.hideFormTab),
         };
         workspaceVisibilitySettings = finalSettings;
-        localStorage.setItem("workspace_visibility_settings", JSON.stringify(finalSettings));
+        localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: finalSettings.hideFormTab }));
         applyWorkspaceVisibilitySettings();
         return true;
       } catch (e) {
@@ -5238,15 +5202,13 @@
     let workspaceSettingsUnlocked = false;
 
     function updateWorkspaceSettingsModalUI() {
-      const downloadToggle = document.getElementById("workspaceSettingHideDownloadTab");
       const formToggle = document.getElementById("workspaceSettingHideFormTab");
       const saveStatus = document.getElementById("workspaceSettingsSaveStatus");
       const passwordBox = document.getElementById("workspaceSettingsPasswordBox");
       const contentBox = document.getElementById("workspaceSettingsContentBox");
       const saveButton = document.getElementById("workspaceSettingsSaveButton");
 
-      if (downloadToggle) downloadToggle.checked = workspaceVisibilitySettings.hideDownloadTab;
-      if (formToggle) formToggle.checked = workspaceVisibilitySettings.hideFormTab;
+      if (formToggle) formToggle.checked = Boolean(workspaceVisibilitySettings.hideFormTab);
       if (saveStatus) saveStatus.classList.add("hidden");
 
       const unlocked = workspaceSettingsUnlocked;
@@ -5262,20 +5224,26 @@
       const formBtn = document.getElementById("tabFormBtn");
 
       if (portalBtn) {
-        const shouldHide = workspaceVisibilitySettings.hideDownloadTab;
+        const shouldHide = isMinimalWorkspaceMode;
         portalBtn.classList.toggle("hidden", shouldHide);
         portalBtn.disabled = shouldHide;
       }
 
       if (formBtn) {
-        const shouldHide = workspaceVisibilitySettings.hideFormTab;
+        const shouldHide = isMinimalWorkspaceMode || workspaceVisibilitySettings.hideFormTab;
         formBtn.classList.toggle("hidden", shouldHide);
         formBtn.disabled = shouldHide;
       }
 
-      if (workspaceVisibilitySettings.hideDownloadTab && currentWorkspaceTab === "portal") {
-        shiftWorkspace("database");
+      if (isMinimalWorkspaceMode) {
+        currentWorkspaceTab = "portal";
+        updateWorkspaceSettingsModalUI();
+        if (typeof applySidebarState === "function") {
+          applySidebarState();
+        }
+        return;
       }
+
       if (workspaceVisibilitySettings.hideFormTab && currentWorkspaceTab === "form") {
         shiftWorkspace("portal");
       }
@@ -5336,12 +5304,10 @@
     }
 
     async function saveWorkspaceSettingsFromModal() {
-      const downloadToggle = document.getElementById("workspaceSettingHideDownloadTab");
       const formToggle = document.getElementById("workspaceSettingHideFormTab");
       const saveStatus = document.getElementById("workspaceSettingsSaveStatus");
 
       const nextSettings = {
-        hideDownloadTab: Boolean(downloadToggle && downloadToggle.checked),
         hideFormTab: Boolean(formToggle && formToggle.checked),
       };
 
@@ -5379,13 +5345,15 @@
     }
 
     function shiftWorkspace(targetViewTab) {
+      if (isMinimalWorkspaceMode) {
+        targetViewTab = "portal";
+      }
+
       const hiddenSettings = getWorkspaceVisibilitySettings();
-      if ((targetViewTab === "portal" && hiddenSettings.hideDownloadTab) || (targetViewTab === "form" && hiddenSettings.hideFormTab)) {
-        if (targetViewTab === "portal") {
-          const altTarget = "database";
-          if (isDashboardUnlocked && document.getElementById("paneWorkspaceDb")) {
-            shiftWorkspace(altTarget);
-          }
+      if (targetViewTab === "form" && hiddenSettings.hideFormTab) {
+        if (isMinimalWorkspaceMode) {
+          currentWorkspaceTab = "portal";
+          return;
         }
         return;
       }
@@ -5807,11 +5775,10 @@
 
         if (typeof hydrateWorkspaceVisibilitySettingsFromDatabase === "function") {
           const nextSettings = {
-            hideDownloadTab: Boolean(data.hideDownloadTab),
             hideFormTab: Boolean(data.hideFormTab),
           };
           workspaceVisibilitySettings = nextSettings;
-          localStorage.setItem("workspace_visibility_settings", JSON.stringify(nextSettings));
+          localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: nextSettings.hideFormTab }));
           applyWorkspaceVisibilitySettings();
         }
 
@@ -7230,6 +7197,23 @@
     }
 
     async function fetchDatabase(forceRefresh = false) {
+      if (!forceRefresh && allCachedRecords.length === 0) {
+        try {
+          const cached = localStorage.getItem("local_people_cache");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed)) {
+              allCachedRecords = parsed;
+              updateStatsDashboard();
+              applyFiltersClientSide();
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn("Could not load cached people list from localStorage:", e);
+        }
+      }
+
       if (forceRefresh || allCachedRecords.length === 0) {
         setSyncButtonLoading(true);
         const startTime = Date.now();
@@ -7237,6 +7221,9 @@
           const res = await fetch(`${API_BASE}/api/people`);
           if (!res.ok) throw new Error("Failed to load database records");
           allCachedRecords = await res.json();
+          try {
+            localStorage.setItem("local_people_cache", JSON.stringify(allCachedRecords));
+          } catch (e) { }
           updateStatsDashboard();
         } catch (err) {
           console.error("Error fetching database records:", err);
@@ -7283,19 +7270,7 @@
 
     function startDatabasePolling(intervalMs = 0) {
       if (dbPollIntervalId) return;
-      // Only refresh once on load unless a future caller explicitly enables polling.
-      (async () => {
-        try {
-          const res = await fetch(`${API_BASE}/api/people`);
-          if (res.ok) {
-            const latest = await res.json();
-            lastDbSnapshotHash = computeDbSnapshotHash(latest);
-            allCachedRecords = latest;
-            updateStatsDashboard();
-            applyFiltersClientSide();
-          }
-        } catch (e) { }
-      })();
+      // Do not fetch people data automatically on page load. The app should load the people database only when the user explicitly starts a verification flow.
       if (intervalMs > 0) {
         dbPollIntervalId = setInterval(pollDatabaseChanges, intervalMs);
       }
@@ -7749,6 +7724,12 @@
         return;
       }
 
+      // Minimal workspace mode: only the download portal remains active.
+      if (isMinimalWorkspaceMode && isCmdOrCtrl && (key === "f" || key === "s" || key === "d" || key === "k")) {
+        e.preventDefault();
+        return;
+      }
+
       // Cmd+F or Ctrl+F: from any page or tab, redirect to database table and toggle full screen
       if (isCmdOrCtrl && key === "f") {
         e.preventDefault();
@@ -7758,9 +7739,6 @@
 
       // Cmd+S or Ctrl+S: from any page or tab, redirect to download portal and toggle full screen
       if (isCmdOrCtrl && key === "s") {
-        if (workspaceVisibilitySettings.hideDownloadTab) {
-          return;
-        }
         e.preventDefault();
         toggleWorkspaceFullscreen("portal");
         return;
@@ -12380,6 +12358,10 @@
         const dbRes = await fetch(`${API_BASE}/api/people`, { signal: bulkVerifyAbortController.signal });
         if (!dbRes.ok) throw new Error("Failed to fetch database records.");
         const allRecords = await dbRes.json();
+        try {
+          localStorage.setItem("local_people_cache", JSON.stringify(allRecords || []));
+        } catch (e) { }
+        allCachedRecords = Array.isArray(allRecords) ? allRecords : [];
         if (!isBulkVerifyRunning || bulkVerifyAbortController.signal.aborted) return;
 
         const targets = allRecords.filter(r => r.status !== "done");
@@ -13371,7 +13353,7 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 10, maxWaves = 1, waveDelayMs = 0) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 5, maxWaves = 2, waveDelayMs = 250) {
       const normalizedNin = String(nin || "").trim();
       const dobValue = String(dob || "").trim();
       const firstnameVal = String(firstname || "").trim();
@@ -14267,14 +14249,13 @@
       const floatingNav = document.getElementById("floatingTopNav");
       if (floatingNav) floatingNav.classList.remove("hidden");
 
-      // Hide non-admin tabs
+      // Minimal workspace mode: only the download tab remains visible.
       document.getElementById("tabFormBtn").classList.add("hidden");
-      document.getElementById("tabPortalBtn").classList.add("hidden");
+      document.getElementById("tabPortalBtn").classList.remove("hidden");
       document.getElementById("tabDbBtn").classList.add("hidden");
-      // Keep admin tab visible always
       const tabAdminBtn = document.getElementById("tabAdminBtn");
       if (tabAdminBtn) {
-        tabAdminBtn.className = "w-12 sm:w-14 h-7 rounded-full flex items-center justify-center bg-blue-600 text-white shadow-sm shadow-blue-500/30 transition-all duration-150 cursor-pointer";
+        tabAdminBtn.classList.remove("hidden");
       }
 
       // Hide the other content panes
@@ -14312,9 +14293,9 @@
       const floatingNav = document.getElementById("floatingTopNav");
       if (floatingNav) floatingNav.classList.remove("hidden");
 
-      document.getElementById("tabFormBtn").classList.remove("hidden");
+      document.getElementById("tabFormBtn").classList.add("hidden");
       document.getElementById("tabPortalBtn").classList.remove("hidden");
-      document.getElementById("tabDbBtn").classList.remove("hidden");
+      document.getElementById("tabDbBtn").classList.add("hidden");
       document.getElementById("tabAdminBtn").classList.remove("hidden");
 
       if (authenticatedAdmin) {
@@ -14336,7 +14317,7 @@
       }
 
       const hiddenSettings = getWorkspaceVisibilitySettings();
-      const defaultTab = hiddenSettings.hideDownloadTab ? "database" : "portal";
+      const defaultTab = isMinimalWorkspaceMode ? "portal" : "portal";
       shiftWorkspace(defaultTab);
     }
 
@@ -15685,91 +15666,98 @@
       };
       currentAbortCtrl.signal.addEventListener("abort", outerAbortHandler, { once: true });
 
-      const parallelCount = 10;
+      const parallelCount = 5;
+      const maxWaves = 2;
       let lastErrorData = null;
       let lastErrorMsg = '';
       let captchaInvalidDetected = false;
 
-      // Send 10 requests in parallel
-      const requests = Array.from({ length: parallelCount }, (_, i) => {
-        return fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
-          method: 'GET',
-          headers: {
-            'Captcha-Code': captchaCode,
-            'x-captcha-session': session,
-          },
-          signal: waveController.signal
-        })
-          .then(async (res) => {
-            const data = await res.json().catch(() => ({}));
-            const errMsg = data.error || data.message || '';
-            const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
-              rdIsInvalidCaptchaError(errMsg) :
-              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(errMsg);
-
-            if (isCapErr) {
-              captchaInvalidDetected = true;
-              throw new Error('CAPTCHA_INVALID');
-            }
-
-            if (res.ok) {
-              // First success wins!
-              return { res, data };
-            }
-
-            lastErrorData = data;
-            lastErrorMsg = errMsg || `HTTP ${res.status}`;
-            throw new Error(lastErrorMsg);
-          })
-          .catch((err) => {
-            if (err.name === 'AbortError') throw err;
-            throw err;
-          });
-      });
-
-      // Track whether this was a success (used after try/catch to decide what to do)
       let winner = null;
       let searchSucceeded = false;
       let searchWasAborted = false;
 
-      try {
-        winner = await Promise.any(requests);
-        // Successful response received first — halt all other in-flight parallel requests
-        waveController.abort();
-        searchSucceeded = true;
-      } catch (aggErr) {
-        waveController.abort();
-        // If aborted by user explicitly stopping search, exit silently
-        if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
-          searchWasAborted = true;
-        } else {
-          const isCapErr = Boolean(
-            captchaInvalidDetected ||
-            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
-            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
-            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
-          );
+      for (let wave = 0; wave < maxWaves; wave++) {
+        const currentWaveAbort = new AbortController();
+        const requests = Array.from({ length: parallelCount }, (_, i) => {
+          return fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
+            method: 'GET',
+            headers: {
+              'Captcha-Code': captchaCode,
+              'x-captcha-session': session,
+            },
+            signal: currentWaveAbort.signal
+          })
+            .then(async (res) => {
+              const data = await res.json().catch(() => ({}));
+              const errMsg = data.error || data.message || '';
+              const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
+                rdIsInvalidCaptchaError(errMsg) :
+                /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(errMsg);
 
-          if (isCapErr) {
-            showRequestNumberResultModal({
-              success: false,
-              isCaptchaError: true,
-              requestNumber: reqNum,
-              error: 'Captcha expired or invalid. Please solve fresh captcha below.',
-              raw: lastErrorData || {}
+              if (isCapErr) {
+                captchaInvalidDetected = true;
+                throw new Error('CAPTCHA_INVALID');
+              }
+
+              if (res.ok) {
+                return { res, data };
+              }
+
+              lastErrorData = data;
+              lastErrorMsg = errMsg || `HTTP ${res.status}`;
+              throw new Error(lastErrorMsg);
+            })
+            .catch((err) => {
+              if (err.name === 'AbortError') throw err;
+              throw err;
             });
-          } else {
-            const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
-            showRequestNumberResultModal({
-              success: false,
-              requestNumber: reqNum,
-              error: displayErr,
-              raw: lastErrorData || {}
-            });
+        });
+
+        try {
+          winner = await Promise.any(requests);
+          currentWaveAbort.abort();
+          searchSucceeded = true;
+          break;
+        } catch (aggErr) {
+          currentWaveAbort.abort();
+          if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
+            searchWasAborted = true;
+            break;
+          }
+          if (wave === maxWaves - 1) {
+            const isCapErr = Boolean(
+              captchaInvalidDetected ||
+              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
+              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
+              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
+            );
+
+            if (isCapErr) {
+              showRequestNumberResultModal({
+                success: false,
+                isCaptchaError: true,
+                requestNumber: reqNum,
+                error: 'Captcha expired or invalid. Please solve fresh captcha below.',
+                raw: lastErrorData || {}
+              });
+            } else {
+              const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
+              showRequestNumberResultModal({
+                success: false,
+                requestNumber: reqNum,
+                error: displayErr,
+                raw: lastErrorData || {}
+              });
+            }
           }
         }
+      }
+
+      try {
+        if (searchSucceeded && winner) {
+          // handled below
+        }
       } finally {
-        // Always reset button/state
         if (reqNumAbortController === currentAbortCtrl) {
           isReqNumSearchRunning = false;
           _updateReqNumSearchBtn(false);
@@ -21513,14 +21501,6 @@ Your details were incorrect and have been changed/updated, but the update has no
         </div>
 
         <div id="workspaceSettingsContentBox" class="hidden space-y-4">
-          <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
-            <input id="workspaceSettingHideDownloadTab" type="checkbox" class="mt-0.5 h-4 w-4 accent-blue-600" />
-            <span>
-              <span class="block text-xs font-semibold text-slate-800">Hide Download tab</span>
-              <span class="block text-[11px] text-slate-500 mt-1">Disables Cmd/Ctrl+S and removes the Download button from the floating nav.</span>
-            </span>
-          </label>
-
           <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
             <input id="workspaceSettingHideFormTab" type="checkbox" class="mt-0.5 h-4 w-4 accent-blue-600" />
             <span>
