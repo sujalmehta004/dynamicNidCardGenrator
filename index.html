@@ -852,7 +852,7 @@
     <span class="w-px h-3.5 bg-slate-200 mx-0.5"></span>
 
     <!-- Tab: Admin (gear icon) -->
-    <button id="tabAdminBtn" onclick="shiftWorkspace('admin')" title="Admin Setup"
+    <button id="tabAdminBtn" onclick="shiftWorkspace('admin')" title="Settings" aria-label="Settings"
       class="w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800">
       <svg class="w-4 h-4" style="width:15px;height:15px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -5116,7 +5116,7 @@
         const shouldHideBySetting =
           key === "form" && hiddenSettings.hideFormTab;
 
-        const shouldHideInMinimalMode = isMinimalWorkspaceMode && key !== "portal";
+        const shouldHideInMinimalMode = isMinimalWorkspaceMode && key !== "portal" && key !== "admin";
 
         if (!isDashboardUnlocked && key !== "admin") {
           btn.classList.add("hidden");
@@ -5224,9 +5224,8 @@
       const formBtn = document.getElementById("tabFormBtn");
 
       if (portalBtn) {
-        const shouldHide = isMinimalWorkspaceMode;
-        portalBtn.classList.toggle("hidden", shouldHide);
-        portalBtn.disabled = shouldHide;
+        portalBtn.classList.remove("hidden");
+        portalBtn.disabled = false;
       }
 
       if (formBtn) {
@@ -5235,7 +5234,7 @@
         formBtn.disabled = shouldHide;
       }
 
-      if (isMinimalWorkspaceMode) {
+      if (isMinimalWorkspaceMode && currentWorkspaceTab !== "admin") {
         currentWorkspaceTab = "portal";
         updateWorkspaceSettingsModalUI();
         if (typeof applySidebarState === "function") {
@@ -5345,7 +5344,7 @@
     }
 
     function shiftWorkspace(targetViewTab) {
-      if (isMinimalWorkspaceMode) {
+      if (isMinimalWorkspaceMode && targetViewTab !== "admin") {
         targetViewTab = "portal";
       }
 
