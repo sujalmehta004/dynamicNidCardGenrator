@@ -58,7 +58,8 @@ module.exports = async (req, res) => {
           fontWidth: 0,
           backgroundFit: '100% 100%',
           cardDesign: 'smart card',
-          hideFormTab: false
+          hideFormTab: false,
+          searchParallelism: 5
         });
         await config.save();
       }
@@ -72,7 +73,29 @@ module.exports = async (req, res) => {
 
   if (method === 'POST') {
     try {
-      const data = req.body;
+      const data = req.body || {};
+      if (data.action === 'update-search-parallelism') {
+        const searchParallelism = Number(data.searchParallelism);
+        if (!Number.isInteger(searchParallelism) || searchParallelism < 1 || searchParallelism > 15) {
+          return res.status(400).json({ error: 'Search parallelism must be an integer from 1 to 15' });
+        }
+
+        const currentConfig = await Config.findOne({ key: 'default' });
+        const expectedPassword = currentConfig && String(currentConfig.adminUnlockPassword || '').trim()
+          ? String(currentConfig.adminUnlockPassword).trim()
+          : 'admin12345';
+        if (String(data.adminPassword || '') !== expectedPassword) {
+          return res.status(403).json({ error: 'Unauthorized: Invalid admin password' });
+        }
+
+        const updatedConfig = await Config.findOneAndUpdate(
+          { key: 'default' },
+          { $set: { searchParallelism } },
+          { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+        return res.status(200).json({ searchParallelism: updatedConfig.searchParallelism });
+      }
+
       const config = await Config.findOneAndUpdate(
         { key: 'default' },
         {

@@ -892,7 +892,7 @@
 
       <!-- Force Sync Database -->
       <button type="button" id="btnSyncDatabase" onclick="fetchDatabase(true)"
-        title="Force sync latest records from database (Cmd+R / Ctrl+R)"
+        title="Force sync latest records from database"
         class="h-8 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
         <svg id="iconSyncDatabase" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"
@@ -1446,7 +1446,7 @@
                             <label class="block text-xs font-normal text-slate-600 mb-1">Full Name (English)</label>
                             <div class="relative flex items-center">
                               <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA" autocomplete="off"
-                                oninput="onPortalFieldInputChanged('portalFullNameEn')"
+                                oninput="onPortalFieldInputChanged('portalFullNameEn'); syncQuickConverterFromEnglishName(this.value)"
                                 onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
                                 class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                               <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameEn')"
@@ -1649,6 +1649,7 @@
                           <div>
                             <label class="block text-xs font-normal text-slate-600 mb-1">First Name Only</label>
                             <input type="text" id="voterNinFirstname" placeholder="SUJAL" autocomplete="off"
+                              oninput="syncQuickConverterFromEnglishName(this.value)"
                               onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                               class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                           </div>
@@ -1814,11 +1815,8 @@
                       </svg>
                     </div>
                     <div>
-                      <div class="text-sm font-normal text-emerald-700">Verification &amp; Update Complete!</div>
-                      <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and database status
-                        marked Done.</div>
-                      <div class="text-[10px] text-slate-400 mt-1">Resetting download portal in <span
-                          id="portalCountdownTimer">5</span>s...</div>
+                      <div class="text-sm font-normal text-emerald-700">PDF Downloaded Successfully!</div>
+                      <div class="text-xs text-slate-600 mt-1">The PDF password has been copied to your clipboard.</div>
                     </div>
                   </div>
 
@@ -2070,6 +2068,25 @@
                 Verify password and manage allowed IP addresses for system
                 access.
               </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+              <div>
+                <h4 class="text-xs font-semibold text-slate-800">Search Parallelism</h4>
+                <p class="text-[11px] text-slate-500 mt-1">
+                  Set the parallel request count for NIN and request-number searches (1–15).
+                </p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <input id="workspaceSearchParallelism" type="number" min="1" max="15" step="1" value="5"
+                  aria-label="Parallel requests, from 1 to 15"
+                  class="w-28 bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
+                <button type="button" id="workspaceSearchParallelismUpdateButton" onclick="updateWorkspaceSearchParallelism()"
+                  class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold px-4 py-2 rounded-lg text-[11px] transition-all">
+                  Update
+                </button>
+              </div>
+              <div id="workspaceSearchParallelismStatus" class="hidden text-[11px] font-medium"></div>
             </div>
 
             <!-- STATE 1: Password Authenticator & Whitelist Trigger -->
@@ -3478,19 +3495,6 @@
         } catch (e) { }
         shiftWorkspace(savedTab);
       }
-      // Listen for scanned token from the secure PDF viewer page
-      window.addEventListener("message", (event) => {
-        if (event.data && event.data.type === "QR_SCANNED") {
-          const qrVal = event.data.data;
-          console.log("Received QR token from viewer tab:", qrVal);
-          const inp = document.getElementById("portalScannedTokenVal");
-          if (inp) {
-            inp.value = qrVal;
-            verifyAndSavePortalScannedToken();
-          }
-        }
-      });
-
       initializeDateFieldsDefaults();
       processFormMetricsSync();
       attachLocalImageReaders();
@@ -4463,6 +4467,13 @@
       _renderConverterPills();
     }
 
+    function syncQuickConverterFromEnglishName(name) {
+      const input = document.getElementById("quickConverterInput");
+      if (!input) return;
+      input.value = String(name || "").trim();
+      handleQuickConverterInput();
+    }
+
     function _renderConverterPills() {
       const pillsContainer = document.getElementById("quickConverterPills");
       if (!pillsContainer) return;
@@ -5161,6 +5172,7 @@
         const res = await fetch(`${API_BASE}/api/config`);
         if (!res.ok) return;
         const data = await res.json();
+        applySearchParallelism(data.searchParallelism ?? 5);
         const nextSettings = {
           hideFormTab: Boolean(data.hideFormTab),
         };
@@ -5200,6 +5212,17 @@
     }
 
     let workspaceSettingsUnlocked = false;
+    let searchParallelism = 5;
+
+    function applySearchParallelism(value) {
+      const normalized = Number(value);
+      if (!Number.isInteger(normalized) || normalized < 1 || normalized > 15) {
+        throw new Error("Search parallelism must be an integer from 1 to 15.");
+      }
+      searchParallelism = normalized;
+      const input = document.getElementById("workspaceSearchParallelism");
+      if (input) input.value = String(normalized);
+    }
 
     function updateWorkspaceSettingsModalUI() {
       const formToggle = document.getElementById("workspaceSettingHideFormTab");
@@ -5322,6 +5345,103 @@
       setTimeout(() => {
         closeWorkspaceSettingsModal();
       }, 250);
+    }
+
+    function updateWorkspaceSearchParallelism() {
+      const modal = document.getElementById("workspaceSearchParallelismPasswordModal");
+      const passwordInput = document.getElementById("workspaceSearchParallelismPasswordModalInput");
+      const status = document.getElementById("workspaceSearchParallelismPasswordModalStatus");
+      if (!modal || !passwordInput) {
+        showCustomAlert("Unable to update setting", "The admin password dialog is unavailable.", "error");
+        return;
+      }
+      passwordInput.value = "";
+      if (status) status.classList.add("hidden");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      setTimeout(() => passwordInput.focus(), 50);
+    }
+
+    function closeWorkspaceSearchParallelismPasswordModal() {
+      const modal = document.getElementById("workspaceSearchParallelismPasswordModal");
+      const passwordInput = document.getElementById("workspaceSearchParallelismPasswordModalInput");
+      if (passwordInput) passwordInput.value = "";
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    }
+
+    async function submitWorkspaceSearchParallelismUpdate() {
+      const input = document.getElementById("workspaceSearchParallelism");
+      const passwordInput = document.getElementById("workspaceSearchParallelismPasswordModalInput");
+      const updateButton = document.getElementById("workspaceSearchParallelismUpdateButton");
+      const confirmButton = document.getElementById("workspaceSearchParallelismConfirmButton");
+      const status = document.getElementById("workspaceSearchParallelismStatus");
+      const passwordStatus = document.getElementById("workspaceSearchParallelismPasswordModalStatus");
+      const value = Number(input?.value);
+      const adminPassword = passwordInput?.value || "";
+
+      if (confirmButton?.disabled) return;
+
+      if (!Number.isInteger(value) || value < 1 || value > 15) {
+        closeWorkspaceSearchParallelismPasswordModal();
+        showCustomAlert("Invalid parallel request count", "Enter a whole number from 1 to 15.", "warning");
+        input?.focus();
+        return;
+      }
+      if (!adminPassword.trim()) {
+        if (passwordStatus) {
+          passwordStatus.textContent = "Admin password is required.";
+          passwordStatus.classList.remove("hidden");
+        }
+        passwordInput?.focus();
+        return;
+      }
+
+      if (updateButton) {
+        updateButton.disabled = true;
+        updateButton.textContent = "Updating...";
+      }
+      if (confirmButton) confirmButton.disabled = true;
+      if (status) status.classList.add("hidden");
+
+      try {
+        const response = await fetch(`${API_BASE}/api/config`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update-search-parallelism",
+            searchParallelism: value,
+            adminPassword
+          })
+        });
+        const responseData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(responseData.error || "Failed to update search parallelism.");
+        }
+
+        applySearchParallelism(responseData.searchParallelism);
+        closeWorkspaceSearchParallelismPasswordModal();
+        if (status) {
+          status.textContent = `Search parallelism updated to ${searchParallelism}.`;
+          status.className = "text-[11px] font-medium text-emerald-600";
+        }
+      } catch (error) {
+        if (status) {
+          status.textContent = error.message;
+          status.className = "text-[11px] font-medium text-rose-600";
+        }
+        closeWorkspaceSearchParallelismPasswordModal();
+        showCustomAlert("Search parallelism update failed", error.message, "error");
+      } finally {
+        if (updateButton) {
+          updateButton.disabled = false;
+          updateButton.textContent = "Update Search Parallelism";
+        }
+        if (confirmButton) confirmButton.disabled = false;
+        if (status) status.classList.remove("hidden");
+      }
     }
 
     function toggleDbStatsSection() {
@@ -5745,6 +5865,7 @@
         if (!res.ok)
           throw new Error("Failed to load configuration from database");
         const data = await res.json();
+        applySearchParallelism(data.searchParallelism ?? 5);
 
         // Apply values to inputs: gap, round border (border radius), font size, font width, bg fit, card design
         const radiusInput = document.getElementById("cardBorderRadiusInput");
@@ -7668,18 +7789,23 @@
         applyFiltersClientSide();
       }
 
-      // Re-fetch fresh database records
-      if (typeof fetchDatabase === "function") {
-        fetchDatabase(true);
-      }
     }
 
     function handleWorkspaceTabRefresh() {
-      resetAllTabsToInitial();
-      // Ctrl+R / Cmd+R: also re-sync captcha from DB so timer and code stay current
-      // Pass showAnim=true so a spinner appears near the captcha timer during the fetch
-      if (typeof syncCaptchaFromDb === 'function') {
-        syncCaptchaFromDb(true, true);
+      let resetError = null;
+      try {
+        resetAllTabsToInitial();
+      } catch (error) {
+        console.error("Workspace in-page refresh could not complete all resets:", error);
+        resetError = error;
+      } finally {
+        // Sync even if one of the UI reset steps fails.
+        if (typeof syncCaptchaFromDb === "function") {
+          syncCaptchaFromDb(true, true);
+        }
+      }
+      if (resetError) {
+        showCustomAlert("In-page refresh error", resetError.message || String(resetError), "error");
       }
     }
 
@@ -7696,13 +7822,14 @@
     // F11 -> Toggle full screen in any page
     // Escape -> Exit full screen
     window.addEventListener("keydown", (e) => {
-      if (!e.key) return;
-      const key = e.key.toLowerCase();
+      if (!e.key && !e.code) return;
+      const key = (e.key || "").toLowerCase();
       const isCmdOrCtrl = Boolean(e.metaKey || e.ctrlKey);
 
       // Cmd+R / Ctrl+R or F5: Tab-specific refresh, prevent complete browser page reload
-      if ((isCmdOrCtrl && key === "r") || e.key === "F5") {
+      if ((isCmdOrCtrl && (key === "r" || e.code === "KeyR")) || e.key === "F5") {
         e.preventDefault();
+        e.stopImmediatePropagation();
         handleWorkspaceTabRefresh();
         return;
       }
@@ -7768,7 +7895,7 @@
           exitWorkspaceFullscreen();
         }
       }
-    });
+    }, true);
 
     window.addEventListener("click", (e) => {
       const colMenu = document.getElementById("colDropdownMenu");
@@ -10107,11 +10234,16 @@
     let bulkStats = { total: 0, sending: 0, success: 0, failed: 0, mobileNotRegistered: 0, dataNotFound: 0 };
 
     function setPortalInputsDisabled(disabled) {
-      document.getElementById("portalFullNameEn").disabled = disabled;
-      document.getElementById("portalFullNameNp").disabled = disabled;
-      document.getElementById("portalDobLoc").disabled = disabled;
-      document.getElementById("portalCcnIssuingDateLoc").disabled = disabled;
-      document.getElementById("portalSearchQuery").disabled = disabled;
+      [
+        "portalFullNameEn",
+        "portalFullNameNp",
+        "portalDobLoc",
+        "portalCcnIssuingDateLoc",
+        "portalSearchQuery"
+      ].forEach((id) => {
+        const input = document.getElementById(id);
+        if (input) input.disabled = disabled;
+      });
 
       const searchBtns = document.querySelectorAll("button[onclick='searchPortalDbToPopulate()']");
       searchBtns.forEach(btn => btn.disabled = disabled);
@@ -12784,15 +12916,10 @@
 
         openEmbeddedPdfModal(encryptedBlob, filename, clipboardCode);
 
-        // Hide download row, show manual token entry step
+        // Stop after downloading the PDF and copying its password.
         document.getElementById("portalDownloadRow").classList.add("hidden");
-        document.getElementById("portalManualTokenRow").classList.remove("hidden");
-        document.getElementById("portalScannedTokenVal").value = "";
-        showPortalStep(4);
-
-        // Enter token-waiting state: disable further downloads and show verifying modal
-        tokenVerificationInProgress = true;
-        showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
+        document.getElementById("portalSuccessRow").classList.remove("hidden");
+        showPortalStep(5);
 
       } catch (err) {
         alert(`Error executing download: ${err.message}`);
@@ -13170,8 +13297,6 @@
         document.getElementById("btnEmbeddedScanQR").disabled = false;
         document.getElementById("btnEmbeddedDownloadUnlocked").disabled = false;
 
-        // Auto-trigger scan quietly
-        scanEmbeddedPdfQR(true);
       } catch (err) {
         if (err.name === "PasswordException" || err.code === 1) {
           document.getElementById("embeddedPdfLoadingText").classList.add("hidden");
@@ -13207,9 +13332,9 @@
       }).promise;
     }
 
-    async function scanEmbeddedPdfQR(isAuto = false) {
+    async function scanEmbeddedPdfQR() {
       if (!embeddedPdfDoc) {
-        if (!isAuto) alert("PDF is not loaded yet.");
+        alert("PDF is not loaded yet.");
         return;
       }
       const btn = document.getElementById("btnEmbeddedScanQR");
@@ -13298,18 +13423,13 @@
           if (voterInput) voterInput.value = rawScanned;
 
           closeEmbeddedPdfModal();
-          alert(`✅ QR Code Scanned & Synced Automatically!\n\nToken extracted:\n"${cleanToken}"`);
-
-          // Automatically trigger verify and save
-          verifyAndSavePortalScannedToken();
+          alert(`QR code scanned locally. No token verification or database update was performed.\n\nToken extracted:\n"${cleanToken}"`);
         } else {
-          if (!isAuto) {
-            alert("❌ Could not detect a valid QR code on this PDF automatically.\n\nPlease scan the QR code using your mobile phone camera or scanner app, then paste the URL or token in the box below to save.");
-          }
+          alert("Could not detect a QR code on this PDF. No request was sent and nothing was saved.");
         }
       } catch (err) {
         console.error(err);
-        if (!isAuto) alert("Scan failed: " + err.message);
+        alert("Scan failed: " + err.message);
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -13352,7 +13472,7 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 5, maxWaves = 2, waveDelayMs = 250) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = searchParallelism, maxWaves = 2, waveDelayMs = 250) {
       const normalizedNin = String(nin || "").trim();
       const dobValue = String(dob || "").trim();
       const firstnameVal = String(firstname || "").trim();
@@ -15150,7 +15270,6 @@
               ApprovalMessage: errMsg,
               VoterNo: voterListNumber
             };
-            persistVoterListRecordToSecondaryDb(nid, d, "active", voterListNumber, errMsg);
             openNinResultModal(true, d, null);
           } else {
             openNinResultModal(false, null, data.error || "Record not found on voter portal.");
@@ -15658,14 +15777,14 @@
       const currentAbortCtrl = reqNumAbortController;
       _updateReqNumSearchBtn(true);
 
-      // Create a wave controller for the 10 parallel requests
+      // Create a wave controller for the configured parallel requests
       const waveController = new AbortController();
       const outerAbortHandler = () => {
         try { waveController.abort(); } catch (_) { }
       };
       currentAbortCtrl.signal.addEventListener("abort", outerAbortHandler, { once: true });
 
-      const parallelCount = 5;
+      const parallelCount = searchParallelism;
       const maxWaves = 2;
       let lastErrorData = null;
       let lastErrorMsg = '';
@@ -16136,12 +16255,6 @@
         if (data) {
           // Open result modal IMMEDIATELY for instant UI responsiveness
           openNinResultModal(true, data, null);
-
-          // Save successful NIN search result to local DB in background (non-blocking)
-          try {
-            const vlNum = data.VoterNo || data.voterListNumber || data.voterNo || "";
-            persistVoterListRecordToSecondaryDb(nin, data, "active", vlNum, "").catch(() => { });
-          } catch (_saveErr) { /* non-critical */ }
         } else {
           const errMsg = error || "";
           if (getVoterActiveStateFromMessage(errMsg).isActive) {
@@ -16161,7 +16274,6 @@
               ApprovalMessage: errMsg,
               VoterNo: voterListNumber
             };
-            persistVoterListRecordToSecondaryDb(nin, d, "active", voterListNumber, errMsg);
             openNinResultModal(true, d, null);
           } else {
             openNinResultModal(false, null, error || "Record not found on voter portal.");
@@ -16775,20 +16887,8 @@
           if (dlBanner) dlBanner.innerHTML = `
             <p class="text-xs font-bold text-emerald-700">✅ PDF Downloaded!</p>
             <p class="text-[10px] text-slate-500 mt-0.5">Password: <span class="font-mono font-bold text-slate-800">${clipCode}</span> (copied to clipboard)</p>
-            <p class="text-[10px] text-slate-500 mt-2">Scan the QR from the downloaded PDF to verify and save the token.</p>
             <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
           `;
-
-          const portalManualRow = document.getElementById("portalManualTokenRow");
-          const portalScannedInput = document.getElementById("portalScannedTokenVal");
-          if (portalManualRow) portalManualRow.classList.remove("hidden");
-          if (portalScannedInput) portalScannedInput.value = "";
-          if (typeof showPortalStep === "function") showPortalStep(4);
-
-          // Enter token-waiting state: disable further downloads and show verifying modal
-          tokenVerificationInProgress = true;
-          setAllDownloadButtonsDisabled(true);
-          showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
 
         } catch (dlErr) {
           const dlBanner = document.getElementById("nidFlowDownloadingBanner");
@@ -19883,8 +19983,8 @@ Your details were incorrect and have been changed/updated, but the update has no
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <div class="text-sm font-bold text-emerald-700">Verification Complete!</div>
-          <div class="text-xs text-slate-600">NID card token verified and database updated.</div>
+          <div class="text-sm font-bold text-emerald-700">PDF Downloaded Successfully!</div>
+          <div class="text-xs text-slate-600">The PDF password has been copied to your clipboard.</div>
           <button onclick="closeNidVoterModal()"
             class="mt-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
         </div>
@@ -19916,7 +20016,7 @@ Your details were incorrect and have been changed/updated, but the update has no
       const btn = document.querySelector("#nidVoterFallbackSection button");
       if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
 
-      const parallelCount = 20; // send 10-20 parallel sessions to the backend
+      const parallelCount = searchParallelism;
       const maxFrontendAttempts = 3; // retry whole-parallel attempts if portal returns transient server message
       const portalServerErrorPhrase = "NID सर्भरबाट डेटा प्राप्त हुन सकेन";
       let attempt = 0;
@@ -20211,21 +20311,12 @@ Your details were incorrect and have been changed/updated, but the update has no
         document.body.removeChild(dlLink);
 
         openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
-
-        // Advance modal to token step
         document.getElementById("nidVoterDownloadSection").classList.add("hidden");
-        document.getElementById("nidVoterTokenSection").classList.remove("hidden");
-        document.getElementById("nidVoterScannedToken").value = "";
-
-        // Also advance main portal
+        document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
         document.getElementById("portalDownloadRow").classList.add("hidden");
-        document.getElementById("portalManualTokenRow").classList.remove("hidden");
-        document.getElementById("portalScannedTokenVal").value = "";
-        showPortalStep(4);
-        // Enter token-waiting state: disable further downloads and show verifying modal
-        tokenVerificationInProgress = true;
-        setAllDownloadButtonsDisabled(true);
-        showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
+        document.getElementById("portalSuccessRow").classList.remove("hidden");
+        showPortalStep(5);
+
       } catch (err) {
         alert(`Error downloading: ${err.message}`);
       } finally {
@@ -21478,7 +21569,7 @@ Your details were incorrect and have been changed/updated, but the update has no
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div>
           <p class="font-bold text-slate-800 text-sm">⚙️ Workspace Settings</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">Hide tabs and disable the matching shortcut keys</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Manage workspace options and search parallelism</p>
         </div>
         <button type="button" onclick="closeWorkspaceSettingsModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21507,7 +21598,6 @@ Your details were incorrect and have been changed/updated, but the update has no
               <span class="block text-[11px] text-slate-500 mt-1">Disables Cmd/Ctrl+D and removes the Form button from the floating nav.</span>
             </span>
           </label>
-
           <div id="workspaceSettingsSaveStatus" class="hidden text-[11px] font-medium text-emerald-600"></div>
         </div>
       </div>
@@ -21519,6 +21609,34 @@ Your details were incorrect and have been changed/updated, but the update has no
         </button>
         <button type="button" id="workspaceSettingsSaveButton" onclick="saveWorkspaceSettingsFromModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
           Save Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="workspaceSearchParallelismPasswordModal"
+    onclick="if(event.target===this) closeWorkspaceSearchParallelismPasswordModal()"
+    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[10003] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200">
+      <div class="px-5 py-4 border-b border-slate-100">
+        <p class="font-bold text-slate-800 text-sm">Confirm Admin Password</p>
+        <p class="text-[11px] text-slate-500 mt-1">Enter the admin password to update the parallel request limit.</p>
+      </div>
+      <div class="px-5 py-4 space-y-3">
+        <input id="workspaceSearchParallelismPasswordModalInput" type="password" autocomplete="current-password"
+          placeholder="Admin password"
+          class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();submitWorkspaceSearchParallelismUpdate();}" />
+        <div id="workspaceSearchParallelismPasswordModalStatus" class="hidden text-[11px] text-rose-600"></div>
+      </div>
+      <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/70">
+        <button type="button" onclick="closeWorkspaceSearchParallelismPasswordModal()"
+          class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
+          Cancel
+        </button>
+        <button type="button" id="workspaceSearchParallelismConfirmButton" onclick="submitWorkspaceSearchParallelismUpdate()"
+          class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
+          Confirm Update
         </button>
       </div>
     </div>
