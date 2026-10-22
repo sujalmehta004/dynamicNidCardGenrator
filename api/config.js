@@ -58,14 +58,12 @@ module.exports = async (req, res) => {
           fontWidth: 0,
           backgroundFit: '100% 100%',
           cardDesign: 'smart card',
-          hideFormTab: false,
-          searchParallelism: 5
+          hideDownloadTab: false,
+          hideFormTab: false
         });
         await config.save();
       }
-
-      const sanitizedConfig = config.toObject ? config.toObject() : { ...config };
-      return res.status(200).json(sanitizedConfig);
+      return res.status(200).json(config);
     } catch (err) {
       return res.status(500).json({ error: 'Failed to retrieve configuration', details: err.message });
     }
@@ -73,29 +71,7 @@ module.exports = async (req, res) => {
 
   if (method === 'POST') {
     try {
-      const data = req.body || {};
-      if (data.action === 'update-search-parallelism') {
-        const searchParallelism = Number(data.searchParallelism);
-        if (!Number.isInteger(searchParallelism) || searchParallelism < 1 || searchParallelism > 15) {
-          return res.status(400).json({ error: 'Search parallelism must be an integer from 1 to 15' });
-        }
-
-        const currentConfig = await Config.findOne({ key: 'default' });
-        const expectedPassword = currentConfig && String(currentConfig.adminUnlockPassword || '').trim()
-          ? String(currentConfig.adminUnlockPassword).trim()
-          : 'admin12345';
-        if (String(data.adminPassword || '') !== expectedPassword) {
-          return res.status(403).json({ error: 'Unauthorized: Invalid admin password' });
-        }
-
-        const updatedConfig = await Config.findOneAndUpdate(
-          { key: 'default' },
-          { $set: { searchParallelism } },
-          { new: true, upsert: true, setDefaultsOnInsert: true }
-        );
-        return res.status(200).json({ searchParallelism: updatedConfig.searchParallelism });
-      }
-
+      const data = req.body;
       const config = await Config.findOneAndUpdate(
         { key: 'default' },
         {
@@ -105,12 +81,12 @@ module.exports = async (req, res) => {
           fontWidth: data.fontWidth ?? 0,
           backgroundFit: data.backgroundFit ?? '100% 100%',
           cardDesign: data.cardDesign ?? 'smart card',
+          hideDownloadTab: data.hideDownloadTab ?? false,
           hideFormTab: data.hideFormTab ?? false
         },
         { new: true, upsert: true }
       );
-      const sanitizedConfig = config.toObject ? config.toObject() : { ...config };
-      return res.status(200).json(sanitizedConfig);
+      return res.status(200).json(config);
     } catch (err) {
       return res.status(500).json({ error: 'Failed to update configuration', details: err.message });
     }

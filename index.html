@@ -852,7 +852,7 @@
     <span class="w-px h-3.5 bg-slate-200 mx-0.5"></span>
 
     <!-- Tab: Admin (gear icon) -->
-    <button id="tabAdminBtn" onclick="shiftWorkspace('admin')" title="Settings" aria-label="Settings"
+    <button id="tabAdminBtn" onclick="shiftWorkspace('admin')" title="Admin Setup"
       class="w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer text-slate-500 hover:bg-slate-100 hover:text-slate-800">
       <svg class="w-4 h-4" style="width:15px;height:15px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -892,7 +892,7 @@
 
       <!-- Force Sync Database -->
       <button type="button" id="btnSyncDatabase" onclick="fetchDatabase(true)"
-        title="Force sync latest records from database"
+        title="Force sync latest records from database (Cmd+R / Ctrl+R)"
         class="h-8 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer">
         <svg id="iconSyncDatabase" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"
@@ -1403,8 +1403,27 @@
                 <!-- ── RIGHT COLUMN (70% width): Search Top Row + Search by Name & Search by NIN + Captcha / Actions ── -->
                 <div class="w-full lg:w-[70%] flex flex-col space-y-3.5">
 
-                  <!-- ── ROW 1: Fullscreen + ℹ button only for the download tab ── -->
-                  <div class="flex items-center justify-end gap-2.5">
+                  <!-- ── ROW 1: DB Search (full width) + Fullscreen + ℹ button ── -->
+                  <div class="flex items-center gap-2.5">
+                    <!-- DB Search Input (full width flex) with live suggestions -->
+                    <div class="relative flex-1">
+                      <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <input type="text" id="portalSearchQuery"
+                        placeholder="Search previously saved in database by name or NIN..." autocomplete="off"
+                        oninput="_onPortalSearchQueryInput(this.value)"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();}"
+                        class="w-full bg-white hover:bg-slate-50 border border-slate-200 focus:border-slate-400 focus:ring-1 focus:ring-slate-300 rounded-xl pl-9 pr-3 py-2 text-slate-800 text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
+                      <!-- Live Suggestion Dropdown -->
+                      <div id="portalSearchDropdown"
+                        class="hidden absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+                      </div>
+                    </div>
+                    <!-- Fullscreen button -->
                     <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')"
                       title="Toggle Full Screen (Cmd+S / Ctrl+S)"
                       class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[38px]">
@@ -1416,6 +1435,7 @@
                       <kbd
                         class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200 hidden sm:inline">⌘S</kbd>
                     </button>
+                    <!-- ℹ button -->
                     <button type="button" onclick="openNepaliCharInfo()"
                       title="View collected Nepali characters from voterlist"
                       class="w-[38px] h-[38px] rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium flex items-center justify-center transition-all shadow-2xs cursor-pointer shrink-0">
@@ -1446,7 +1466,7 @@
                             <label class="block text-xs font-normal text-slate-600 mb-1">Full Name (English)</label>
                             <div class="relative flex items-center">
                               <input type="text" id="portalFullNameEn" placeholder="SUJAL MEHTA" autocomplete="off"
-                                oninput="onPortalFieldInputChanged('portalFullNameEn'); syncQuickConverterFromEnglishName(this.value)"
+                                oninput="onPortalFieldInputChanged('portalFullNameEn')"
                                 onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btnPortalInitProcess').click();}"
                                 class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-amber-600 focus:ring-1 focus:ring-amber-600/20 rounded-xl px-3 py-1.5 pr-7 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                               <button type="button" tabindex="-1" onclick="addPortalFieldVariant('portalFullNameEn')"
@@ -1649,7 +1669,6 @@
                           <div>
                             <label class="block text-xs font-normal text-slate-600 mb-1">First Name Only</label>
                             <input type="text" id="voterNinFirstname" placeholder="SUJAL" autocomplete="off"
-                              oninput="syncQuickConverterFromEnglishName(this.value)"
                               onkeydown="if(event.key==='Enter'){event.preventDefault();handleNinSearchClick();}"
                               class="w-full bg-white hover:border-slate-300 focus:bg-white border border-slate-200 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/20 rounded-xl px-3 py-1.5 text-slate-800 uppercase text-xs shadow-2xs transition-all h-[38px] placeholder:text-slate-400 font-normal" />
                           </div>
@@ -1815,8 +1834,11 @@
                       </svg>
                     </div>
                     <div>
-                      <div class="text-sm font-normal text-emerald-700">PDF Downloaded Successfully!</div>
-                      <div class="text-xs text-slate-600 mt-1">The PDF password has been copied to your clipboard.</div>
+                      <div class="text-sm font-normal text-emerald-700">Verification &amp; Update Complete!</div>
+                      <div class="text-xs text-slate-600 mt-1">The NID card token has been verified and database status
+                        marked Done.</div>
+                      <div class="text-[10px] text-slate-400 mt-1">Resetting download portal in <span
+                          id="portalCountdownTimer">5</span>s...</div>
                     </div>
                   </div>
 
@@ -2070,25 +2092,6 @@
               </p>
             </div>
 
-            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-              <div>
-                <h4 class="text-xs font-semibold text-slate-800">Search Parallelism</h4>
-                <p class="text-[11px] text-slate-500 mt-1">
-                  Set the parallel request count for NIN and request-number searches (1–15).
-                </p>
-              </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <input id="workspaceSearchParallelism" type="number" min="1" max="15" step="1" value="5"
-                  aria-label="Parallel requests, from 1 to 15"
-                  class="w-28 bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono" />
-                <button type="button" id="workspaceSearchParallelismUpdateButton" onclick="updateWorkspaceSearchParallelism()"
-                  class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold px-4 py-2 rounded-lg text-[11px] transition-all">
-                  Update
-                </button>
-              </div>
-              <div id="workspaceSearchParallelismStatus" class="hidden text-[11px] font-medium"></div>
-            </div>
-
             <!-- STATE 1: Password Authenticator & Whitelist Trigger -->
             <div id="adminAuthBox" class="space-y-4">
               <div class="space-y-2">
@@ -2158,7 +2161,13 @@
                 </table>
               </div>
 
+              <div class="pt-3 border-t border-slate-100">
+                <button type="button" onclick="openWorkspaceSettingsModal()"
+                  class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-lg text-[11px] transition-all border border-slate-200">
+                  Workspace Settings
+                </button>
               </div>
+            </div>
           </section>
         </div>
 
@@ -3495,6 +3504,19 @@
         } catch (e) { }
         shiftWorkspace(savedTab);
       }
+      // Listen for scanned token from the secure PDF viewer page
+      window.addEventListener("message", (event) => {
+        if (event.data && event.data.type === "QR_SCANNED") {
+          const qrVal = event.data.data;
+          console.log("Received QR token from viewer tab:", qrVal);
+          const inp = document.getElementById("portalScannedTokenVal");
+          if (inp) {
+            inp.value = qrVal;
+            verifyAndSavePortalScannedToken();
+          }
+        }
+      });
+
       initializeDateFieldsDefaults();
       processFormMetricsSync();
       attachLocalImageReaders();
@@ -3519,6 +3541,11 @@
       // byte-for-byte including ZWJ/ZWNJ; silently rewriting pasted text breaks matching.
 
       loadSavedColumnVisibility();
+      loadNepalAdministrativeData();
+      loadSavedVoterListRecords()
+        .then(() => fetchDatabase())
+        .catch(() => fetchDatabase())
+        .finally(() => initPortalAutocomplete());
       checkIpAccessControl();
       loadSavedBordersAndBackgrounds();
       generateVoterCaptcha();
@@ -3526,7 +3553,7 @@
       if (typeof updateSavedCaptchaIndicator === "function") {
         updateSavedCaptchaIndicator();
       }
-      // Minimal startup mode: only load the DB-backed config, captcha store, and allowed-ips data.
+      // Sync captcha from DB immediately on load, then poll every 5 minutes
       if (typeof syncCaptchaFromDb === "function") {
         syncCaptchaFromDb();
         setInterval(syncCaptchaFromDb, 5 * 60 * 1000);
@@ -4467,13 +4494,6 @@
       _renderConverterPills();
     }
 
-    function syncQuickConverterFromEnglishName(name) {
-      const input = document.getElementById("quickConverterInput");
-      if (!input) return;
-      input.value = String(name || "").trim();
-      handleQuickConverterInput();
-    }
-
     function _renderConverterPills() {
       const pillsContainer = document.getElementById("quickConverterPills");
       if (!pillsContainer) return;
@@ -5099,7 +5119,6 @@
 
     let isSidebarCollapsed = true;
     let currentWorkspaceTab = "portal";
-    const isMinimalWorkspaceMode = true;
 
     function toggleSidebarCollapse() {
       // No-op: sidebar replaced by floating top nav
@@ -5118,20 +5137,20 @@
       Object.keys(tabs).forEach(key => {
         const btn = document.getElementById(tabs[key]);
         if (!btn) return;
-
         const isActive = (key === currentWorkspaceTab);
+
+        // Base floating icon-only button classes (wide & thin pill)
         const activeClass = "bg-blue-600 text-white shadow-sm shadow-blue-500/30";
         const inactiveClass = "text-slate-500 hover:bg-slate-100 hover:text-slate-800";
         btn.className = `w-12 sm:w-14 h-7 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer ${isActive ? activeClass : inactiveClass}`;
 
         const shouldHideBySetting =
-          key === "form" && hiddenSettings.hideFormTab;
-
-        const shouldHideInMinimalMode = isMinimalWorkspaceMode && key !== "portal" && key !== "admin";
+          (key === "portal" && hiddenSettings.hideDownloadTab) ||
+          (key === "form" && hiddenSettings.hideFormTab);
 
         if (!isDashboardUnlocked && key !== "admin") {
           btn.classList.add("hidden");
-        } else if (shouldHideBySetting || shouldHideInMinimalMode) {
+        } else if (shouldHideBySetting) {
           btn.classList.add("hidden");
         } else {
           btn.classList.remove("hidden");
@@ -5141,6 +5160,7 @@
 
     let isDbStatsVisible = true;
     let workspaceVisibilitySettings = {
+      hideDownloadTab: false,
       hideFormTab: false,
     };
 
@@ -5148,22 +5168,24 @@
       try {
         const raw = localStorage.getItem("workspace_visibility_settings");
         if (!raw) {
-          return { hideFormTab: Boolean(workspaceVisibilitySettings.hideFormTab) };
+          return { ...workspaceVisibilitySettings };
         }
         const parsed = JSON.parse(raw) || {};
         return {
+          hideDownloadTab: Boolean(parsed.hideDownloadTab),
           hideFormTab: Boolean(parsed.hideFormTab),
         };
       } catch (e) {
-        return { hideFormTab: Boolean(workspaceVisibilitySettings.hideFormTab) };
+        return { ...workspaceVisibilitySettings };
       }
     }
 
     function saveWorkspaceVisibilitySettings(nextSettings = workspaceVisibilitySettings) {
       workspaceVisibilitySettings = {
+        hideDownloadTab: Boolean(nextSettings.hideDownloadTab),
         hideFormTab: Boolean(nextSettings.hideFormTab),
       };
-      localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: workspaceVisibilitySettings.hideFormTab }));
+      localStorage.setItem("workspace_visibility_settings", JSON.stringify(workspaceVisibilitySettings));
       applyWorkspaceVisibilitySettings();
     }
 
@@ -5172,12 +5194,12 @@
         const res = await fetch(`${API_BASE}/api/config`);
         if (!res.ok) return;
         const data = await res.json();
-        applySearchParallelism(data.searchParallelism ?? 5);
         const nextSettings = {
+          hideDownloadTab: Boolean(data.hideDownloadTab),
           hideFormTab: Boolean(data.hideFormTab),
         };
         workspaceVisibilitySettings = nextSettings;
-        localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: nextSettings.hideFormTab }));
+        localStorage.setItem("workspace_visibility_settings", JSON.stringify(nextSettings));
         applyWorkspaceVisibilitySettings();
       } catch (e) {
         console.warn("Could not hydrate workspace visibility settings from database:", e);
@@ -5187,6 +5209,7 @@
     async function persistWorkspaceVisibilityToDatabase(nextSettings = workspaceVisibilitySettings) {
       try {
         const payload = {
+          hideDownloadTab: Boolean(nextSettings.hideDownloadTab),
           hideFormTab: Boolean(nextSettings.hideFormTab),
         };
         const res = await fetch(`${API_BASE}/api/config`, {
@@ -5199,10 +5222,11 @@
         }
         const savedData = await res.json();
         const finalSettings = {
+          hideDownloadTab: Boolean(savedData.hideDownloadTab),
           hideFormTab: Boolean(savedData.hideFormTab),
         };
         workspaceVisibilitySettings = finalSettings;
-        localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: finalSettings.hideFormTab }));
+        localStorage.setItem("workspace_visibility_settings", JSON.stringify(finalSettings));
         applyWorkspaceVisibilitySettings();
         return true;
       } catch (e) {
@@ -5212,26 +5236,17 @@
     }
 
     let workspaceSettingsUnlocked = false;
-    let searchParallelism = 5;
-
-    function applySearchParallelism(value) {
-      const normalized = Number(value);
-      if (!Number.isInteger(normalized) || normalized < 1 || normalized > 15) {
-        throw new Error("Search parallelism must be an integer from 1 to 15.");
-      }
-      searchParallelism = normalized;
-      const input = document.getElementById("workspaceSearchParallelism");
-      if (input) input.value = String(normalized);
-    }
 
     function updateWorkspaceSettingsModalUI() {
+      const downloadToggle = document.getElementById("workspaceSettingHideDownloadTab");
       const formToggle = document.getElementById("workspaceSettingHideFormTab");
       const saveStatus = document.getElementById("workspaceSettingsSaveStatus");
       const passwordBox = document.getElementById("workspaceSettingsPasswordBox");
       const contentBox = document.getElementById("workspaceSettingsContentBox");
       const saveButton = document.getElementById("workspaceSettingsSaveButton");
 
-      if (formToggle) formToggle.checked = Boolean(workspaceVisibilitySettings.hideFormTab);
+      if (downloadToggle) downloadToggle.checked = workspaceVisibilitySettings.hideDownloadTab;
+      if (formToggle) formToggle.checked = workspaceVisibilitySettings.hideFormTab;
       if (saveStatus) saveStatus.classList.add("hidden");
 
       const unlocked = workspaceSettingsUnlocked;
@@ -5247,25 +5262,20 @@
       const formBtn = document.getElementById("tabFormBtn");
 
       if (portalBtn) {
-        portalBtn.classList.remove("hidden");
-        portalBtn.disabled = false;
+        const shouldHide = workspaceVisibilitySettings.hideDownloadTab;
+        portalBtn.classList.toggle("hidden", shouldHide);
+        portalBtn.disabled = shouldHide;
       }
 
       if (formBtn) {
-        const shouldHide = isMinimalWorkspaceMode || workspaceVisibilitySettings.hideFormTab;
+        const shouldHide = workspaceVisibilitySettings.hideFormTab;
         formBtn.classList.toggle("hidden", shouldHide);
         formBtn.disabled = shouldHide;
       }
 
-      if (isMinimalWorkspaceMode && currentWorkspaceTab !== "admin") {
-        currentWorkspaceTab = "portal";
-        updateWorkspaceSettingsModalUI();
-        if (typeof applySidebarState === "function") {
-          applySidebarState();
-        }
-        return;
+      if (workspaceVisibilitySettings.hideDownloadTab && currentWorkspaceTab === "portal") {
+        shiftWorkspace("database");
       }
-
       if (workspaceVisibilitySettings.hideFormTab && currentWorkspaceTab === "form") {
         shiftWorkspace("portal");
       }
@@ -5326,10 +5336,12 @@
     }
 
     async function saveWorkspaceSettingsFromModal() {
+      const downloadToggle = document.getElementById("workspaceSettingHideDownloadTab");
       const formToggle = document.getElementById("workspaceSettingHideFormTab");
       const saveStatus = document.getElementById("workspaceSettingsSaveStatus");
 
       const nextSettings = {
+        hideDownloadTab: Boolean(downloadToggle && downloadToggle.checked),
         hideFormTab: Boolean(formToggle && formToggle.checked),
       };
 
@@ -5345,103 +5357,6 @@
       setTimeout(() => {
         closeWorkspaceSettingsModal();
       }, 250);
-    }
-
-    function updateWorkspaceSearchParallelism() {
-      const modal = document.getElementById("workspaceSearchParallelismPasswordModal");
-      const passwordInput = document.getElementById("workspaceSearchParallelismPasswordModalInput");
-      const status = document.getElementById("workspaceSearchParallelismPasswordModalStatus");
-      if (!modal || !passwordInput) {
-        showCustomAlert("Unable to update setting", "The admin password dialog is unavailable.", "error");
-        return;
-      }
-      passwordInput.value = "";
-      if (status) status.classList.add("hidden");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-      setTimeout(() => passwordInput.focus(), 50);
-    }
-
-    function closeWorkspaceSearchParallelismPasswordModal() {
-      const modal = document.getElementById("workspaceSearchParallelismPasswordModal");
-      const passwordInput = document.getElementById("workspaceSearchParallelismPasswordModalInput");
-      if (passwordInput) passwordInput.value = "";
-      if (modal) {
-        modal.classList.add("hidden");
-        modal.classList.remove("flex");
-      }
-    }
-
-    async function submitWorkspaceSearchParallelismUpdate() {
-      const input = document.getElementById("workspaceSearchParallelism");
-      const passwordInput = document.getElementById("workspaceSearchParallelismPasswordModalInput");
-      const updateButton = document.getElementById("workspaceSearchParallelismUpdateButton");
-      const confirmButton = document.getElementById("workspaceSearchParallelismConfirmButton");
-      const status = document.getElementById("workspaceSearchParallelismStatus");
-      const passwordStatus = document.getElementById("workspaceSearchParallelismPasswordModalStatus");
-      const value = Number(input?.value);
-      const adminPassword = passwordInput?.value || "";
-
-      if (confirmButton?.disabled) return;
-
-      if (!Number.isInteger(value) || value < 1 || value > 15) {
-        closeWorkspaceSearchParallelismPasswordModal();
-        showCustomAlert("Invalid parallel request count", "Enter a whole number from 1 to 15.", "warning");
-        input?.focus();
-        return;
-      }
-      if (!adminPassword.trim()) {
-        if (passwordStatus) {
-          passwordStatus.textContent = "Admin password is required.";
-          passwordStatus.classList.remove("hidden");
-        }
-        passwordInput?.focus();
-        return;
-      }
-
-      if (updateButton) {
-        updateButton.disabled = true;
-        updateButton.textContent = "Updating...";
-      }
-      if (confirmButton) confirmButton.disabled = true;
-      if (status) status.classList.add("hidden");
-
-      try {
-        const response = await fetch(`${API_BASE}/api/config`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "update-search-parallelism",
-            searchParallelism: value,
-            adminPassword
-          })
-        });
-        const responseData = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(responseData.error || "Failed to update search parallelism.");
-        }
-
-        applySearchParallelism(responseData.searchParallelism);
-        closeWorkspaceSearchParallelismPasswordModal();
-        if (status) {
-          status.textContent = `Search parallelism updated to ${searchParallelism}.`;
-          status.className = "text-[11px] font-medium text-emerald-600";
-        }
-      } catch (error) {
-        if (status) {
-          status.textContent = error.message;
-          status.className = "text-[11px] font-medium text-rose-600";
-        }
-        closeWorkspaceSearchParallelismPasswordModal();
-        showCustomAlert("Search parallelism update failed", error.message, "error");
-      } finally {
-        if (updateButton) {
-          updateButton.disabled = false;
-          updateButton.textContent = "Update Search Parallelism";
-        }
-        if (confirmButton) confirmButton.disabled = false;
-        if (status) status.classList.remove("hidden");
-      }
     }
 
     function toggleDbStatsSection() {
@@ -5464,15 +5379,13 @@
     }
 
     function shiftWorkspace(targetViewTab) {
-      if (isMinimalWorkspaceMode && targetViewTab !== "admin") {
-        targetViewTab = "portal";
-      }
-
       const hiddenSettings = getWorkspaceVisibilitySettings();
-      if (targetViewTab === "form" && hiddenSettings.hideFormTab) {
-        if (isMinimalWorkspaceMode) {
-          currentWorkspaceTab = "portal";
-          return;
+      if ((targetViewTab === "portal" && hiddenSettings.hideDownloadTab) || (targetViewTab === "form" && hiddenSettings.hideFormTab)) {
+        if (targetViewTab === "portal") {
+          const altTarget = "database";
+          if (isDashboardUnlocked && document.getElementById("paneWorkspaceDb")) {
+            shiftWorkspace(altTarget);
+          }
         }
         return;
       }
@@ -5865,7 +5778,6 @@
         if (!res.ok)
           throw new Error("Failed to load configuration from database");
         const data = await res.json();
-        applySearchParallelism(data.searchParallelism ?? 5);
 
         // Apply values to inputs: gap, round border (border radius), font size, font width, bg fit, card design
         const radiusInput = document.getElementById("cardBorderRadiusInput");
@@ -5895,10 +5807,11 @@
 
         if (typeof hydrateWorkspaceVisibilitySettingsFromDatabase === "function") {
           const nextSettings = {
+            hideDownloadTab: Boolean(data.hideDownloadTab),
             hideFormTab: Boolean(data.hideFormTab),
           };
           workspaceVisibilitySettings = nextSettings;
-          localStorage.setItem("workspace_visibility_settings", JSON.stringify({ hideFormTab: nextSettings.hideFormTab }));
+          localStorage.setItem("workspace_visibility_settings", JSON.stringify(nextSettings));
           applyWorkspaceVisibilitySettings();
         }
 
@@ -7317,23 +7230,6 @@
     }
 
     async function fetchDatabase(forceRefresh = false) {
-      if (!forceRefresh && allCachedRecords.length === 0) {
-        try {
-          const cached = localStorage.getItem("local_people_cache");
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed)) {
-              allCachedRecords = parsed;
-              updateStatsDashboard();
-              applyFiltersClientSide();
-              return;
-            }
-          }
-        } catch (e) {
-          console.warn("Could not load cached people list from localStorage:", e);
-        }
-      }
-
       if (forceRefresh || allCachedRecords.length === 0) {
         setSyncButtonLoading(true);
         const startTime = Date.now();
@@ -7341,9 +7237,6 @@
           const res = await fetch(`${API_BASE}/api/people`);
           if (!res.ok) throw new Error("Failed to load database records");
           allCachedRecords = await res.json();
-          try {
-            localStorage.setItem("local_people_cache", JSON.stringify(allCachedRecords));
-          } catch (e) { }
           updateStatsDashboard();
         } catch (err) {
           console.error("Error fetching database records:", err);
@@ -7390,7 +7283,19 @@
 
     function startDatabasePolling(intervalMs = 0) {
       if (dbPollIntervalId) return;
-      // Do not fetch people data automatically on page load. The app should load the people database only when the user explicitly starts a verification flow.
+      // Only refresh once on load unless a future caller explicitly enables polling.
+      (async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/people`);
+          if (res.ok) {
+            const latest = await res.json();
+            lastDbSnapshotHash = computeDbSnapshotHash(latest);
+            allCachedRecords = latest;
+            updateStatsDashboard();
+            applyFiltersClientSide();
+          }
+        } catch (e) { }
+      })();
       if (intervalMs > 0) {
         dbPollIntervalId = setInterval(pollDatabaseChanges, intervalMs);
       }
@@ -7789,23 +7694,18 @@
         applyFiltersClientSide();
       }
 
+      // Re-fetch fresh database records
+      if (typeof fetchDatabase === "function") {
+        fetchDatabase(true);
+      }
     }
 
     function handleWorkspaceTabRefresh() {
-      let resetError = null;
-      try {
-        resetAllTabsToInitial();
-      } catch (error) {
-        console.error("Workspace in-page refresh could not complete all resets:", error);
-        resetError = error;
-      } finally {
-        // Sync even if one of the UI reset steps fails.
-        if (typeof syncCaptchaFromDb === "function") {
-          syncCaptchaFromDb(true, true);
-        }
-      }
-      if (resetError) {
-        showCustomAlert("In-page refresh error", resetError.message || String(resetError), "error");
+      resetAllTabsToInitial();
+      // Ctrl+R / Cmd+R: also re-sync captcha from DB so timer and code stay current
+      // Pass showAnim=true so a spinner appears near the captcha timer during the fetch
+      if (typeof syncCaptchaFromDb === 'function') {
+        syncCaptchaFromDb(true, true);
       }
     }
 
@@ -7822,14 +7722,13 @@
     // F11 -> Toggle full screen in any page
     // Escape -> Exit full screen
     window.addEventListener("keydown", (e) => {
-      if (!e.key && !e.code) return;
-      const key = (e.key || "").toLowerCase();
+      if (!e.key) return;
+      const key = e.key.toLowerCase();
       const isCmdOrCtrl = Boolean(e.metaKey || e.ctrlKey);
 
       // Cmd+R / Ctrl+R or F5: Tab-specific refresh, prevent complete browser page reload
-      if ((isCmdOrCtrl && (key === "r" || e.code === "KeyR")) || e.key === "F5") {
+      if ((isCmdOrCtrl && key === "r") || e.key === "F5") {
         e.preventDefault();
-        e.stopImmediatePropagation();
         handleWorkspaceTabRefresh();
         return;
       }
@@ -7850,12 +7749,6 @@
         return;
       }
 
-      // Minimal workspace mode: only the download portal remains active.
-      if (isMinimalWorkspaceMode && isCmdOrCtrl && (key === "f" || key === "s" || key === "d" || key === "k")) {
-        e.preventDefault();
-        return;
-      }
-
       // Cmd+F or Ctrl+F: from any page or tab, redirect to database table and toggle full screen
       if (isCmdOrCtrl && key === "f") {
         e.preventDefault();
@@ -7865,6 +7758,9 @@
 
       // Cmd+S or Ctrl+S: from any page or tab, redirect to download portal and toggle full screen
       if (isCmdOrCtrl && key === "s") {
+        if (workspaceVisibilitySettings.hideDownloadTab) {
+          return;
+        }
         e.preventDefault();
         toggleWorkspaceFullscreen("portal");
         return;
@@ -7895,7 +7791,7 @@
           exitWorkspaceFullscreen();
         }
       }
-    }, true);
+    });
 
     window.addEventListener("click", (e) => {
       const colMenu = document.getElementById("colDropdownMenu");
@@ -10234,16 +10130,11 @@
     let bulkStats = { total: 0, sending: 0, success: 0, failed: 0, mobileNotRegistered: 0, dataNotFound: 0 };
 
     function setPortalInputsDisabled(disabled) {
-      [
-        "portalFullNameEn",
-        "portalFullNameNp",
-        "portalDobLoc",
-        "portalCcnIssuingDateLoc",
-        "portalSearchQuery"
-      ].forEach((id) => {
-        const input = document.getElementById(id);
-        if (input) input.disabled = disabled;
-      });
+      document.getElementById("portalFullNameEn").disabled = disabled;
+      document.getElementById("portalFullNameNp").disabled = disabled;
+      document.getElementById("portalDobLoc").disabled = disabled;
+      document.getElementById("portalCcnIssuingDateLoc").disabled = disabled;
+      document.getElementById("portalSearchQuery").disabled = disabled;
 
       const searchBtns = document.querySelectorAll("button[onclick='searchPortalDbToPopulate()']");
       searchBtns.forEach(btn => btn.disabled = disabled);
@@ -12489,10 +12380,6 @@
         const dbRes = await fetch(`${API_BASE}/api/people`, { signal: bulkVerifyAbortController.signal });
         if (!dbRes.ok) throw new Error("Failed to fetch database records.");
         const allRecords = await dbRes.json();
-        try {
-          localStorage.setItem("local_people_cache", JSON.stringify(allRecords || []));
-        } catch (e) { }
-        allCachedRecords = Array.isArray(allRecords) ? allRecords : [];
         if (!isBulkVerifyRunning || bulkVerifyAbortController.signal.aborted) return;
 
         const targets = allRecords.filter(r => r.status !== "done");
@@ -12916,10 +12803,15 @@
 
         openEmbeddedPdfModal(encryptedBlob, filename, clipboardCode);
 
-        // Stop after downloading the PDF and copying its password.
+        // Hide download row, show manual token entry step
         document.getElementById("portalDownloadRow").classList.add("hidden");
-        document.getElementById("portalSuccessRow").classList.remove("hidden");
-        showPortalStep(5);
+        document.getElementById("portalManualTokenRow").classList.remove("hidden");
+        document.getElementById("portalScannedTokenVal").value = "";
+        showPortalStep(4);
+
+        // Enter token-waiting state: disable further downloads and show verifying modal
+        tokenVerificationInProgress = true;
+        showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
 
       } catch (err) {
         alert(`Error executing download: ${err.message}`);
@@ -13297,6 +13189,8 @@
         document.getElementById("btnEmbeddedScanQR").disabled = false;
         document.getElementById("btnEmbeddedDownloadUnlocked").disabled = false;
 
+        // Auto-trigger scan quietly
+        scanEmbeddedPdfQR(true);
       } catch (err) {
         if (err.name === "PasswordException" || err.code === 1) {
           document.getElementById("embeddedPdfLoadingText").classList.add("hidden");
@@ -13332,9 +13226,9 @@
       }).promise;
     }
 
-    async function scanEmbeddedPdfQR() {
+    async function scanEmbeddedPdfQR(isAuto = false) {
       if (!embeddedPdfDoc) {
-        alert("PDF is not loaded yet.");
+        if (!isAuto) alert("PDF is not loaded yet.");
         return;
       }
       const btn = document.getElementById("btnEmbeddedScanQR");
@@ -13423,13 +13317,18 @@
           if (voterInput) voterInput.value = rawScanned;
 
           closeEmbeddedPdfModal();
-          alert(`QR code scanned locally. No token verification or database update was performed.\n\nToken extracted:\n"${cleanToken}"`);
+          alert(`✅ QR Code Scanned & Synced Automatically!\n\nToken extracted:\n"${cleanToken}"`);
+
+          // Automatically trigger verify and save
+          verifyAndSavePortalScannedToken();
         } else {
-          alert("Could not detect a QR code on this PDF. No request was sent and nothing was saved.");
+          if (!isAuto) {
+            alert("❌ Could not detect a valid QR code on this PDF automatically.\n\nPlease scan the QR code using your mobile phone camera or scanner app, then paste the URL or token in the box below to save.");
+          }
         }
       } catch (err) {
         console.error(err);
-        alert("Scan failed: " + err.message);
+        if (!isAuto) alert("Scan failed: " + err.message);
       } finally {
         if (btn) {
           btn.disabled = false;
@@ -13472,7 +13371,7 @@
 
     let portalSearchCache = [];
 
-    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = searchParallelism, maxWaves = 2, waveDelayMs = 250) {
+    async function queryVoterPortalWithRetry({ nin, dob, firstname, signal } = {}, parallelCount = 10, maxWaves = 1, waveDelayMs = 0) {
       const normalizedNin = String(nin || "").trim();
       const dobValue = String(dob || "").trim();
       const firstnameVal = String(firstname || "").trim();
@@ -14368,13 +14267,14 @@
       const floatingNav = document.getElementById("floatingTopNav");
       if (floatingNav) floatingNav.classList.remove("hidden");
 
-      // Minimal workspace mode: only the download tab remains visible.
+      // Hide non-admin tabs
       document.getElementById("tabFormBtn").classList.add("hidden");
-      document.getElementById("tabPortalBtn").classList.remove("hidden");
+      document.getElementById("tabPortalBtn").classList.add("hidden");
       document.getElementById("tabDbBtn").classList.add("hidden");
+      // Keep admin tab visible always
       const tabAdminBtn = document.getElementById("tabAdminBtn");
       if (tabAdminBtn) {
-        tabAdminBtn.classList.remove("hidden");
+        tabAdminBtn.className = "w-12 sm:w-14 h-7 rounded-full flex items-center justify-center bg-blue-600 text-white shadow-sm shadow-blue-500/30 transition-all duration-150 cursor-pointer";
       }
 
       // Hide the other content panes
@@ -14412,9 +14312,9 @@
       const floatingNav = document.getElementById("floatingTopNav");
       if (floatingNav) floatingNav.classList.remove("hidden");
 
-      document.getElementById("tabFormBtn").classList.add("hidden");
+      document.getElementById("tabFormBtn").classList.remove("hidden");
       document.getElementById("tabPortalBtn").classList.remove("hidden");
-      document.getElementById("tabDbBtn").classList.add("hidden");
+      document.getElementById("tabDbBtn").classList.remove("hidden");
       document.getElementById("tabAdminBtn").classList.remove("hidden");
 
       if (authenticatedAdmin) {
@@ -14436,7 +14336,7 @@
       }
 
       const hiddenSettings = getWorkspaceVisibilitySettings();
-      const defaultTab = isMinimalWorkspaceMode ? "portal" : "portal";
+      const defaultTab = hiddenSettings.hideDownloadTab ? "database" : "portal";
       shiftWorkspace(defaultTab);
     }
 
@@ -15270,6 +15170,7 @@
               ApprovalMessage: errMsg,
               VoterNo: voterListNumber
             };
+            persistVoterListRecordToSecondaryDb(nid, d, "active", voterListNumber, errMsg);
             openNinResultModal(true, d, null);
           } else {
             openNinResultModal(false, null, data.error || "Record not found on voter portal.");
@@ -15777,105 +15678,98 @@
       const currentAbortCtrl = reqNumAbortController;
       _updateReqNumSearchBtn(true);
 
-      // Create a wave controller for the configured parallel requests
+      // Create a wave controller for the 10 parallel requests
       const waveController = new AbortController();
       const outerAbortHandler = () => {
         try { waveController.abort(); } catch (_) { }
       };
       currentAbortCtrl.signal.addEventListener("abort", outerAbortHandler, { once: true });
 
-      const parallelCount = searchParallelism;
-      const maxWaves = 2;
+      const parallelCount = 10;
       let lastErrorData = null;
       let lastErrorMsg = '';
       let captchaInvalidDetected = false;
 
+      // Send 10 requests in parallel
+      const requests = Array.from({ length: parallelCount }, (_, i) => {
+        return fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
+          method: 'GET',
+          headers: {
+            'Captcha-Code': captchaCode,
+            'x-captcha-session': session,
+          },
+          signal: waveController.signal
+        })
+          .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            const errMsg = data.error || data.message || '';
+            const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
+              rdIsInvalidCaptchaError(errMsg) :
+              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(errMsg);
+
+            if (isCapErr) {
+              captchaInvalidDetected = true;
+              throw new Error('CAPTCHA_INVALID');
+            }
+
+            if (res.ok) {
+              // First success wins!
+              return { res, data };
+            }
+
+            lastErrorData = data;
+            lastErrorMsg = errMsg || `HTTP ${res.status}`;
+            throw new Error(lastErrorMsg);
+          })
+          .catch((err) => {
+            if (err.name === 'AbortError') throw err;
+            throw err;
+          });
+      });
+
+      // Track whether this was a success (used after try/catch to decide what to do)
       let winner = null;
       let searchSucceeded = false;
       let searchWasAborted = false;
 
-      for (let wave = 0; wave < maxWaves; wave++) {
-        const currentWaveAbort = new AbortController();
-        const requests = Array.from({ length: parallelCount }, (_, i) => {
-          return fetch(`/api/search-by-request-number?requestNumber=${encodeURIComponent(reqNum)}`, {
-            method: 'GET',
-            headers: {
-              'Captcha-Code': captchaCode,
-              'x-captcha-session': session,
-            },
-            signal: currentWaveAbort.signal
-          })
-            .then(async (res) => {
-              const data = await res.json().catch(() => ({}));
-              const errMsg = data.error || data.message || '';
-              const isCapErr = (typeof rdIsInvalidCaptchaError === 'function') ?
-                rdIsInvalidCaptchaError(errMsg) :
-                /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(errMsg);
-
-              if (isCapErr) {
-                captchaInvalidDetected = true;
-                throw new Error('CAPTCHA_INVALID');
-              }
-
-              if (res.ok) {
-                return { res, data };
-              }
-
-              lastErrorData = data;
-              lastErrorMsg = errMsg || `HTTP ${res.status}`;
-              throw new Error(lastErrorMsg);
-            })
-            .catch((err) => {
-              if (err.name === 'AbortError') throw err;
-              throw err;
-            });
-        });
-
-        try {
-          winner = await Promise.any(requests);
-          currentWaveAbort.abort();
-          searchSucceeded = true;
-          break;
-        } catch (aggErr) {
-          currentWaveAbort.abort();
-          if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
-            searchWasAborted = true;
-            break;
-          }
-          if (wave === maxWaves - 1) {
-            const isCapErr = Boolean(
-              captchaInvalidDetected ||
-              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
-              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
-              /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
-            );
-
-            if (isCapErr) {
-              showRequestNumberResultModal({
-                success: false,
-                isCaptchaError: true,
-                requestNumber: reqNum,
-                error: 'Captcha expired or invalid. Please solve fresh captcha below.',
-                raw: lastErrorData || {}
-              });
-            } else {
-              const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
-              showRequestNumberResultModal({
-                success: false,
-                requestNumber: reqNum,
-                error: displayErr,
-                raw: lastErrorData || {}
-              });
-            }
-          }
-        }
-      }
-
       try {
-        if (searchSucceeded && winner) {
-          // handled below
+        winner = await Promise.any(requests);
+        // Successful response received first — halt all other in-flight parallel requests
+        waveController.abort();
+        searchSucceeded = true;
+      } catch (aggErr) {
+        waveController.abort();
+        // If aborted by user explicitly stopping search, exit silently
+        if (currentAbortCtrl.signal.aborted || !isReqNumSearchRunning) {
+          searchWasAborted = true;
+        } else {
+          const isCapErr = Boolean(
+            captchaInvalidDetected ||
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorMsg) ||
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.message || '') ||
+            /captcha|invalid code|expire|session_expired|validation failed|मिल्दैन|गलत/i.test(lastErrorData?.error || '')
+          );
+
+          if (isCapErr) {
+            showRequestNumberResultModal({
+              success: false,
+              isCaptchaError: true,
+              requestNumber: reqNum,
+              error: 'Captcha expired or invalid. Please solve fresh captcha below.',
+              raw: lastErrorData || {}
+            });
+          } else {
+            const displayErr = (lastErrorData && (lastErrorData.message || lastErrorData.error)) || lastErrorMsg || 'Request Not Found';
+            showRequestNumberResultModal({
+              success: false,
+              requestNumber: reqNum,
+              error: displayErr,
+              raw: lastErrorData || {}
+            });
+          }
         }
       } finally {
+        // Always reset button/state
         if (reqNumAbortController === currentAbortCtrl) {
           isReqNumSearchRunning = false;
           _updateReqNumSearchBtn(false);
@@ -16255,6 +16149,12 @@
         if (data) {
           // Open result modal IMMEDIATELY for instant UI responsiveness
           openNinResultModal(true, data, null);
+
+          // Save successful NIN search result to local DB in background (non-blocking)
+          try {
+            const vlNum = data.VoterNo || data.voterListNumber || data.voterNo || "";
+            persistVoterListRecordToSecondaryDb(nin, data, "active", vlNum, "").catch(() => { });
+          } catch (_saveErr) { /* non-critical */ }
         } else {
           const errMsg = error || "";
           if (getVoterActiveStateFromMessage(errMsg).isActive) {
@@ -16274,6 +16174,7 @@
               ApprovalMessage: errMsg,
               VoterNo: voterListNumber
             };
+            persistVoterListRecordToSecondaryDb(nin, d, "active", voterListNumber, errMsg);
             openNinResultModal(true, d, null);
           } else {
             openNinResultModal(false, null, error || "Record not found on voter portal.");
@@ -16887,8 +16788,20 @@
           if (dlBanner) dlBanner.innerHTML = `
             <p class="text-xs font-bold text-emerald-700">✅ PDF Downloaded!</p>
             <p class="text-[10px] text-slate-500 mt-0.5">Password: <span class="font-mono font-bold text-slate-800">${clipCode}</span> (copied to clipboard)</p>
+            <p class="text-[10px] text-slate-500 mt-2">Scan the QR from the downloaded PDF to verify and save the token.</p>
             <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
           `;
+
+          const portalManualRow = document.getElementById("portalManualTokenRow");
+          const portalScannedInput = document.getElementById("portalScannedTokenVal");
+          if (portalManualRow) portalManualRow.classList.remove("hidden");
+          if (portalScannedInput) portalScannedInput.value = "";
+          if (typeof showPortalStep === "function") showPortalStep(4);
+
+          // Enter token-waiting state: disable further downloads and show verifying modal
+          tokenVerificationInProgress = true;
+          setAllDownloadButtonsDisabled(true);
+          showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
 
         } catch (dlErr) {
           const dlBanner = document.getElementById("nidFlowDownloadingBanner");
@@ -19983,8 +19896,8 @@ Your details were incorrect and have been changed/updated, but the update has no
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <div class="text-sm font-bold text-emerald-700">PDF Downloaded Successfully!</div>
-          <div class="text-xs text-slate-600">The PDF password has been copied to your clipboard.</div>
+          <div class="text-sm font-bold text-emerald-700">Verification Complete!</div>
+          <div class="text-xs text-slate-600">NID card token verified and database updated.</div>
           <button onclick="closeNidVoterModal()"
             class="mt-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
         </div>
@@ -20016,7 +19929,7 @@ Your details were incorrect and have been changed/updated, but the update has no
       const btn = document.querySelector("#nidVoterFallbackSection button");
       if (btn) { btn.disabled = true; btn.innerText = "Searching..."; }
 
-      const parallelCount = searchParallelism;
+      const parallelCount = 20; // send 10-20 parallel sessions to the backend
       const maxFrontendAttempts = 3; // retry whole-parallel attempts if portal returns transient server message
       const portalServerErrorPhrase = "NID सर्भरबाट डेटा प्राप्त हुन सकेन";
       let attempt = 0;
@@ -20311,12 +20224,21 @@ Your details were incorrect and have been changed/updated, but the update has no
         document.body.removeChild(dlLink);
 
         openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
-        document.getElementById("nidVoterDownloadSection").classList.add("hidden");
-        document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
-        document.getElementById("portalDownloadRow").classList.add("hidden");
-        document.getElementById("portalSuccessRow").classList.remove("hidden");
-        showPortalStep(5);
 
+        // Advance modal to token step
+        document.getElementById("nidVoterDownloadSection").classList.add("hidden");
+        document.getElementById("nidVoterTokenSection").classList.remove("hidden");
+        document.getElementById("nidVoterScannedToken").value = "";
+
+        // Also advance main portal
+        document.getElementById("portalDownloadRow").classList.add("hidden");
+        document.getElementById("portalManualTokenRow").classList.remove("hidden");
+        document.getElementById("portalScannedTokenVal").value = "";
+        showPortalStep(4);
+        // Enter token-waiting state: disable further downloads and show verifying modal
+        tokenVerificationInProgress = true;
+        setAllDownloadButtonsDisabled(true);
+        showTokenVerifyingModal("Waiting for scanned token to be verified and saved...");
       } catch (err) {
         alert(`Error downloading: ${err.message}`);
       } finally {
@@ -21569,7 +21491,7 @@ Your details were incorrect and have been changed/updated, but the update has no
       <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div>
           <p class="font-bold text-slate-800 text-sm">⚙️ Workspace Settings</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">Manage workspace options and search parallelism</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Hide tabs and disable the matching shortcut keys</p>
         </div>
         <button type="button" onclick="closeWorkspaceSettingsModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21592,12 +21514,21 @@ Your details were incorrect and have been changed/updated, but the update has no
 
         <div id="workspaceSettingsContentBox" class="hidden space-y-4">
           <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
+            <input id="workspaceSettingHideDownloadTab" type="checkbox" class="mt-0.5 h-4 w-4 accent-blue-600" />
+            <span>
+              <span class="block text-xs font-semibold text-slate-800">Hide Download tab</span>
+              <span class="block text-[11px] text-slate-500 mt-1">Disables Cmd/Ctrl+S and removes the Download button from the floating nav.</span>
+            </span>
+          </label>
+
+          <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 cursor-pointer">
             <input id="workspaceSettingHideFormTab" type="checkbox" class="mt-0.5 h-4 w-4 accent-blue-600" />
             <span>
               <span class="block text-xs font-semibold text-slate-800">Hide Form tab</span>
               <span class="block text-[11px] text-slate-500 mt-1">Disables Cmd/Ctrl+D and removes the Form button from the floating nav.</span>
             </span>
           </label>
+
           <div id="workspaceSettingsSaveStatus" class="hidden text-[11px] font-medium text-emerald-600"></div>
         </div>
       </div>
@@ -21609,34 +21540,6 @@ Your details were incorrect and have been changed/updated, but the update has no
         </button>
         <button type="button" id="workspaceSettingsSaveButton" onclick="saveWorkspaceSettingsFromModal()" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md shadow-blue-500/20 transition-all">
           Save Settings
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div id="workspaceSearchParallelismPasswordModal"
-    onclick="if(event.target===this) closeWorkspaceSearchParallelismPasswordModal()"
-    class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[10003] hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <p class="font-bold text-slate-800 text-sm">Confirm Admin Password</p>
-        <p class="text-[11px] text-slate-500 mt-1">Enter the admin password to update the parallel request limit.</p>
-      </div>
-      <div class="px-5 py-4 space-y-3">
-        <input id="workspaceSearchParallelismPasswordModalInput" type="password" autocomplete="current-password"
-          placeholder="Admin password"
-          class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 font-mono"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();submitWorkspaceSearchParallelismUpdate();}" />
-        <div id="workspaceSearchParallelismPasswordModalStatus" class="hidden text-[11px] text-rose-600"></div>
-      </div>
-      <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/70">
-        <button type="button" onclick="closeWorkspaceSearchParallelismPasswordModal()"
-          class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
-          Cancel
-        </button>
-        <button type="button" id="workspaceSearchParallelismConfirmButton" onclick="submitWorkspaceSearchParallelismUpdate()"
-          class="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
-          Confirm Update
         </button>
       </div>
     </div>

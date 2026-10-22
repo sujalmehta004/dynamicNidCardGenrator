@@ -153,10 +153,7 @@ Work faster with built-in global shortcuts accessible from any tab or modal:
 | `Cmd + K` | `Ctrl + K` | Switch to **Form Design Studio** (new entry / editor) |
 | `Cmd + S` | `Ctrl + S` | Switch to **Download Card Portal** (search & PDF download) |
 | `Cmd + F` | `Ctrl + F` | Switch to **Database Index Table** & toggle Full Screen |
-| `Cmd + R` | `Ctrl + R` | Reset workspace forms and sync the saved captcha without fetching people records |
 | `Escape` | `Escape` | Exit Full Screen view |
-
-The admin-only Workspace Settings dialog also controls the number of parallel requests used by NIN and request-number searches (1–15). Every change requires the admin password in a confirmation dialog.
 
 ---
 
@@ -183,7 +180,6 @@ http://localhost:3000
 5. Generate or share the QR verification link.
 6. Use the verification route to redirect or display citizen information.
 7. Use the Download Card Portal (`Cmd+S` / `Ctrl+S`) to search and fetch the document or download paper formats (Standard Portrait, Landscape with White Card, or Phone Verified).
-8. After downloading an e-NID PDF, the portal copies its password to the clipboard and does not automatically verify or save the PDF token. In Workspace Settings, an admin can set the parallel request count for NIN and request-number searches to an integer from 1 to 15; each update requires the admin password.
 
 ---
 
