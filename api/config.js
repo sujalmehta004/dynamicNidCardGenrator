@@ -13,8 +13,16 @@ module.exports = async (req, res) => {
     };
   }
 
-  const method = req.method;
+  try {
+    await connectToDatabase();
+  } catch (error) {
+    console.error('Database connection error:', error);
+    return res.status(500).json({ error: 'Database connection failed' });
+  }
 
+  const { method } = req;
+
+  // Headers
   res.setHeader('Content-Type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -22,27 +30,6 @@ module.exports = async (req, res) => {
 
   if (method === "OPTIONS") {
     return res.status(200).end();
-  }
-
-  const url = req.url || '';
-  if (req.query?.action === 'hostname' || url.includes('/api/hostname')) {
-    const os = require('os');
-    const { execFile } = require('child_process');
-    const fallbackHostname = os.hostname() || '';
-    return new Promise((resolve) => {
-      execFile('hostname', (error, stdout, stderr) => {
-        const hostname = (stdout || '').toString().trim() || (stderr || '').toString().trim() || fallbackHostname;
-        res.status(200).json({ hostname, source: error ? 'fallback' : 'hostname' });
-        resolve();
-      });
-    });
-  }
-
-  try {
-    await connectToDatabase();
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return res.status(500).json({ error: 'Database connection failed' });
   }
 
   if (method === 'GET') {
@@ -57,9 +44,7 @@ module.exports = async (req, res) => {
           verticalGap: 6,
           fontWidth: 0,
           backgroundFit: '100% 100%',
-          cardDesign: 'smart card',
-          hideDownloadTab: false,
-          hideFormTab: false
+          cardDesign: 'smart card'
         });
         await config.save();
       }
@@ -80,9 +65,7 @@ module.exports = async (req, res) => {
           verticalGap: data.verticalGap ?? 6,
           fontWidth: data.fontWidth ?? 0,
           backgroundFit: data.backgroundFit ?? '100% 100%',
-          cardDesign: data.cardDesign ?? 'smart card',
-          hideDownloadTab: data.hideDownloadTab ?? false,
-          hideFormTab: data.hideFormTab ?? false
+          cardDesign: data.cardDesign ?? 'smart card'
         },
         { new: true, upsert: true }
       );

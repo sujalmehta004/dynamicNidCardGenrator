@@ -1,0 +1,17 @@
+{
+    version - 4
+    feature : search only ( setting tab also )
+    git : version-4-new-search-only (e332c1211f71cf9f2d91b2395f9894bc204fb939)
+}
+
+{
+    version - 3
+    feature : new ui , new search features , tab hiding features , all tabs
+    git  : version-3-all_tab-new_download_tab (c047f6919bbb09bb9ef7021e0f0fd55f3e45d9c7)
+}
+
+{
+    version - 0 , 1 , 2
+    feature : complete working - nominal
+    git : 
+}
