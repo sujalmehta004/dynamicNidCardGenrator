@@ -1,13 +1,5 @@
 const https = require('https');
 
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  maxSockets: 60,
-  maxFreeSockets: 20,
-  timeout: 10000,
-  rejectUnauthorized: false
-});
-
 function makeRequest(url, options, postData = null) {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
@@ -16,7 +8,6 @@ function makeRequest(url, options, postData = null) {
       hostname: urlObj.hostname,
       path: urlObj.pathname + urlObj.search,
       headers: options.headers || {},
-      agent: httpsAgent,
       rejectUnauthorized: false,
     };
 
@@ -33,8 +24,8 @@ function makeRequest(url, options, postData = null) {
     });
 
     req.on('error', reject);
-    // timeout in ms (default 6s) to avoid hanging requests
-    const timeoutMs = (options && options.timeout) || 6000;
+    // timeout in ms (default 10s) to avoid hanging requests
+    const timeoutMs = (options && options.timeout) || 10000;
     req.setTimeout(timeoutMs, () => {
       req.destroy(new Error('Request timed out'));
     });
@@ -146,13 +137,17 @@ module.exports = async (req, res) => {
   const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36';
 
   try {
-    // Fast parallel approach: test primary candidates concurrently and return on FIRST success immediately
+    // Parallel approach: create multiple independent sessions and POST GetFromNIN concurrently
+    const requestedParallel = parseInt(req.body.parallelCount || req.query && req.query.parallel || 10, 10) || 10;
+    const parallelCount = Math.min(20, Math.max(1, requestedParallel));
+
     const makeAttempt = async (fnameCandidate) => {
       try {
+        // new session per attempt
         const s1 = await makeRequest('https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo', {
           method: 'GET',
           headers: { 'User-Agent': UA, 'Accept': 'text/html' },
-          timeout: 5000
+          timeout: 10000
         });
         const sc = s1.headers && s1.headers['set-cookie'];
         if (!sc || !Array.isArray(sc) || sc.length === 0) return { ok: false, reason: 'no-cookie' };
@@ -163,18 +158,20 @@ module.exports = async (req, res) => {
         const p = await makeRequest(postUrl, {
           method: 'POST',
           headers: { ...hdrs, 'Content-Length': '0', 'Origin': 'https://applyvr.election.gov.np', 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
-          timeout: 5000
+          timeout: 10000
         });
         let json = null;
         try { json = JSON.parse(p.body); } catch (e) { json = null; }
 
+        // If json indicates data present, return it
         if (json && json.data && json.status === 1) return { ok: true, type: 'json', data: json, cookie: cookieStr };
 
+        // If portal indicates already registered, try to GET dashboard and extract prefilled JSON
         if (( !json || !json.data || json.status !== 1 ) && typeof (json && json.message) === 'string') {
           const step3 = await makeRequest('https://applyvr.election.gov.np/Dashboard/NewEnrollment', {
             method: 'GET',
             headers: { 'Cookie': cookieStr, 'User-Agent': UA, 'Referer': 'https://applyvr.election.gov.np/Login/Preregistration/EnterMobileNo' },
-            timeout: 5000
+            timeout: 10000
           });
           const parsed = extractVoterJsonObject(step3.body);
           if (parsed) return { ok: true, type: 'parsed', data: parsed, cookie: cookieStr };
@@ -190,38 +187,15 @@ module.exports = async (req, res) => {
     if (formattedFirstname && !/^[0-9\-/]{2,}$/.test(formattedFirstname)) candidates.push(formattedFirstname);
     candidates.push('sujal');
     candidates.push('');
+    while (candidates.length < parallelCount) candidates.push('sujal' + Math.floor(Math.random() * 10000));
 
-    const attemptPromises = candidates.map(c => makeAttempt(c));
-
-    // Return as soon as ANY attempt succeeds without waiting for slower/failing attempts to timeout!
-    const successResult = await new Promise((resolve) => {
-      let settled = 0;
-      let firstFallback = null;
-      attemptPromises.forEach(async (p) => {
-        try {
-          const r = await p;
-          if (r && r.ok) {
-            resolve(r);
-            return;
-          }
-          if (!firstFallback && r && r.json && typeof r.json.message === 'string') {
-            firstFallback = r;
-          }
-        } catch (e) {
-          // ignore error
-        } finally {
-          settled++;
-          if (settled === attemptPromises.length) {
-            resolve(firstFallback || { ok: false });
-          }
-        }
-      });
-    });
-
+    const attemptPromises = candidates.slice(0, parallelCount).map(c => makeAttempt(c));
+    const results = await Promise.all(attemptPromises);
+    const successResult = results.find(r => r.ok === true);
     let step2 = null;
     let step2Json = null;
     let sessionCookie = null;
-    if (successResult && successResult.ok) {
+    if (successResult) {
       if (successResult.type === 'parsed') {
         const parsedDirect = successResult.data;
         parsedDirect._note = 'extracted_from_new_enrollment_parallel_attempt';
@@ -240,10 +214,12 @@ module.exports = async (req, res) => {
         sessionCookie = successResult.cookie;
       }
     } else {
-      if (successResult && successResult.json && typeof successResult.json.message === 'string') {
-        step2Json = successResult.json;
+      // no success — try to pick a json error if any result had json with message
+      const anyJson = results.find(r => r.json && typeof r.json.message === 'string');
+      if (anyJson) {
+        step2Json = anyJson.json;
       } else {
-        return res.status(500).json({ error: "NID सर्भरबाट डेटा प्राप्त हुन सकेन। कृपया केही समयपछि पुनः प्रयास गर्नुहोस्।" });
+        return res.status(500).json({ error: "NID सर्भरबाट डेटा प्राप्त हुन सकेन। कृपया केही समयपछि पुनः प्रयास गर्नुहोस्।", details: results.slice(0,5) });
       }
     }
 
@@ -441,39 +417,42 @@ module.exports = async (req, res) => {
     // ── District ─────────────────────────────────────────────────────────────
     // Portal uses DistrictId (e.g. 10 = Sunsari) — NOT the standard 1-77 geographic numbering
     const distId = parseInt(parsedData.DistrictId || parsedData.DistrictCode || parsedData.PermanentDistrict || 0, 10);
-    const muniId = parseInt(parsedData.VdcMunicipalityId || parsedData.PermanentVdcMunicipality || 0, 10);
 
-    const districtPromise = (distId && provId)
-      ? makeRequest(
-          `https://applyvr.election.gov.np/Api/RegistrationApi/GetDistrictByProvince?provinceId=${provId}`,
-          { method: 'GET', headers: { ...authHeaders, 'Referer': 'https://applyvr.election.gov.np/Dashboard/NewEnrollment' }, timeout: 4000 }
-        ).catch(() => null)
-      : Promise.resolve(null);
-
-    const muniPromise = (muniId && distId)
-      ? makeRequest(
-          `https://applyvr.election.gov.np/Api/RegistrationApi/GetMunicipalities?DistrictId=${distId}`,
-          { method: 'GET', headers: { ...authHeaders, 'Referer': 'https://applyvr.election.gov.np/Dashboard/NewEnrollment' }, timeout: 4000 }
-        ).catch(() => null)
-      : Promise.resolve(null);
-
-    const [distRes, muniRes] = await Promise.all([districtPromise, muniPromise]);
-
-    if (distRes && distRes.body) {
+    if (distId && provId) {
       try {
+        // Fetch from portal using the LIVE session (still valid right after NewEnrollment)
+        const distRes = await makeRequest(
+          `https://applyvr.election.gov.np/Api/RegistrationApi/GetDistrictByProvince?provinceId=${provId}`,
+          { method: 'GET', headers: { ...authHeaders, 'Referer': 'https://applyvr.election.gov.np/Dashboard/NewEnrollment' } }
+        );
         const distBody = JSON.parse(distRes.body);
+        // Response format: { data: [{id, name, code}], status:1 }
+        // The "name" field is Nepali only (e.g. "सुनसरी")
         const distList = Array.isArray(distBody) ? distBody : (distBody.data || []);
         const distMatch = distList.find(d => String(d.id || "") === String(distId));
         if (distMatch) {
-          const distNameNp = distMatch.name || "";
+          const distNameNp = distMatch.name || "";   // e.g. "सुनसरी"
           parsedData.PermanentDistrictNameNp = distNameNp;
+          // Resolve English name via our Nepali→English lookup
           parsedData.PermanentDistrictNameEn = DISTRICT_NP_TO_EN[distNameNp] || distNameNp;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("District API error:", e.message);
+      }
     }
 
-    if (muniRes && muniRes.body) {
+    // ── Municipality ─────────────────────────────────────────────────────────
+    // Portal uses VdcMunicipalityId (e.g. 5093)
+    // Response format: { data: [{id, name, code}], status:1 }
+    // "name" is Nepali with suffix already included (e.g. "इनरुवा नगरपालिका")
+    const muniId = parseInt(parsedData.VdcMunicipalityId || parsedData.PermanentVdcMunicipality || 0, 10);
+
+    if (muniId && distId) {
       try {
+        const muniRes = await makeRequest(
+          `https://applyvr.election.gov.np/Api/RegistrationApi/GetMunicipalities?DistrictId=${distId}`,
+          { method: 'GET', headers: { ...authHeaders, 'Referer': 'https://applyvr.election.gov.np/Dashboard/NewEnrollment' } }
+        );
         const muniBody = JSON.parse(muniRes.body);
         const muniList = Array.isArray(muniBody) ? muniBody : (muniBody.data || []);
         const muniMatch = muniList.find(m => String(m.id || "") === String(muniId));
