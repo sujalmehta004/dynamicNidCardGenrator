@@ -13173,29 +13173,60 @@
               return;
             }
             const rec = rowObj.record;
-            const status = rowObj.state === "success" ? "done" : "pending";
-            if (rec && rec.ninEn) {
-              try {
-                const response = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(rec.ninEn)}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    status,
-                    updateDate: new Date().toISOString().split("T")[0],
-                    updateAction: "Bulk Verification Status Updated",
-                    updateNote: `Status set to ${status} after bulk verification.`
-                  })
-                });
-                const responseData = await response.json().catch(() => ({}));
-                if (!response.ok) {
-                  throw new Error(responseData.error || `Status update failed (${response.status}).`);
-                }
-              } catch (error) {
-                console.error(`Failed to update bulk verification status for ${rec.ninEn}:`, error);
+            if (!rec || !rec.ninEn) return;
+            const currentStatus = String(rec.status || "").trim().toLowerCase();
+            const isMobileUpdate = currentStatus === "inprogress" || currentStatus === "mobile_updated" || currentStatus.includes("mobile");
+            const isDataUpdate = currentStatus === "data_update" || currentStatus === "data update";
+            const isCardError = currentStatus === "card_error" || currentStatus === "card error";
+            const isNotOnline = currentStatus === "not online" || currentStatus === "notonline" || currentStatus === "not_online";
+            const hasOtp = rowObj.state === "success";
+
+            let targetStatus = null;
+            if (isMobileUpdate || isDataUpdate) {
+              targetStatus = null;
+            } else if (isCardError) {
+              if (hasOtp) targetStatus = "pending";
+            } else if (isNotOnline) {
+              if (hasOtp || rowObj.voterSearchResult?.success) {
+                targetStatus = "pending";
+              } else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") {
+                targetStatus = "inprogress";
+              } else if (rowObj.resolvedCode === "DATA_NOT_FOUND") {
+                targetStatus = "not online";
               }
+            } else if (hasOtp) {
+              targetStatus = "pending";
+            } else if (rowObj.resolvedCode === "MOBILE_NOT_REGISTERED") {
+              targetStatus = "inprogress";
+            } else if (rowObj.resolvedCode === "DATA_NOT_FOUND") {
+              targetStatus = "not online";
+            }
+
+            if (!targetStatus || rec.status === targetStatus) return;
+            try {
+              const response = await fetch(`${API_BASE}/api/people?originalNin=${encodeURIComponent(rec.ninEn)}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  status: targetStatus,
+                  updateDate: new Date().toISOString().split("T")[0],
+                  updateAction: "Bulk Verification Status Updated",
+                  updateNote: `Status set to ${targetStatus} from the bulk OTP result.`
+                })
+              });
+              const responseData = await response.json().catch(() => ({}));
+              if (!response.ok) {
+                throw new Error(responseData.error || `Status update failed (${response.status}).`);
+              }
+              rec.status = targetStatus;
+            } catch (error) {
+              console.error(`Failed to update bulk verification status for ${rec.ninEn}:`, error);
             }
           });
         await Promise.allSettled(autoUpdatePromises);
+        if (typeof fetchDatabase === "function") {
+          await fetchDatabase(true);
+        }
 
         if (bulkStats.sending === 0) {
           const parts = [];
