@@ -13,16 +13,8 @@ module.exports = async (req, res) => {
     };
   }
 
-  try {
-    await connectToDatabase();
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return res.status(500).json({ error: 'Database connection failed' });
-  }
+  const method = req.method;
 
-  const { method } = req;
-
-  // Headers
   res.setHeader('Content-Type', 'application/json');
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -30,6 +22,27 @@ module.exports = async (req, res) => {
 
   if (method === "OPTIONS") {
     return res.status(200).end();
+  }
+
+  const url = req.url || '';
+  if (req.query?.action === 'hostname' || url.includes('/api/hostname')) {
+    const os = require('os');
+    const { execFile } = require('child_process');
+    const fallbackHostname = os.hostname() || '';
+    return new Promise((resolve) => {
+      execFile('hostname', (error, stdout, stderr) => {
+        const hostname = (stdout || '').toString().trim() || (stderr || '').toString().trim() || fallbackHostname;
+        res.status(200).json({ hostname, source: error ? 'fallback' : 'hostname' });
+        resolve();
+      });
+    });
+  }
+
+  try {
+    await connectToDatabase();
+  } catch (error) {
+    console.error('Database connection error:', error);
+    return res.status(500).json({ error: 'Database connection failed' });
   }
 
   if (method === 'GET') {
@@ -44,11 +57,17 @@ module.exports = async (req, res) => {
           verticalGap: 6,
           fontWidth: 0,
           backgroundFit: '100% 100%',
-          cardDesign: 'smart card'
+          cardDesign: 'smart card',
+          hideFormTab: false,
+          searchParallelism: 2,
+          voterListParallelism: 2,
+          voterListRetryCount: 2
         });
         await config.save();
       }
-      return res.status(200).json(config);
+
+      const sanitizedConfig = config.toObject ? config.toObject() : { ...config };
+      return res.status(200).json(sanitizedConfig);
     } catch (err) {
       return res.status(500).json({ error: 'Failed to retrieve configuration', details: err.message });
     }
@@ -56,7 +75,41 @@ module.exports = async (req, res) => {
 
   if (method === 'POST') {
     try {
-      const data = req.body;
+      const data = req.body || {};
+      if (data.action === 'update-search-settings' || data.action === 'update-search-parallelism') {
+        const currentConfig = await Config.findOne({ key: 'default' });
+        const searchParallelism = Number(data.searchParallelism);
+        const voterListParallelism = Number(data.voterListParallelism ?? currentConfig?.voterListParallelism ?? 2);
+        const voterListRetryCount = Number(data.voterListRetryCount ?? currentConfig?.voterListRetryCount ?? 2);
+        if (!Number.isInteger(searchParallelism) || searchParallelism < 1 || searchParallelism > 10) {
+          return res.status(400).json({ error: 'Search parallelism must be an integer from 1 to 10' });
+        }
+        if (!Number.isInteger(voterListParallelism) || voterListParallelism < 1 || voterListParallelism > 10) {
+          return res.status(400).json({ error: 'Voter-list parallelism must be an integer from 1 to 10' });
+        }
+        if (!Number.isInteger(voterListRetryCount) || voterListRetryCount < 1 || voterListRetryCount > 10) {
+          return res.status(400).json({ error: 'Voter-list retry count must be an integer from 1 to 10' });
+        }
+
+        const expectedPassword = currentConfig && String(currentConfig.adminUnlockPassword || '').trim()
+          ? String(currentConfig.adminUnlockPassword).trim()
+          : 'admin12345';
+        if (String(data.adminPassword || '') !== expectedPassword) {
+          return res.status(403).json({ error: 'Unauthorized: Invalid admin password' });
+        }
+
+        const updatedConfig = await Config.findOneAndUpdate(
+          { key: 'default' },
+          { $set: { searchParallelism, voterListParallelism, voterListRetryCount } },
+          { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+        return res.status(200).json({
+          searchParallelism: updatedConfig.searchParallelism,
+          voterListParallelism: updatedConfig.voterListParallelism,
+          voterListRetryCount: updatedConfig.voterListRetryCount
+        });
+      }
+
       const config = await Config.findOneAndUpdate(
         { key: 'default' },
         {
@@ -65,11 +118,13 @@ module.exports = async (req, res) => {
           verticalGap: data.verticalGap ?? 6,
           fontWidth: data.fontWidth ?? 0,
           backgroundFit: data.backgroundFit ?? '100% 100%',
-          cardDesign: data.cardDesign ?? 'smart card'
+          cardDesign: data.cardDesign ?? 'smart card',
+          hideFormTab: data.hideFormTab ?? false
         },
         { new: true, upsert: true }
       );
-      return res.status(200).json(config);
+      const sanitizedConfig = config.toObject ? config.toObject() : { ...config };
+      return res.status(200).json(sanitizedConfig);
     } catch (err) {
       return res.status(500).json({ error: 'Failed to update configuration', details: err.message });
     }

@@ -73,7 +73,7 @@ function makeHttpsRequest(url, options, postData) {
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, captcha-code, Captcha-Code");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, captcha-code, Captcha-Code, x-captcha-session, X-Captcha-Session");
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
   }
 
   const cookies = parseCookies(req.headers.cookie);
-  const sessionCookie = cookies['captcha-session'];
+  const sessionCookie = req.headers["x-captcha-session"] || req.headers["X-Captcha-Session"] || cookies['captcha-session'];
 
   const { fullName, fullNameLoc, dobLoc, ccnIssuingDateLoc } = req.body;
   if (!fullName || !fullNameLoc || !dobLoc || !ccnIssuingDateLoc) {

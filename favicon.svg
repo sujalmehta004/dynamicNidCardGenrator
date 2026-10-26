@@ -1,7 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="National Identity Hub icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Search icon">
   <rect width="64" height="64" rx="16" fill="#0f172a"/>
-  <rect x="12" y="14" width="40" height="36" rx="8" fill="#1d4ed8"/>
-  <path d="M20 24h24" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-  <path d="M20 32h16" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-  <path d="M20 40h10" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="28" cy="28" r="15" fill="none" stroke="#60a5fa" stroke-width="6"/>
+  <path d="m39 39 13 13" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
 </svg>
