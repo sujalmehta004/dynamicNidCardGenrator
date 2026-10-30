@@ -1106,6 +1106,7 @@
         <kbd
           class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘F</kbd>
       </button>
+
     </div>
   </div>
   <!-- ═══════════════════════════════════════════════════════════ -->
@@ -1471,8 +1472,20 @@
                 <!-- ── RIGHT COLUMN (70% width): Search Top Row + Search by Name & Search by NIN + Captcha / Actions ── -->
                 <div class="w-full lg:w-[70%] flex flex-col space-y-3.5">
 
-                  <!-- ── ROW 1: Fullscreen + ℹ button only for the download tab ── -->
+                  <!-- ── ROW 1: Fullscreen + History + ℹ button only for the download tab ── -->
                   <div class="flex items-center justify-end gap-2.5">
+                    <div class="relative">
+                      <button type="button" id="btnOpenDownloadHistory" onclick="toggleDownloadHistoryDrawer()"
+                        title="Open recent card download history"
+                        class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[38px]">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v5l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>History</span>
+                        <kbd class="text-[9px] bg-slate-100 text-slate-500 px-1 py-0.5 rounded font-mono border border-slate-200">⌘H</kbd>
+                      </button>
+                    </div>
                     <button type="button" id="btnTogglePortalFullscreen" onclick="toggleWorkspaceFullscreen('portal')"
                       title="Toggle Full Screen (Cmd+S / Ctrl+S)"
                       class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 h-[38px]">
@@ -1773,9 +1786,6 @@
                     <span class="text-slate-400">→</span>
                     <span id="portalStepInd3" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">3.
                       Download</span>
-                    <span class="text-slate-400">→</span>
-                    <span id="portalStepInd4" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">4. Token
-                      Scan</span>
                   </div>
 
                   <!-- Unified Captcha Station (ENLARGED FOR CLEAR UNDERSTANDING) -->
@@ -1866,8 +1876,8 @@
                       <span>Authentication Successful! Ready to download identity record.</span>
                     </div>
                     <button type="button" id="btnPortalDownloadNid" onclick="executePortalDownload()"
-                      class="w-full bg-slate-900 hover:bg-black text-white font-normal py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md cursor-pointer">
-                      <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      class="w-full bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-normal py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2 text-xs shadow-md cursor-pointer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                           d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                       </svg>
@@ -1879,7 +1889,7 @@
                   <div id="portalManualTokenRow"
                     class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 fade-in">
                     <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg text-slate-700 text-xs">
-                      <span class="font-normal block mb-1">⚠️ PDF Downloaded Successfully!</span>
+                      <span class="font-normal block mb-1">⚠️ Card images downloaded successfully!</span>
                       Open the downloaded PDF card, scan the QR code inside, copy the text/URL, and paste it below to
                       verify and update the database.
                       <span class="text-rose-600 font-normal block mt-0.5">Do not close or refresh this page.</span>
@@ -1905,9 +1915,11 @@
                       </svg>
                     </div>
                     <div>
-                      <div class="text-sm font-normal text-emerald-700">PDF Downloaded Successfully!</div>
-                      <div class="text-xs text-slate-600 mt-1">The PDF password has been copied to your clipboard.</div>
+                      <div id="portalDownloadCompleteTitle" class="text-sm font-normal text-emerald-700">Preparing card images...</div>
+                      <div id="portalDownloadPasswordStatus" class="text-xs text-slate-600 mt-1">The PDF password has been copied to your clipboard.</div>
+                      <div id="portalDownloadImageStatus" class="text-xs text-slate-600 mt-1">Preparing page images...</div>
                     </div>
+                    <div id="portalDownloadImages" class="mt-4 grid grid-cols-1 gap-4 text-left"></div>
                   </div>
 
                   <!-- ── Clear All + Verify All ── -->
@@ -7812,6 +7824,211 @@
       }
     }
 
+    const DOWNLOAD_HISTORY_KEY = "nidqr_card_download_history_v1";
+    const DOWNLOAD_HISTORY_TTL_MS = 12 * 60 * 60 * 1000;
+
+    function getDownloadHistoryEntries() {
+      try {
+        const raw = localStorage.getItem(DOWNLOAD_HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+      } catch (error) {
+        console.warn("Could not read download history:", error);
+        return [];
+      }
+    }
+
+    function pruneExpiredDownloadHistory(entries = getDownloadHistoryEntries()) {
+      const now = Date.now();
+      return (entries || []).filter((entry) => Number(entry?.expiresAt || 0) > now)
+        .sort((a, b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
+    }
+
+    function persistDownloadedCardHistory({ name, nin, thumbnailDataUrl }) {
+      if (!name || !thumbnailDataUrl) return;
+      const now = Date.now();
+      const nextEntry = {
+        id: `history-${now}-${Math.random().toString(16).slice(2, 8)}`,
+        name: String(name).trim(),
+        nin: String(nin || "").trim(),
+        thumbnailDataUrl,
+        createdAt: now,
+        expiresAt: now + DOWNLOAD_HISTORY_TTL_MS,
+      };
+      const nextHistory = [nextEntry, ...pruneExpiredDownloadHistory()].slice(0, 30);
+      try {
+        localStorage.setItem(DOWNLOAD_HISTORY_KEY, JSON.stringify(nextHistory));
+      } catch (error) {
+        console.warn("Could not save download history:", error);
+      }
+      renderDownloadHistoryList();
+    }
+
+    function renderDownloadHistoryList() {
+      const list = document.getElementById("downloadHistoryList");
+      if (!list) return;
+      const entries = pruneExpiredDownloadHistory();
+      if (!entries.length) {
+        list.innerHTML = `
+          <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-center text-[11px] text-slate-500">
+            No downloaded cards in the last 12 hours.
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = entries.map((entry) => {
+        const dateLabel = new Date(Number(entry.createdAt || Date.now())).toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        const name = String(entry.name || "Unknown Person").trim();
+        const nin = entry.nin ? ` • ${entry.nin}` : "";
+        return `
+          <button type="button" data-history-id="${entry.id}" class="history-item w-full text-left rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm hover:border-slate-300 transition-all flex items-center gap-3">
+            <img src="${entry.thumbnailDataUrl || ""}" alt="${name}" class="w-12 h-12 object-cover rounded-lg border border-slate-200 bg-slate-100" />
+            <div class="min-w-0 flex-1">
+              <div class="text-[12px] font-semibold text-slate-800 truncate">${name}</div>
+              <div class="text-[10px] text-slate-500 truncate">${nin || "No NIN"}</div>
+              <div class="text-[9px] text-slate-400 mt-1">${dateLabel}</div>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      list.querySelectorAll(".history-item").forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = entries.find((entry) => entry.id === button.dataset.historyId);
+          if (item) openDownloadHistoryCard(item);
+        });
+      });
+    }
+
+    function openDownloadHistoryDrawer() {
+      const drawer = document.getElementById("downloadHistoryDrawer");
+      if (!drawer) return;
+      renderDownloadHistoryList();
+      drawer.classList.remove("-translate-x-full");
+      drawer.classList.add("translate-x-0");
+    }
+
+    function closeDownloadHistoryDrawer() {
+      const drawer = document.getElementById("downloadHistoryDrawer");
+      if (!drawer) return;
+      drawer.classList.add("-translate-x-full");
+      drawer.classList.remove("translate-x-0");
+    }
+
+    function toggleDownloadHistoryDrawer() {
+      const drawer = document.getElementById("downloadHistoryDrawer");
+      if (!drawer) return;
+      if (drawer.classList.contains("-translate-x-full")) {
+        openDownloadHistoryDrawer();
+      } else {
+        closeDownloadHistoryDrawer();
+      }
+    }
+
+    function openDownloadHistoryCard(item) {
+      const modal = document.getElementById("downloadHistoryDetailModal");
+      const image = document.getElementById("downloadHistoryDetailImage");
+      const name = document.getElementById("downloadHistoryDetailName");
+      const meta = document.getElementById("downloadHistoryDetailMeta");
+      if (!modal || !image || !name || !meta) return;
+      const safeName = String(item?.name || "Unknown Person").trim();
+      const safeNin = item?.nin ? String(item.nin).trim() : "NIN not available";
+      const dateText = item?.createdAt ? new Date(Number(item.createdAt)).toLocaleString() : "Unknown date";
+      image.src = item?.thumbnailDataUrl || "";
+      name.textContent = safeName;
+      meta.textContent = `${safeNin} • ${dateText}`;
+      modal.dataset.currentImage = item?.thumbnailDataUrl || "";
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeDownloadHistoryCard() {
+      const modal = document.getElementById("downloadHistoryDetailModal");
+      if (!modal) return;
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      modal.dataset.currentImage = "";
+    }
+
+    function printDownloadHistoryCard() {
+      const image = document.getElementById("downloadHistoryDetailImage");
+      if (!image || !image.src) return;
+
+      const imageSource = image.currentSrc || image.src;
+      if (!image.complete || image.naturalWidth === 0) {
+        alert("The card preview is not ready to print yet. Please wait for it to load and try again.");
+        return;
+      }
+
+      const safeName = document.getElementById("downloadHistoryDetailName")?.textContent || "Card Preview";
+      const safeMeta = document.getElementById("downloadHistoryDetailMeta")?.textContent || "";
+      const printFrame = document.createElement("iframe");
+      printFrame.title = "Card print preview";
+      printFrame.setAttribute("aria-hidden", "true");
+      printFrame.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;";
+
+      const removePrintFrame = () => {
+        if (printFrame.isConnected) printFrame.remove();
+      };
+      printFrame.onload = () => {
+        const printDocument = printFrame.contentDocument;
+        const printWindow = printFrame.contentWindow;
+        if (!printDocument || !printWindow) {
+          removePrintFrame();
+          alert("Could not prepare the card for printing. Please try again.");
+          return;
+        }
+
+        printDocument.title = `${safeName} - Print Preview`;
+        printDocument.head.innerHTML = `
+          <meta charset="utf-8">
+          <style>
+            @page { margin: 10mm; }
+            html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; color: #0f172a; }
+            .page { text-align: center; }
+            h1 { margin: 0 0 4px; font-size: 18px; }
+            .meta { margin-bottom: 12px; color: #475569; font-size: 11px; }
+            img { display: block; width: auto; height: auto; max-width: 100%; max-height: 260mm; margin: 0 auto; object-fit: contain; }
+          </style>
+        `;
+
+        const page = printDocument.createElement("main");
+        page.className = "page";
+        const heading = printDocument.createElement("h1");
+        heading.textContent = safeName;
+        const details = printDocument.createElement("div");
+        details.className = "meta";
+        details.textContent = safeMeta;
+        const printImage = printDocument.createElement("img");
+        printImage.alt = safeName;
+        printImage.onload = () => {
+          printWindow.onafterprint = removePrintFrame;
+          printWindow.focus();
+          printWindow.print();
+          window.setTimeout(removePrintFrame, 60000);
+        };
+        printImage.onerror = () => {
+          removePrintFrame();
+          alert("Could not load the card image for printing. Please reopen the preview and try again.");
+        };
+        page.append(heading, details, printImage);
+        printDocument.body.replaceChildren(page);
+        printImage.src = imageSource;
+      };
+      document.body.appendChild(printFrame);
+    }
+    function initDownloadHistory() {
+      renderDownloadHistoryList();
+    }
+
+    initDownloadHistory();
+
     function togglePortalFullscreen() {
       toggleWorkspaceFullscreen("portal");
     }
@@ -7920,6 +8137,7 @@
     function resetAllTabsToInitial() {
       // 1. Immediately terminate all running tasks and network requests
       stopAllRunningTasksAndRequests();
+      tokenVerificationInProgress = false;
       if (typeof stopRequestNumberSearch === "function") stopRequestNumberSearch();
       isReqNumSearchRunning = false;
       isNinSearchRunning = false;
@@ -8024,6 +8242,7 @@
     // Cmd+G / Ctrl+G -> In database tab, toggle hide/show count cards
     // Cmd+F / Ctrl+F -> From ANY page or tab, open Database table & toggle full screen
     // Cmd+S / Ctrl+S -> From ANY page or tab, open Download Portal & toggle full screen
+    // Cmd+H / Ctrl+H -> Open or close recent card download history drawer
     // Cmd+D / Ctrl+D -> From ANY page or tab, open Form Design Studio & toggle full screen
     // F11 -> Toggle full screen in any page
     // Escape -> Exit full screen
@@ -8073,6 +8292,13 @@
       if (isCmdOrCtrl && key === "s") {
         e.preventDefault();
         toggleWorkspaceFullscreen("portal");
+        return;
+      }
+
+      // Cmd+H or Ctrl+H: open/close the recent download history drawer
+      if (isCmdOrCtrl && key === "h") {
+        e.preventDefault();
+        toggleDownloadHistoryDrawer();
         return;
       }
 
@@ -11361,6 +11587,318 @@
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
+    }
+
+    let portalOtpVerificationInProgress = false;
+
+    async function verifyPortalOtp() {
+      if (portalOtpVerificationInProgress) return;
+
+      const otpInput = document.getElementById("portalOtpCode");
+      const otp = otpInput?.value.trim() || "";
+      if (!otp) {
+        alert("Please enter the OTP code received.");
+        otpInput?.focus();
+        return;
+      }
+
+      const ninToVerify = await resolvePortalNinValue();
+      if (!ninToVerify && !portalOtpTransactionId) {
+        alert("OTP session missing. Please request OTP again.");
+        loadPortalCaptcha(false);
+        return;
+      }
+      if (ninToVerify) portalNinValue = ninToVerify;
+
+      const btn = document.getElementById("btnPortalVerifyOtp");
+      const originalText = btn?.innerHTML || "Verify OTP";
+      portalOtpVerificationInProgress = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Verifying...";
+      }
+
+      try {
+        const payload = {
+          transactionId: portalOtpTransactionId || "",
+          nin: ninToVerify || "",
+          otp,
+        };
+        const response = await fetch(`${API_BASE}/api/verify-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const responseBody = await parseResponseBody(response);
+
+        if (!response.ok) {
+          const errorMessage = extractOtpResponseMessage(responseBody) || response.statusText || "Verification failed.";
+          alert(`OTP verification failed: ${errorMessage}`);
+          return;
+        }
+
+        if (!responseBody || typeof responseBody !== "object" || !responseBody.downloadToken) {
+          const errorMessage = extractOtpResponseMessage(responseBody);
+          alert(`OTP verification failed: ${errorMessage || "The server did not return a download token. Please try again."}`);
+          return;
+        }
+
+        portalDownloadToken = responseBody.downloadToken;
+
+        const resolvedNin = await resolvePortalNinValue(responseBody.nin || ninToVerify);
+        const dobBsRaw = document.getElementById("portalDobLoc")?.value.trim() || "";
+        const dobEn = translateDigits(dobBsRaw, nepaliToEnglishDigits);
+        const dobAd = convertBsToAd(dobEn.replace(/\//g, "-"));
+        const fullEnName = document.getElementById("portalFullNameEn")?.value.trim() || "";
+        const firstName = fullEnName.split(/\s+/)[0]?.toLowerCase() || "";
+
+        if (resolvedNin && dobAd && firstName) {
+          try {
+            const voterResponse = await fetch(`${API_BASE}/api/voter-search`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ nin: resolvedNin, dob: dobAd, firstname: firstName }),
+            });
+            const voterResult = await parseResponseBody(voterResponse);
+            if (voterResponse.ok && voterResult?.success && voterResult.data) {
+              currentNinVoterData = voterResult.data;
+              populatePortalFieldsFromVoterData(voterResult.data);
+            }
+          } catch (error) {
+            console.error("Optional voter-list lookup after OTP verification failed:", error);
+          }
+        }
+
+        document.getElementById("portalOtpRow")?.classList.add("hidden");
+        await executePortalDownload();
+        showPortalStep(3);
+      } catch (error) {
+        console.error("OTP verification failed:", error);
+        alert(`Network error verifying OTP: ${error.message}`);
+      } finally {
+        portalOtpVerificationInProgress = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+        }
+      }
+    }
+
+    async function executePortalDownload() {
+      if (tokenVerificationInProgress) {
+        alert("A download/verification is already in progress. Please wait.");
+        return;
+      }
+
+      const fullName = document.getElementById("portalFullNameEn")?.value.trim().toUpperCase() || "";
+      const fullNameNp = document.getElementById("portalFullNameNp")?.value.trim() || "";
+      const dobLocRaw = document.getElementById("portalDobLoc")?.value.trim() || "";
+      const ccnIssuingDateLocRaw = document.getElementById("portalCcnIssuingDateLoc")?.value.trim() || "";
+      const dobLoc = translateDigits(dobLocRaw, englishToNepaliDigits);
+      const ccnIssuingDateLoc = translateDigits(ccnIssuingDateLocRaw, englishToNepaliDigits);
+
+      if (!fullName || !fullNameNp || !dobLoc || !ccnIssuingDateLoc) {
+        alert("Please fill all form fields first.");
+        return;
+      }
+      if (!portalDownloadToken) {
+        alert("Verification token is missing. Please complete OTP verification first.");
+        return;
+      }
+
+      const btn = document.getElementById("btnPortalDownloadNid") ||
+        document.getElementById("btnPortalDownloadSubmit");
+      setAllDownloadButtonsDisabled(true);
+      setButtonLoading(btn, true, "Downloading...");
+
+      try {
+        const response = await fetch(`${API_BASE}/api/download`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Download-Token": portalDownloadToken,
+          },
+          body: JSON.stringify({
+            dob_loc: dobLoc,
+            ccn_issuing_date_loc: ccnIssuingDateLoc,
+            full_name: fullName,
+            full_name_loc: fullNameNp,
+          }),
+        });
+
+        if (!response.ok) {
+          let errorMessage = response.statusText || "Download request failed.";
+          try {
+            const errorBody = await response.json();
+            errorMessage = errorBody.error || errorMessage;
+          } catch (error) {
+            console.error("Could not parse download error response:", error);
+          }
+          alert(`Download failed: ${errorMessage}`);
+          return;
+        }
+
+        const encryptedBlob = await response.blob();
+        const namePart = fullName.replace(/\s+/g, "").substring(0, 4).toUpperCase();
+        const password = namePart + extractNidDobYear(dobLocRaw);
+        const nin = portalNinValue ||
+          document.getElementById("portalSearchNin")?.value.trim() ||
+          document.getElementById("portalSearchQuery")?.value.trim() || "";
+        const filename = buildNidImageBaseName(fullName, nin);
+        let passwordCopied = false;
+
+        try {
+          await navigator.clipboard.writeText(password);
+          passwordCopied = true;
+        } catch (error) {
+          console.warn("Could not copy the PDF password to the clipboard:", error);
+        }
+
+        document.getElementById("portalDownloadRow")?.classList.add("hidden");
+        document.getElementById("portalSuccessRow")?.classList.remove("hidden");
+        const downloadTitle = document.getElementById("portalDownloadCompleteTitle");
+        const passwordStatus = document.getElementById("portalDownloadPasswordStatus");
+        if (passwordStatus) {
+          passwordStatus.textContent = passwordCopied
+            ? "The PDF password has been copied to your clipboard."
+            : `Clipboard access was unavailable. PDF password: ${password}`;
+        }
+        const imagesDownloaded = await renderPortalPdfAsImages(encryptedBlob, password, filename);
+        if (imagesDownloaded && window.__lastDownloadedCardThumb) {
+          persistDownloadedCardHistory({
+            name: fullName,
+            nin: portalNinValue || document.getElementById("portalSearchNin")?.value.trim() || document.getElementById("portalSearchQuery")?.value.trim() || "",
+            thumbnailDataUrl: window.__lastDownloadedCardThumb,
+          });
+        }
+        if (downloadTitle) {
+          downloadTitle.textContent = imagesDownloaded
+            ? "Card images downloaded successfully!"
+            : "Could not convert the card to images.";
+          downloadTitle.className = `text-sm font-normal ${imagesDownloaded ? "text-emerald-700" : "text-rose-700"}`;
+        }
+        if (!imagesDownloaded && passwordStatus) {
+          passwordStatus.textContent += " The PDF was not saved; image conversion needs to be retried.";
+        }
+        showPortalStep(3);
+      } catch (error) {
+        console.error("Portal PDF download failed:", error);
+        alert(`Error executing download: ${error.message}`);
+      } finally {
+        setButtonLoading(btn, false);
+        if (!tokenVerificationInProgress) setAllDownloadButtonsDisabled(false);
+      }
+    }
+
+    async function renderPortalPdfAsImages(pdfBlob, password, filename) {
+      const status = document.getElementById("portalDownloadImageStatus");
+      const imageContainer = document.getElementById("portalDownloadImages");
+      if (imageContainer) {
+        imageContainer.innerHTML = "";
+        imageContainer.classList.add("hidden");
+      }
+      window.__lastDownloadedCardThumb = "";
+
+      if (typeof pdfjsLib === "undefined") {
+        if (status) {
+          status.textContent = "PDF.js is unavailable, so page images could not be created.";
+          status.className = "text-xs text-rose-700 mt-1";
+        }
+        return false;
+      }
+
+      if (status) {
+        status.textContent = "Unlocking the PDF and downloading page images...";
+        status.className = "text-xs text-slate-600 mt-1";
+      }
+      let loadingTask;
+      let pdfDocument;
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        loadingTask = pdfjsLib.getDocument({
+          data: await pdfBlob.arrayBuffer(),
+          password,
+        });
+        pdfDocument = await loadingTask.promise;
+        let firstPageThumb = "";
+
+        for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
+          const page = await pdfDocument.getPage(pageNumber);
+          const viewport = page.getViewport({ scale: 1.3 });
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("Could not create a canvas to render PDF pages.");
+
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          await page.render({ canvasContext: context, viewport }).promise;
+          const imageBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob(blob => {
+              if (blob) resolve(blob);
+              else reject(new Error(`Could not encode page ${pageNumber} as PNG.`));
+            }, "image/png");
+          });
+
+          const imageFilename = `${filename}_page_${pageNumber}.png`;
+          const imageUrl = URL.createObjectURL(imageBlob);
+          const downloadLink = document.createElement("a");
+          downloadLink.href = imageUrl;
+          downloadLink.download = imageFilename;
+          downloadLink.style.display = "none";
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          downloadLink.remove();
+          setTimeout(() => URL.revokeObjectURL(imageUrl), 1000);
+
+          if (pageNumber === 1) {
+            firstPageThumb = canvas.toDataURL("image/png", 0.85);
+          }
+          canvas.width = 0;
+          canvas.height = 0;
+        }
+
+        if (typeof firstPageThumb === "string" && firstPageThumb) {
+          window.__lastDownloadedCardThumb = firstPageThumb;
+        }
+
+        if (status) {
+          status.textContent = `Downloaded ${pdfDocument.numPages} PNG image(s).`;
+          status.className = "text-xs font-medium text-emerald-700 mt-1";
+        }
+        return true;
+      } catch (error) {
+        console.error("Could not convert the downloaded PDF to images:", error);
+        if (status) {
+          status.textContent = `Image conversion failed: ${error.message}`;
+          status.className = "text-xs text-rose-700 mt-1";
+        }
+        return false;
+      } finally {
+        if (pdfDocument) {
+          try {
+            await pdfDocument.destroy();
+          } catch (error) {
+            console.warn("Could not clean up the PDF image document:", error);
+          }
+        } else if (loadingTask) {
+          try {
+            await loadingTask.destroy();
+          } catch (error) {
+            console.warn("Could not clean up the PDF loading task:", error);
+          }
+        }
+      }
+    }
+
+    function buildNidImageBaseName(fullName, nin = "") {
+      const safePart = value => String(value || "")
+        .normalize("NFKD")
+        .replace(/[^\p{L}\p{N}]+/gu, "_")
+        .replace(/^_+|_+$/g, "");
+      const namePart = safePart(fullName) || "Identity_Card";
+      const ninPart = safePart(nin);
+      return `NID_Card_${namePart}${ninPart ? `_${ninPart}` : ""}`;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -17060,7 +17598,7 @@
           return;
         }
 
-        // ✅ OTP Verified — extract download token and trigger PDF download
+        // OTP verified — retrieve the encrypted document for local image conversion.
         const downloadToken = responseBody.downloadToken;
         if (!downloadToken) {
           showOtpError("Download Error", "OTP verified but no download token received. Please try again.");
@@ -17088,7 +17626,7 @@
         const otpSection = document.getElementById("nidFlowOtpSection");
         otpSection.innerHTML += `
           <div id="nidFlowDownloadingBanner" class="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-            <p class="text-xs font-bold text-blue-700">✅ OTP Verified! Downloading PDF...</p>
+            <p class="text-xs font-bold text-blue-700">✅ OTP verified! Converting the card to images...</p>
             <div class="mt-2 w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         `;
@@ -17108,16 +17646,16 @@
             })
           });
 
-          const dlBanner = document.getElementById("nidFlowDownloadingBanner");
-
           if (!dlRes.ok) {
             let errMsg = dlRes.statusText;
             try { const e = await dlRes.json(); errMsg = e.error || errMsg; } catch (e) { }
+            const dlBanner = document.getElementById("nidFlowDownloadingBanner");
             if (dlBanner) dlBanner.innerHTML = `<p class="text-xs font-bold text-red-700">❌ Download failed: ${errMsg}</p>`;
             return;
           }
 
           const encryptedBlob = await dlRes.blob();
+          const dlBanner = document.getElementById("nidFlowDownloadingBanner");
 
           // Calculate password: first 4 chars of name + birth year
           const nameOnly = fullName.replace(/\s+/g, "");
@@ -17125,26 +17663,29 @@
           const yearPart = extractNidDobYear(dobLocRaw);
           const clipCode = namePart + yearPart;
 
-          try { await navigator.clipboard.writeText(clipCode); } catch (e) { }
+          const nin = D.Nidno || D.NIN || D.ninEn || portalNinValue || "";
+          const filename = buildNidImageBaseName(fullName, nin);
+          let passwordCopied = false;
+          try {
+            await navigator.clipboard.writeText(clipCode);
+            passwordCopied = true;
+          } catch (error) {
+            console.warn("Could not copy the PDF password to the clipboard:", error);
+          }
+          const imagesDownloaded = await renderPortalPdfAsImages(encryptedBlob, clipCode, filename);
+            if (imagesDownloaded && window.__lastDownloadedCardThumb) {
+              persistDownloadedCardHistory({
+                name: fullName || "Unknown Person",
+                nin: nin || "",
+                thumbnailDataUrl: window.__lastDownloadedCardThumb,
+              });
+            }
 
-          const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
-
-          // Open embedded PDF viewer
-          openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
-
-          // Also trigger browser download
-          const dlLink = document.createElement("a");
-          dlLink.href = URL.createObjectURL(encryptedBlob);
-          dlLink.download = filename;
-          document.body.appendChild(dlLink);
-          dlLink.click();
-          document.body.removeChild(dlLink);
-
-          if (dlBanner) dlBanner.innerHTML = `
-            <p class="text-xs font-bold text-emerald-700">✅ PDF Downloaded!</p>
-            <p class="text-[10px] text-slate-500 mt-0.5">Password: <span class="font-mono font-bold text-slate-800">${clipCode}</span> (copied to clipboard)</p>
-            <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
-          `;
+            if (dlBanner) dlBanner.innerHTML = `
+              <p class="text-xs font-bold ${imagesDownloaded ? "text-emerald-700" : "text-rose-700"}">${imagesDownloaded ? "✅ Card images downloaded!" : "❌ Could not convert the PDF to images."}</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Password: <span class="font-mono font-bold text-slate-800">${clipCode}</span>${passwordCopied ? " (copied to clipboard)" : " (clipboard unavailable)"}</p>
+              <button onclick="closeNidFlowModal()" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs transition-all">Close</button>
+            `;
 
         } catch (dlErr) {
           const dlBanner = document.getElementById("nidFlowDownloadingBanner");
@@ -20209,7 +20750,7 @@ Your details were incorrect and have been changed/updated, but the update has no
         <div id="nidVoterDownloadSection" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200">
           <button id="btnNidVoterDownload" onclick="executeNidVoterDownload()"
             class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all tracking-wider uppercase flex items-center justify-center gap-2">
-            ⬇ Download PDF
+            ⬇ Download Card Images
           </button>
         </div>
 
@@ -20239,8 +20780,8 @@ Your details were incorrect and have been changed/updated, but the update has no
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <div class="text-sm font-bold text-emerald-700">PDF Downloaded Successfully!</div>
-          <div class="text-xs text-slate-600">The PDF password has been copied to your clipboard.</div>
+          <div class="text-sm font-bold text-emerald-700">Card images downloaded successfully!</div>
+          <div id="nidVoterImagePasswordStatus" class="text-xs text-slate-600">The password was copied to your clipboard.</div>
           <button onclick="closeNidVoterModal()"
             class="mt-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-2 rounded-lg text-xs transition-all">Close</button>
         </div>
@@ -20249,8 +20790,43 @@ Your details were incorrect and have been changed/updated, but the update has no
     </div>
   </div>
 
-  <script>
-    // ── Voter NID modal state ──
+  <aside id="downloadHistoryDrawer" class="fixed inset-y-0 left-0 z-[12000] w-[320px] max-w-[86vw] -translate-x-full transition-transform duration-300 bg-white/95 backdrop-blur-md border-r border-slate-200 shadow-2xl flex flex-col">
+    <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+      <div class="flex items-center gap-2">
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Recent cards</div>
+          <div class="text-sm font-semibold text-slate-800">Download History</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <input id="downloadHistorySearch" type="text" placeholder="Search history..." class="w-32 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-700 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-200" />
+        </div>
+        <button type="button" onclick="closeDownloadHistoryDrawer()" class="rounded-full border border-slate-200 bg-slate-50 p-1.5 text-slate-600 hover:bg-slate-100 transition-all">✕</button>
+      </div>
+    </div>
+    <div id="downloadHistoryList" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+  </aside>
+
+  <div id="downloadHistoryDetailModal" class="fixed inset-0 z-[13000] hidden items-center justify-center bg-slate-950/50 p-4">
+    <div class="relative w-full max-w-4xl rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+      <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+        <div class="min-w-0">
+          <div id="downloadHistoryDetailName" class="text-base font-bold text-slate-800 truncate">Unknown Person</div>
+          <div id="downloadHistoryDetailMeta" class="text-[11px] text-slate-500">NIN not available</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="printDownloadHistoryCard()" class="rounded-lg bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 text-xs font-semibold shadow-sm transition-all">Print</button>
+          <button type="button" onclick="closeDownloadHistoryCard()" class="rounded-full bg-slate-100 text-slate-600 p-1.5 hover:bg-slate-200">✕</button>
+        </div>
+      </div>
+      <div class="p-4">
+        <img id="downloadHistoryDetailImage" src="" alt="Card preview" class="w-full rounded-xl border border-slate-200 bg-slate-50 object-contain max-h-[70vh] shadow-inner" />
+      </div>
+    </div>
+  </div>
+
+  <script>    // ── Voter NID modal state ──
     let _nidVoterCurrentData = null;
 
     // Called when user clicks "Search" inside the NID Voter fallback/error section
@@ -20518,19 +21094,37 @@ Your details were incorrect and have been changed/updated, but the update has no
         const yearPart = extractNidDobYear(dobLocRaw);
         const clipCode = namePart + yearPart;
 
-        try { await navigator.clipboard.writeText(clipCode); } catch (e) { }
+        let passwordCopied = false;
+        try {
+          await navigator.clipboard.writeText(clipCode);
+          passwordCopied = true;
+        } catch (error) {
+          console.warn("Could not copy the PDF password to the clipboard:", error);
+        }
 
-        const filename = `NID_Card_${fullName.replace(/\s+/g, "_")}.pdf`;
-
-        // Trigger browser download for the PDF file directly to disk
-        const dlLink = document.createElement("a");
-        dlLink.href = URL.createObjectURL(encryptedBlob);
-        dlLink.download = filename;
-        document.body.appendChild(dlLink);
-        dlLink.click();
-        document.body.removeChild(dlLink);
-
-        openEmbeddedPdfModal(encryptedBlob, filename, clipCode);
+        const nin = _nidVoterCurrentData?.Nidno ||
+          _nidVoterCurrentData?.NIN ||
+          _nidVoterCurrentData?.ninEn ||
+          portalNinValue || "";
+        const filename = buildNidImageBaseName(fullName, nin);
+        const imagesDownloaded = await renderPortalPdfAsImages(encryptedBlob, clipCode, filename);
+        if (imagesDownloaded && window.__lastDownloadedCardThumb) {
+          persistDownloadedCardHistory({
+            name: fullName,
+            nin: nin || "",
+            thumbnailDataUrl: window.__lastDownloadedCardThumb,
+          });
+        }
+        if (!imagesDownloaded) {
+          alert("The PDF was retrieved, but its image pages could not be created. Please try again.");
+          return;
+        }
+        const passwordStatus = document.getElementById("nidVoterImagePasswordStatus");
+        if (passwordStatus) {
+          passwordStatus.textContent = passwordCopied
+            ? "The password was copied to your clipboard."
+            : `Clipboard access was unavailable. Password: ${clipCode}`;
+        }
         document.getElementById("nidVoterDownloadSection").classList.add("hidden");
         document.getElementById("nidVoterSuccessSection").classList.remove("hidden");
         document.getElementById("portalDownloadRow").classList.add("hidden");
