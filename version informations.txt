@@ -22,5 +22,5 @@
     git : version-0-1-2-nominal-full-working (dd23e13017c7134881d558a09ed6152c0724ac96)
     repo : dynamicNidCardGenrator
     vercel : sujalmehta.prof + sujalmehta.temp
-    link : nidqr1,nidqr2.sujalmehta.com.np
+    link : nidqr1,nidqr2.sujalmehta.com.np.
 }
